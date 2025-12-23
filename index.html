@@ -3,456 +3,443 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keyboard Tester</title>
+    <title>Keyboard & Gamepad Tester [Perfect Layout]</title>
     <style>
-        /* --- 1. RESET & BASIC LAYOUT --- */
+        /* --- 1. CORE RESET --- */
         * { box-sizing: border-box; }
         body {
             background-color: #121212;
             color: #eee;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: start;
-            padding-top: 20px; /* Jarak atas dikurangi sedikit */
-            min-height: 100vh;
-            margin: 0;
-            user-select: none;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px; min-height: 100vh; margin: 0; user-select: none;
+            overflow-x: hidden;
         }
 
-        /* --- 2. HEADER & CONTROLS --- */
+        /* --- 2. HEADER --- */
         .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            max-width: 1250px;
-            margin-bottom: 20px;
-            padding: 0 10px;
+            width: 100%; max-width: 1280px; display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
         }
-
-        h2 { 
-            margin: 0; 
-            color: #00e5ff; /* Cyan Electric */
-            text-transform: uppercase; 
-            letter-spacing: 3px;
-            font-size: 1.8rem;
-            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
-        }
-
-        /* Toggle Switch Style */
-        .sound-control {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #1e1e1e;
-            padding: 8px 16px;
-            border-radius: 30px;
-            border: 1px solid #333;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .sound-label { font-size: 0.9rem; font-weight: 600; color: #ccc; }
+        h2 { margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; }
         
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+        .controls { display: flex; gap: 15px; }
+        .ctrl-box {
+            background: #1e1e1e; padding: 5px 15px; border-radius: 30px;
+            border: 1px solid #333; display: flex; align-items: center; gap: 10px;
+        }
+        .ctrl-label { font-size: 0.8rem; font-weight: bold; color: #aaa; }
+
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #555; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #00e5ff; }
-        input:checked + .slider:before { transform: translateX(22px); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        /* --- 3. DASHBOARD (SEKARANG DI ATAS) --- */
+        /* --- 3. DASHBOARD --- */
         .dashboard {
-            width: 100%; max-width: 1250px;
-            display: grid; grid-template-columns: 1.5fr 1fr 1fr;
-            gap: 15px; align-items: stretch;
-            margin-bottom: 25px; /* Jarak antara Dashboard dan Keyboard */
+            width: 100%; max-width: 1280px; display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 30px;
         }
-
         .panel {
-            background: #1e1e1e; border: 1px solid #333; border-radius: 10px;
-            padding: 15px; 
-            height: 150px; /* Tinggi dikurangi agar keyboard tidak terlalu ke bawah */
-            display: flex; flex-direction: column;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            background: #1e1e1e; border: 1px solid #333; border-radius: 12px;
+            padding: 15px; height: 140px; display: flex; flex-direction: column; position: relative;
         }
-
-        .panel-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 8px;
-            color: #00e5ff; font-weight: bold; font-size: 0.85rem; text-transform: uppercase;
-        }
-
-        /* History Log */
-        #key-history { 
-            flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; 
-            gap: 6px; align-content: flex-start; padding-right: 5px;
-        }
-        #key-history::-webkit-scrollbar { width: 6px; }
-        #key-history::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        .panel-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
-        .log-item { 
-            background: #2a2a2a; color: #00e5ff; padding: 3px 8px; 
-            border-radius: 4px; font-size: 11px; border: 1px solid #333; 
-            font-family: monospace; animation: popIn 0.1s ease;
-        }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #key-history { flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
+        .log-item { background: #2a2a2a; padding: 3px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #333; font-family: monospace; color: #00e5ff; }
+        .log-item.err { color: #ff4081; border-color: #ff4081; }
 
-        /* Stats Blocks */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; height: 100%; }
-        .stat-box { 
-            background: #252525; border-radius: 6px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-        }
-        .stat-val { font-size: 2rem; color: #fff; font-weight: bold; font-family: monospace; line-height: 1;}
-        .stat-lbl { font-size: 0.65rem; color: #888; text-transform: uppercase; margin-top: 5px; }
-
-        /* Ghosting */
-        .ghosting-display { flex-grow: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .ghost-val { font-size: 3.5rem; font-weight: bold; color: #fff; line-height: 1; transition: color 0.2s; }
-        .ghost-lbl { color: #666; font-size: 0.7rem; text-transform: uppercase; margin-top: 5px; }
-        .ghost-max { font-size: 0.8rem; color: #00e5ff; margin-top: 5px; font-family: monospace; }
-
-        /* Buttons */
-        button { cursor: pointer; background: #333; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; transition: background 0.2s;}
-        button:hover { background: #555; }
-        .btn-reset { background: #b71c1c; } .btn-reset:hover { background: #d32f2f; }
-
+        .stats-row { display: flex; justify-content: space-around; height: 100%; align-items: center; }
+        .stat-item { text-align: center; }
+        .stat-val { font-size: 2rem; font-weight: bold; line-height: 1.1; }
+        .stat-lbl { font-size: 0.7rem; color: #888; text-transform: uppercase; }
 
         /* --- 4. KEYBOARD CONTAINER --- */
-        .keyboard-case {
-            background: #1e1e1e;
-            padding: 25px;
-            border-radius: 16px;
-            border-bottom: 8px solid #0f0f0f;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 1280px;
-            margin-bottom: 50px; /* Jarak bawah */
-        }
-
-        /* --- 5. KEYBOARD LAYOUT GRID --- */
-        /* Rows */
-        .media-row { display: flex; justify-content: center; gap: 20px; padding-bottom: 12px; border-bottom: 2px solid #2a2a2a; margin-bottom: 8px; }
-        .function-row { display: flex; gap: 48px; padding-left: 5px; margin-bottom: 5px; }
-        .keyboard-body { display: flex; gap: 15px; }
-        .main-block { display: flex; flex-direction: column; gap: 6px; }
-        .row { display: flex; gap: 6px; }
+        .wrapper { width: 100%; display: flex; justify-content: center; }
         
-        /* Groups */
-        .media-group { display: flex; gap: 8px; align-items: center; }
-        .f-group { display: flex; gap: 6px; }
-        
-        /* Side Blocks */
-        .nav-block { display: flex; flex-direction: column; justify-content: space-between; width: 165px; }
-        .nav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .numpad-block { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 50px); gap: 6px; width: 220px; }
-
-        /* --- 6. KEY STYLING --- */
-        .key {
-            height: 50px; width: 50px;
-            background: #333;
-            border-top: 1px solid #444;
-            border-bottom: 4px solid #222;
-            border-radius: 5px;
-            color: #ddd;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 600;
-            cursor: default;
-            transition: all 0.05s ease-out;
+        .kb-container {
             position: relative;
+            background: #181818; padding: 25px; border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-bottom: 8px solid #000;
+            display: flex; gap: 20px; 
+            min-width: 1280px; /* Lebar pas untuk 104 key */
+            transform-origin: top center;
         }
 
-        .key.media { height: 36px; width: 46px; font-size: 16px; border-radius: 12px; background: #2a2a2a; border-bottom: 3px solid #1a1a1a; }
-
-        /* Active (Pressed) */
-        .key.active {
-            background: #f0faff; color: #111; border-bottom: 1px solid #ccc;
-            transform: translateY(3px); box-shadow: 0 0 20px rgba(0, 229, 255, 0.6); z-index: 10;
-        }
-
-        /* Tested (Released) */
-        .key.tested {
-            background: #003344; color: #00e5ff;
-            border-color: #002233; border-bottom-color: #001122;
+        /* --- BLOCKS & ROWS --- */
+        .block-main { display: flex; flex-direction: column; gap: 6px; }
+        
+        /* NAVIGATION BLOCK (FIXED) */
+        .block-nav { 
+            display: flex; flex-direction: column; 
+            width: 162px; /* 50px * 3 + gap 6px * 2 */
         }
         
+        /* NUMPAD BLOCK */
+        .block-num { 
+            display: grid; 
+            grid-template-columns: repeat(4, 50px); 
+            grid-template-rows: repeat(5, 50px); 
+            gap: 6px; 
+            width: 218px; 
+        }
+
+        .row { display: flex; gap: 6px; position: relative; }
+        
+        /* Nav Grids */
+        .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; } /* PrtSc */
+        .nav-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 40px; } /* Ins/Home */
+        .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } /* Arrows */
+
+        /* --- KEY STYLES --- */
+        .key {
+            height: 50px; width: 50px; 
+            background: #333; color: #ddd; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 600; cursor: default;
+            border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444;
+            transition: 0.05s;
+        }
+        .key.active { background: #f0faff; color: #111; border-bottom: 2px solid #ccc; transform: translateY(2px); box-shadow: 0 0 15px #00e5ff; z-index: 100; }
+        .key.tested { background: #004455; color: #00e5ff; border-color: #002233; }
         .key.tested.active { background: #f0faff; color: #111; }
 
-        /* Sizes */
-        .w-2 { width: 75px; } .w-3 { width: 90px; } .w-4 { width: 115px; }
-        .w-5 { width: 65px; } .w-space { width: 318px; } .w-full { flex-grow: 1; }
-        .h-2 { grid-row: span 2; height: 106px; } .w-num-0 { grid-column: span 2; width: 106px; }
+        /* SIZES */
+        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; }
+        .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; }
+        .w-space { width: 342px; }
+        
+        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; }
+        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; }
+        .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
 
-        /* Mobile */
-        @media (max-width: 1000px) {
-            .keyboard-case { transform: scale(0.6); transform-origin: top center; margin-bottom: -150px; }
-            .dashboard { grid-template-columns: 1fr; height: auto; margin-bottom: 10px; }
-            .panel { height: auto; min-height: 120px; }
-            .header-section { flex-direction: column; gap: 10px; }
+        /* ISO LAYOUT */
+        .iso-key { display: none; }
+        .kb-container.iso-mode .iso-key { display: flex; }
+        .kb-container.iso-mode .ansi-key { display: none; }
+        .kb-container.iso-mode .key[data-code="Enter"] {
+            position: absolute; right: 0; top: -56px;
+            height: 106px; width: 65px; z-index: 5;
+            border-radius: 5px 5px 5px 15px;
         }
+        .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 62px; }
+
+        /* --- 5. GAMEPAD (SPACIOUS LAYOUT) --- */
+        .gamepad-container {
+            width: 100%; max-width: 650px; /* Lebarkan sedikit */
+            background: #1e1e1e; border-radius: 30px; border: 2px solid #333;
+            padding: 20px; margin-top: 40px; margin-bottom: 50px;
+            display: flex; flex-direction: column; align-items: center;
+            opacity: 0.5; transition: 0.3s;
+        }
+        .gamepad-container.active { opacity: 1; border-color: #00e5ff; box-shadow: 0 0 20px rgba(0,229,255,0.1); }
+        .gp-status { color: #888; font-weight: bold; margin-bottom: 15px; font-size: 0.9rem; }
+        
+        .controller-body {
+            position: relative; width: 500px; height: 340px; /* Perbesar Body */
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border-radius: 80px 80px 140px 140px; border: 2px solid #444;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        .btn-gp {
+            position: absolute; display: flex; align-items: center; justify-content: center;
+            background: #333; color: #888; border: 2px solid #444; font-size: 10px; font-weight: bold; transition: 0.1s;
+        }
+        .btn-gp.pressed { background: #00e5ff; color: #000; box-shadow: 0 0 15px #00e5ff; border-color: #fff; transform: scale(0.95); }
+        
+        /* -- POSISI GAMEPAD (REVISI JARAK) -- */
+        .gp-round { width: 36px; height: 36px; border-radius: 50%; }
+        /* Face Buttons (Kanan Atas) */
+        .pos-y { top: 60px; right: 80px; } 
+        .pos-x { top: 95px; right: 115px; }
+        .pos-b { top: 95px; right: 45px; } 
+        .pos-a { top: 130px; right: 80px; }
+
+        /* D-Pad (Kiri Bawah - Jauh dari Stick) */
+        .gp-dpad { width: 30px; height: 30px; border-radius: 4px; }
+        .pos-du { top: 120px; left: 100px; } 
+        .pos-dd { top: 180px; left: 100px; }
+        .pos-dl { top: 150px; left: 70px; } 
+        .pos-dr { top: 150px; left: 130px; }
+
+        /* Sticks (Kiri Atas & Kanan Bawah) */
+        .gp-stick { width: 50px; height: 50px; border-radius: 50%; border: 3px solid #555; background: #222; }
+        .gp-stick.pressed { background: #005577; }
+        
+        .pos-ls { top: 55px; left: 60px; } /* Jauh di kiri atas */
+        .pos-rs { top: 170px; right: 100px; } /* Jauh di kanan bawah */
+
+        /* Shoulders */
+        .gp-sh { width: 80px; height: 20px; border-radius: 10px; top: -10px; }
+        .pos-lb { left: 45px; } .pos-rb { right: 45px; }
+        .gp-tr { width: 50px; height: 30px; border-radius: 5px 5px 15px 15px; top: -35px; z-index: -1; }
+        .pos-lt { left: 60px; } .pos-rt { right: 60px; }
+
+        /* Center */
+        .gp-small { width: 20px; height: 20px; border-radius: 50%; top: 110px; }
+        .pos-sel { left: 210px; } .pos-start { right: 210px; } 
+        .pos-home { left: 238px; top: 80px; width: 24px; height: 24px; }
+
+        /* Paddles */
+        .gp-paddle { width: 25px; height: 40px; border-radius: 6px; bottom: 70px; background: #222; }
+        .pos-p1 { left: 190px; bottom: 90px; } .pos-p2 { right: 190px; bottom: 90px; }
+        .pos-p3 { left: 160px; bottom: 50px; } .pos-p4 { right: 160px; bottom: 50px; }
+        .pro-label { position: absolute; bottom: 20px; width: 100%; text-align: center; color: #555; font-size: 0.6rem; }
     </style>
 </head>
 <body>
 
     <div class="header-section">
-        <h2>Keyboard Tester BT</h2>
-        
-        <div class="sound-control">
-            <span class="sound-label">🔊 Click Sound</span>
-            <label class="switch">
-                <input type="checkbox" id="sound-toggle" checked>
-                <span class="slider"></span>
-            </label>
+        <h2>Keyboard Tester <span style="font-size:0.7em; color:#fff">ULTIMATE</span></h2>
+        <div class="controls">
+            <div class="ctrl-box">
+                <span class="ctrl-label">ANSI</span>
+                <label class="switch">
+                    <input type="checkbox" id="layout-toggle" onchange="toggleLayout()">
+                    <span class="slider"></span>
+                </label>
+                <span class="ctrl-label" style="color:#00e5ff">ISO</span>
+            </div>
+            <div class="ctrl-box">
+                <span class="ctrl-label">🔊 Sound</span>
+                <label class="switch">
+                    <input type="checkbox" id="sound-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
     </div>
 
     <div class="dashboard">
         <div class="panel">
-            <div class="panel-header"><span>Input Log</span><button onclick="clearLog()">Clear</button></div>
+            <div class="panel-head">INPUT LOG <span style="cursor:pointer; color:#ff4081" onclick="clearLog()">[CLEAR]</span></div>
             <div id="key-history"></div>
+            <div id="chatter-alert" style="display:none; position:absolute; bottom:10px; right:10px; background:#b71c1c; color:#fff; padding:5px; border-radius:4px; font-size:0.8rem; font-weight:bold;">⚠️ Chatter!</div>
         </div>
-        
         <div class="panel">
-            <div class="panel-header">Speed Stats</div>
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div id="tpm-display" class="stat-val">0</div>
-                    <div class="stat-lbl">Keys / Minute</div>
+            <div class="panel-head">STATS & GHOSTING</div>
+            <div class="stats-row">
+                <div class="stat-item"><div class="stat-val" id="tpm-display">0</div><div class="stat-lbl">KPM</div></div>
+                <div class="stat-item">
+                    <div class="stat-val" id="ghost-current" style="color:#fff">0</div>
+                    <div class="stat-lbl">PRESSED NOW</div>
                 </div>
-                <div class="stat-box">
-                    <div id="tested-count" class="stat-val">0</div>
-                    <div class="stat-lbl">Unique Keys</div>
+                <div class="stat-item">
+                    <div class="stat-val" id="ghost-max" style="color:#00e5ff">0</div>
+                    <div class="stat-lbl">MAX RECORD</div>
                 </div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header"><span>Ghosting Test</span><button class="btn-reset" onclick="resetAll()">Reset</button></div>
-            <div class="ghosting-display">
-                <div id="current-pressed" class="ghost-val">0</div>
-                <div class="ghost-lbl">Pressed Now</div>
-                <div id="max-pressed" class="ghost-max">Max: 0</div>
             </div>
         </div>
     </div>
-    
-    <div class="keyboard-case">
-        <div class="media-row">
-            <div class="media-group"><div class="key media" data-code="BrowserHome">🏠</div><div class="key media" data-code="LaunchMail">✉</div><div class="key media" data-code="Calculator">🧮</div></div>
-            <div class="media-group"><div class="key media" data-code="MediaTrackPrevious">⏮</div><div class="key media" data-code="MediaPlayPause">⏯</div><div class="key media" data-code="MediaStop">⏹</div><div class="key media" data-code="MediaTrackNext">⏭</div></div>
-            <div class="media-group"><div class="key media" data-code="VolumeMute">🔇</div><div class="key media" data-code="VolumeDown">🔉</div><div class="key media" data-code="VolumeUp">🔊</div></div>
-            <div class="media-group" style="margin-left: 20px;"><div class="key media" data-code="BrightnessDown">🔅</div><div class="key media" data-code="BrightnessUp">🔆</div></div>
-        </div>
-        
-        <div class="function-row">
-            <div class="f-group"><div class="key" data-code="Escape">Esc</div></div>
-            <div class="f-group"><div class="key" data-code="F1">F1</div><div class="key" data-code="F2">F2</div><div class="key" data-code="F3">F3</div><div class="key" data-code="F4">F4</div></div>
-            <div class="f-group"><div class="key" data-code="F5">F5</div><div class="key" data-code="F6">F6</div><div class="key" data-code="F7">F7</div><div class="key" data-code="F8">F8</div></div>
-            <div class="f-group"><div class="key" data-code="F9">F9</div><div class="key" data-code="F10">F10</div><div class="key" data-code="F11">F11</div><div class="key" data-code="F12">F12</div></div>
-            <div class="f-group" style="margin-left: 15px;"><div class="key" data-code="PrintScreen">PrtSc</div><div class="key" data-code="ScrollLock">ScrLk</div><div class="key" data-code="Pause">Pause</div></div>
-        </div>
 
-        <div class="keyboard-body">
-            <div class="main-block">
-                <div class="row"><div class="key" data-code="Backquote">~</div><div class="key" data-code="Digit1">1</div><div class="key" data-code="Digit2">2</div><div class="key" data-code="Digit3">3</div><div class="key" data-code="Digit4">4</div><div class="key" data-code="Digit5">5</div><div class="key" data-code="Digit6">6</div><div class="key" data-code="Digit7">7</div><div class="key" data-code="Digit8">8</div><div class="key" data-code="Digit9">9</div><div class="key" data-code="Digit0">0</div><div class="key" data-code="Minus">-</div><div class="key" data-code="Equal">=</div><div class="key w-full" data-code="Backspace">Backspace</div></div>
-                <div class="row"><div class="key w-2" data-code="Tab">Tab</div><div class="key" data-code="KeyQ">Q</div><div class="key" data-code="KeyW">W</div><div class="key" data-code="KeyE">E</div><div class="key" data-code="KeyR">R</div><div class="key" data-code="KeyT">T</div><div class="key" data-code="KeyY">Y</div><div class="key" data-code="KeyU">U</div><div class="key" data-code="KeyI">I</div><div class="key" data-code="KeyO">O</div><div class="key" data-code="KeyP">P</div><div class="key" data-code="BracketLeft">[</div><div class="key" data-code="BracketRight">]</div><div class="key w-full" data-code="Backslash">\</div></div>
-                <div class="row"><div class="key w-3" data-code="CapsLock">Caps</div><div class="key" data-code="KeyA">A</div><div class="key" data-code="KeyS">S</div><div class="key" data-code="KeyD">D</div><div class="key" data-code="KeyF">F</div><div class="key" data-code="KeyG">G</div><div class="key" data-code="KeyH">H</div><div class="key" data-code="KeyJ">J</div><div class="key" data-code="KeyK">K</div><div class="key" data-code="KeyL">L</div><div class="key" data-code="Semicolon">;</div><div class="key" data-code="Quote">'</div><div class="key w-full" data-code="Enter">Enter</div></div>
-                <div class="row"><div class="key w-4" data-code="ShiftLeft">Shift</div><div class="key" data-code="KeyZ">Z</div><div class="key" data-code="KeyX">X</div><div class="key" data-code="KeyC">C</div><div class="key" data-code="KeyV">V</div><div class="key" data-code="KeyB">B</div><div class="key" data-code="KeyN">N</div><div class="key" data-code="KeyM">M</div><div class="key" data-code="Comma">,</div><div class="key" data-code="Period">.</div><div class="key" data-code="Slash">/</div><div class="key w-full" data-code="ShiftRight">Shift</div></div>
-                <div class="row"><div class="key w-5" data-code="ControlLeft">Ctrl</div><div class="key w-5" data-code="MetaLeft">Win</div><div class="key w-5" data-code="AltLeft">Alt</div><div class="key w-space" data-code="Space">Space</div><div class="key w-5" data-code="AltRight">Alt</div><div class="key w-5" data-code="MetaRight">Win</div><div class="key w-5" data-code="ContextMenu">Menu</div><div class="key w-5" data-code="ControlRight">Ctrl</div></div>
+    <div class="wrapper" id="kb-wrapper">
+        <div class="kb-container" id="kb-case">
+            
+            <div class="block-main">
+                <div class="row" style="margin-bottom:10px;">
+                    <div class="key" style="margin-right:30px;" data-code="Escape">Esc</div>
+                    <div class="key" data-code="F1">F1</div><div class="key" data-code="F2">F2</div><div class="key" data-code="F3">F3</div><div class="key" style="margin-right:20px;" data-code="F4">F4</div>
+                    <div class="key" data-code="F5">F5</div><div class="key" data-code="F6">F6</div><div class="key" data-code="F7">F7</div><div class="key" style="margin-right:20px;" data-code="F8">F8</div>
+                    <div class="key" data-code="F9">F9</div><div class="key" data-code="F10">F10</div><div class="key" data-code="F11">F11</div><div class="key" data-code="F12">F12</div>
+                </div>
+
+                <div class="row">
+                    <div class="key" data-code="Backquote">~</div><div class="key" data-code="Digit1">1</div><div class="key" data-code="Digit2">2</div><div class="key" data-code="Digit3">3</div><div class="key" data-code="Digit4">4</div><div class="key" data-code="Digit5">5</div><div class="key" data-code="Digit6">6</div><div class="key" data-code="Digit7">7</div><div class="key" data-code="Digit8">8</div><div class="key" data-code="Digit9">9</div><div class="key" data-code="Digit0">0</div><div class="key" data-code="Minus">-</div><div class="key" data-code="Equal">=</div><div class="key w-2" data-code="Backspace">Back</div>
+                </div>
+                <div class="row">
+                    <div class="key w-15" data-code="Tab">Tab</div>
+                    <div class="key" data-code="KeyQ">Q</div><div class="key" data-code="KeyW">W</div><div class="key" data-code="KeyE">E</div><div class="key" data-code="KeyR">R</div><div class="key" data-code="KeyT">T</div><div class="key" data-code="KeyY">Y</div><div class="key" data-code="KeyU">U</div><div class="key" data-code="KeyI">I</div><div class="key" data-code="KeyO">O</div><div class="key" data-code="KeyP">P</div><div class="key" data-code="BracketLeft">[</div><div class="key" data-code="BracketRight">]</div><div class="key w-15 ansi-key" data-code="Backslash">\</div>
+                </div>
+                <div class="row">
+                    <div class="key w-175" data-code="CapsLock">Caps</div>
+                    <div class="key" data-code="KeyA">A</div><div class="key" data-code="KeyS">S</div><div class="key" data-code="KeyD">D</div><div class="key" data-code="KeyF">F</div><div class="key" data-code="KeyG">G</div><div class="key" data-code="KeyH">H</div><div class="key" data-code="KeyJ">J</div><div class="key" data-code="KeyK">K</div><div class="key" data-code="KeyL">L</div><div class="key" data-code="Semicolon">;</div><div class="key" data-code="Quote">'</div>
+                    <div class="key iso-key" data-code="Backslash">#</div> 
+                    <div class="key w-225" data-code="Enter">Enter</div>
+                </div>
+                <div class="row">
+                    <div class="key w-225" data-code="ShiftLeft">Shift</div>
+                    <div class="key iso-key" data-code="IntlBackslash">\</div>
+                    <div class="key" data-code="KeyZ">Z</div><div class="key" data-code="KeyX">X</div><div class="key" data-code="KeyC">C</div><div class="key" data-code="KeyV">V</div><div class="key" data-code="KeyB">B</div><div class="key" data-code="KeyN">N</div><div class="key" data-code="KeyM">M</div><div class="key" data-code="Comma">,</div><div class="key" data-code="Period">.</div><div class="key" data-code="Slash">/</div>
+                    <div class="key w-275" data-code="ShiftRight">Shift</div>
+                </div>
+                <div class="row">
+                    <div class="key w-125" data-code="ControlLeft">Ctrl</div><div class="key w-125" data-code="MetaLeft">Win</div><div class="key w-125" data-code="AltLeft">Alt</div>
+                    <div class="key w-space" data-code="Space">Space</div>
+                    <div class="key w-125" data-code="AltRight">Alt</div><div class="key w-125" data-code="MetaRight">Win</div><div class="key" data-code="ContextMenu">Mn</div><div class="key w-125" data-code="ControlRight">Ctrl</div>
+                </div>
             </div>
-            <div class="nav-block">
-                <div class="nav-grid"><div class="key" data-code="Insert">Ins</div><div class="key" data-code="Home">Home</div><div class="key" data-code="PageUp">PgUp</div><div class="key" data-code="Delete">Del</div><div class="key" data-code="End">End</div><div class="key" data-code="PageDown">PgDn</div></div>
-                <div class="nav-grid"><div class="key" style="visibility: hidden;"></div><div class="key" data-code="ArrowUp">↑</div><div class="key" style="visibility: hidden;"></div><div class="key" data-code="ArrowLeft">←</div><div class="key" data-code="ArrowDown">↓</div><div class="key" data-code="ArrowRight">→</div></div>
+
+            <div class="block-nav">
+                <div class="nav-sys">
+                    <div class="key" data-code="PrintScreen">Prt</div><div class="key" data-code="ScrollLock">Scr</div><div class="key" data-code="Pause">Pau</div>
+                </div>
+                <div class="nav-cmd">
+                    <div class="key" data-code="Insert">Ins</div><div class="key" data-code="Home">Hm</div><div class="key" data-code="PageUp">PU</div>
+                    <div class="key" data-code="Delete">Del</div><div class="key" data-code="End">Ed</div><div class="key" data-code="PageDown">PD</div>
+                </div>
+                <div class="nav-arr">
+                    <div></div><div class="key" data-code="ArrowUp">↑</div><div></div>
+                    <div class="key" data-code="ArrowLeft">←</div><div class="key" data-code="ArrowDown">↓</div><div class="key" data-code="ArrowRight">→</div>
+                </div>
             </div>
-            <div class="numpad-block">
+
+            <div class="block-num">
                 <div class="key" data-code="NumLock">Num</div><div class="key" data-code="NumpadDivide">/</div><div class="key" data-code="NumpadMultiply">*</div><div class="key" data-code="NumpadSubtract">-</div>
-                <div class="key" data-code="Numpad7">7</div><div class="key" data-code="Numpad8">8</div><div class="key" data-code="Numpad9">9</div><div class="key h-2" data-code="NumpadAdd">+</div>
+                <div class="key" data-code="Numpad7">7</div><div class="key" data-code="Numpad8">8</div><div class="key" data-code="Numpad9">9</div><div class="key" data-code="NumpadAdd">+</div>
                 <div class="key" data-code="Numpad4">4</div><div class="key" data-code="Numpad5">5</div><div class="key" data-code="Numpad6">6</div>
-                <div class="key" data-code="Numpad1">1</div><div class="key" data-code="Numpad2">2</div><div class="key" data-code="Numpad3">3</div><div class="key h-2" data-code="NumpadEnter">Ent</div>
-                <div class="key w-num-0" data-code="Numpad0">0</div><div class="key" data-code="NumpadDecimal">.</div>
+                <div class="key" data-code="Numpad1">1</div><div class="key" data-code="Numpad2">2</div><div class="key" data-code="Numpad3">3</div><div class="key" data-code="NumpadEnter">Ent</div>
+                <div class="key" data-code="Numpad0">0</div><div class="key" data-code="NumpadDecimal">.</div>
             </div>
+        </div>
+    </div>
+
+    <div class="gamepad-container" id="gp-container">
+        <div class="gp-status" id="gp-status">Connect a Controller to Start</div>
+        <div class="controller-body">
+            <div class="btn-gp gp-tr pos-lt" id="gp-b6">LT</div><div class="btn-gp gp-tr pos-rt" id="gp-b7">RT</div>
+            <div class="btn-gp gp-sh pos-lb" id="gp-b4">LB</div><div class="btn-gp gp-sh pos-rb" id="gp-b5">RB</div>
+            
+            <div class="btn-gp gp-stick pos-ls" id="gp-b10">L3</div>
+            <div class="btn-gp gp-dpad pos-du" id="gp-b12">▲</div><div class="btn-gp gp-dpad pos-dd" id="gp-b13">▼</div>
+            <div class="btn-gp gp-dpad pos-dl" id="gp-b14">◀</div><div class="btn-gp gp-dpad pos-dr" id="gp-b15">▶</div>
+            
+            <div class="btn-gp gp-round pos-y" id="gp-b3" style="color:#eadd00">Y</div>
+            <div class="btn-gp gp-round pos-x" id="gp-b2" style="color:#0088ff">X</div>
+            <div class="btn-gp gp-round pos-a" id="gp-b0" style="color:#00ff88">A</div>
+            <div class="btn-gp gp-round pos-b" id="gp-b1" style="color:#ff4040">B</div>
+            <div class="btn-gp gp-stick pos-rs" id="gp-b11">R3</div>
+
+            <div class="btn-gp gp-small pos-sel" id="gp-b8">Sel</div><div class="btn-gp gp-small pos-start" id="gp-b9">Sta</div><div class="btn-gp gp-small pos-home" id="gp-b16">⌂</div>
+            
+            <div class="btn-gp gp-paddle pos-p1" id="gp-b17">P1</div><div class="btn-gp gp-paddle pos-p2" id="gp-b18">P2</div>
+            <div class="btn-gp gp-paddle pos-p3" id="gp-b19">P3</div><div class="btn-gp gp-paddle pos-p4" id="gp-b20">P4</div>
+            <div class="pro-label">PRO CONTROLLER PADDLES</div>
         </div>
     </div>
 
     <script>
-        // --- 1. AUDIO ENGINE (NOISE BURST METHOD) ---
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+        // --- AUTO SCALE FUNCTION ---
+        function scaleKeyboard() {
+            const wrap = document.getElementById('kb-wrapper');
+            const kb = document.getElementById('kb-case');
+            const screenW = window.innerWidth;
+            const kbW = 1270;
+            if (screenW < kbW) {
+                const scale = (screenW - 20) / kbW;
+                kb.style.transform = `scale(${scale})`;
+                wrap.style.height = (kb.offsetHeight * scale) + "px";
+            } else {
+                kb.style.transform = 'scale(1)';
+                wrap.style.height = 'auto';
+            }
+        }
+        window.addEventListener('resize', scaleKeyboard);
+        window.addEventListener('load', scaleKeyboard);
+
+        // --- AUDIO ENGINE ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let noiseBuffer = null;
-
-        function createNoiseBuffer() {
-            if (noiseBuffer) return;
-            const bufferSize = audioCtx.sampleRate * 1.0; 
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1;
-            }
-            noiseBuffer = buffer;
-        }
-
-        function playClickSound() {
-            const isSoundOn = document.getElementById('sound-toggle').checked;
-            if (!isSoundOn) return;
+        function playSound() {
+            if (!document.getElementById('sound-toggle').checked) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            createNoiseBuffer();
-            const t = audioCtx.currentTime;
-
-            const noiseSrc = audioCtx.createBufferSource();
-            noiseSrc.buffer = noiseBuffer;
-
-            const noiseFilter = audioCtx.createBiquadFilter();
-            noiseFilter.type = 'highpass';
-            noiseFilter.frequency.value = 1200;
-
-            const noiseGain = audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(0.5, t);
-            noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.03);
-
-            noiseSrc.connect(noiseFilter);
-            noiseFilter.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-
-            noiseSrc.start(t);
-            noiseSrc.stop(t + 0.04);
-        }
-
-        // --- 2. VARIABLES ---
-        const historyContainer = document.getElementById('key-history');
-        const tpmDisplay = document.getElementById('tpm-display');
-        const testedCountDisplay = document.getElementById('tested-count');
-        const currentPressedDisplay = document.getElementById('current-pressed');
-        const maxPressedDisplay = document.getElementById('max-pressed');
-
-        let testedKeys = new Set();
-        let activeKeys = new Set();
-        let maxSimultaneous = 0;
-        let startTime = null;
-        let keystrokeCount = 0;
-        let timerInterval = null;
-
-        // --- 3. HELPER FUNCTIONS ---
-        function formatLabel(code) {
-            if (code.startsWith('Key')) return code.replace('Key', '');
-            if (code.startsWith('Digit')) return code.replace('Digit', '');
-            if (code.startsWith('Numpad')) return code.replace('Numpad', 'Num ');
-            if (code === 'ArrowUp') return '↑';
-            if (code === 'ArrowDown') return '↓';
-            if (code === 'ArrowLeft') return '←';
-            if (code === 'ArrowRight') return '→';
-            if (code === 'Space') return 'Space';
-            if (code === 'ControlLeft') return 'L-Ctrl';
-            if (code === 'ControlRight') return 'R-Ctrl';
-            if (code === 'ShiftLeft') return 'L-Shift';
-            if (code === 'ShiftRight') return 'R-Shift';
-            return code;
-        }
-
-        function updateVisuals(code, isKeyDown) {
-            const keyElement = document.querySelector(`.key[data-code="${code}"]`);
-            if (keyElement) {
-                if (isKeyDown) {
-                    keyElement.classList.add('active');
-                    keyElement.classList.add('tested');
-                } else {
-                    keyElement.classList.remove('active');
-                }
+            if (!noiseBuffer) {
+                const b = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+                const d = b.getChannelData(0); for(let i=0; i<d.length; i++) d[i] = Math.random()*2-1;
+                noiseBuffer = b;
             }
+            const s = audioCtx.createBufferSource(); s.buffer = noiseBuffer;
+            const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1200;
+            const g = audioCtx.createGain(); g.gain.setValueAtTime(0.5, audioCtx.currentTime); 
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.03);
+            s.connect(f); f.connect(g); g.connect(audioCtx.destination);
+            s.start(); s.stop(audioCtx.currentTime+0.04);
         }
 
-        function updateStats() {
-            // Count unique keys
-            testedCountDisplay.innerText = testedKeys.size;
+        // --- KEYBOARD LOGIC ---
+        let lastKeyTime = {}, startTime = null, count = 0, activeKeys = new Set(), maxSim = 0;
+        
+        function toggleLayout() {
+            const iso = document.getElementById('layout-toggle').checked;
+            const kb = document.getElementById('kb-case');
+            iso ? kb.classList.add('iso-mode') : kb.classList.remove('iso-mode');
         }
 
-        function updateGhostingStats() {
-            const current = activeKeys.size;
-            currentPressedDisplay.innerText = current;
-            currentPressedDisplay.style.color = current > 5 ? '#ff4081' : '#fff';
-            if (current > maxSimultaneous) {
-                maxSimultaneous = current;
-                maxPressedDisplay.innerText = `Max: ${maxSimultaneous}`;
-            }
-        }
+        function format(code) { return code.replace('Key','').replace('Digit','').replace('Numpad','Num '); }
 
-        function updateTPM() {
-            if (!startTime) return;
-            const min = (Date.now() - startTime) / 60000;
-            const tpm = min > 0 ? Math.round(keystrokeCount / min) : 0;
-            tpmDisplay.innerText = tpm;
-        }
-
-        function clearLog() {
-            historyContainer.innerHTML = '';
-        }
-
-        function resetAll() {
-            testedKeys.clear();
-            activeKeys.clear();
-            maxSimultaneous = 0;
-            keystrokeCount = 0;
-            startTime = null;
-            if (timerInterval) clearInterval(timerInterval);
+        window.addEventListener('keydown', e => {
+            if (e.repeat) return;
+            if (['Tab','AltLeft','AltRight'].includes(e.code) || e.code.startsWith('F')) e.preventDefault();
             
-            // Reset Text
-            tpmDisplay.innerText = '0';
-            testedCountDisplay.innerText = '0';
-            currentPressedDisplay.innerText = '0';
-            maxPressedDisplay.innerText = 'Max: 0';
-
-            // Reset Keys
-            document.querySelectorAll('.key').forEach(k => {
-                k.classList.remove('active');
-                k.classList.remove('tested');
-            });
-            clearLog();
-        }
-
-        // --- 4. EVENT LISTENERS ---
-        window.addEventListener('keydown', (e) => {
-            if(e.code === 'Tab' || e.code === 'AltLeft' || e.code === 'AltRight' || e.code.startsWith('F')) {
-               e.preventDefault();
+            playSound();
+            const now = Date.now(), last = lastKeyTime[e.code] || 0;
+            if (last && now-last < 80) {
+                document.getElementById('chatter-key').innerText = format(e.code);
+                document.getElementById('chatter-alert').style.display = 'block';
+                setTimeout(()=>document.getElementById('chatter-alert').style.display='none',3000);
             }
-            if (e.repeat) return; 
+            lastKeyTime[e.code] = now;
 
-            playClickSound();
+            activeKeys.add(e.code); count++;
+            if(!startTime) { startTime=now; setInterval(()=>{
+                const m = (Date.now()-startTime)/60000;
+                document.getElementById('tpm-display').innerText = m>0?Math.round(count/m):0;
+            },1000); }
 
-            activeKeys.add(e.code);
-            testedKeys.add(e.code);
-            keystrokeCount++;
+            // GHOSTING LOGIC
+            const currentPressed = activeKeys.size;
+            document.getElementById('ghost-current').innerText = currentPressed;
+            if (currentPressed > maxSim) {
+                maxSim = currentPressed;
+                document.getElementById('ghost-max').innerText = maxSim;
+            }
+
+            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>{k.classList.add('active','tested')});
             
-            if (!startTime) {
-                startTime = Date.now();
-                timerInterval = setInterval(updateTPM, 1000);
-            }
-
-            updateVisuals(e.code, true);
-            updateStats(); // Update jumlah tombol unik
-            updateGhostingStats();
-            updateTPM();
-
-            const item = document.createElement('div');
-            item.classList.add('log-item');
-            item.innerText = formatLabel(e.code);
-            historyContainer.appendChild(item);
-            historyContainer.scrollTop = historyContainer.scrollHeight;
+            const l = document.createElement('div'); l.className = 'log-item';
+            if(now-last < 80) l.classList.add('err');
+            l.innerText = format(e.code);
+            document.getElementById('key-history').prepend(l);
         });
 
-        window.addEventListener('keyup', (e) => {
+        window.addEventListener('keyup', e => {
             activeKeys.delete(e.code);
-            updateVisuals(e.code, false);
-            updateGhostingStats();
+            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>k.classList.remove('active'));
+            document.getElementById('ghost-current').innerText = activeKeys.size;
         });
+
+        function clearLog() { document.getElementById('key-history').innerHTML = ''; }
+
+        // --- GAMEPAD LOGIC ---
+        let gpIdx = null;
+        window.addEventListener("gamepadconnected", e => {
+            gpIdx = e.gamepad.index;
+            document.getElementById('gp-container').classList.add('active');
+            document.getElementById('gp-status').innerText = "Connected: " + e.gamepad.id.substring(0,25);
+            loopGP();
+        });
+        window.addEventListener("gamepaddisconnected", e => {
+            gpIdx = null;
+            document.getElementById('gp-container').classList.remove('active');
+            document.getElementById('gp-status').innerText = "Connect a Controller";
+        });
+        function loopGP() {
+            if(gpIdx === null) return;
+            const gp = navigator.getGamepads()[gpIdx];
+            if(gp) {
+                gp.buttons.forEach((b,i)=>{
+                    const el = document.getElementById(`gp-b${i}`);
+                    if(el) b.pressed ? el.classList.add('pressed') : el.classList.remove('pressed');
+                });
+                // Analog Sticks Visuals
+                const ls = document.getElementById('gp-b10');
+                if(ls && (Math.abs(gp.axes[0]) > 0.2 || Math.abs(gp.axes[1]) > 0.2)) ls.classList.add('pressed');
+                const rs = document.getElementById('gp-b11');
+                if(rs && (Math.abs(gp.axes[2]) > 0.2 || Math.abs(gp.axes[3]) > 0.2)) rs.classList.add('pressed');
+                requestAnimationFrame(loopGP);
+            }
+        }
     </script>
 </body>
 </html>
