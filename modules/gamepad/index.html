@@ -7,96 +7,129 @@
     <style>
         /* LAYOUT UTAMA */
         .main-grid {
-            display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;
-            width: 100%; max-width: 1200px; align-items: start;
+            display: grid; grid-template-columns: 1.4fr 0.6fr; gap: 20px;
+            width: 100%; max-width: 1280px; align-items: start;
         }
 
         /* --- SECTION 1: STANDARD CONTROLLER --- */
         .gp-visual-wrapper {
-            position: relative; width: 460px; height: 320px; margin: 0 auto;
+            position: relative; 
+            width: 540px; height: 360px; /* Ukuran diperbesar agar lega */
+            margin: 0 auto;
             background: linear-gradient(145deg, #252525, #151515);
-            border-radius: 80px 80px 140px 140px; border: 2px solid #444;
-            box-shadow: inset 0 0 30px #000;
+            border-radius: 90px 90px 160px 160px; 
+            border: 2px solid #444;
+            box-shadow: inset 0 0 40px #000;
         }
         
         /* Tombol Umum */
         .btn-gp {
             position: absolute; display: flex; align-items: center; justify-content: center;
             background: #333; color: #888; border: 2px solid #444; 
-            font-size: 9px; font-weight: bold; transition: 0.05s;
+            font-size: 10px; font-weight: bold; transition: 0.05s;
+            box-shadow: 0 4px 5px rgba(0,0,0,0.5);
         }
-        .btn-gp.pressed { background: #00e5ff; color: #000; box-shadow: 0 0 15px #00e5ff; border-color: #fff; transform: scale(0.95); }
+        .btn-gp.pressed { 
+            background: #00e5ff; color: #000; 
+            box-shadow: 0 0 15px #00e5ff; border-color: #fff; transform: scale(0.95); 
+        }
 
-        /* Posisi Tombol Face & Dpad */
-        .gp-round { width: 34px; height: 34px; border-radius: 50%; }
-        .pos-y { top: 60px; right: 80px; } .pos-x { top: 95px; right: 115px; } 
-        .pos-b { top: 95px; right: 45px; } .pos-a { top: 130px; right: 80px; }
-        .gp-dpad { width: 28px; height: 28px; border-radius: 4px; }
-        .pos-du { top: 95px; left: 95px; } .pos-dd { top: 155px; left: 95px; } 
-        .pos-dl { top: 125px; left: 65px; } .pos-dr { top: 125px; left: 125px; }
-
-        /* Analog Sticks */
-        .gp-stick { width: 50px; height: 50px; border-radius: 50%; border: 3px solid #555; background: #222; }
-        .gp-stick.pressed { background: #005577; }
-        .pos-ls { top: 60px; left: 60px; } .pos-rs { top: 160px; right: 90px; }
-
-        /* Shoulders (LB/RB) */
-        .gp-sh { width: 80px; height: 20px; border-radius: 10px; top: -10px; }
-        .pos-lb { left: 40px; } .pos-rb { right: 40px; }
-
-        /* Triggers (LT/RT) - ANALOG BAR VISUALIZER */
+        /* --- Triggers (LT/RT Visualizer) --- */
+        /* Diposisikan di paling atas, seperti "telinga" */
         .trigger-bar-container {
-            position: absolute; top: -40px; width: 60px; height: 100px;
-            background: #111; border-radius: 10px; border: 1px solid #444; overflow: hidden;
-            display: flex; align-items: flex-end; justify-content: center;
+            position: absolute; top: 20px; 
+            width: 70px; height: 12px; /* Horizontal Bar style agar hemat tempat vertikal */
+            background: #111; border-radius: 6px; border: 1px solid #444; overflow: hidden;
+            display: flex; align-items: center;
         }
-        .pos-lt-bar { left: 30px; } .pos-rt-bar { right: 30px; }
-        .trigger-fill { width: 100%; background: #00e5ff; height: 0%; transition: height 0.05s; }
-        .trigger-val { position: absolute; bottom: 5px; color: #fff; font-size: 0.7rem; font-family: monospace; z-index: 2; width: 100%; text-align: center; }
+        .pos-lt-bar { left: 60px; } 
+        .pos-rt-bar { right: 60px; flex-direction: row-reverse; } /* Bar kanan mengisi dari kanan */
+        
+        .trigger-fill { height: 100%; background: #00e5ff; width: 0%; transition: width 0.05s; }
+        
+        /* Label Trigger (L / R) */
+        .trigger-val { 
+            position: absolute; top: -18px; 
+            color: #aaa; font-size: 0.7rem; font-weight: bold; font-family: monospace; 
+        }
+        .pos-lt-bar .trigger-val { left: 0; }
+        .pos-rt-bar .trigger-val { right: 0; }
 
-        /* Center Buttons */
-        .gp-small { width: 22px; height: 22px; border-radius: 50%; top: 110px; }
-        .pos-sel { left: 190px; } .pos-start { right: 190px; } .pos-home { left: 219px; top: 70px; }
+        /* --- Shoulders (LB/RB) --- */
+        .gp-sh { width: 90px; height: 25px; border-radius: 8px; }
+        .pos-lb { top: 45px; left: 50px; } 
+        .pos-rb { top: 45px; right: 50px; }
 
-        /* PADDLES & EXTRAS (P1-P4) */
-        .gp-paddle { width: 25px; height: 45px; border-radius: 8px; bottom: 50px; background: #1a1a1a; border-color: #333; }
-        .pos-p1 { left: 170px; bottom: 70px; } .pos-p2 { right: 170px; bottom: 70px; } 
-        .pos-p3 { left: 140px; bottom: 30px; } .pos-p4 { right: 140px; bottom: 30px; }
-        .paddle-label { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #555; font-size: 0.7rem; letter-spacing: 1px; }
+        /* --- D-Pad (Kiri) --- */
+        .gp-dpad { width: 30px; height: 30px; border-radius: 4px; }
+        .pos-du { top: 100px; left: 100px; } 
+        .pos-dd { top: 164px; left: 100px; } 
+        .pos-dl { top: 132px; left: 68px; } 
+        .pos-dr { top: 132px; left: 132px; }
+
+        /* --- Face Buttons (Kanan - ABXY) --- */
+        .gp-round { width: 38px; height: 38px; border-radius: 50%; }
+        .pos-y { top: 90px; right: 100px; } /* Y (Atas) */
+        .pos-x { top: 125px; right: 135px; } /* X (Kiri) */
+        .pos-b { top: 125px; right: 65px; }  /* B (Kanan) */
+        .pos-a { top: 160px; right: 100px; } /* A (Bawah) */
+
+        /* --- Analog Sticks (L3/R3) --- */
+        /* Digeser ke bawah agar tidak nabrak Dpad/ABXY */
+        .gp-stick { width: 56px; height: 56px; border-radius: 50%; border: 3px solid #555; background: #222; }
+        .gp-stick.pressed { background: #005577; border-color: #00e5ff; }
+        .pos-ls { top: 200px; left: 160px; } 
+        .pos-rs { top: 200px; right: 160px; }
+
+        /* --- Center Buttons --- */
+        .gp-small { width: 24px; height: 24px; border-radius: 50%; top: 110px; color: #aaa; font-size: 0.6rem;}
+        .pos-sel { left: 210px; } 
+        .pos-start { right: 210px; } 
+        .pos-home { left: 258px; top: 80px; width: 24px; height: 24px; font-size: 1rem;} /* Home agak di atas */
+
+        /* --- PADDLES & EXTRAS (P1-P4) --- */
+        /* Di bagian bawah body */
+        .gp-paddle { width: 30px; height: 40px; border-radius: 8px; bottom: 40px; background: #1a1a1a; border-color: #333; }
+        .pos-p1 { left: 200px; bottom: 80px; } 
+        .pos-p2 { right: 200px; bottom: 80px; } 
+        .pos-p3 { left: 160px; bottom: 40px; } 
+        .pos-p4 { right: 160px; bottom: 40px; }
+        
+        .paddle-label { position: absolute; bottom: 15px; width: 100%; text-align: center; color: #444; font-size: 0.7rem; letter-spacing: 1px; font-weight: bold; }
 
         /* DATA MONITOR (Deadzone & Values) */
         .monitor-panel {
-            margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-            background: #1a1a1a; padding: 15px; border-radius: 10px; border: 1px dashed #444;
+            margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px dashed #444;
         }
-        .mon-row { display: flex; justify-content: space-between; font-family: monospace; font-size: 0.85rem; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 3px; margin-bottom: 3px;}
+        .mon-row { display: flex; justify-content: space-between; font-family: monospace; font-size: 0.85rem; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .mon-val { color: #00e5ff; font-weight: bold; }
 
         /* --- SECTION 2: SONY TOUCHPAD (WEBHID) --- */
         .ds-wrapper {
-            background: #1e1e1e; border: 1px solid #333; border-radius: 15px; padding: 20px;
+            background: #1e1e1e; border: 1px solid #333; border-radius: 15px; padding: 25px;
             display: flex; flex-direction: column; align-items: center; height: 100%;
         }
         .ds-touchpad {
-            width: 100%; height: 200px; background: #222; border: 2px solid #444;
+            width: 100%; height: 250px; background: #222; border: 2px solid #444;
             border-radius: 15px; position: relative; overflow: hidden; margin: 20px 0;
             box-shadow: inset 0 0 30px #000;
         }
         .ds-finger {
-            position: absolute; width: 30px; height: 30px; border-radius: 50%;
+            position: absolute; width: 40px; height: 40px; border-radius: 50%;
             transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.7rem; opacity: 0; transition: opacity 0.1s; pointer-events: none;
+            font-weight: bold; font-size: 0.8rem; opacity: 0; transition: opacity 0.1s; pointer-events: none;
         }
-        #f1 { background: #00e5ff; box-shadow: 0 0 15px #00e5ff; }
-        #f2 { background: #ff4081; box-shadow: 0 0 15px #ff4081; }
+        #f1 { background: #00e5ff; box-shadow: 0 0 20px #00e5ff; color: #000; }
+        #f2 { background: #ff4081; box-shadow: 0 0 20px #ff4081; color: #000; }
         
         .connect-btn { 
-            background: #00a2ff; color: #fff; border: none; padding: 10px 20px; 
-            border-radius: 30px; font-weight: bold; cursor: pointer; 
+            background: #00a2ff; color: #fff; border: none; padding: 12px 25px; 
+            border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
-        .connect-btn:hover { background: #fff; color: #00a2ff; }
+        .connect-btn:hover { background: #fff; color: #00a2ff; box-shadow: 0 0 15px #00a2ff; }
 
-        @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
