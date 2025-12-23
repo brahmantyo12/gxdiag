@@ -1,0 +1,2 @@
+# gxdiag
+Input Diagnose utility
