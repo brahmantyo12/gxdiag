@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Diagnostic Suite (KB, Mouse, Controllers)</title>
+    <title>Project GXDiag - Hardware Diagnostic Suite</title>
     <style>
         /* --- 1. CORE RESET --- */
         * { box-sizing: border-box; }
@@ -16,19 +16,29 @@
             overflow-x: hidden;
         }
 
-        /* --- 2. HEADER --- */
+        /* --- 2. HEADER & MENU --- */
         .header-section {
             width: 100%; max-width: 1280px; display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
         }
-        h2 { margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; }
+        h2 { margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,229,255,0.3); }
         
-        .controls { display: flex; gap: 15px; }
+        .controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        
         .ctrl-box {
             background: #1e1e1e; padding: 5px 15px; border-radius: 30px;
             border: 1px solid #333; display: flex; align-items: center; gap: 10px;
         }
         .ctrl-label { font-size: 0.8rem; font-weight: bold; color: #aaa; }
+
+        /* Dead Pixel Buttons */
+        .pixel-menu { display: flex; gap: 5px; }
+        .pixel-btn {
+            width: 20px; height: 20px; border: 1px solid #555; border-radius: 50%; cursor: pointer; transition: 0.2s;
+        }
+        .pixel-btn:hover { transform: scale(1.2); }
+
+        /* Switches */
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 34px; }
@@ -36,36 +46,40 @@
         input:checked + .slider { background-color: #00e5ff; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* --- 3. DASHBOARD --- */
+        /* --- 3. DASHBOARD (4 Columns) --- */
         .dashboard {
-            width: 100%; max-width: 1280px; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 30px;
+            width: 100%; max-width: 1280px; display: grid; 
+            grid-template-columns: 1.5fr 0.8fr 1fr 1fr; /* Log, Stats, Mic, Cam */
+            gap: 15px; margin-bottom: 30px;
         }
         .panel {
             background: #1e1e1e; border: 1px solid #333; border-radius: 12px;
-            padding: 15px; height: 150px; display: flex; flex-direction: column; position: relative;
+            padding: 15px; height: 160px; display: flex; flex-direction: column; position: relative; overflow: hidden;
         }
         .panel-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
+        /* Log */
         #key-history { flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
         .log-item { background: #2a2a2a; padding: 3px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #333; font-family: monospace; color: #00e5ff; }
         .log-item.err { color: #ff4081; border-color: #ff4081; }
+        
+        /* Stats */
+        .stats-col { display: flex; flex-direction: column; justify-content: space-around; height: 100%; }
+        .stat-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed #333; padding-bottom: 2px; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #fff; font-family: monospace; }
+        .stat-lbl { font-size: 0.7rem; color: #888; }
 
-        .stats-row { display: flex; justify-content: space-around; height: 100%; align-items: center; }
-        .stat-item { text-align: center; }
-        .stat-val { font-size: 2rem; font-weight: bold; line-height: 1.1; }
-        .stat-lbl { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+        /* Media */
+        #mic-canvas, #cam-video { width: 100%; height: 100%; background: #000; border-radius: 5px; object-fit: cover; }
+        .media-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00e5ff; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; color:#000; z-index: 10; font-size: 0.8rem; white-space: nowrap;}
+        .media-btn:hover { background: #fff; }
 
-        /* MIC VISUALIZER */
-        #mic-canvas { width: 100%; height: 100%; background: #111; border-radius: 5px; }
-        .mic-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00e5ff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; color:#000; z-index: 10;}
-        .mic-btn:hover { background: #fff; }
-
-        /* --- 4. KEYBOARD CONTAINER --- */
-        .wrapper { width: 100%; display: flex; justify-content: center; }
+        /* --- 4. KEYBOARD --- */
+        .wrapper { width: 100%; overflow-x: auto; display: flex; justify-content: center; padding-bottom: 20px; }
         .kb-container {
             position: relative; background: #181818; padding: 25px; border-radius: 15px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-bottom: 8px solid #000;
-            display: flex; gap: 20px; min-width: 1280px; transform-origin: top center; margin-bottom: 40px;
+            display: flex; gap: 20px; min-width: 1250px;
         }
         .block-main { display: flex; flex-direction: column; gap: 6px; }
         .block-nav { display: flex; flex-direction: column; width: 162px; }
@@ -75,55 +89,30 @@
         .nav-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 40px; }
         .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
-        .key {
-            height: 50px; width: 50px; background: #333; color: #ddd; border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 600; cursor: default;
-            border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444; transition: 0.05s;
-        }
+        .key { height: 50px; width: 50px; background: #333; color: #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; cursor: default; border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444; transition: 0.05s; }
         .key.active { background: #f0faff; color: #111; border-bottom: 2px solid #ccc; transform: translateY(2px); box-shadow: 0 0 15px #00e5ff; z-index: 100; }
         .key.tested { background: #004455; color: #00e5ff; border-color: #002233; }
         .key.tested.active { background: #f0faff; color: #111; }
 
-        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; }
-        .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
-        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; }
-        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; }
-        .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
-
-        .iso-key { display: none; }
-        .kb-container.iso-mode .iso-key { display: flex; }
-        .kb-container.iso-mode .ansi-key { display: none; }
+        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; } .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
+        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; } .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; } .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
+        .iso-key { display: none; } .kb-container.iso-mode .iso-key { display: flex; } .kb-container.iso-mode .ansi-key { display: none; }
         .kb-container.iso-mode .key[data-code="Enter"] { position: absolute; right: 0; top: -56px; height: 106px; width: 65px; z-index: 5; border-radius: 5px 5px 5px 15px; }
         .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 62px; }
 
-        /* --- 5. CONTROLLER SECTION (SIDE BY SIDE) --- */
-        .controllers-row {
-            width: 100%; max-width: 1280px;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-            margin-bottom: 30px;
-        }
+        /* --- 5. BOTTOM SECTION --- */
+        .bottom-section { width: 100%; max-width: 1280px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; margin-bottom: 30px; }
 
-        /* --- Standard Gamepad --- */
-        .gamepad-container {
-            background: #1e1e1e; border-radius: 20px; border: 2px solid #333;
-            padding: 20px; display: flex; flex-direction: column; align-items: center;
-            transition: 0.3s;
-        }
-        .gamepad-container.active { border-color: #00e5ff; box-shadow: 0 0 20px rgba(0,229,255,0.1); }
+        /* Gamepad */
+        .gamepad-container { background: #1e1e1e; border-radius: 20px; border: 2px solid #333; padding: 20px; display: flex; flex-direction: column; align-items: center; opacity: 0.5; transition: 0.3s; }
+        .gamepad-container.active { opacity: 1; border-color: #00e5ff; box-shadow: 0 0 20px rgba(0,229,255,0.1); }
         .gp-status { color: #888; font-weight: bold; margin-bottom: 15px; font-size: 0.9rem; width:100%; display:flex; justify-content:space-between; align-items:center;}
         .rumble-btn { background: #ff4081; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size:0.7rem; font-weight:bold; display:none; }
         .gamepad-container.active .rumble-btn { display:block; }
-
-        .controller-body {
-            position: relative; width: 400px; height: 260px;
-            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-            border-radius: 60px 60px 100px 100px; border: 2px solid #444;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8); margin-bottom: 20px;
-        }
+        
+        .controller-body { position: relative; width: 400px; height: 260px; background: linear-gradient(145deg, #2a2a2a, #1a1a1a); border-radius: 60px 60px 100px 100px; border: 2px solid #444; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); margin-bottom: 20px; }
         .btn-gp { position: absolute; display: flex; align-items: center; justify-content: center; background: #333; color: #888; border: 2px solid #444; font-size: 9px; font-weight: bold; transition: 0.1s; }
         .btn-gp.pressed { background: #00e5ff; color: #000; box-shadow: 0 0 15px #00e5ff; border-color: #fff; transform: scale(0.95); }
-        
         .gp-round { width: 30px; height: 30px; border-radius: 50%; }
         .pos-y { top: 50px; right: 70px; } .pos-x { top: 80px; right: 100px; } .pos-b { top: 80px; right: 40px; } .pos-a { top: 110px; right: 70px; }
         .gp-dpad { width: 24px; height: 24px; border-radius: 4px; }
@@ -137,7 +126,6 @@
         .gp-paddle { width: 20px; height: 30px; border-radius: 6px; bottom: 40px; background: #222; }
         .pos-p1 { left: 150px; bottom: 60px; } .pos-p2 { right: 150px; bottom: 60px; } .pos-p3 { left: 130px; bottom: 30px; } .pos-p4 { right: 130px; bottom: 30px; }
         .pro-label { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #444; font-size: 0.6rem; letter-spacing: 1px;}
-
         .analog-container { width: 100%; display: flex; justify-content: space-around; padding-top: 15px; border-top: 1px dashed #333; }
         .stick-wrapper { display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .stick-visual { width: 80px; height: 80px; border: 2px solid #444; border-radius: 50%; background: #111; position: relative; display: flex; align-items: center; justify-content: center; }
@@ -146,38 +134,9 @@
         .stick-dot { width: 8px; height: 8px; background: #00e5ff; border-radius: 50%; position: absolute; box-shadow: 0 0 5px #00e5ff; transform: translate(0, 0); }
         .stick-vals { font-family: monospace; font-size: 0.75rem; color: #666; }
 
-        /* --- DualShock WebHID Specific --- */
-        .ds-container {
-            background: #1e1e1e; border-radius: 20px; border: 2px solid #333;
-            padding: 20px; display: flex; flex-direction: column; align-items: center;
-            justify-content: center;
-        }
-        .ds-connect-btn { background: #00a2ff; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-bottom: 15px; transition:0.2s;}
-        .ds-connect-btn:hover { background: #fff; box-shadow: 0 0 15px #00a2ff; }
-        .ds-connect-btn:disabled { background: #333; color: #555; cursor: not-allowed; box-shadow:none;}
-        
-        .ds-touchpad {
-            width: 300px; height: 180px; background: #222; border: 2px solid #444;
-            border-radius: 20px; position: relative; overflow: hidden;
-            box-shadow: inset 0 0 30px #000;
-        }
-        .ds-finger {
-            position: absolute; width: 30px; height: 30px; border-radius: 50%;
-            transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.7rem; opacity: 0; transition: opacity 0.1s;
-            pointer-events: none;
-        }
-        #ds-f1 { background: #00e5ff; box-shadow: 0 0 15px #00e5ff; }
-        #ds-f2 { background: #ff4081; box-shadow: 0 0 15px #ff4081; }
-        .ds-info { margin-top: 15px; font-family: monospace; font-size: 0.8rem; color: #888; text-align: center;}
-
-        /* --- 6. MOUSE SECTION (BELOW) --- */
-        .mouse-section {
-            width: 100%; max-width: 800px; margin-bottom: 50px;
-            background: #1e1e1e; border-radius: 20px; border: 2px solid #333;
-            padding: 30px; display: flex; flex-direction: column; align-items: center;
-        }
-        .mouse-layout { display: flex; gap: 50px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+        /* Mouse */
+        .mouse-container { background: #1e1e1e; border-radius: 20px; border: 2px solid #333; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .mouse-layout { display: flex; gap: 30px; align-items: flex-start; }
         .mouse-body { position: relative; width: 140px; height: 220px; background: #222; border-radius: 60px 60px 50px 50px; border: 2px solid #444; box-shadow: inset 0 0 20px #000; }
         .ms-btn { position: absolute; background: #333; border: 1px solid #444; transition: 0.1s; }
         .ms-btn.pressed { background: #00e5ff; box-shadow: 0 0 15px #00e5ff; }
@@ -187,30 +146,46 @@
         .ms-mid.scrolling { background: #ff4081; }
         .ms-side-fwd { top: 100px; left: -8px; width: 15px; height: 30px; border-radius: 5px 0 0 5px; background: #444; }
         .ms-side-back { top: 140px; left: -8px; width: 15px; height: 30px; border-radius: 5px 0 0 5px; background: #444; }
-        
-        .touchpad-area { width: 240px; height: 160px; background: #1a1a1a; border: 2px dashed #444; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .touchpad-area { width: 200px; height: 160px; background: #1a1a1a; border: 2px dashed #444; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-top: 30px; }
         .touch-label { color: #555; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; }
         .touch-coords { color: #00e5ff; font-family: monospace; font-size: 1.2rem; font-weight: bold; }
-        .touch-scroll-indicator { position: absolute; color: #ff4081; font-weight: bold; font-size: 0.9rem; opacity: 0; transition: opacity 0.2s; }
-        .touch-scroll-indicator.visible { opacity: 1; }
+        .touch-hz { font-family: monospace; font-size: 0.8rem; color: #888; margin-top: 5px; }
 
         /* Multi Touch */
         .multi-touch-section { width: 100%; max-width: 1200px; margin-bottom: 50px; background: #1e1e1e; border: 2px solid #333; border-radius: 10px; height: 200px; position: relative; overflow: hidden; touch-action: none; display: flex; align-items: center; justify-content: center; }
         .multi-touch-placeholder { color: #444; font-weight: bold; font-size: 1.5rem; user-select: none; }
         .touch-point { position: absolute; width: 40px; height: 40px; background: rgba(0, 229, 255, 0.5); border: 2px solid #00e5ff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem;}
 
+        /* DEAD PIXEL OVERLAY */
+        #dead-pixel-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: black; z-index: 9999; display: none; cursor: none;
+        }
+
         @media (max-width: 1200px) {
             .dashboard { grid-template-columns: 1fr; height: auto; }
-            .controllers-row { grid-template-columns: 1fr; }
-            .gamepad-container, .ds-container, .mouse-section { width: 100%; max-width: 100%; }
+            .bottom-section { grid-template-columns: 1fr; }
+            .gamepad-container, .mouse-container { width: 100%; max-width: 100%; }
             .wrapper { justify-content: flex-start; }
         }
     </style>
 </head>
 <body>
 
+    <div id="dead-pixel-overlay" onclick="cyclePixelColor()"></div>
+
     <div class="header-section">
-        <h2>Input Tester <span style="font-size:0.7em; color:#fff">SUITE</span></h2>
+        <h2>Project <span style="color:#fff">GXDiag</span></h2>
+        
+        <div class="pixel-menu">
+            <span class="ctrl-label">Dead Pixel:</span>
+            <button class="pixel-btn" style="background:#f00" onclick="startDeadPixel('red')"></button>
+            <button class="pixel-btn" style="background:#0f0" onclick="startDeadPixel('lime')"></button>
+            <button class="pixel-btn" style="background:#00f" onclick="startDeadPixel('blue')"></button>
+            <button class="pixel-btn" style="background:#fff" onclick="startDeadPixel('white')"></button>
+            <button class="pixel-btn" style="background:#000" onclick="startDeadPixel('black')"></button>
+        </div>
+
         <div class="controls">
             <div class="ctrl-box">
                 <span class="ctrl-label">ANSI</span>
@@ -237,17 +212,22 @@
             <div id="chatter-alert" style="display:none; position:absolute; bottom:10px; right:10px; background:#b71c1c; color:#fff; padding:5px; border-radius:4px; font-size:0.8rem; font-weight:bold;">⚠️ Chatter!</div>
         </div>
         <div class="panel">
-            <div class="panel-head">STATS & GHOSTING</div>
-            <div class="stats-row">
-                <div class="stat-item"><div class="stat-val" id="tpm-display">0</div><div class="stat-lbl">KPM</div></div>
-                <div class="stat-item"><div class="stat-val" id="ghost-current" style="color:#fff">0</div><div class="stat-lbl">PRESSED</div></div>
-                <div class="stat-item"><div class="stat-val" id="ghost-max" style="color:#00e5ff">0</div><div class="stat-lbl">MAX</div></div>
+            <div class="panel-head">KEYBOARD STATS</div>
+            <div class="stats-col">
+                <div class="stat-row"><span class="stat-lbl">KPM</span><span class="stat-val" id="tpm-display">0</span></div>
+                <div class="stat-row"><span class="stat-lbl">PRESSED</span><span class="stat-val" id="ghost-current" style="color:#fff">0</span></div>
+                <div class="stat-row"><span class="stat-lbl">MAX</span><span class="stat-val" id="ghost-max" style="color:#00e5ff">0</span></div>
             </div>
         </div>
-        <div class="panel" style="position:relative;">
+        <div class="panel">
             <div class="panel-head">MICROPHONE</div>
             <canvas id="mic-canvas"></canvas>
-            <button class="mic-btn" id="mic-btn" onclick="toggleMic()">START MIC TEST</button>
+            <button class="media-btn" id="mic-btn" onclick="toggleMic()">START MIC</button>
+        </div>
+        <div class="panel">
+            <div class="panel-head">WEBCAM TEST</div>
+            <video id="cam-video" autoplay playsinline muted></video>
+            <button class="media-btn" id="cam-btn" onclick="toggleCam()">START CAM</button>
         </div>
     </div>
 
@@ -294,12 +274,11 @@
         </div>
     </div>
 
-    <div class="controllers-row">
-        
+    <div class="bottom-section">
         <div class="gamepad-container" id="gp-container">
             <div class="gp-status">
-                <span id="gp-status">Standard Controller</span>
-                <button class="rumble-btn" id="rumble-btn" onclick="testRumble()">TEST VIBRATION</button>
+                <span id="gp-status">Connect a Controller</span>
+                <button class="rumble-btn" id="rumble-btn" onclick="testRumble()">TEST RUMBLE</button>
             </div>
             <div class="controller-body">
                 <div class="btn-gp gp-tr pos-lt" id="gp-b6">LT</div><div class="btn-gp gp-tr pos-rt" id="gp-b7">RT</div>
@@ -319,50 +298,50 @@
             </div>
         </div>
 
-        <div class="ds-container">
-            <h3 style="color:#00a2ff; margin-bottom:10px;">DualShock Touchpad</h3>
-            <button class="ds-connect-btn" id="ds-connect">CONNECT USB (CHROME/EDGE)</button>
-            <div class="ds-touchpad">
-                <div id="ds-f1" class="ds-finger">1</div>
-                <div id="ds-f2" class="ds-finger">2</div>
-                <div style="position:absolute; top:50%; width:100%; height:1px; background:#333;"></div>
-                <div style="position:absolute; left:50%; height:100%; width:1px; background:#333;"></div>
-            </div>
-            <div class="ds-info" id="ds-data-1">F1: Inactive</div>
-            <div class="ds-info" id="ds-data-2">F2: Inactive</div>
-        </div>
-
-    </div>
-
-    <div class="mouse-section">
-        <div class="gp-status">Mouse & Touchpad</div>
-        <div class="mouse-layout">
-            <div class="mouse-body">
-                <div class="ms-btn ms-left" id="ms-0"></div><div class="ms-btn ms-right" id="ms-2"></div><div class="ms-btn ms-mid" id="ms-1"></div>
-                <div class="ms-btn ms-side-back" id="ms-3" title="Back"></div><div class="ms-btn ms-side-fwd" id="ms-4" title="Forward"></div>
-            </div>
-            <div class="touchpad-area" id="touch-area">
-                <div class="touch-label">Touch / Scroll</div>
-                <div class="touch-coords" id="touch-coords">X:0 Y:0</div>
-                <div class="touch-scroll-indicator" id="scroll-msg">SCROLLING...</div>
+        <div class="mouse-container">
+            <div class="gp-status">Mouse & Touchpad</div>
+            <div class="mouse-layout">
+                <div class="mouse-body">
+                    <div class="ms-btn ms-left" id="ms-0"></div><div class="ms-btn ms-right" id="ms-2"></div><div class="ms-btn ms-mid" id="ms-1"></div>
+                    <div class="ms-btn ms-side-back" id="ms-3" title="Back"></div><div class="ms-btn ms-side-fwd" id="ms-4" title="Forward"></div>
+                </div>
+                <div class="touchpad-area" id="touch-area">
+                    <div class="touch-label">Polling Rate (Hz)</div>
+                    <div class="touch-coords" id="poll-rate">0 Hz</div>
+                    <div class="touch-hz" id="touch-coords">X:0 Y:0</div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="multi-touch-section" id="multi-touch">
-        <div class="multi-touch-placeholder">TOUCHSCREEN TEST AREA (MULTI-TOUCH)</div>
+        <div class="multi-touch-placeholder">TOUCHSCREEN & PEN TEST AREA</div>
     </div>
 
     <script>
-        // --- 1. AUTO SCALE ---
-        function scaleKeyboard() {
-            const wrap = document.getElementById('kb-wrapper');
-            const kb = document.getElementById('kb-case');
-            // Remove complex auto-zoom to prevent disappearing
-            // Just center it. If too wide, scrollbar appears via CSS.
+        // --- DEAD PIXEL ---
+        const dpOverlay = document.getElementById('dead-pixel-overlay');
+        const colors = ['red', 'lime', 'blue', 'white', 'black'];
+        let colorIdx = 0;
+        function startDeadPixel(c) {
+            dpOverlay.style.display = 'block';
+            dpOverlay.style.backgroundColor = c;
+            colorIdx = colors.indexOf(c);
+            document.documentElement.requestFullscreen();
         }
+        function cyclePixelColor() {
+            colorIdx = (colorIdx + 1) % colors.length;
+            dpOverlay.style.backgroundColor = colors[colorIdx];
+            if (colorIdx === 0 && !document.fullscreenElement) {
+                // Exit on loop back or double click logic if needed
+                // But simplified: user press ESC to exit
+            }
+        }
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) dpOverlay.style.display = 'none';
+        });
 
-        // --- 2. AUDIO & MIC ---
+        // --- AUDIO & MIC ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let noiseBuffer = null;
         function playSound() {
@@ -383,7 +362,7 @@
 
         let micStream = null;
         async function toggleMic() {
-            if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; document.getElementById('mic-btn').innerText = "START MIC TEST"; return; }
+            if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; document.getElementById('mic-btn').innerText = "START MIC"; return; }
             try {
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 document.getElementById('mic-btn').style.display = 'none';
@@ -407,7 +386,24 @@
             } catch(e) { alert("Mic Permission Denied"); }
         }
 
-        // --- 3. KEYBOARD ---
+        // --- WEBCAM ---
+        let camStream = null;
+        async function toggleCam() {
+            const vid = document.getElementById('cam-video');
+            const btn = document.getElementById('cam-btn');
+            if(camStream) {
+                camStream.getTracks().forEach(t => t.stop()); camStream = null;
+                btn.innerText = "START CAM"; btn.style.display='block'; vid.srcObject=null;
+                return;
+            }
+            try {
+                camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                vid.srcObject = camStream;
+                btn.style.display = 'none';
+            } catch(e) { alert("Camera Permission Denied"); }
+        }
+
+        // --- KEYBOARD ---
         let lastKeyTime = {}, startTime = null, count = 0, activeKeys = new Set(), maxSim = 0;
         function toggleLayout() {
             const iso = document.getElementById('layout-toggle').checked;
@@ -447,7 +443,7 @@
         });
         function clearLog() { document.getElementById('key-history').innerHTML = ''; }
 
-        // --- 4. GAMEPAD (STANDARD) ---
+        // --- GAMEPAD ---
         let gpIdx = null;
         window.addEventListener("gamepadconnected", e => {
             gpIdx = e.gamepad.index;
@@ -458,7 +454,7 @@
         window.addEventListener("gamepaddisconnected", e => {
             gpIdx = null;
             document.getElementById('gp-container').classList.remove('active');
-            document.getElementById('gp-status').innerText = "Standard Controller";
+            document.getElementById('gp-status').innerText = "Connect a Controller";
         });
         function loopGP() {
             if(gpIdx === null) return;
@@ -489,38 +485,9 @@
             else alert("Rumble not supported/detected");
         }
 
-        // --- 5. DUALSHOCK WEBHID ---
-        const dsBtn = document.getElementById('ds-connect');
-        const f1 = document.getElementById('ds-f1'), f2 = document.getElementById('ds-f2');
-        const v1 = document.getElementById('ds-data-1'), v2 = document.getElementById('ds-data-2');
-        dsBtn.addEventListener('click', async () => {
-            try {
-                const devs = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x054C }] });
-                if(devs.length===0) return;
-                const d = devs[0]; await d.open();
-                dsBtn.innerText = "CONNECTED"; dsBtn.disabled=true;
-                d.addEventListener('inputreport', e => {
-                    const data = new Uint8Array(e.data.buffer);
-                    let offset = 35; // Default DS4 Offset
-                    // Finger 1
-                    if (!(data[offset] & 0x80)) {
-                        const x = ((data[offset+2]&0x0F)<<8)|data[offset+1];
-                        const y = (data[offset+3]<<4)|((data[offset+2]&0xF0)>>4);
-                        f1.style.opacity=1; f1.style.left=(x/1920*100)+'%'; f1.style.top=(y/940*100)+'%';
-                        v1.innerText = `F1: ${x}, ${y}`;
-                    } else { f1.style.opacity=0; v1.innerText="F1: Inactive"; }
-                    // Finger 2
-                    if (!(data[offset+4] & 0x80)) {
-                        const x = ((data[offset+6]&0x0F)<<8)|data[offset+5];
-                        const y = (data[offset+7]<<4)|((data[offset+6]&0xF0)>>4);
-                        f2.style.opacity=1; f2.style.left=(x/1920*100)+'%'; f2.style.top=(y/940*100)+'%';
-                        v2.innerText = `F2: ${x}, ${y}`;
-                    } else { f2.style.opacity=0; v2.innerText="F2: Inactive"; }
-                });
-            } catch(e){ alert("WebHID Error: "+e.message); }
-        });
-
-        // --- 6. MOUSE & TOUCH ---
+        // --- MOUSE (POLLING RATE) & TOUCH ---
+        let lastMouseTime = performance.now();
+        let mousePolls = [];
         window.addEventListener('mousedown', e => {
             const btn = document.getElementById(`ms-${e.button}`);
             if(btn) { btn.classList.add('pressed'); e.preventDefault(); }
@@ -530,42 +497,54 @@
             if(btn) btn.classList.remove('pressed');
         });
         window.addEventListener('contextmenu', e => e.preventDefault());
-        window.addEventListener('wheel', e => {
-            const mid = document.getElementById('ms-1'); mid.classList.add('scrolling');
-            const scrollMsg = document.getElementById('scroll-msg');
-            scrollMsg.innerText = "SLIDE " + (e.deltaY > 0 ? "DOWN" : "UP");
-            scrollMsg.classList.add('visible');
-            clearTimeout(window.scrollTimer);
-            window.scrollTimer = setTimeout(() => {
-                mid.classList.remove('scrolling'); scrollMsg.classList.remove('visible');
-            }, 200);
-        });
+        
         const touchArea = document.getElementById('touch-area');
         touchArea.addEventListener('mousemove', e => {
+            // Polling Rate Logic
+            const now = performance.now();
+            const diff = now - lastMouseTime;
+            lastMouseTime = now;
+            if(diff > 0) {
+                mousePolls.push(1000/diff);
+                if(mousePolls.length > 50) mousePolls.shift();
+                const avg = Math.round(mousePolls.reduce((a,b)=>a+b)/mousePolls.length);
+                document.getElementById('poll-rate').innerText = avg + " Hz";
+            }
+            // Coords
             const rect = touchArea.getBoundingClientRect();
             document.getElementById('touch-coords').innerText = `X:${Math.round(e.clientX - rect.left)} Y:${Math.round(e.clientY - rect.top)}`;
         });
 
-        // MULTI TOUCH
+        // --- MULTI TOUCH + PEN PRESSURE ---
         const multiTouch = document.getElementById('multi-touch');
-        multiTouch.addEventListener('touchstart', handleTouch, {passive: false});
-        multiTouch.addEventListener('touchmove', handleTouch, {passive: false});
-        multiTouch.addEventListener('touchend', handleTouch);
-        function handleTouch(e) {
+        multiTouch.addEventListener('pointerdown', handlePointer, {passive: false});
+        multiTouch.addEventListener('pointermove', handlePointer, {passive: false});
+        multiTouch.addEventListener('pointerup', handlePointer);
+        
+        const pointers = {};
+        function handlePointer(e) {
             e.preventDefault();
+            if (e.type === 'pointerup') { delete pointers[e.pointerId]; }
+            else { pointers[e.pointerId] = e; }
+            
             multiTouch.innerHTML = '';
-            if(e.touches.length > 0) {
-                for (let i = 0; i < e.touches.length; i++) {
-                    const t = e.touches[i];
+            const keys = Object.keys(pointers);
+            if(keys.length > 0) {
+                keys.forEach((pid, idx) => {
+                    const p = pointers[pid];
                     const rect = multiTouch.getBoundingClientRect();
                     const el = document.createElement('div');
                     el.className = 'touch-point';
-                    el.style.left = (t.clientX - rect.left) + 'px';
-                    el.style.top = (t.clientY - rect.top) + 'px';
-                    el.innerText = i+1;
+                    el.style.left = (p.clientX - rect.left) + 'px';
+                    el.style.top = (p.clientY - rect.top) + 'px';
+                    // Pressure Check
+                    const pressure = p.pressure || 0.5;
+                    const scale = 0.5 + (pressure * 1.5); 
+                    el.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                    el.innerText = (p.pointerType === 'pen' ? '🖊️' : idx+1);
                     multiTouch.appendChild(el);
-                }
-            } else { multiTouch.innerHTML = '<div class="multi-touch-placeholder">TOUCHSCREEN TEST AREA (MULTI-TOUCH)</div>'; }
+                });
+            } else { multiTouch.innerHTML = '<div class="multi-touch-placeholder">TOUCHSCREEN & PEN TEST AREA</div>'; }
         }
     </script>
 </body>
