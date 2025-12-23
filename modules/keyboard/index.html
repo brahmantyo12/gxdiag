@@ -2,10 +2,17 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>GXDiag - Keyboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Keyboard Tester</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        .kb-header { display: flex; justify-content: space-between; width: 100%; max-width: 1250px; margin-bottom: 20px; align-items: center; }
+        /* HEADER & STATS */
+        .kb-header { 
+            display: flex; justify-content: space-between; width: 100%; 
+            max-width: 1260px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; gap: 10px;
+        }
+        
+        /* SWITCH TOGGLE */
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 34px; }
@@ -13,9 +20,35 @@
         input:checked + .slider { background-color: #00e5ff; }
         input:checked + .slider:before { transform: translateX(20px); }
         
-        /* Keyboard UI Copied from V16 */
-        .wrapper { width: 100%; overflow-x: auto; display: flex; justify-content: center; padding-bottom: 20px; }
-        .kb-container { position: relative; background: #181818; padding: 25px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-bottom: 8px solid #000; display: flex; gap: 20px; min-width: 1280px; }
+        /* CONTAINER WRAPPER (Auto-Scale Logic) */
+        .wrapper { 
+            width: 100%; 
+            display: flex; 
+            justify-content: center; 
+            overflow: hidden; /* Hilangkan scrollbar */
+            margin-bottom: 20px;
+            /* Tinggi akan diatur otomatis oleh JS */
+        }
+
+        /* BODY KEYBOARD */
+        .kb-container { 
+            position: relative; 
+            background: #181818; 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+            border-bottom: 8px solid #000; 
+            display: flex; 
+            gap: 20px; 
+            /* Ukuran Asli Fixed */
+            width: 1260px; 
+            min-width: 1260px;
+            /* Skala mulai dari tengah atas */
+            transform-origin: top center;
+            transition: transform 0.2s ease-out; /* Animasi halus saat resize */
+        }
+
+        /* GRID TOMBOL */
         .block-main { display: flex; flex-direction: column; gap: 6px; }
         .block-nav { display: flex; flex-direction: column; width: 162px; }
         .block-num { display: grid; grid-template-columns: repeat(4, 50px); grid-template-rows: repeat(5, 50px); gap: 6px; width: 218px; }
@@ -23,22 +56,51 @@
         .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
         .nav-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 40px; }
         .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .key { height: 50px; width: 50px; background: #333; color: #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; cursor: default; border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444; transition: 0.05s; }
-        .key.active { background: #f0faff; color: #111; border-bottom: 2px solid #ccc; transform: translateY(2px); box-shadow: 0 0 15px #00e5ff; z-index: 100; }
+
+        /* DESAIN TOMBOL */
+        .key { 
+            height: 50px; width: 50px; background: #333; color: #ddd; border-radius: 4px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 13px; font-weight: 600; cursor: default; 
+            border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444; transition: 0.05s; 
+        }
+        .key.active { 
+            background: #f0faff; color: #111; border-bottom: 2px solid #ccc; 
+            transform: translateY(2px); box-shadow: 0 0 15px #00e5ff; z-index: 100; 
+        }
         .key.tested { background: #004455; color: #00e5ff; border-color: #002233; }
-        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; } .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
-        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; } .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; } .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
-        .iso-key { display: none; } .kb-container.iso-mode .iso-key { display: flex; } .kb-container.iso-mode .ansi-key { display: none; }
-        .kb-container.iso-mode .key[data-code="Enter"] { position: absolute; right: 0; top: -56px; height: 106px; width: 65px; z-index: 5; border-radius: 5px 5px 5px 15px; }
+        
+        /* UKURAN TOMBOL KHUSUS */
+        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; } 
+        .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
+        
+        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; } 
+        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; } 
+        .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
+
+        /* ISO MODE FIX */
+        .iso-key { display: none; } 
+        .kb-container.iso-mode .iso-key { display: flex; } 
+        .kb-container.iso-mode .ansi-key { display: none; }
+        .kb-container.iso-mode .key[data-code="Enter"] { 
+            position: absolute; right: 0; top: -56px; height: 106px; width: 65px; 
+            z-index: 5; border-radius: 5px 5px 5px 15px; 
+        }
         .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 62px; }
         
-        .alert-box { background: #b71c1c; color: white; padding: 10px; border-radius: 5px; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); display: none; z-index: 999; font-weight: bold; }
+        /* ALERT & INFO */
+        .alert-box { 
+            background: #b71c1c; color: white; padding: 10px 20px; border-radius: 30px; 
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%); 
+            display: none; z-index: 999; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
         .info-bar { display: flex; gap: 20px; font-family: monospace; color: #888; margin-top: 10px; }
     </style>
 </head>
 <body>
     <a href="../../index.html" class="back-btn">← MENU</a>
     <h2>Keyboard Tester</h2>
+    
     <div id="chatter-alert" class="alert-box">⚠️ CHATTER DETECTED! <span id="chatter-key"></span></div>
 
     <div class="kb-header">
@@ -57,18 +119,38 @@
     <div class="wrapper">
         <div class="kb-container" id="kb-case">
             <div class="block-main">
-                <div class="row" style="margin-bottom:10px;"><div class="key" style="margin-right:30px;" data-code="Escape">Esc</div><div class="key" data-code="F1">F1</div><div class="key" data-code="F2">F2</div><div class="key" data-code="F3">F3</div><div class="key" style="margin-right:20px;" data-code="F4">F4</div><div class="key" data-code="F5">F5</div><div class="key" data-code="F6">F6</div><div class="key" data-code="F7">F7</div><div class="key" style="margin-right:20px;" data-code="F8">F8</div><div class="key" data-code="F9">F9</div><div class="key" data-code="F10">F10</div><div class="key" data-code="F11">F11</div><div class="key" data-code="F12">F12</div></div>
-                <div class="row"><div class="key" data-code="Backquote">~</div><div class="key" data-code="Digit1">1</div><div class="key" data-code="Digit2">2</div><div class="key" data-code="Digit3">3</div><div class="key" data-code="Digit4">4</div><div class="key" data-code="Digit5">5</div><div class="key" data-code="Digit6">6</div><div class="key" data-code="Digit7">7</div><div class="key" data-code="Digit8">8</div><div class="key" data-code="Digit9">9</div><div class="key" data-code="Digit0">0</div><div class="key" data-code="Minus">-</div><div class="key" data-code="Equal">=</div><div class="key w-2" data-code="Backspace">Back</div></div>
-                <div class="row"><div class="key w-15" data-code="Tab">Tab</div><div class="key" data-code="KeyQ">Q</div><div class="key" data-code="KeyW">W</div><div class="key" data-code="KeyE">E</div><div class="key" data-code="KeyR">R</div><div class="key" data-code="KeyT">T</div><div class="key" data-code="KeyY">Y</div><div class="key" data-code="KeyU">U</div><div class="key" data-code="KeyI">I</div><div class="key" data-code="KeyO">O</div><div class="key" data-code="KeyP">P</div><div class="key" data-code="BracketLeft">[</div><div class="key" data-code="BracketRight">]</div><div class="key w-15 ansi-key" data-code="Backslash">\</div></div>
-                <div class="row"><div class="key w-175" data-code="CapsLock">Caps</div><div class="key" data-code="KeyA">A</div><div class="key" data-code="KeyS">S</div><div class="key" data-code="KeyD">D</div><div class="key" data-code="KeyF">F</div><div class="key" data-code="KeyG">G</div><div class="key" data-code="KeyH">H</div><div class="key" data-code="KeyJ">J</div><div class="key" data-code="KeyK">K</div><div class="key" data-code="KeyL">L</div><div class="key" data-code="Semicolon">;</div><div class="key" data-code="Quote">'</div><div class="key iso-key" data-code="Backslash">#</div><div class="key w-225" data-code="Enter">Enter</div></div>
-                <div class="row"><div class="key w-225" data-code="ShiftLeft">Shift</div><div class="key iso-key" data-code="IntlBackslash">\</div><div class="key" data-code="KeyZ">Z</div><div class="key" data-code="KeyX">X</div><div class="key" data-code="KeyC">C</div><div class="key" data-code="KeyV">V</div><div class="key" data-code="KeyB">B</div><div class="key" data-code="KeyN">N</div><div class="key" data-code="KeyM">M</div><div class="key" data-code="Comma">,</div><div class="key" data-code="Period">.</div><div class="key" data-code="Slash">/</div><div class="key w-275" data-code="ShiftRight">Shift</div></div>
-                <div class="row"><div class="key w-125" data-code="ControlLeft">Ctrl</div><div class="key w-125" data-code="MetaLeft">Win</div><div class="key w-125" data-code="AltLeft">Alt</div><div class="key w-space" data-code="Space">Space</div><div class="key w-125" data-code="AltRight">Alt</div><div class="key w-125" data-code="MetaRight">Win</div><div class="key" data-code="ContextMenu">Mn</div><div class="key w-125" data-code="ControlRight">Ctrl</div></div>
+                <div class="row" style="margin-bottom:10px;">
+                    <div class="key" style="margin-right:30px;" data-code="Escape">Esc</div>
+                    <div class="key" data-code="F1">F1</div><div class="key" data-code="F2">F2</div><div class="key" data-code="F3">F3</div><div class="key" style="margin-right:20px;" data-code="F4">F4</div>
+                    <div class="key" data-code="F5">F5</div><div class="key" data-code="F6">F6</div><div class="key" data-code="F7">F7</div><div class="key" style="margin-right:20px;" data-code="F8">F8</div>
+                    <div class="key" data-code="F9">F9</div><div class="key" data-code="F10">F10</div><div class="key" data-code="F11">F11</div><div class="key" data-code="F12">F12</div>
+                </div>
+                <div class="row">
+                    <div class="key" data-code="Backquote">~</div><div class="key" data-code="Digit1">1</div><div class="key" data-code="Digit2">2</div><div class="key" data-code="Digit3">3</div><div class="key" data-code="Digit4">4</div><div class="key" data-code="Digit5">5</div><div class="key" data-code="Digit6">6</div><div class="key" data-code="Digit7">7</div><div class="key" data-code="Digit8">8</div><div class="key" data-code="Digit9">9</div><div class="key" data-code="Digit0">0</div><div class="key" data-code="Minus">-</div><div class="key" data-code="Equal">=</div><div class="key w-2" data-code="Backspace">Back</div>
+                </div>
+                <div class="row">
+                    <div class="key w-15" data-code="Tab">Tab</div>
+                    <div class="key" data-code="KeyQ">Q</div><div class="key" data-code="KeyW">W</div><div class="key" data-code="KeyE">E</div><div class="key" data-code="KeyR">R</div><div class="key" data-code="KeyT">T</div><div class="key" data-code="KeyY">Y</div><div class="key" data-code="KeyU">U</div><div class="key" data-code="KeyI">I</div><div class="key" data-code="KeyO">O</div><div class="key" data-code="KeyP">P</div><div class="key" data-code="BracketLeft">[</div><div class="key" data-code="BracketRight">]</div><div class="key w-15 ansi-key" data-code="Backslash">\</div>
+                </div>
+                <div class="row">
+                    <div class="key w-175" data-code="CapsLock">Caps</div>
+                    <div class="key" data-code="KeyA">A</div><div class="key" data-code="KeyS">S</div><div class="key" data-code="KeyD">D</div><div class="key" data-code="KeyF">F</div><div class="key" data-code="KeyG">G</div><div class="key" data-code="KeyH">H</div><div class="key" data-code="KeyJ">J</div><div class="key" data-code="KeyK">K</div><div class="key" data-code="KeyL">L</div><div class="key" data-code="Semicolon">;</div><div class="key" data-code="Quote">'</div><div class="key iso-key" data-code="Backslash">#</div><div class="key w-225" data-code="Enter">Enter</div>
+                </div>
+                <div class="row">
+                    <div class="key w-225" data-code="ShiftLeft">Shift</div><div class="key iso-key" data-code="IntlBackslash">\</div>
+                    <div class="key" data-code="KeyZ">Z</div><div class="key" data-code="KeyX">X</div><div class="key" data-code="KeyC">C</div><div class="key" data-code="KeyV">V</div><div class="key" data-code="KeyB">B</div><div class="key" data-code="KeyN">N</div><div class="key" data-code="KeyM">M</div><div class="key" data-code="Comma">,</div><div class="key" data-code="Period">.</div><div class="key" data-code="Slash">/</div><div class="key w-275" data-code="ShiftRight">Shift</div>
+                </div>
+                <div class="row">
+                    <div class="key w-125" data-code="ControlLeft">Ctrl</div><div class="key w-125" data-code="MetaLeft">Win</div><div class="key w-125" data-code="AltLeft">Alt</div><div class="key w-space" data-code="Space">Space</div><div class="key w-125" data-code="AltRight">Alt</div><div class="key w-125" data-code="MetaRight">Win</div><div class="key" data-code="ContextMenu">Mn</div><div class="key w-125" data-code="ControlRight">Ctrl</div>
+                </div>
             </div>
+
             <div class="block-nav">
                 <div class="nav-sys"><div class="key" data-code="PrintScreen">Prt</div><div class="key" data-code="ScrollLock">Scr</div><div class="key" data-code="Pause">Pau</div></div>
                 <div class="nav-cmd"><div class="key" data-code="Insert">Ins</div><div class="key" data-code="Home">Hm</div><div class="key" data-code="PageUp">PU</div><div class="key" data-code="Delete">Del</div><div class="key" data-code="End">Ed</div><div class="key" data-code="PageDown">PD</div></div>
                 <div class="nav-arr"><div></div><div class="key" data-code="ArrowUp">↑</div><div></div><div class="key" data-code="ArrowLeft">←</div><div class="key" data-code="ArrowDown">↓</div><div class="key" data-code="ArrowRight">→</div></div>
             </div>
+
             <div class="block-num">
                 <div class="key" data-code="NumLock">Num</div><div class="key" data-code="NumpadDivide">/</div><div class="key" data-code="NumpadMultiply">*</div><div class="key" data-code="NumpadSubtract">-</div>
                 <div class="key" data-code="Numpad7">7</div><div class="key" data-code="Numpad8">8</div><div class="key" data-code="Numpad9">9</div><div class="key" data-code="NumpadAdd">+</div>
@@ -80,6 +162,7 @@
     </div>
 
     <script>
+        // --- 1. AUDIO ENGINE ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let noiseBuffer = null;
         function playSound() {
@@ -97,30 +180,45 @@
             s.start(); s.stop(audioCtx.currentTime+0.04);
         }
 
+        // --- 2. KEYBOARD LOGIC (Chatter, Ghosting, KPM) ---
         let activeKeys = new Set(), maxSim = 0, lastKeyTime = {}, startTime = null, count = 0;
         
         function toggleLayout() {
             document.getElementById('kb-case').classList.toggle('iso-mode');
+            // Recalculate scale after layout change
+            setTimeout(autoScaleKeyboard, 50);
         }
+
+        function format(code) { return code.replace('Key','').replace('Digit','').replace('Numpad','Num '); }
 
         window.addEventListener('keydown', e => {
             if (e.repeat) return;
             if (['Tab','AltLeft','AltRight'].includes(e.code) || e.code.startsWith('F')) e.preventDefault();
+            
             playSound();
             const now = Date.now(), last = lastKeyTime[e.code] || 0;
+            
+            // Chatter Detection (<80ms threshold)
             if (last && now-last < 80) {
-                document.getElementById('chatter-key').innerText = e.code;
+                document.getElementById('chatter-key').innerText = format(e.code) + ` (${now-last}ms)`;
                 document.getElementById('chatter-alert').style.display = 'block';
                 setTimeout(()=>document.getElementById('chatter-alert').style.display='none',3000);
             }
+            
             lastKeyTime[e.code] = now;
             activeKeys.add(e.code); count++;
+            
+            // KPM Counter
             if(!startTime) { startTime=now; setInterval(()=>{
                 const m = (Date.now()-startTime)/60000;
                 document.getElementById('kpm').innerText = m>0?Math.round(count/m):0;
             },1000); }
+            
+            // Ghosting Stats
             document.getElementById('ghost-curr').innerText = activeKeys.size;
             if(activeKeys.size > maxSim) document.getElementById('ghost-max').innerText = maxSim = activeKeys.size;
+            
+            // Visual Update
             document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>{k.classList.add('active','tested')});
         });
 
@@ -129,6 +227,32 @@
             document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>k.classList.remove('active'));
             document.getElementById('ghost-curr').innerText = activeKeys.size;
         });
+
+        // --- 3. AUTO SCALE LOGIC (The Fix) ---
+        function autoScaleKeyboard() {
+            const wrapper = document.querySelector('.wrapper');
+            const keyboard = document.getElementById('kb-case');
+            
+            // Lebar asli keyboard fixed di CSS
+            const originalWidth = 1260; 
+            // Ambil lebar layar dikurangi padding
+            const screenWidth = window.innerWidth - 40; 
+            
+            // Hitung ratio
+            let scale = screenWidth / originalWidth;
+            if (scale > 1) scale = 1; // Jangan membesar lebih dari 100%
+
+            // Terapkan Scale
+            keyboard.style.transform = `scale(${scale})`;
+            
+            // Sesuaikan tinggi wrapper agar tidak ada ruang kosong di bawah
+            // Kita ambil tinggi asli elemen keyboard, dikali scale
+            wrapper.style.height = (keyboard.offsetHeight * scale) + 'px';
+        }
+
+        // Jalankan saat load dan resize
+        window.addEventListener('load', autoScaleKeyboard);
+        window.addEventListener('resize', autoScaleKeyboard);
     </script>
 </body>
 </html>
