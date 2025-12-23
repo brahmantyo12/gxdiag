@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>GXDiag - Controller</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        .gp-container { position: relative; width: 400px; height: 260px; background: linear-gradient(145deg, #2a2a2a, #1a1a1a); border-radius: 60px 60px 100px 100px; border: 2px solid #444; margin: 0 auto; }
+        .btn-gp { position: absolute; display: flex; align-items: center; justify-content: center; background: #333; color: #888; border: 2px solid #444; font-size: 9px; font-weight: bold; transition: 0.1s; }
+        .btn-gp.pressed { background: #00e5ff; color: #000; box-shadow: 0 0 15px #00e5ff; border-color: #fff; }
+        
+        /* Positioning (Simplified) */
+        .gp-round { width: 30px; height: 30px; border-radius: 50%; }
+        .pos-y { top: 50px; right: 70px; } .pos-x { top: 80px; right: 100px; } .pos-b { top: 80px; right: 40px; } .pos-a { top: 110px; right: 70px; }
+        .gp-dpad { width: 24px; height: 24px; border-radius: 4px; }
+        .pos-du { top: 100px; left: 80px; } .pos-dd { top: 148px; left: 80px; } .pos-dl { top: 124px; left: 56px; } .pos-dr { top: 124px; left: 104px; }
+        .gp-stick { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #555; background: #222; }
+        .gp-stick.pressed { background: #005577; }
+        .pos-ls { top: 50px; left: 50px; } .pos-rs { top: 140px; right: 80px; }
+        .gp-tr { width: 40px; height: 25px; border-radius: 5px; top: -30px; z-index: -1; } .pos-lt { left: 55px; } .pos-rt { right: 55px; }
+        .gp-sh { width: 70px; height: 18px; border-radius: 10px; top: -10px; } .pos-lb { left: 40px; } .pos-rb { right: 40px; }
+        
+        .analog-data { display: flex; justify-content: space-around; margin-top: 15px; font-family: monospace; color: #888; border-top: 1px dashed #333; padding-top: 10px;}
+        .stick-vis { width: 60px; height: 60px; border: 1px solid #555; border-radius: 50%; position: relative; }
+        .dot { width: 6px; height: 6px; background: #00e5ff; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← MENU</a>
+    <h2>Game Controller</h2>
+    
+    <div class="panel" style="text-align:center;">
+        <div style="margin-bottom:15px; color:#00e5ff; font-weight:bold;" id="status">Connect Controller</div>
+        <button onclick="testRumble()" style="padding:5px 15px; background:#ff4081; color:#fff; border:none; border-radius:5px;">TEST VIBRATION</button>
+        <br><br>
+        
+        <div class="gp-container">
+            <div class="btn-gp gp-tr pos-lt" id="b6">LT</div><div class="btn-gp gp-tr pos-rt" id="b7">RT</div>
+            <div class="btn-gp gp-sh pos-lb" id="b4">LB</div><div class="btn-gp gp-sh pos-rb" id="b5">RB</div>
+            <div class="btn-gp gp-stick pos-ls" id="b10">L3</div><div class="btn-gp gp-stick pos-rs" id="b11">R3</div>
+            <div class="btn-gp gp-dpad pos-du" id="b12">▲</div><div class="btn-gp gp-dpad pos-dd" id="b13">▼</div><div class="btn-gp gp-dpad pos-dl" id="b14">◀</div><div class="btn-gp gp-dpad pos-dr" id="b15">▶</div>
+            <div class="btn-gp gp-round pos-y" id="b3">Y</div><div class="btn-gp gp-round pos-x" id="b2">X</div><div class="btn-gp gp-round pos-a" id="b0">A</div><div class="btn-gp gp-round pos-b" id="b1">B</div>
+        </div>
+
+        <div class="analog-data">
+            <div>
+                <div class="stick-vis"><div class="dot" id="dl"></div></div>
+                <div id="vl">L: 0.0, 0.0</div>
+            </div>
+            <div>
+                <div class="stick-vis"><div class="dot" id="dr"></div></div>
+                <div id="vr">R: 0.0, 0.0</div>
+            </div>
+        </div>
+        <p style="font-size:0.8rem; color:#666;">Note: Steering Wheels usually map to Left Stick (Axis 0)</p>
+    </div>
+
+    <script>
+        let gpIdx = null;
+        window.addEventListener("gamepadconnected", e => {
+            gpIdx = e.gamepad.index;
+            document.getElementById('status').innerText = "Connected: " + e.gamepad.id.substring(0,20) + "...";
+            loop();
+        });
+        
+        function loop() {
+            if(gpIdx===null) return;
+            const gp = navigator.getGamepads()[gpIdx];
+            if(gp) {
+                gp.buttons.forEach((b,i) => {
+                    const el = document.getElementById('b'+i);
+                    if(el) b.pressed ? el.classList.add('pressed') : el.classList.remove('pressed');
+                });
+                
+                // Analog Visuals
+                const lx = gp.axes[0], ly = gp.axes[1];
+                const rx = gp.axes[2], ry = gp.axes[3];
+                
+                document.getElementById('dl').style.transform = `translate(calc(-50% + ${lx*25}px), calc(-50% + ${ly*25}px))`;
+                document.getElementById('vl').innerText = `L: ${lx.toFixed(2)}, ${ly.toFixed(2)}`;
+                
+                document.getElementById('dr').style.transform = `translate(calc(-50% + ${rx*25}px), calc(-50% + ${ry*25}px))`;
+                document.getElementById('vr').innerText = `R: ${rx.toFixed(2)}, ${ry.toFixed(2)}`;
+                
+                requestAnimationFrame(loop);
+            }
+        }
+
+        function testRumble() {
+            const gp = navigator.getGamepads()[gpIdx];
+            if(gp && gp.vibrationActuator) gp.vibrationActuator.playEffect("dual-rumble", { duration: 500, strongMagnitude: 1.0, weakMagnitude: 1.0 });
+            else alert("Rumble not supported.");
+        }
+    </script>
+</body>
+</html>
