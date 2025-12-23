@@ -1,21 +1,41 @@
-/* css/style.css */
+/* css/style.css - REVISI NETRAL */
 * { box-sizing: border-box; }
+
 body {
     background-color: #121212;
     color: #eee;
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    display: flex; flex-direction: column; align-items: center;
-    min-height: 100vh; margin: 0; padding: 20px;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    /* PENTING: Padding dikurangi agar tidak memakan tempat di layar kecil */
+    padding: 10px; 
+    overflow-x: hidden; /* Mencegah scrollbar horizontal default */
 }
-h2 { color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
-button { cursor: pointer; transition: 0.2s; }
+
+a { text-decoration: none; color: inherit; }
+
+h2 { 
+    color: #00e5ff; 
+    text-transform: uppercase; 
+    letter-spacing: 2px; 
+    margin-bottom: 20px; 
+    text-shadow: 0 0 10px rgba(0,229,255,0.3);
+    text-align: center;
+}
+
+/* Tombol Back */
 .back-btn {
-    position: absolute; top: 20px; left: 20px;
-    background: #333; color: #fff; text-decoration: none;
-    padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; border: 1px solid #555;
+    position: absolute; top: 15px; left: 15px;
+    background: #1e1e1e; color: #aaa; 
+    padding: 8px 15px; border-radius: 30px; font-size: 0.8rem; 
+    border: 1px solid #333; z-index: 1000; font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 .back-btn:hover { background: #00e5ff; color: #000; border-color: #00e5ff; }
-.panel {
-    background: #1e1e1e; border: 1px solid #333; border-radius: 12px;
-    padding: 20px; margin-bottom: 20px; width: 100%; max-width: 1000px;
-}
+
+/* Tombol Umum */
+button { cursor: pointer; transition: 0.2s; }
+button:active { transform: scale(0.98); }
