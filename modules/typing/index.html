@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>GXDiag - Typing</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        .word-box { background: #111; padding: 20px; border-radius: 10px; font-size: 1.5rem; height: 100px; overflow: hidden; color: #555; line-height: 1.5; margin-bottom: 20px; border: 2px solid #333; }
+        .word-active { color: #fff; background: #333; padding: 2px 5px; border-radius: 4px; }
+        .word-correct { color: #00e5ff; }
+        .word-wrong { color: #ff4081; text-decoration: line-through; }
+        .input-box { width: 100%; padding: 15px; font-size: 1.2rem; background: #222; border: 2px solid #444; color: #fff; border-radius: 10px; outline: none; }
+        .input-box:focus { border-color: #00e5ff; }
+        .stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; color: #00e5ff; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← MENU</a>
+    <h2>Typing Speed Challenge</h2>
+    <div class="panel">
+        <div class="stats">
+            <span id="time">60s</span>
+            <span id="wpm">0 WPM</span>
+        </div>
+        <div class="word-box" id="display"></div>
+        <input type="text" class="input-box" id="input" placeholder="Type words here..." autocomplete="off">
+        <button onclick="location.reload()" style="width:100%; margin-top:15px; padding:10px; background:#333; color:white; border:none; border-radius:5px;">RESTART</button>
+    </div>
+    <script>
+        const words = "the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" ");
+        let list = []; for(let i=0; i<150; i++) list.push(words[Math.floor(Math.random()*words.length)]);
+        
+        const disp = document.getElementById('display');
+        const inp = document.getElementById('input');
+        disp.innerHTML = list.map((w,i)=>`<span id="w-${i}">${w}</span>`).join(" ");
+        
+        let curr=0, running=false, time=60, correct=0;
+        document.getElementById(`w-0`).classList.add('word-active');
+
+        inp.addEventListener('input', e => {
+            if(!running && time>0) { running=true; startTimer(); }
+            const val = inp.value;
+            if(val.endsWith(' ')) {
+                const target = list[curr];
+                const typed = val.trim();
+                const span = document.getElementById(`w-${curr}`);
+                
+                if(typed === target) { span.className='word-correct'; correct += target.length + 1; }
+                else { span.className='word-wrong'; }
+                
+                curr++;
+                if(curr < list.length) {
+                    const next = document.getElementById(`w-${curr}`);
+                    next.classList.add('word-active');
+                    if(next.offsetTop > disp.offsetHeight) disp.scrollTop = next.offsetTop;
+                }
+                inp.value='';
+            }
+        });
+
+        function startTimer() {
+            const t = setInterval(() => {
+                time--; document.getElementById('time').innerText = time + 's';
+                const wpm = Math.round((correct/5) / ((60-time)/60)) || 0;
+                document.getElementById('wpm').innerText = wpm + ' WPM';
+                if(time<=0) { clearInterval(t); inp.disabled=true; alert("Finished! Score: " + wpm + " WPM"); }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
