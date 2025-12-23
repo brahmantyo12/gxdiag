@@ -4,7 +4,6 @@
 > A lightweight, modular tool to test Keyboards, Mice, Gamepads, Audio, and Touchscreens directly from your browser. No installation required.
 
 ![Project Banner](screenshots/banner.png)
-*(Optional: Replace this with a screenshot of your main menu)*
 
 ## 🚀 Overview
 
