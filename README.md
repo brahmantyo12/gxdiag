@@ -1,39 +1,62 @@
-# ⌨️ Ultimate Input Tester
+# 🛠️ Project GXDiag (v2.0)
 
-A comprehensive web-based diagnostic tool designed to test Keyboards, Mice, and Gamepads directly in the browser. Built with vanilla HTML, CSS, and JavaScript.
+> **The Ultimate Web-Based Hardware Diagnostic Suite.**
+> A lightweight, modular tool to test Keyboards, Mice, Gamepads, Audio, and Touchscreens directly from your browser. No installation required.
 
-[**🔴 LIVE DEMO**](https://gxdiag.brahmantyo12.my.id/) 
+![Project Banner](screenshots/banner.png)
+*(Optional: Replace this with a screenshot of your main menu)*
 
-![Screenshot](screenshot.png)
+## 🚀 Overview
 
-## ✨ Features
+**Project GXDiag** is a comprehensive diagnostic utility built with vanilla **HTML5, CSS3, and JavaScript**. It leverages modern browser APIs (Web Audio, Gamepad API, WebHID) to provide accurate hardware testing without the need for heavy desktop software.
 
-### 1. Keyboard Diagnostics
-* **Visual Layouts:** Supports ANSI & ISO layouts (Toggleable).
-* **N-Key Rollover Test:** Detects "Ghosting" capabilities with a live counter of simultaneous key presses.
-* **Chatter Detection:** Algorithmic detection for double-typing switches (< 80ms threshold).
-* **Analysis:** Tracks Keystrokes Per Minute (KPM) and unique keys pressed.
+Designed for gamers, hardware enthusiasts, and technicians who need a quick, reliable way to verify input devices on any computer.
 
-### 2. Gamepad / Controller Tester
-* **Plug & Play:** Uses the HTML5 Gamepad API.
-* **Analog Precision:** Visualizer for drift detection and deadzone checking.
-* **Full Mapping:** Supports standard Xbox/PS layouts including triggers and D-Pad.
-* **Pro Features:** Visual placeholders for back paddles (Elite/Scuf controllers).
+## ✨ Key Features
 
-### 3. Mouse & Touchpad
-* **Mouse Check:** Visualizes Left, Right, Middle, Back, and Forward buttons.
-* **Touchpad Tracker:** Real-time X/Y coordinate tracking and scroll gesture detection.
+### 1. ⌨️ Advanced Keyboard Tester
+* **Full Layout Visualizer:** Supports standard 104-key layouts with **Auto-Scale** logic to fit any screen size perfectly.
+* **N-Key Rollover (Ghosting):** Detects how many simultaneous keys can be registered.
+* **Chatter Detection:** Algorithmic detection for double-typing switches (Threshold: <80ms).
+* **Layout Support:** Toggle between **ANSI** and **ISO** layouts.
+* **Audio Feedback:** Satisfying "clicky" sound feedback generated via Web Audio API.
 
-### 4. Audio Feedback
-* **Generated Sound:** Uses Web Audio API to generate synthetic "clicky" sounds (White Noise Burst) without external assets to ensure fast loading times.
+### 2. 🎮 Pro Controller Diagnostic
+* **Dual API Support:**
+    * **Standard Gamepad API:** Works with Xbox, PlayStation, and Generic controllers.
+    * **Sony WebHID:** Reads **Raw Touchpad Data** (Finger coordinates) from DualShock 4 and DualSense controllers via USB.
+* **Deadzone & Drift Visualizer:** Precise analog stick and trigger readout (0.00 - 1.00 float precision).
+* **Haptic Feedback:** Test vibration motors (Rumble).
+* **Paddle Support:** Visualizers for back paddles (P1-P4) on Elite/Pro controllers.
 
-## 🛠️ Tech Stack
-* **HTML5** (Semantic structure)
-* **CSS3** (Flexbox & Grid layout, responsive design)
-* **JavaScript (ES6+)** (Event listeners, Gamepad API, AudioContext API)
+### 3. 🖱️ Mouse & Touchpad
+* **Polling Rate Checker:** Real-time Hertz (Hz) counter to measure mouse report rate.
+* **Button Check:** Test Left, Right, Middle, and Side buttons (Forward/Back).
+* **Multi-Touch Canvas:** Test up to 10 simultaneous touch points with pressure sensitivity support (for Stylus/Pen).
 
-## 🚀 How to Run
-Simply open `index.html` in any modern web browser. No installation or server required.
+### 4. ⚡ Typing Speed Challenge
+* **WPM Test:** 60-second typing challenge to measure Words Per Minute.
+* **Accuracy Tracker:** Highlights correct and incorrect keystrokes in real-time.
+
+### 5. 🔊 Audio System
+* **Stereo Output Test:** Independent Left/Right channel frequency generation.
+* **Microphone Visualizer:** Real-time waveform rendering to test audio input clarity.
 
 ---
-*Created by [Nama Kamu]*
+
+## 📂 Project Structure
+
+The project is organized into modular sections for better scalability and performance:
+
+```text
+GXDiag-Project/
+├── css/
+│   └── style.css          # Global Theme & Reset
+├── modules/
+│   ├── keyboard/          # Keyboard Logic & Layout
+│   ├── mouse/             # Mouse & Polling Rate Logic
+│   ├── gamepad/           # Controller & WebHID Logic
+│   ├── typing/            # WPM Challenge Logic
+│   └── audio/             # Mic & Speaker Tests
+├── index.html             # Main Dashboard (Hub)
+└── README.md              # Documentation
