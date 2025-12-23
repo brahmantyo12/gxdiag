@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>GXDiag - Mouse</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        .mouse-container { display: flex; gap: 50px; justify-content: center; flex-wrap: wrap; }
+        .mouse-body { position: relative; width: 160px; height: 260px; background: #222; border-radius: 70px 70px 60px 60px; border: 2px solid #444; }
+        .ms-btn { position: absolute; background: #333; border: 1px solid #444; transition: 0.05s; }
+        .ms-btn.pressed { background: #00e5ff; box-shadow: 0 0 20px #00e5ff; }
+        .ms-left { top:0; left:0; width:78px; height:100px; border-radius:68px 0 0 0; }
+        .ms-right { top:0; right:0; width:78px; height:100px; border-radius:0 68px 0 0; }
+        .ms-mid { top:30px; left:68px; width:24px; height:45px; border-radius:12px; background:#111; z-index:2; }
+        .ms-mid.scroll { background: #ff4081; }
+        .ms-s1 { top:120px; left:-8px; width:15px; height:35px; border-radius:5px 0 0 5px; background:#444; }
+        .ms-s2 { top:160px; left:-8px; width:15px; height:35px; border-radius:5px 0 0 5px; background:#444; }
+        
+        .touch-area { width: 300px; height: 200px; background: #111; border: 2px dashed #444; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden;}
+        .touch-point { position: absolute; width: 40px; height: 40px; background: rgba(0,229,255,0.5); border-radius: 50%; transform: translate(-50%, -50%); display:flex; align-items:center; justify-content:center; font-weight:bold;}
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← MENU</a>
+    <h2>Mouse & Touchpad</h2>
+    
+    <div class="panel">
+        <div class="mouse-container">
+            <div class="mouse-body">
+                <div id="m0" class="ms-btn ms-left"></div>
+                <div id="m2" class="ms-btn ms-right"></div>
+                <div id="m1" class="ms-btn ms-mid"></div>
+                <div id="m3" class="ms-btn ms-s2"></div>
+                <div id="m4" class="ms-btn ms-s1"></div>
+            </div>
+            <div id="touch" class="touch-area">
+                <div style="color:#666; font-size:0.8rem;">HOVER / TOUCH / SCROLL</div>
+                <h3 id="hz" style="color:#00e5ff; margin:5px 0;">0 Hz</h3>
+                <div id="coords" style="font-family:monospace;">X:0 Y:0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" id="mt-panel" style="height:200px; position:relative; overflow:hidden; touch-action:none;">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#444; font-weight:bold;">MULTI-TOUCH SCREEN AREA</div>
+    </div>
+
+    <script>
+        // Mouse Buttons
+        window.addEventListener('mousedown', e => {
+            const el = document.getElementById('m'+e.button);
+            if(el) { el.classList.add('pressed'); e.preventDefault(); }
+        });
+        window.addEventListener('mouseup', e => {
+            const el = document.getElementById('m'+e.button);
+            if(el) el.classList.remove('pressed');
+        });
+        window.addEventListener('contextmenu', e => e.preventDefault());
+        window.addEventListener('wheel', e => {
+            const el = document.getElementById('m1'); el.classList.add('scroll');
+            setTimeout(()=>el.classList.remove('scroll'), 150);
+        });
+
+        // Polling Rate
+        let lastT = performance.now();
+        let polls = [];
+        const tArea = document.getElementById('touch');
+        tArea.addEventListener('mousemove', e => {
+            const now = performance.now();
+            const diff = now - lastT;
+            lastT = now;
+            if(diff > 0) {
+                polls.push(1000/diff);
+                if(polls.length > 50) polls.shift();
+                const avg = Math.round(polls.reduce((a,b)=>a+b)/polls.length);
+                document.getElementById('hz').innerText = avg + " Hz";
+            }
+            const rect = tArea.getBoundingClientRect();
+            document.getElementById('coords').innerText = `X:${Math.round(e.clientX-rect.left)} Y:${Math.round(e.clientY-rect.top)}`;
+        });
+
+        // Multi Touch
+        const mt = document.getElementById('mt-panel');
+        mt.addEventListener('touchstart', hTouch, {passive:false});
+        mt.addEventListener('touchmove', hTouch, {passive:false});
+        mt.addEventListener('touchend', hTouch);
+        function hTouch(e) {
+            e.preventDefault();
+            mt.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#444; font-weight:bold;">MULTI-TOUCH SCREEN AREA</div>';
+            for(let i=0; i<e.touches.length; i++) {
+                const t = e.touches[i];
+                const rect = mt.getBoundingClientRect();
+                const d = document.createElement('div');
+                d.className = 'touch-point';
+                d.style.left = (t.clientX - rect.left) + 'px';
+                d.style.top = (t.clientY - rect.top) + 'px';
+                d.innerText = i+1;
+                mt.appendChild(d);
+            }
+        }
+    </script>
+</body>
+</html>
