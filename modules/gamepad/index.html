@@ -14,7 +14,7 @@
         /* --- SECTION 1: STANDARD CONTROLLER --- */
         .gp-visual-wrapper {
             position: relative; 
-            width: 540px; height: 360px; /* Ukuran diperbesar agar lega */
+            width: 560px; height: 380px; /* Sedikit diperbesar lagi */
             margin: 0 auto;
             background: linear-gradient(145deg, #252525, #151515);
             border-radius: 90px 90px 160px 160px; 
@@ -34,70 +34,77 @@
             box-shadow: 0 0 15px #00e5ff; border-color: #fff; transform: scale(0.95); 
         }
 
-        /* --- Triggers (LT/RT Visualizer) --- */
-        /* Diposisikan di paling atas, seperti "telinga" */
+        /* --- Triggers (LT/RT Visualizer) - DESAIN BARU --- */
         .trigger-bar-container {
-            position: absolute; top: 20px; 
-            width: 70px; height: 12px; /* Horizontal Bar style agar hemat tempat vertikal */
-            background: #111; border-radius: 6px; border: 1px solid #444; overflow: hidden;
+            position: absolute; top: 15px; 
+            width: 100px; height: 18px; /* Lebih tebal & lebar */
+            background: #111; /* Warna track gelap */
+            border: 1px solid #555; 
+            overflow: hidden;
             display: flex; align-items: center;
+            box-shadow: inset 0 0 5px #000;
         }
-        .pos-lt-bar { left: 60px; } 
-        .pos-rt-bar { right: 60px; flex-direction: row-reverse; } /* Bar kanan mengisi dari kanan */
         
-        .trigger-fill { height: 100%; background: #00e5ff; width: 0%; transition: width 0.05s; }
+        /* Bentuk melengkung mengikuti bahu controller */
+        .pos-lt-bar { left: 60px; border-radius: 10px 4px 4px 10px; } 
+        .pos-rt-bar { right: 60px; border-radius: 4px 10px 10px 4px; flex-direction: row-reverse; } 
+        
+        .trigger-fill { height: 100%; background: linear-gradient(90deg, #00e5ff, #0099cc); width: 0%; transition: width 0.05s; }
         
         /* Label Trigger (L / R) */
         .trigger-val { 
-            position: absolute; top: -18px; 
-            color: #aaa; font-size: 0.7rem; font-weight: bold; font-family: monospace; 
+            position: absolute; top: 20px; /* Pindah ke bawah bar */
+            color: #666; font-size: 0.65rem; font-weight: bold; font-family: monospace; 
+            width: 100%; text-align: center;
         }
-        .pos-lt-bar .trigger-val { left: 0; }
-        .pos-rt-bar .trigger-val { right: 0; }
 
         /* --- Shoulders (LB/RB) --- */
-        .gp-sh { width: 90px; height: 25px; border-radius: 8px; }
-        .pos-lb { top: 45px; left: 50px; } 
-        .pos-rb { top: 45px; right: 50px; }
+        .gp-sh { width: 100px; height: 28px; border-radius: 8px; }
+        .pos-lb { top: 45px; left: 60px; } 
+        .pos-rb { top: 45px; right: 60px; }
 
         /* --- D-Pad (Kiri) --- */
-        .gp-dpad { width: 30px; height: 30px; border-radius: 4px; }
-        .pos-du { top: 100px; left: 100px; } 
-        .pos-dd { top: 164px; left: 100px; } 
-        .pos-dl { top: 132px; left: 68px; } 
-        .pos-dr { top: 132px; left: 132px; }
+        .gp-dpad { width: 32px; height: 32px; border-radius: 4px; }
+        .pos-du { top: 110px; left: 110px; } 
+        .pos-dd { top: 178px; left: 110px; } 
+        .pos-dl { top: 144px; left: 76px; } 
+        .pos-dr { top: 144px; left: 144px; }
 
         /* --- Face Buttons (Kanan - ABXY) --- */
-        .gp-round { width: 38px; height: 38px; border-radius: 50%; }
-        .pos-y { top: 90px; right: 100px; } /* Y (Atas) */
-        .pos-x { top: 125px; right: 135px; } /* X (Kiri) */
-        .pos-b { top: 125px; right: 65px; }  /* B (Kanan) */
-        .pos-a { top: 160px; right: 100px; } /* A (Bawah) */
+        .gp-round { width: 40px; height: 40px; border-radius: 50%; }
+        .pos-y { top: 100px; right: 110px; } 
+        .pos-x { top: 135px; right: 145px; } 
+        .pos-b { top: 135px; right: 75px; }  
+        .pos-a { top: 170px; right: 110px; } 
 
         /* --- Analog Sticks (L3/R3) --- */
-        /* Digeser ke bawah agar tidak nabrak Dpad/ABXY */
-        .gp-stick { width: 56px; height: 56px; border-radius: 50%; border: 3px solid #555; background: #222; }
+        .gp-stick { width: 60px; height: 60px; border-radius: 50%; border: 3px solid #555; background: #222; }
         .gp-stick.pressed { background: #005577; border-color: #00e5ff; }
-        .pos-ls { top: 200px; left: 160px; } 
-        .pos-rs { top: 200px; right: 160px; }
+        .pos-ls { top: 210px; left: 170px; } 
+        .pos-rs { top: 210px; right: 170px; }
 
         /* --- Center Buttons --- */
-        .gp-small { width: 24px; height: 24px; border-radius: 50%; top: 110px; color: #aaa; font-size: 0.6rem;}
-        .pos-sel { left: 210px; } 
-        .pos-start { right: 210px; } 
-        .pos-home { left: 258px; top: 80px; width: 24px; height: 24px; font-size: 1rem;} /* Home agak di atas */
+        .gp-small { width: 26px; height: 26px; border-radius: 50%; top: 120px; color: #aaa; font-size: 0.6rem;}
+        .pos-sel { left: 220px; } 
+        .pos-start { right: 220px; } 
+        .pos-home { left: 268px; top: 90px; width: 24px; height: 24px; font-size: 1rem;} 
 
-        /* --- PADDLES & EXTRAS (P1-P4) --- */
-        /* Di bagian bawah body */
-        .gp-paddle { width: 30px; height: 40px; border-radius: 8px; bottom: 40px; background: #1a1a1a; border-color: #333; }
-        .pos-p1 { left: 200px; bottom: 80px; } 
-        .pos-p2 { right: 200px; bottom: 80px; } 
-        .pos-p3 { left: 160px; bottom: 40px; } 
-        .pos-p4 { right: 160px; bottom: 40px; }
+        /* --- PADDLES (P1-P4) SEJAJAR HORIZONTAL --- */
+        .gp-paddle { 
+            width: 40px; height: 30px; /* Bentuk lebih lebar */
+            border-radius: 6px; bottom: 30px; /* Paling bawah */
+            background: #1a1a1a; border-color: #333; 
+        }
+        /* Urutan: P3 - P1 - [Tengah] - P2 - P4 */
+        .pos-p3 { left: 160px; } 
+        .pos-p1 { left: 210px; } 
         
-        .paddle-label { position: absolute; bottom: 15px; width: 100%; text-align: center; color: #444; font-size: 0.7rem; letter-spacing: 1px; font-weight: bold; }
+        .pos-p2 { right: 210px; } 
+        .pos-p4 { right: 160px; }
+        
+        .paddle-label { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #444; font-size: 0.7rem; letter-spacing: 1px; font-weight: bold; }
 
-        /* DATA MONITOR (Deadzone & Values) */
+        /* DATA MONITOR */
         .monitor-panel {
             margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
             background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px dashed #444;
@@ -105,7 +112,7 @@
         .mon-row { display: flex; justify-content: space-between; font-family: monospace; font-size: 0.85rem; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .mon-val { color: #00e5ff; font-weight: bold; }
 
-        /* --- SECTION 2: SONY TOUCHPAD (WEBHID) --- */
+        /* --- SECTION 2: SONY TOUCHPAD --- */
         .ds-wrapper {
             background: #1e1e1e; border: 1px solid #333; border-radius: 15px; padding: 25px;
             display: flex; flex-direction: column; align-items: center; height: 100%;
