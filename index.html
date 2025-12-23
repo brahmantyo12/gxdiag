@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project GXDiag - Main Menu</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .menu-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px; width: 100%; max-width: 1000px; margin-top: 20px;
+        }
+        .card {
+            background: #1e1e1e; border: 1px solid #333; border-radius: 15px;
+            padding: 40px 20px; text-align: center; transition: 0.3s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .card:hover { transform: translateY(-5px); border-color: #00e5ff; box-shadow: 0 0 25px rgba(0, 229, 255, 0.15); }
+        .icon { font-size: 3.5rem; margin-bottom: 15px; }
+        .title { font-size: 1.2rem; font-weight: 800; color: #00e5ff; margin-bottom: 5px; text-transform: uppercase; }
+        .desc { font-size: 0.85rem; color: #777; }
+    </style>
+</head>
+<body>
+    <div style="text-align:center; margin-bottom:30px; margin-top:20px;">
+        <h1 style="font-size: 3rem; margin:0;">PROJECT <span style="color:#00e5ff">GXDIAG</span></h1>
+        <p style="color:#888; margin-top:5px;">Professional Hardware Diagnostic Suite v2.0</p>
+    </div>
+
+    <div class="menu-grid">
+        <a href="modules/keyboard/index.html" class="card">
+            <div class="icon">⌨️</div>
+            <div class="title">Keyboard Tester</div>
+            <div class="desc">Ghosting, Chatter Check & Layout Visualizer</div>
+        </a>
+        <a href="modules/typing/index.html" class="card">
+            <div class="icon">⚡</div>
+            <div class="title">Typing Speed</div>
+            <div class="desc">WPM Challenge & Accuracy Benchmark</div>
+        </a>
+        <a href="modules/mouse/index.html" class="card">
+            <div class="icon">🖱️</div>
+            <div class="title">Mouse & Touch</div>
+            <div class="desc">Buttons, Polling Rate (Hz) & Multi-touch</div>
+        </a>
+        <a href="modules/gamepad/index.html" class="card">
+            <div class="icon">🎮</div>
+            <div class="title">Game Controller</div>
+            <div class="desc">Gamepad, Joystick, Steering & Haptics</div>
+        </a>
+        <a href="modules/audio/index.html" class="card">
+            <div class="icon">🔊</div>
+            <div class="title">Audio System</div>
+            <div class="desc">Stereo L/R Output & Microphone Input</div>
+        </a>
+    </div>
+</body>
+</html>
