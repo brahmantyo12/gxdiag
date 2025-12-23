@@ -3,501 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Diagnostic Suite (Stable)</title>
+    <title>Project GXDiag - Hardware Diagnostic Hub</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        /* --- 1. CORE RESET --- */
-        * { box-sizing: border-box; }
-        body {
-            background-color: #121212;
-            color: #eee;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 20px; min-height: 100vh; margin: 0;
-            overflow-y: auto; /* Pastikan bisa scroll ke bawah */
-            overflow-x: hidden;
+        .menu-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; width: 100%; max-width: 1000px; margin-top: 40px;
         }
-
-        /* --- 2. HEADER --- */
-        .header-section {
-            width: 100%; max-width: 1200px; display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
+        .card {
+            background: #1e1e1e; border: 1px solid #333; border-radius: 15px;
+            padding: 30px; text-align: center; text-decoration: none; color: #eee;
+            transition: 0.3s; display: flex; flex-direction: column; align-items: center;
         }
-        h2 { margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; }
-        
-        .controls { display: flex; gap: 15px; }
-        .ctrl-box {
-            background: #1e1e1e; padding: 5px 15px; border-radius: 30px;
-            border: 1px solid #333; display: flex; align-items: center; gap: 10px;
-        }
-        .ctrl-label { font-size: 0.8rem; font-weight: bold; color: #aaa; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #00e5ff; }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        /* --- 3. DASHBOARD --- */
-        .dashboard {
-            width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 30px;
-        }
-        .panel {
-            background: #1e1e1e; border: 1px solid #333; border-radius: 12px;
-            padding: 15px; height: 160px; display: flex; flex-direction: column; position: relative;
-        }
-        .panel-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        
-        #key-history { flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
-        .log-item { background: #2a2a2a; padding: 3px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #333; font-family: monospace; color: #00e5ff; }
-        .log-item.err { color: #ff4081; border-color: #ff4081; }
-
-        .stats-row { display: flex; justify-content: space-around; height: 100%; align-items: center; }
-        .stat-item { text-align: center; }
-        .stat-val { font-size: 2rem; font-weight: bold; line-height: 1.1; }
-        .stat-lbl { font-size: 0.7rem; color: #888; text-transform: uppercase; }
-
-        /* MIC VISUALIZER */
-        #mic-canvas { width: 100%; height: 100%; background: #111; border-radius: 5px; }
-        .mic-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00e5ff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; color:#000; z-index: 10;}
-        .mic-btn:hover { background: #fff; }
-
-        /* --- 4. KEYBOARD CONTAINER (SCROLLABLE MODE) --- */
-        /* Wrapper ini menjamin keyboard tidak hilang, tapi muncul scrollbar kalau layar kecil */
-        .wrapper { 
-            width: 100%; 
-            overflow-x: auto; /* Kunci stabilitas: Scroll Horizontal */
-            display: flex; 
-            justify-content: center; 
-            padding-bottom: 20px;
-        }
-        
-        .kb-container {
-            position: relative;
-            background: #181818; padding: 25px; border-radius: 15px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-bottom: 8px solid #000;
-            display: flex; gap: 20px; 
-            min-width: 1250px; /* Ukuran Fixed agar tombol tidak berantakan */
-        }
-
-        .block-main { display: flex; flex-direction: column; gap: 6px; }
-        .block-nav { display: flex; flex-direction: column; width: 162px; }
-        .block-num { display: grid; grid-template-columns: repeat(4, 50px); grid-template-rows: repeat(5, 50px); gap: 6px; width: 218px; }
-        .row { display: flex; gap: 6px; position: relative; }
-        
-        .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
-        .nav-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 40px; }
-        .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-
-        .key {
-            height: 50px; width: 50px; background: #333; color: #ddd; border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 600; cursor: default;
-            border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444; transition: 0.05s;
-        }
-        .key.active { background: #f0faff; color: #111; border-bottom: 2px solid #ccc; transform: translateY(2px); box-shadow: 0 0 15px #00e5ff; z-index: 100; }
-        .key.tested { background: #004455; color: #00e5ff; border-color: #002233; }
-        .key.tested.active { background: #f0faff; color: #111; }
-
-        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; }
-        .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
-        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; }
-        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; }
-        .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
-
-        /* ISO FIX */
-        .iso-key { display: none; }
-        .kb-container.iso-mode .iso-key { display: flex; }
-        .kb-container.iso-mode .ansi-key { display: none; }
-        .kb-container.iso-mode .key[data-code="Enter"] { position: absolute; right: 0; top: -56px; height: 106px; width: 65px; z-index: 5; border-radius: 5px 5px 5px 15px; }
-        .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 62px; }
-
-        /* --- 5. BOTTOM SECTION --- */
-        .bottom-section {
-            width: 100%; max-width: 1200px;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-            margin-top: 40px; margin-bottom: 30px;
-        }
-
-        /* Gamepad */
-        .gamepad-container {
-            background: #1e1e1e; border-radius: 20px; border: 2px solid #333;
-            padding: 20px; display: flex; flex-direction: column; align-items: center;
-            opacity: 0.5; transition: 0.3s;
-        }
-        .gamepad-container.active { opacity: 1; border-color: #00e5ff; box-shadow: 0 0 20px rgba(0,229,255,0.1); }
-        .gp-status { color: #888; font-weight: bold; margin-bottom: 15px; font-size: 0.9rem; width:100%; display:flex; justify-content:space-between; align-items:center;}
-        .rumble-btn { background: #ff4081; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size:0.7rem; font-weight:bold; display:none; }
-        .gamepad-container.active .rumble-btn { display:block; }
-        
-        .controller-body {
-            position: relative; width: 400px; height: 260px;
-            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-            border-radius: 60px 60px 100px 100px; border: 2px solid #444;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8); margin-bottom: 20px;
-        }
-        .btn-gp { position: absolute; display: flex; align-items: center; justify-content: center; background: #333; color: #888; border: 2px solid #444; font-size: 9px; font-weight: bold; transition: 0.1s; }
-        .btn-gp.pressed { background: #00e5ff; color: #000; box-shadow: 0 0 15px #00e5ff; border-color: #fff; transform: scale(0.95); }
-        
-        /* GP Pos */
-        .gp-round { width: 30px; height: 30px; border-radius: 50%; }
-        .pos-y { top: 50px; right: 70px; } .pos-x { top: 80px; right: 100px; } .pos-b { top: 80px; right: 40px; } .pos-a { top: 110px; right: 70px; }
-        .gp-dpad { width: 24px; height: 24px; border-radius: 4px; }
-        .pos-du { top: 100px; left: 80px; } .pos-dd { top: 148px; left: 80px; } .pos-dl { top: 124px; left: 56px; } .pos-dr { top: 124px; left: 104px; }
-        .gp-stick { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #555; background: #222; }
-        .gp-stick.pressed { background: #005577; }
-        .pos-ls { top: 50px; left: 50px; } .pos-rs { top: 140px; right: 80px; }
-        .gp-sh { width: 70px; height: 18px; border-radius: 10px; top: -10px; } .pos-lb { left: 40px; } .pos-rb { right: 40px; }
-        .gp-tr { width: 40px; height: 25px; border-radius: 5px; top: -30px; z-index: -1; } .pos-lt { left: 55px; } .pos-rt { right: 55px; }
-        .gp-small { width: 18px; height: 18px; border-radius: 50%; top: 100px; } .pos-sel { left: 160px; } .pos-start { right: 160px; } .pos-home { left: 190px; top: 60px; }
-        .gp-paddle { width: 20px; height: 30px; border-radius: 6px; bottom: 40px; background: #222; }
-        .pos-p1 { left: 150px; bottom: 60px; } .pos-p2 { right: 150px; bottom: 60px; } .pos-p3 { left: 130px; bottom: 30px; } .pos-p4 { right: 130px; bottom: 30px; }
-        .pro-label { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #444; font-size: 0.6rem; letter-spacing: 1px;}
-
-        .analog-container { width: 100%; display: flex; justify-content: space-around; padding-top: 15px; border-top: 1px dashed #333; }
-        .stick-wrapper { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .stick-visual { width: 80px; height: 80px; border: 2px solid #444; border-radius: 50%; background: #111; position: relative; display: flex; align-items: center; justify-content: center; }
-        .stick-visual::before { content: ''; width: 100%; height: 1px; background: #222; position: absolute; }
-        .stick-visual::after { content: ''; height: 100%; width: 1px; background: #222; position: absolute; }
-        .stick-dot { width: 8px; height: 8px; background: #00e5ff; border-radius: 50%; position: absolute; box-shadow: 0 0 5px #00e5ff; transform: translate(0, 0); }
-        .stick-vals { font-family: monospace; font-size: 0.75rem; color: #666; }
-
-        /* Mouse */
-        .mouse-container { background: #1e1e1e; border-radius: 20px; border: 2px solid #333; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .mouse-layout { display: flex; gap: 30px; align-items: flex-start; }
-        .mouse-body { position: relative; width: 140px; height: 220px; background: #222; border-radius: 60px 60px 50px 50px; border: 2px solid #444; box-shadow: inset 0 0 20px #000; }
-        .ms-btn { position: absolute; background: #333; border: 1px solid #444; transition: 0.1s; }
-        .ms-btn.pressed { background: #00e5ff; box-shadow: 0 0 15px #00e5ff; }
-        .ms-left { top: 0; left: 0; width: 68px; height: 90px; border-radius: 58px 0 0 0; border-right: none; }
-        .ms-right { top: 0; right: 0; width: 68px; height: 90px; border-radius: 0 58px 0 0; border-left: none; }
-        .ms-mid { top: 25px; left: 58px; width: 24px; height: 40px; border-radius: 10px; background: #111; z-index: 5; }
-        .ms-mid.scrolling { background: #ff4081; }
-        .ms-side-fwd { top: 100px; left: -8px; width: 15px; height: 30px; border-radius: 5px 0 0 5px; background: #444; }
-        .ms-side-back { top: 140px; left: -8px; width: 15px; height: 30px; border-radius: 5px 0 0 5px; background: #444; }
-        .touchpad-area { width: 200px; height: 160px; background: #1a1a1a; border: 2px dashed #444; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-top: 30px; }
-        .touch-label { color: #555; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; }
-        .touch-coords { color: #00e5ff; font-family: monospace; font-size: 1.2rem; font-weight: bold; }
-        .touch-scroll-indicator { position: absolute; color: #ff4081; font-weight: bold; font-size: 0.9rem; opacity: 0; transition: opacity 0.2s; }
-        .touch-scroll-indicator.visible { opacity: 1; }
-
-        /* Multi Touch */
-        .multi-touch-section { width: 100%; max-width: 1200px; margin-bottom: 50px; background: #1e1e1e; border: 2px solid #333; border-radius: 10px; height: 200px; position: relative; overflow: hidden; touch-action: none; display: flex; align-items: center; justify-content: center; }
-        .multi-touch-placeholder { color: #444; font-weight: bold; font-size: 1.5rem; user-select: none; }
-        .touch-point { position: absolute; width: 40px; height: 40px; background: rgba(0, 229, 255, 0.5); border: 2px solid #00e5ff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem;}
-
-        @media (max-width: 1200px) {
-            .dashboard { grid-template-columns: 1fr; height: auto; }
-            .bottom-section { grid-template-columns: 1fr; }
-            .gamepad-container, .mouse-container { width: 100%; max-width: 100%; }
-            .wrapper { justify-content: flex-start; } /* Allow left-align for scroll */
-        }
+        .card:hover { transform: translateY(-5px); border-color: #00e5ff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); }
+        .icon { font-size: 3rem; margin-bottom: 15px; }
+        .title { font-size: 1.2rem; font-weight: bold; color: #00e5ff; margin-bottom: 10px; }
+        .desc { font-size: 0.8rem; color: #888; }
     </style>
 </head>
 <body>
+    <h1 style="font-size: 2.5rem; margin-bottom: 5px;">PROJECT <span style="color:#00e5ff">GXDIAG</span></h1>
+    <p style="color:#888;">Professional Hardware Diagnostic Suite</p>
 
-    <div class="header-section">
-        <h2>Input Tester <span style="font-size:0.7em; color:#fff">SUITE</span></h2>
-        <div class="controls">
-            <div class="ctrl-box">
-                <span class="ctrl-label">ANSI</span>
-                <label class="switch">
-                    <input type="checkbox" id="layout-toggle" onchange="toggleLayout()">
-                    <span class="slider"></span>
-                </label>
-                <span class="ctrl-label" style="color:#00e5ff">ISO</span>
-            </div>
-            <div class="ctrl-box">
-                <span class="ctrl-label">🔊 Sound</span>
-                <label class="switch">
-                    <input type="checkbox" id="sound-toggle" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
+    <div class="menu-grid">
+        <a href="modules/keyboard/index.html" class="card">
+            <div class="icon">⌨️</div>
+            <div class="title">Keyboard Tester</div>
+            <div class="desc">Ghosting, Chattering & Layout Check</div>
+        </a>
+        <a href="modules/typing/index.html" class="card">
+            <div class="icon">⚡</div>
+            <div class="title">Typing Speed</div>
+            <div class="desc">WPM Challenge & Accuracy Test</div>
+        </a>
+        <a href="modules/mouse/index.html" class="card">
+            <div class="icon">🖱️</div>
+            <div class="title">Mouse & Touchpad</div>
+            <div class="desc">Buttons, Polling Rate & Multi-touch</div>
+        </a>
+        <a href="modules/gamepad/index.html" class="card">
+            <div class="icon">🎮</div>
+            <div class="title">Game Controller</div>
+            <div class="desc">Gamepad, Steering Wheel & Haptics</div>
+        </a>
+        <a href="modules/audio/index.html" class="card">
+            <div class="icon">🔊</div>
+            <div class="title">Audio System</div>
+            <div class="desc">Stereo Speaker Test & Mic Visualizer</div>
+        </a>
     </div>
-
-    <div class="dashboard">
-        <div class="panel">
-            <div class="panel-head">INPUT LOG <span style="cursor:pointer; color:#ff4081" onclick="clearLog()">[CLEAR]</span></div>
-            <div id="key-history"></div>
-            <div id="chatter-alert" style="display:none; position:absolute; bottom:10px; right:10px; background:#b71c1c; color:#fff; padding:5px; border-radius:4px; font-size:0.8rem; font-weight:bold;">⚠️ Chatter!</div>
-        </div>
-        <div class="panel">
-            <div class="panel-head">STATS & GHOSTING</div>
-            <div class="stats-row">
-                <div class="stat-item"><div class="stat-val" id="tpm-display">0</div><div class="stat-lbl">KPM</div></div>
-                <div class="stat-item"><div class="stat-val" id="ghost-current" style="color:#fff">0</div><div class="stat-lbl">PRESSED</div></div>
-                <div class="stat-item"><div class="stat-val" id="ghost-max" style="color:#00e5ff">0</div><div class="stat-lbl">MAX</div></div>
-            </div>
-        </div>
-        <div class="panel" style="position:relative;">
-            <div class="panel-head">MICROPHONE</div>
-            <canvas id="mic-canvas"></canvas>
-            <button class="mic-btn" id="mic-btn" onclick="toggleMic()">START MIC TEST</button>
-        </div>
-    </div>
-
-    <div class="wrapper">
-        <div class="kb-container" id="kb-case">
-            <div class="block-main">
-                <div class="row" style="margin-bottom:10px;">
-                    <div class="key" style="margin-right:30px;" data-code="Escape">Esc</div>
-                    <div class="key" data-code="F1">F1</div><div class="key" data-code="F2">F2</div><div class="key" data-code="F3">F3</div><div class="key" style="margin-right:20px;" data-code="F4">F4</div>
-                    <div class="key" data-code="F5">F5</div><div class="key" data-code="F6">F6</div><div class="key" data-code="F7">F7</div><div class="key" style="margin-right:20px;" data-code="F8">F8</div>
-                    <div class="key" data-code="F9">F9</div><div class="key" data-code="F10">F10</div><div class="key" data-code="F11">F11</div><div class="key" data-code="F12">F12</div>
-                </div>
-                <div class="row">
-                    <div class="key" data-code="Backquote">~</div><div class="key" data-code="Digit1">1</div><div class="key" data-code="Digit2">2</div><div class="key" data-code="Digit3">3</div><div class="key" data-code="Digit4">4</div><div class="key" data-code="Digit5">5</div><div class="key" data-code="Digit6">6</div><div class="key" data-code="Digit7">7</div><div class="key" data-code="Digit8">8</div><div class="key" data-code="Digit9">9</div><div class="key" data-code="Digit0">0</div><div class="key" data-code="Minus">-</div><div class="key" data-code="Equal">=</div><div class="key w-2" data-code="Backspace">Back</div>
-                </div>
-                <div class="row">
-                    <div class="key w-15" data-code="Tab">Tab</div>
-                    <div class="key" data-code="KeyQ">Q</div><div class="key" data-code="KeyW">W</div><div class="key" data-code="KeyE">E</div><div class="key" data-code="KeyR">R</div><div class="key" data-code="KeyT">T</div><div class="key" data-code="KeyY">Y</div><div class="key" data-code="KeyU">U</div><div class="key" data-code="KeyI">I</div><div class="key" data-code="KeyO">O</div><div class="key" data-code="KeyP">P</div><div class="key" data-code="BracketLeft">[</div><div class="key" data-code="BracketRight">]</div><div class="key w-15 ansi-key" data-code="Backslash">\</div>
-                </div>
-                <div class="row">
-                    <div class="key w-175" data-code="CapsLock">Caps</div>
-                    <div class="key" data-code="KeyA">A</div><div class="key" data-code="KeyS">S</div><div class="key" data-code="KeyD">D</div><div class="key" data-code="KeyF">F</div><div class="key" data-code="KeyG">G</div><div class="key" data-code="KeyH">H</div><div class="key" data-code="KeyJ">J</div><div class="key" data-code="KeyK">K</div><div class="key" data-code="KeyL">L</div><div class="key" data-code="Semicolon">;</div><div class="key" data-code="Quote">'</div><div class="key iso-key" data-code="Backslash">#</div><div class="key w-225" data-code="Enter">Enter</div>
-                </div>
-                <div class="row">
-                    <div class="key w-225" data-code="ShiftLeft">Shift</div><div class="key iso-key" data-code="IntlBackslash">\</div>
-                    <div class="key" data-code="KeyZ">Z</div><div class="key" data-code="KeyX">X</div><div class="key" data-code="KeyC">C</div><div class="key" data-code="KeyV">V</div><div class="key" data-code="KeyB">B</div><div class="key" data-code="KeyN">N</div><div class="key" data-code="KeyM">M</div><div class="key" data-code="Comma">,</div><div class="key" data-code="Period">.</div><div class="key" data-code="Slash">/</div><div class="key w-275" data-code="ShiftRight">Shift</div>
-                </div>
-                <div class="row">
-                    <div class="key w-125" data-code="ControlLeft">Ctrl</div><div class="key w-125" data-code="MetaLeft">Win</div><div class="key w-125" data-code="AltLeft">Alt</div><div class="key w-space" data-code="Space">Space</div><div class="key w-125" data-code="AltRight">Alt</div><div class="key w-125" data-code="MetaRight">Win</div><div class="key" data-code="ContextMenu">Mn</div><div class="key w-125" data-code="ControlRight">Ctrl</div>
-                </div>
-            </div>
-            <div class="block-nav">
-                <div class="nav-sys"><div class="key" data-code="PrintScreen">Prt</div><div class="key" data-code="ScrollLock">Scr</div><div class="key" data-code="Pause">Pau</div></div>
-                <div class="nav-cmd"><div class="key" data-code="Insert">Ins</div><div class="key" data-code="Home">Hm</div><div class="key" data-code="PageUp">PU</div><div class="key" data-code="Delete">Del</div><div class="key" data-code="End">Ed</div><div class="key" data-code="PageDown">PD</div></div>
-                <div class="nav-arr"><div></div><div class="key" data-code="ArrowUp">↑</div><div></div><div class="key" data-code="ArrowLeft">←</div><div class="key" data-code="ArrowDown">↓</div><div class="key" data-code="ArrowRight">→</div></div>
-            </div>
-            <div class="block-num">
-                <div class="key" data-code="NumLock">Num</div><div class="key" data-code="NumpadDivide">/</div><div class="key" data-code="NumpadMultiply">*</div><div class="key" data-code="NumpadSubtract">-</div>
-                <div class="key" data-code="Numpad7">7</div><div class="key" data-code="Numpad8">8</div><div class="key" data-code="Numpad9">9</div><div class="key" data-code="NumpadAdd">+</div>
-                <div class="key" data-code="Numpad4">4</div><div class="key" data-code="Numpad5">5</div><div class="key" data-code="Numpad6">6</div>
-                <div class="key" data-code="Numpad1">1</div><div class="key" data-code="Numpad2">2</div><div class="key" data-code="Numpad3">3</div><div class="key" data-code="NumpadEnter">Ent</div>
-                <div class="key" data-code="Numpad0">0</div><div class="key" data-code="NumpadDecimal">.</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bottom-section">
-        <div class="gamepad-container" id="gp-container">
-            <div class="gp-status">
-                <span id="gp-status">Connect a Controller</span>
-                <button class="rumble-btn" id="rumble-btn" onclick="testRumble()">TEST VIBRATION</button>
-            </div>
-            <div class="controller-body">
-                <div class="btn-gp gp-tr pos-lt" id="gp-b6">LT</div><div class="btn-gp gp-tr pos-rt" id="gp-b7">RT</div>
-                <div class="btn-gp gp-sh pos-lb" id="gp-b4">LB</div><div class="btn-gp gp-sh pos-rb" id="gp-b5">RB</div>
-                <div class="btn-gp gp-stick pos-ls" id="gp-b10">L3</div><div class="btn-gp gp-dpad pos-du" id="gp-b12">▲</div><div class="btn-gp gp-dpad pos-dd" id="gp-b13">▼</div>
-                <div class="btn-gp gp-dpad pos-dl" id="gp-b14">◀</div><div class="btn-gp gp-dpad pos-dr" id="gp-b15">▶</div>
-                <div class="btn-gp gp-round pos-y" id="gp-b3" style="color:#eadd00">Y</div><div class="btn-gp gp-round pos-x" id="gp-b2" style="color:#0088ff">X</div>
-                <div class="btn-gp gp-round pos-a" id="gp-b0" style="color:#00ff88">A</div><div class="btn-gp gp-round pos-b" id="gp-b1" style="color:#ff4040">B</div><div class="btn-gp gp-stick pos-rs" id="gp-b11">R3</div>
-                <div class="btn-gp gp-small pos-sel" id="gp-b8">Sel</div><div class="btn-gp gp-small pos-start" id="gp-b9">Sta</div><div class="btn-gp gp-small pos-home" id="gp-b16">⌂</div>
-                <div class="btn-gp gp-paddle pos-p1" id="gp-b17">P1</div><div class="btn-gp gp-paddle pos-p2" id="gp-b18">P2</div>
-                <div class="btn-gp gp-paddle pos-p3" id="gp-b19">P3</div><div class="btn-gp gp-paddle pos-p4" id="gp-b20">P4</div>
-                <div class="pro-label">PRO CONTROLLER PADDLES</div>
-            </div>
-            <div class="analog-container">
-                <div class="stick-wrapper"><div class="stick-visual"><div class="stick-dot" id="dot-l"></div></div><div class="stick-vals" id="val-l">L: 0.00, 0.00</div></div>
-                <div class="stick-wrapper"><div class="stick-visual"><div class="stick-dot" id="dot-r"></div></div><div class="stick-vals" id="val-r">R: 0.00, 0.00</div></div>
-            </div>
-        </div>
-
-        <div class="mouse-container">
-            <div class="gp-status">Mouse & Touchpad</div>
-            <div class="mouse-layout">
-                <div class="mouse-body">
-                    <div class="ms-btn ms-left" id="ms-0"></div><div class="ms-btn ms-right" id="ms-2"></div><div class="ms-btn ms-mid" id="ms-1"></div>
-                    <div class="ms-btn ms-side-back" id="ms-3" title="Back"></div><div class="ms-btn ms-side-fwd" id="ms-4" title="Forward"></div>
-                </div>
-                <div class="touchpad-area" id="touch-area">
-                    <div class="touch-label">Touch / Scroll</div>
-                    <div class="touch-coords" id="touch-coords">X:0 Y:0</div>
-                    <div class="touch-scroll-indicator" id="scroll-msg">SCROLLING...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="multi-touch-section" id="multi-touch">
-        <div class="multi-touch-placeholder">TOUCHSCREEN TEST AREA (MULTI-TOUCH)</div>
-    </div>
-
-    <script>
-        // AUDIO & MIC
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let noiseBuffer = null;
-        function playSound() {
-            if (!document.getElementById('sound-toggle').checked) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (!noiseBuffer) {
-                const b = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
-                const d = b.getChannelData(0); for(let i=0; i<d.length; i++) d[i] = Math.random()*2-1;
-                noiseBuffer = b;
-            }
-            const s = audioCtx.createBufferSource(); s.buffer = noiseBuffer;
-            const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1200;
-            const g = audioCtx.createGain(); g.gain.setValueAtTime(0.5, audioCtx.currentTime); 
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.03);
-            s.connect(f); f.connect(g); g.connect(audioCtx.destination);
-            s.start(); s.stop(audioCtx.currentTime+0.04);
-        }
-
-        let micStream = null;
-        async function toggleMic() {
-            if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; document.getElementById('mic-btn').innerText = "START MIC TEST"; return; }
-            try {
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                document.getElementById('mic-btn').style.display = 'none';
-                const src = audioCtx.createMediaStreamSource(micStream);
-                const anal = audioCtx.createAnalyser(); anal.fftSize = 256; src.connect(anal);
-                const buf = new Uint8Array(anal.frequencyBinCount);
-                const cvs = document.getElementById('mic-canvas'); const ctx = cvs.getContext('2d');
-                function drawMic() {
-                    if(!micStream) return;
-                    requestAnimationFrame(drawMic);
-                    anal.getByteFrequencyData(buf);
-                    ctx.fillStyle = '#111'; ctx.fillRect(0,0,cvs.width,cvs.height);
-                    const barW = (cvs.width/buf.length)*2.5; let x = 0;
-                    for(let i=0; i<buf.length; i++) {
-                        const h = buf[i]/2;
-                        ctx.fillStyle = `rgb(${h+100}, 255, 255)`;
-                        ctx.fillRect(x, cvs.height-h, barW, h); x += barW + 1;
-                    }
-                }
-                drawMic();
-            } catch(e) { alert("Mic Permission Denied"); }
-        }
-
-        // KEYBOARD
-        let lastKeyTime = {}, startTime = null, count = 0, activeKeys = new Set(), maxSim = 0;
-        function toggleLayout() {
-            const iso = document.getElementById('layout-toggle').checked;
-            const kb = document.getElementById('kb-case');
-            iso ? kb.classList.add('iso-mode') : kb.classList.remove('iso-mode');
-        }
-        function format(code) { return code.replace('Key','').replace('Digit','').replace('Numpad','Num '); }
-
-        window.addEventListener('keydown', e => {
-            if (e.repeat) return;
-            if (['Tab','AltLeft','AltRight'].includes(e.code) || e.code.startsWith('F')) e.preventDefault();
-            playSound();
-            const now = Date.now(), last = lastKeyTime[e.code] || 0;
-            if (last && now-last < 80) {
-                document.getElementById('chatter-key').innerText = format(e.code);
-                document.getElementById('chatter-alert').style.display = 'block';
-                setTimeout(()=>document.getElementById('chatter-alert').style.display='none',3000);
-            }
-            lastKeyTime[e.code] = now;
-            activeKeys.add(e.code); count++;
-            if(!startTime) { startTime=now; setInterval(()=>{
-                const m = (Date.now()-startTime)/60000;
-                document.getElementById('tpm-display').innerText = m>0?Math.round(count/m):0;
-            },1000); }
-            document.getElementById('ghost-current').innerText = activeKeys.size;
-            if(activeKeys.size > maxSim) { maxSim = activeKeys.size; document.getElementById('ghost-max').innerText = maxSim; }
-            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>{k.classList.add('active','tested')});
-            const l = document.createElement('div'); l.className = 'log-item';
-            if(now-last < 80) l.classList.add('err');
-            l.innerText = format(e.code);
-            document.getElementById('key-history').prepend(l);
-        });
-        window.addEventListener('keyup', e => {
-            activeKeys.delete(e.code);
-            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>k.classList.remove('active'));
-            document.getElementById('ghost-current').innerText = activeKeys.size;
-        });
-        function clearLog() { document.getElementById('key-history').innerHTML = ''; }
-
-        // GAMEPAD
-        let gpIdx = null;
-        window.addEventListener("gamepadconnected", e => {
-            gpIdx = e.gamepad.index;
-            document.getElementById('gp-container').classList.add('active');
-            document.getElementById('gp-status').innerText = "Connected: " + e.gamepad.id.substring(0,25);
-            loopGP();
-        });
-        window.addEventListener("gamepaddisconnected", e => {
-            gpIdx = null;
-            document.getElementById('gp-container').classList.remove('active');
-            document.getElementById('gp-status').innerText = "Connect a Controller";
-        });
-        function loopGP() {
-            if(gpIdx === null) return;
-            const gp = navigator.getGamepads()[gpIdx];
-            if(gp) {
-                gp.buttons.forEach((b,i)=>{
-                    const el = document.getElementById(`gp-b${i}`);
-                    if(el) b.pressed ? el.classList.add('pressed') : el.classList.remove('pressed');
-                });
-                const lx = gp.axes[0], ly = gp.axes[1];
-                document.getElementById('dot-l').style.transform = `translate(${lx*35}px, ${ly*35}px)`;
-                document.getElementById('val-l').innerText = `L: ${lx.toFixed(2)}, ${ly.toFixed(2)}`;
-                const ls = document.getElementById('gp-b10');
-                if(ls && (Math.abs(lx)>0.3 || Math.abs(ly)>0.3)) ls.classList.add('pressed'); else if(ls) ls.classList.remove('pressed');
-
-                const rx = gp.axes[2], ry = gp.axes[3];
-                document.getElementById('dot-r').style.transform = `translate(${rx*35}px, ${ry*35}px)`;
-                document.getElementById('val-r').innerText = `R: ${rx.toFixed(2)}, ${ry.toFixed(2)}`;
-                const rs = document.getElementById('gp-b11');
-                if(rs && (Math.abs(rx)>0.3 || Math.abs(ry)>0.3)) rs.classList.add('pressed'); else if(rs) rs.classList.remove('pressed');
-                requestAnimationFrame(loopGP);
-            }
-        }
-        function testRumble() {
-            if(gpIdx === null) return;
-            const gp = navigator.getGamepads()[gpIdx];
-            if (gp && gp.vibrationActuator) gp.vibrationActuator.playEffect("dual-rumble", { startDelay: 0, duration: 500, weakMagnitude: 1.0, strongMagnitude: 1.0 });
-            else alert("Rumble not supported/detected");
-        }
-
-        // MOUSE & TOUCH
-        window.addEventListener('mousedown', e => {
-            const btn = document.getElementById(`ms-${e.button}`);
-            if(btn) { btn.classList.add('pressed'); e.preventDefault(); }
-        });
-        window.addEventListener('mouseup', e => {
-            const btn = document.getElementById(`ms-${e.button}`);
-            if(btn) btn.classList.remove('pressed');
-        });
-        window.addEventListener('contextmenu', e => e.preventDefault());
-        window.addEventListener('wheel', e => {
-            const mid = document.getElementById('ms-1'); mid.classList.add('scrolling');
-            const scrollMsg = document.getElementById('scroll-msg');
-            scrollMsg.innerText = "SLIDE " + (e.deltaY > 0 ? "DOWN" : "UP");
-            scrollMsg.classList.add('visible');
-            clearTimeout(window.scrollTimer);
-            window.scrollTimer = setTimeout(() => {
-                mid.classList.remove('scrolling'); scrollMsg.classList.remove('visible');
-            }, 200);
-        });
-        const touchArea = document.getElementById('touch-area');
-        touchArea.addEventListener('mousemove', e => {
-            const rect = touchArea.getBoundingClientRect();
-            document.getElementById('touch-coords').innerText = `X:${Math.round(e.clientX - rect.left)} Y:${Math.round(e.clientY - rect.top)}`;
-        });
-
-        // MULTI TOUCH
-        const multiTouch = document.getElementById('multi-touch');
-        multiTouch.addEventListener('touchstart', handleTouch, {passive: false});
-        multiTouch.addEventListener('touchmove', handleTouch, {passive: false});
-        multiTouch.addEventListener('touchend', handleTouch);
-        function handleTouch(e) {
-            e.preventDefault();
-            multiTouch.innerHTML = '';
-            if(e.touches.length > 0) {
-                for (let i = 0; i < e.touches.length; i++) {
-                    const t = e.touches[i];
-                    const rect = multiTouch.getBoundingClientRect();
-                    const el = document.createElement('div');
-                    el.className = 'touch-point';
-                    el.style.left = (t.clientX - rect.left) + 'px';
-                    el.style.top = (t.clientY - rect.top) + 'px';
-                    el.innerText = i+1;
-                    multiTouch.appendChild(el);
-                }
-            } else { multiTouch.innerHTML = '<div class="multi-touch-placeholder">TOUCHSCREEN TEST AREA (MULTI-TOUCH)</div>'; }
-        }
-    </script>
 </body>
 </html>
