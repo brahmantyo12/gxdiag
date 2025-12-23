@@ -2,7 +2,7 @@
 
 A comprehensive web-based diagnostic tool designed to test Keyboards, Mice, and Gamepads directly in the browser. Built with vanilla HTML, CSS, and JavaScript.
 
-[**🔴 LIVE DEMO**]([https://username-kamu.github.io/nama-repo-kamu/](https://gxdiag.brahmantyo12.my.id/)) 
+[**🔴 LIVE DEMO**](https://gxdiag.brahmantyo12.my.id/) 
 
 ![Screenshot](screenshot.png)
 
