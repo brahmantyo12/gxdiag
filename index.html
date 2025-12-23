@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project GXDiag - Input Diagnostic Tool</title>
+    <title>Input Diagnostic Suite (KB, Mouse, Controllers)</title>
     <style>
-        /* --- 1. CORE RESET & THEME --- */
+        /* --- 1. CORE RESET --- */
         * { box-sizing: border-box; }
         body {
             background-color: #121212;
             color: #eee;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             display: flex; flex-direction: column; align-items: center;
             padding: 20px; min-height: 100vh; margin: 0; user-select: none;
             overflow-x: hidden;
@@ -19,22 +19,16 @@
         /* --- 2. HEADER --- */
         .header-section {
             width: 100%; max-width: 1280px; display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;
+            align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
         }
-        h2 { 
-            margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; 
-            text-shadow: 0 0 15px rgba(0, 229, 255, 0.3); font-weight: 800;
-        }
-        .header-sub { color: #fff; font-weight: 300; }
+        h2 { margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; }
         
         .controls { display: flex; gap: 15px; }
         .ctrl-box {
-            background: #1e1e1e; padding: 6px 16px; border-radius: 30px;
+            background: #1e1e1e; padding: 5px 15px; border-radius: 30px;
             border: 1px solid #333; display: flex; align-items: center; gap: 10px;
         }
         .ctrl-label { font-size: 0.8rem; font-weight: bold; color: #aaa; }
-
-        /* Switches */
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 34px; }
@@ -42,42 +36,36 @@
         input:checked + .slider { background-color: #00e5ff; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* --- 3. DASHBOARD (3 PANELS) --- */
+        /* --- 3. DASHBOARD --- */
         .dashboard {
-            width: 100%; max-width: 1280px; display: grid; 
-            grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 30px;
+            width: 100%; max-width: 1280px; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 30px;
         }
         .panel {
             background: #1e1e1e; border: 1px solid #333; border-radius: 12px;
-            padding: 15px; height: 160px; display: flex; flex-direction: column; position: relative;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            padding: 15px; height: 150px; display: flex; flex-direction: column; position: relative;
         }
-        .panel-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .panel-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
-        /* Log */
         #key-history { flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
-        #key-history::-webkit-scrollbar { width: 5px; } 
-        #key-history::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
         .log-item { background: #2a2a2a; padding: 3px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #333; font-family: monospace; color: #00e5ff; }
         .log-item.err { color: #ff4081; border-color: #ff4081; }
 
-        /* Stats */
-        .stats-col { display: flex; flex-direction: column; justify-content: center; height: 100%; gap: 10px; }
-        .stat-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed #333; padding-bottom: 5px; }
-        .stat-val { font-size: 1.4rem; font-weight: bold; color: #fff; font-family: monospace; }
-        .stat-lbl { font-size: 0.7rem; color: #888; font-weight: bold;}
+        .stats-row { display: flex; justify-content: space-around; height: 100%; align-items: center; }
+        .stat-item { text-align: center; }
+        .stat-val { font-size: 2rem; font-weight: bold; line-height: 1.1; }
+        .stat-lbl { font-size: 0.7rem; color: #888; text-transform: uppercase; }
 
-        /* Mic */
+        /* MIC VISUALIZER */
         #mic-canvas { width: 100%; height: 100%; background: #111; border-radius: 5px; }
-        .mic-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00e5ff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; color:#000; z-index: 10; font-size: 0.8rem; white-space: nowrap;}
+        .mic-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00e5ff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; color:#000; z-index: 10;}
         .mic-btn:hover { background: #fff; }
 
         /* --- 4. KEYBOARD CONTAINER --- */
-        .wrapper { width: 100%; overflow-x: auto; display: flex; justify-content: center; padding-bottom: 20px; }
+        .wrapper { width: 100%; display: flex; justify-content: center; }
         .kb-container {
             position: relative; background: #181818; padding: 25px; border-radius: 15px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-bottom: 8px solid #000;
-            display: flex; gap: 20px; min-width: 1280px; margin-bottom: 20px;
+            display: flex; gap: 20px; min-width: 1280px; transform-origin: top center; margin-bottom: 40px;
         }
         .block-main { display: flex; flex-direction: column; gap: 6px; }
         .block-nav { display: flex; flex-direction: column; width: 162px; }
@@ -87,14 +75,25 @@
         .nav-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 40px; }
         .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
-        .key { height: 50px; width: 50px; background: #333; color: #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; cursor: default; border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444; transition: 0.05s; }
+        .key {
+            height: 50px; width: 50px; background: #333; color: #ddd; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 600; cursor: default;
+            border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444; transition: 0.05s;
+        }
         .key.active { background: #f0faff; color: #111; border-bottom: 2px solid #ccc; transform: translateY(2px); box-shadow: 0 0 15px #00e5ff; z-index: 100; }
         .key.tested { background: #004455; color: #00e5ff; border-color: #002233; }
         .key.tested.active { background: #f0faff; color: #111; }
 
-        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; } .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
-        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; } .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; } .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
-        .iso-key { display: none; } .kb-container.iso-mode .iso-key { display: flex; } .kb-container.iso-mode .ansi-key { display: none; }
+        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; }
+        .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
+        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; }
+        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; }
+        .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
+
+        .iso-key { display: none; }
+        .kb-container.iso-mode .iso-key { display: flex; }
+        .kb-container.iso-mode .ansi-key { display: none; }
         .kb-container.iso-mode .key[data-code="Enter"] { position: absolute; right: 0; top: -56px; height: 106px; width: 65px; z-index: 5; border-radius: 5px 5px 5px 15px; }
         .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 62px; }
 
@@ -115,7 +114,6 @@
         .gp-status { color: #888; font-weight: bold; margin-bottom: 15px; font-size: 0.9rem; width:100%; display:flex; justify-content:space-between; align-items:center;}
         .rumble-btn { background: #ff4081; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size:0.7rem; font-weight:bold; display:none; }
         .gamepad-container.active .rumble-btn { display:block; }
-        .rumble-btn:active { transform: scale(0.95); }
 
         .controller-body {
             position: relative; width: 400px; height: 260px;
@@ -212,8 +210,7 @@
 <body>
 
     <div class="header-section">
-        <h2>Project <span style="color:#fff">GXDiag</span> <span style="font-size:0.5em; color:#555">v1.0</span></h2>
-        
+        <h2>Input Tester <span style="font-size:0.7em; color:#fff">SUITE</span></h2>
         <div class="controls">
             <div class="ctrl-box">
                 <span class="ctrl-label">ANSI</span>
@@ -240,17 +237,17 @@
             <div id="chatter-alert" style="display:none; position:absolute; bottom:10px; right:10px; background:#b71c1c; color:#fff; padding:5px; border-radius:4px; font-size:0.8rem; font-weight:bold;">⚠️ Chatter!</div>
         </div>
         <div class="panel">
-            <div class="panel-head">KEYBOARD STATS</div>
-            <div class="stats-col">
-                <div class="stat-row"><span class="stat-lbl">KPM (SPEED)</span><span class="stat-val" id="tpm-display">0</span></div>
-                <div class="stat-row"><span class="stat-lbl">PRESSED NOW</span><span class="stat-val" id="ghost-current" style="color:#fff">0</span></div>
-                <div class="stat-row"><span class="stat-lbl">MAX GHOSTING</span><span class="stat-val" id="ghost-max" style="color:#00e5ff">0</span></div>
+            <div class="panel-head">STATS & GHOSTING</div>
+            <div class="stats-row">
+                <div class="stat-item"><div class="stat-val" id="tpm-display">0</div><div class="stat-lbl">KPM</div></div>
+                <div class="stat-item"><div class="stat-val" id="ghost-current" style="color:#fff">0</div><div class="stat-lbl">PRESSED</div></div>
+                <div class="stat-item"><div class="stat-val" id="ghost-max" style="color:#00e5ff">0</div><div class="stat-lbl">MAX</div></div>
             </div>
         </div>
         <div class="panel" style="position:relative;">
-            <div class="panel-head">MICROPHONE TEST</div>
+            <div class="panel-head">MICROPHONE</div>
             <canvas id="mic-canvas"></canvas>
-            <button class="mic-btn" id="mic-btn" onclick="toggleMic()">START MIC</button>
+            <button class="mic-btn" id="mic-btn" onclick="toggleMic()">START MIC TEST</button>
         </div>
     </div>
 
@@ -323,9 +320,8 @@
         </div>
 
         <div class="ds-container">
-            <h3 style="color:#00a2ff; margin-bottom:10px;">Sony DualShock Touchpad</h3>
-            <div style="font-size:0.75rem; color:#666; margin-bottom:10px; text-align:center;">USB ONLY • CHROME/EDGE ONLY<br>CLOSE STEAM/DS4WINDOWS</div>
-            <button class="ds-connect-btn" id="ds-connect">🔌 CONNECT VIA USB</button>
+            <h3 style="color:#00a2ff; margin-bottom:10px;">DualShock Touchpad</h3>
+            <button class="ds-connect-btn" id="ds-connect">CONNECT USB (CHROME/EDGE)</button>
             <div class="ds-touchpad">
                 <div id="ds-f1" class="ds-finger">1</div>
                 <div id="ds-f2" class="ds-finger">2</div>
@@ -360,8 +356,10 @@
     <script>
         // --- 1. AUTO SCALE ---
         function scaleKeyboard() {
-            // Scale logic removed for stability. 
-            // Relying on CSS horizontal scroll for small screens.
+            const wrap = document.getElementById('kb-wrapper');
+            const kb = document.getElementById('kb-case');
+            // Remove complex auto-zoom to prevent disappearing
+            // Just center it. If too wide, scrollbar appears via CSS.
         }
 
         // --- 2. AUDIO & MIC ---
@@ -406,7 +404,7 @@
                     }
                 }
                 drawMic();
-            } catch(e) { alert("Mic Permission Denied: " + e.message); }
+            } catch(e) { alert("Mic Permission Denied"); }
         }
 
         // --- 3. KEYBOARD ---
@@ -496,7 +494,6 @@
         const f1 = document.getElementById('ds-f1'), f2 = document.getElementById('ds-f2');
         const v1 = document.getElementById('ds-data-1'), v2 = document.getElementById('ds-data-2');
         dsBtn.addEventListener('click', async () => {
-            if (!("hid" in navigator)) { alert("WebHID not supported. Use Chrome/Edge."); return; }
             try {
                 const devs = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x054C }] });
                 if(devs.length===0) return;
