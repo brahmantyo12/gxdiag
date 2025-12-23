@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Keyboard Tester (Media Support)</title>
+    <title>Keyboard Tester Pro + Speed</title>
     <style>
         /* --- RESET & DASAR --- */
         * { box-sizing: border-box; }
@@ -14,16 +14,16 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: start;
+            padding-top: 30px;
             min-height: 100vh;
             margin: 0;
-            overflow-x: hidden; /* Mencegah scroll samping */
         }
 
         h2 { margin-top: 0; color: #00ff88; text-transform: uppercase; letter-spacing: 2px; }
         p { color: #888; margin-bottom: 20px; font-size: 0.9rem; }
 
-        /* --- CONTAINER UTAMA --- */
+        /* --- CONTAINER KEYBOARD --- */
         .keyboard-case {
             background: #2b2b2b;
             padding: 20px;
@@ -33,301 +33,308 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            max-width: 1250px; /* Diperlebar sedikit */
+            max-width: 1250px;
+            margin-bottom: 20px;
         }
 
-        /* --- BARIS MEDIA (BARU) --- */
-        .media-row {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #333;
-            margin-bottom: 5px;
-        }
-
-        .media-group {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-        
-        /* Tombol Media lebih kecil dan bulat */
-        .key.media {
-            height: 35px;
-            width: 45px; 
-            font-size: 16px; /* Icon size */
-            border-radius: 20px; /* Lebih bulat */
-            background: #333;
-        }
-
-        /* --- BARIS FUNGSI (F1-F12) --- */
-        .function-row {
-            display: flex;
-            gap: 45px;
-            padding-left: 5px;
-        }
+        /* --- STYLE TOMBOL SAMA --- */
+        .media-row { display: flex; justify-content: center; gap: 20px; padding-bottom: 10px; border-bottom: 2px solid #333; margin-bottom: 5px; }
+        .media-group { display: flex; gap: 6px; align-items: center; }
+        .key.media { height: 35px; width: 45px; font-size: 16px; border-radius: 20px; background: #333; }
+        .function-row { display: flex; gap: 45px; padding-left: 5px; }
         .f-group { display: flex; gap: 6px; }
-
-        /* --- BADAN KEYBOARD --- */
         .keyboard-body { display: flex; gap: 15px; }
-
-        /* 1. Main Block */
         .main-block { display: flex; flex-direction: column; gap: 6px; }
         .row { display: flex; gap: 6px; }
-
-        /* 2. Nav Block */
-        .nav-block {
-            display: flex; flex-direction: column; justify-content: space-between; width: 160px;
-        }
+        .nav-block { display: flex; flex-direction: column; justify-content: space-between; width: 160px; }
         .nav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .numpad-block { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 50px); gap: 6px; width: 210px; }
 
-        /* 3. Numpad Block */
-        .numpad-block {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(5, 50px); gap: 6px; width: 210px;
-        }
-
-        /* --- STYLING TOMBOL UMUM --- */
         .key {
-            height: 50px; width: 50px;
-            background: #444;
-            border-bottom: 4px solid #333;
-            border-radius: 4px;
-            color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: bold;
-            cursor: default; user-select: none; transition: all 0.05s;
+            height: 50px; width: 50px; background: #444; border-bottom: 4px solid #333;
+            border-radius: 4px; color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold; cursor: default; user-select: none; transition: all 0.05s;
             text-align: center; line-height: 1.1;
         }
+        .key.active { background: #00ff88; color: #111; border-bottom: 2px solid #00cc6a; transform: translateY(2px); box-shadow: 0 0 15px #00ff88; }
+        .w-2 { width: 75px; } .w-3 { width: 90px; } .w-4 { width: 115px; } .w-5 { width: 65px; } .w-space { width: 318px; } .w-full { flex-grow: 1; }
+        .h-2 { grid-row: span 2; height: 106px; } .w-num-0 { grid-column: span 2; width: 106px; }
 
-        /* Warna Aktif */
-        .key.active {
-            background: #00ff88; color: #111;
-            border-bottom: 2px solid #00cc6a;
-            transform: translateY(2px);
-            box-shadow: 0 0 15px #00ff88;
+        /* --- DASHBOARD LOGGER & STATS (BARU) --- */
+        .dashboard {
+            width: 90%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 200px; /* Log Kiri, Statistik Kanan */
+            gap: 15px;
+            align-items: start;
         }
 
-        /* Ukuran Tombol Khusus */
-        .w-2 { width: 75px; } .w-3 { width: 90px; } .w-4 { width: 115px; }
-        .w-5 { width: 65px; } .w-space { width: 318px; } .w-full { flex-grow: 1; }
-        .h-2 { grid-row: span 2; height: 106px; }
-        .w-num-0 { grid-column: span 2; width: 106px; }
+        /* LOG AREA */
+        .logger-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .logger-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .logger-title { color: #fff; font-weight: bold; font-size: 0.9rem; }
+        .btn-clear {
+            background: #ff4444; color: white; border: none; padding: 5px 15px;
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem;
+        }
+        .btn-clear:hover { background: #cc0000; }
 
-        /* Log */
-        #log { margin-top: 20px; font-family: monospace; color: #00ff88; min-height: 20px; }
-        .hint { font-size: 10px; color: #aaa; display: block; margin-top: 2px;}
+        #key-history {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 5px;
+            background: #000;
+        }
+        
+        .log-item {
+            background: #2a2a2a;
+            color: #00ff88;
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Segoe UI', sans-serif; /* Font lebih natural */
+        }
+
+        /* STATS AREA */
+        .stats-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #00ff88;
+            font-family: monospace;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+        .timer-display {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
     </style>
 </head>
 <body>
 
-    <h2>Ultimate Keyboard Tester</h2>
-    <p>Coba tekan tombol multimedia (Volume, Play/Pause) atau tombol Fn+Function di laptopmu.</p>
-
+    <h2>Keyboard Tester Pro</h2>
+    
     <div class="keyboard-case">
-
         <div class="media-row">
             <div class="media-group">
-                <div class="key media" data-code="BrowserHome" title="Browser Home">🏠</div>
-                <div class="key media" data-code="LaunchMail" title="Mail">✉</div>
-                <div class="key media" data-code="Calculator" title="Calculator">🧮</div>
+                <div class="key media" data-code="BrowserHome">🏠</div>
+                <div class="key media" data-code="LaunchMail">✉</div>
+                <div class="key media" data-code="Calculator">🧮</div>
             </div>
-
             <div class="media-group">
-                <div class="key media" data-code="MediaTrackPrevious" title="Previous">⏮</div>
-                <div class="key media" data-code="MediaPlayPause" title="Play/Pause">⏯</div>
-                <div class="key media" data-code="MediaStop" title="Stop">⏹</div>
-                <div class="key media" data-code="MediaTrackNext" title="Next">⏭</div>
+                <div class="key media" data-code="MediaTrackPrevious">⏮</div>
+                <div class="key media" data-code="MediaPlayPause">⏯</div>
+                <div class="key media" data-code="MediaStop">⏹</div>
+                <div class="key media" data-code="MediaTrackNext">⏭</div>
             </div>
-
             <div class="media-group">
-                <div class="key media" data-code="VolumeMute" title="Mute">🔇</div>
-                <div class="key media" data-code="VolumeDown" title="Vol -">🔉</div>
-                <div class="key media" data-code="VolumeUp" title="Vol +">🔊</div>
-            </div>
-            
-            <div class="media-group">
-                 <div class="key media" data-code="BrightnessDown" title="Brightness Down">🔅</div>
-                 <div class="key media" data-code="BrightnessUp" title="Brightness Up">🔆</div>
+                <div class="key media" data-code="VolumeMute">🔇</div>
+                <div class="key media" data-code="VolumeDown">🔉</div>
+                <div class="key media" data-code="VolumeUp">🔊</div>
             </div>
         </div>
         
         <div class="function-row">
-            <div class="f-group">
-                <div class="key" data-code="Escape">Esc</div>
-            </div>
-            <div class="f-group">
-                <div class="key" data-code="F1">F1</div>
-                <div class="key" data-code="F2">F2</div>
-                <div class="key" data-code="F3">F3</div>
-                <div class="key" data-code="F4">F4</div>
-            </div>
-            <div class="f-group">
-                <div class="key" data-code="F5">F5</div>
-                <div class="key" data-code="F6">F6</div>
-                <div class="key" data-code="F7">F7</div>
-                <div class="key" data-code="F8">F8</div>
-            </div>
-            <div class="f-group">
-                <div class="key" data-code="F9">F9</div>
-                <div class="key" data-code="F10">F10</div>
-                <div class="key" data-code="F11">F11</div>
-                <div class="key" data-code="F12">F12</div>
-            </div>
-            <div class="f-group" style="margin-left: 15px;">
-                <div class="key" data-code="PrintScreen">PrtSc</div>
-                <div class="key" data-code="ScrollLock">ScrLk</div>
-                <div class="key" data-code="Pause">Pause</div>
-            </div>
+            <div class="f-group"><div class="key" data-code="Escape">Esc</div></div>
+            <div class="f-group"><div class="key" data-code="F1">F1</div><div class="key" data-code="F2">F2</div><div class="key" data-code="F3">F3</div><div class="key" data-code="F4">F4</div></div>
+            <div class="f-group"><div class="key" data-code="F5">F5</div><div class="key" data-code="F6">F6</div><div class="key" data-code="F7">F7</div><div class="key" data-code="F8">F8</div></div>
+            <div class="f-group"><div class="key" data-code="F9">F9</div><div class="key" data-code="F10">F10</div><div class="key" data-code="F11">F11</div><div class="key" data-code="F12">F12</div></div>
+            <div class="f-group" style="margin-left: 15px;"><div class="key" data-code="PrintScreen">PrtSc</div><div class="key" data-code="ScrollLock">ScrLk</div><div class="key" data-code="Pause">Pause</div></div>
         </div>
 
         <div class="keyboard-body">
             <div class="main-block">
-                <div class="row">
-                    <div class="key" data-code="Backquote">~</div>
-                    <div class="key" data-code="Digit1">1</div>
-                    <div class="key" data-code="Digit2">2</div>
-                    <div class="key" data-code="Digit3">3</div>
-                    <div class="key" data-code="Digit4">4</div>
-                    <div class="key" data-code="Digit5">5</div>
-                    <div class="key" data-code="Digit6">6</div>
-                    <div class="key" data-code="Digit7">7</div>
-                    <div class="key" data-code="Digit8">8</div>
-                    <div class="key" data-code="Digit9">9</div>
-                    <div class="key" data-code="Digit0">0</div>
-                    <div class="key" data-code="Minus">-</div>
-                    <div class="key" data-code="Equal">=</div>
-                    <div class="key w-full" data-code="Backspace">Backspace</div>
-                </div>
-                <div class="row">
-                    <div class="key w-2" data-code="Tab">Tab</div>
-                    <div class="key" data-code="KeyQ">Q</div>
-                    <div class="key" data-code="KeyW">W</div>
-                    <div class="key" data-code="KeyE">E</div>
-                    <div class="key" data-code="KeyR">R</div>
-                    <div class="key" data-code="KeyT">T</div>
-                    <div class="key" data-code="KeyY">Y</div>
-                    <div class="key" data-code="KeyU">U</div>
-                    <div class="key" data-code="KeyI">I</div>
-                    <div class="key" data-code="KeyO">O</div>
-                    <div class="key" data-code="KeyP">P</div>
-                    <div class="key" data-code="BracketLeft">[</div>
-                    <div class="key" data-code="BracketRight">]</div>
-                    <div class="key w-full" data-code="Backslash">\</div>
-                </div>
-                <div class="row">
-                    <div class="key w-3" data-code="CapsLock">Caps</div>
-                    <div class="key" data-code="KeyA">A</div>
-                    <div class="key" data-code="KeyS">S</div>
-                    <div class="key" data-code="KeyD">D</div>
-                    <div class="key" data-code="KeyF">F</div>
-                    <div class="key" data-code="KeyG">G</div>
-                    <div class="key" data-code="KeyH">H</div>
-                    <div class="key" data-code="KeyJ">J</div>
-                    <div class="key" data-code="KeyK">K</div>
-                    <div class="key" data-code="KeyL">L</div>
-                    <div class="key" data-code="Semicolon">;</div>
-                    <div class="key" data-code="Quote">'</div>
-                    <div class="key w-full" data-code="Enter">Enter</div>
-                </div>
-                <div class="row">
-                    <div class="key w-4" data-code="ShiftLeft">Shift</div>
-                    <div class="key" data-code="KeyZ">Z</div>
-                    <div class="key" data-code="KeyX">X</div>
-                    <div class="key" data-code="KeyC">C</div>
-                    <div class="key" data-code="KeyV">V</div>
-                    <div class="key" data-code="KeyB">B</div>
-                    <div class="key" data-code="KeyN">N</div>
-                    <div class="key" data-code="KeyM">M</div>
-                    <div class="key" data-code="Comma">,</div>
-                    <div class="key" data-code="Period">.</div>
-                    <div class="key" data-code="Slash">/</div>
-                    <div class="key w-full" data-code="ShiftRight">Shift</div>
-                </div>
-                <div class="row">
-                    <div class="key w-5" data-code="ControlLeft">Ctrl</div>
-                    <div class="key w-5" data-code="MetaLeft">Win</div>
-                    <div class="key w-5" data-code="AltLeft">Alt</div>
-                    <div class="key w-space" data-code="Space">Space</div>
-                    <div class="key w-5" data-code="AltRight">Alt</div>
-                    <div class="key w-5" data-code="MetaRight">Win</div>
-                    <div class="key w-5" data-code="ContextMenu">Menu</div>
-                    <div class="key w-5" data-code="ControlRight">Ctrl</div>
-                </div>
+                <div class="row"><div class="key" data-code="Backquote">~</div><div class="key" data-code="Digit1">1</div><div class="key" data-code="Digit2">2</div><div class="key" data-code="Digit3">3</div><div class="key" data-code="Digit4">4</div><div class="key" data-code="Digit5">5</div><div class="key" data-code="Digit6">6</div><div class="key" data-code="Digit7">7</div><div class="key" data-code="Digit8">8</div><div class="key" data-code="Digit9">9</div><div class="key" data-code="Digit0">0</div><div class="key" data-code="Minus">-</div><div class="key" data-code="Equal">=</div><div class="key w-full" data-code="Backspace">Backspace</div></div>
+                <div class="row"><div class="key w-2" data-code="Tab">Tab</div><div class="key" data-code="KeyQ">Q</div><div class="key" data-code="KeyW">W</div><div class="key" data-code="KeyE">E</div><div class="key" data-code="KeyR">R</div><div class="key" data-code="KeyT">T</div><div class="key" data-code="KeyY">Y</div><div class="key" data-code="KeyU">U</div><div class="key" data-code="KeyI">I</div><div class="key" data-code="KeyO">O</div><div class="key" data-code="KeyP">P</div><div class="key" data-code="BracketLeft">[</div><div class="key" data-code="BracketRight">]</div><div class="key w-full" data-code="Backslash">\</div></div>
+                <div class="row"><div class="key w-3" data-code="CapsLock">Caps</div><div class="key" data-code="KeyA">A</div><div class="key" data-code="KeyS">S</div><div class="key" data-code="KeyD">D</div><div class="key" data-code="KeyF">F</div><div class="key" data-code="KeyG">G</div><div class="key" data-code="KeyH">H</div><div class="key" data-code="KeyJ">J</div><div class="key" data-code="KeyK">K</div><div class="key" data-code="KeyL">L</div><div class="key" data-code="Semicolon">;</div><div class="key" data-code="Quote">'</div><div class="key w-full" data-code="Enter">Enter</div></div>
+                <div class="row"><div class="key w-4" data-code="ShiftLeft">Shift</div><div class="key" data-code="KeyZ">Z</div><div class="key" data-code="KeyX">X</div><div class="key" data-code="KeyC">C</div><div class="key" data-code="KeyV">V</div><div class="key" data-code="KeyB">B</div><div class="key" data-code="KeyN">N</div><div class="key" data-code="KeyM">M</div><div class="key" data-code="Comma">,</div><div class="key" data-code="Period">.</div><div class="key" data-code="Slash">/</div><div class="key w-full" data-code="ShiftRight">Shift</div></div>
+                <div class="row"><div class="key w-5" data-code="ControlLeft">Ctrl</div><div class="key w-5" data-code="MetaLeft">Win</div><div class="key w-5" data-code="AltLeft">Alt</div><div class="key w-space" data-code="Space">Space</div><div class="key w-5" data-code="AltRight">Alt</div><div class="key w-5" data-code="MetaRight">Win</div><div class="key w-5" data-code="ContextMenu">Menu</div><div class="key w-5" data-code="ControlRight">Ctrl</div></div>
             </div>
-
             <div class="nav-block">
-                <div class="nav-grid">
-                    <div class="key" data-code="Insert">Ins</div>
-                    <div class="key" data-code="Home">Home</div>
-                    <div class="key" data-code="PageUp">PgUp</div>
-                    <div class="key" data-code="Delete">Del</div>
-                    <div class="key" data-code="End">End</div>
-                    <div class="key" data-code="PageDown">PgDn</div>
-                </div>
-                <div class="nav-grid">
-                    <div class="key" style="visibility: hidden;"></div>
-                    <div class="key" data-code="ArrowUp">↑</div>
-                    <div class="key" style="visibility: hidden;"></div>
-                    <div class="key" data-code="ArrowLeft">←</div>
-                    <div class="key" data-code="ArrowDown">↓</div>
-                    <div class="key" data-code="ArrowRight">→</div>
-                </div>
+                <div class="nav-grid"><div class="key" data-code="Insert">Ins</div><div class="key" data-code="Home">Home</div><div class="key" data-code="PageUp">PgUp</div><div class="key" data-code="Delete">Del</div><div class="key" data-code="End">End</div><div class="key" data-code="PageDown">PgDn</div></div>
+                <div class="nav-grid"><div class="key" style="visibility: hidden;"></div><div class="key" data-code="ArrowUp">↑</div><div class="key" style="visibility: hidden;"></div><div class="key" data-code="ArrowLeft">←</div><div class="key" data-code="ArrowDown">↓</div><div class="key" data-code="ArrowRight">→</div></div>
             </div>
-
             <div class="numpad-block">
-                <div class="key" data-code="NumLock">Num</div>
-                <div class="key" data-code="NumpadDivide">/</div>
-                <div class="key" data-code="NumpadMultiply">*</div>
-                <div class="key" data-code="NumpadSubtract">-</div>
-                <div class="key" data-code="Numpad7">7</div>
-                <div class="key" data-code="Numpad8">8</div>
-                <div class="key" data-code="Numpad9">9</div>
-                <div class="key h-2" data-code="NumpadAdd">+</div>
-                <div class="key" data-code="Numpad4">4</div>
-                <div class="key" data-code="Numpad5">5</div>
-                <div class="key" data-code="Numpad6">6</div>
-                <div class="key" data-code="Numpad1">1</div>
-                <div class="key" data-code="Numpad2">2</div>
-                <div class="key" data-code="Numpad3">3</div>
-                <div class="key h-2" data-code="NumpadEnter">Ent</div>
-                <div class="key w-num-0" data-code="Numpad0">0</div>
-                <div class="key" data-code="NumpadDecimal">.</div>
+                <div class="key" data-code="NumLock">Num</div><div class="key" data-code="NumpadDivide">/</div><div class="key" data-code="NumpadMultiply">*</div><div class="key" data-code="NumpadSubtract">-</div>
+                <div class="key" data-code="Numpad7">7</div><div class="key" data-code="Numpad8">8</div><div class="key" data-code="Numpad9">9</div><div class="key h-2" data-code="NumpadAdd">+</div>
+                <div class="key" data-code="Numpad4">4</div><div class="key" data-code="Numpad5">5</div><div class="key" data-code="Numpad6">6</div>
+                <div class="key" data-code="Numpad1">1</div><div class="key" data-code="Numpad2">2</div><div class="key" data-code="Numpad3">3</div><div class="key h-2" data-code="NumpadEnter">Ent</div>
+                <div class="key w-num-0" data-code="Numpad0">0</div><div class="key" data-code="NumpadDecimal">.</div>
             </div>
         </div>
     </div>
 
-    <div id="log">Siap mendeteksi tombol...</div>
+    <div class="dashboard">
+        <div class="logger-container">
+            <div class="logger-header">
+                <span class="logger-title">Key Log (Riwayat)</span>
+                <button class="btn-clear" onclick="clearLog()">Reset Semua</button>
+            </div>
+            <div id="key-history">
+                <div class="log-item" style="color:#666; border-color:#333;">Menunggu...</div>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <div id="tpm-display" class="stat-value">0</div>
+            <div class="stat-label">Tombol / Menit (TPM)</div>
+            <div id="time-display" class="timer-display">0s</div>
+        </div>
+    </div>
 
     <script>
-        const logDiv = document.getElementById('log');
+        const historyContainer = document.getElementById('key-history');
+        const tpmDisplay = document.getElementById('tpm-display');
+        const timeDisplay = document.getElementById('time-display');
+
+        // Variabel untuk Statistik
+        let startTime = null;
+        let keystrokeCount = 0;
+        let timerInterval = null;
 
         function highlightKey(code, isActive) {
-            // Mencari tombol dengan data-code yang sesuai
             const keyElement = document.querySelector(`.key[data-code="${code}"]`);
             if (keyElement) {
-                if (isActive) {
-                    keyElement.classList.add('active');
-                    // Efek visual tambahan: scroll ke tombol jika di luar layar (opsional)
-                } else {
-                    keyElement.classList.remove('active');
-                }
-            } else {
-                // Jika tombol ditekan tapi tidak ada di visual keyboard, catat di log
-                if (isActive) console.log(`Tombol tidak terdaftar di UI: ${code}`);
+                if (isActive) keyElement.classList.add('active');
+                else keyElement.classList.remove('active');
             }
         }
 
+        // --- FUNGSI FORMAT NAMA TOMBOL (Supaya Natural) ---
+        function formatLabel(code) {
+            // 1. Hapus kata "Key" (KeyA -> A)
+            if (code.startsWith('Key')) return code.replace('Key', '');
+            
+            // 2. Hapus kata "Digit" (Digit1 -> 1)
+            if (code.startsWith('Digit')) return code.replace('Digit', '');
+
+            // 3. Rapikan Numpad (Numpad1 -> Num 1)
+            if (code.startsWith('Numpad')) return code.replace('Numpad', 'Num ');
+
+            // 4. Tombol panah
+            if (code === 'ArrowUp') return '↑';
+            if (code === 'ArrowDown') return '↓';
+            if (code === 'ArrowLeft') return '←';
+            if (code === 'ArrowRight') return '→';
+
+            // 5. Tombol spasi
+            if (code === 'Space') return 'Space';
+
+            // Sisanya biarkan default (Enter, Shift, dll)
+            return code;
+        }
+
+        function addToLog(code) {
+            // Hapus pesan "Menunggu..." jika ada
+            if (historyContainer.children[0] && historyContainer.children[0].innerText === "Menunggu...") {
+                historyContainer.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.classList.add('log-item');
+            
+            // Gunakan fungsi formatLabel
+            item.innerText = formatLabel(code);
+
+            historyContainer.appendChild(item);
+            historyContainer.scrollTop = historyContainer.scrollHeight;
+        }
+
+        // --- FUNGSI STATISTIK (TPM) ---
+        function updateStats() {
+            if (!startTime) return;
+
+            // Hitung selisih waktu dalam menit
+            const currentTime = Date.now();
+            const timeElapsedMin = (currentTime - startTime) / 60000; // 60000 ms = 1 menit
+            
+            // Hindari pembagian dengan 0 di awal
+            let tpm = 0;
+            if (timeElapsedMin > 0) {
+                tpm = Math.round(keystrokeCount / timeElapsedMin);
+            }
+
+            // Update Tampilan
+            tpmDisplay.innerText = tpm;
+            timeDisplay.innerText = Math.round((currentTime - startTime) / 1000) + 's';
+        }
+
+        function startTimerIfNeeded() {
+            if (!startTime) {
+                startTime = Date.now();
+                // Jalankan timer setiap detik untuk update tampilan meski tidak mengetik
+                timerInterval = setInterval(updateStats, 1000);
+            }
+        }
+
+        function clearLog() {
+            // Reset Tampilan Log
+            historyContainer.innerHTML = '<div class="log-item" style="color:#666; border-color:#333;">Menunggu...</div>';
+            
+            // Reset Statistik
+            startTime = null;
+            keystrokeCount = 0;
+            tpmDisplay.innerText = "0";
+            timeDisplay.innerText = "0s";
+            
+            // Hentikan interval lama
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
         window.addEventListener('keydown', (e) => {
-            // Mencegah fungsi default HANYA untuk tombol yang sering mengganggu testing
-            // Kita biarkan tombol media tetap bekerja (agar kamu bisa melihat volume naik beneran)
             if(e.code === 'Tab' || e.code === 'AltLeft' || e.code === 'AltRight' || e.code.startsWith('F')) {
                e.preventDefault();
             }
 
+            // Abaikan penekanan lama (tahan tombol) agar TPM akurat
+            if (e.repeat) return;
+
             highlightKey(e.code, true);
-            logDiv.innerText = `Key Code: ${e.code} | Key: ${e.key}`;
+            
+            // Logika Statistik
+            startTimerIfNeeded();
+            keystrokeCount++;
+            updateStats(); // Update angka TPM langsung saat mengetik
+
+            // Logika Log Visual
+            addToLog(e.code);
         });
 
         window.addEventListener('keyup', (e) => {
