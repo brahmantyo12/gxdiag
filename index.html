@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Diagnostic Suite (KB, Mouse, Controllers)</title>
+    <title>Input Diagnostic Suite (Stable)</title>
     <style>
         /* --- 1. CORE RESET --- */
         * { box-sizing: border-box; }
@@ -12,13 +12,14 @@
             color: #eee;
             font-family: 'Segoe UI', Roboto, sans-serif;
             display: flex; flex-direction: column; align-items: center;
-            padding: 20px; min-height: 100vh; margin: 0; user-select: none;
+            padding: 20px; min-height: 100vh; margin: 0;
+            overflow-y: auto; /* Pastikan bisa scroll ke bawah */
             overflow-x: hidden;
         }
 
         /* --- 2. HEADER --- */
         .header-section {
-            width: 100%; max-width: 1280px; display: flex; justify-content: space-between;
+            width: 100%; max-width: 1200px; display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
         }
         h2 { margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; }
@@ -38,11 +39,11 @@
 
         /* --- 3. DASHBOARD --- */
         .dashboard {
-            width: 100%; max-width: 1280px; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 30px;
+            width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 15px; margin-bottom: 30px;
         }
         .panel {
             background: #1e1e1e; border: 1px solid #333; border-radius: 12px;
-            padding: 15px; height: 150px; display: flex; flex-direction: column; position: relative;
+            padding: 15px; height: 160px; display: flex; flex-direction: column; position: relative;
         }
         .panel-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
@@ -60,17 +61,29 @@
         .mic-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00e5ff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; color:#000; z-index: 10;}
         .mic-btn:hover { background: #fff; }
 
-        /* --- 4. KEYBOARD CONTAINER --- */
-        .wrapper { width: 100%; display: flex; justify-content: center; }
-        .kb-container {
-            position: relative; background: #181818; padding: 25px; border-radius: 15px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-bottom: 8px solid #000;
-            display: flex; gap: 20px; min-width: 1280px; transform-origin: top center; margin-bottom: 40px;
+        /* --- 4. KEYBOARD CONTAINER (SCROLLABLE MODE) --- */
+        /* Wrapper ini menjamin keyboard tidak hilang, tapi muncul scrollbar kalau layar kecil */
+        .wrapper { 
+            width: 100%; 
+            overflow-x: auto; /* Kunci stabilitas: Scroll Horizontal */
+            display: flex; 
+            justify-content: center; 
+            padding-bottom: 20px;
         }
+        
+        .kb-container {
+            position: relative;
+            background: #181818; padding: 25px; border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-bottom: 8px solid #000;
+            display: flex; gap: 20px; 
+            min-width: 1250px; /* Ukuran Fixed agar tombol tidak berantakan */
+        }
+
         .block-main { display: flex; flex-direction: column; gap: 6px; }
         .block-nav { display: flex; flex-direction: column; width: 162px; }
         .block-num { display: grid; grid-template-columns: repeat(4, 50px); grid-template-rows: repeat(5, 50px); gap: 6px; width: 218px; }
         .row { display: flex; gap: 6px; position: relative; }
+        
         .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
         .nav-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 40px; }
         .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -91,30 +104,31 @@
         .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; }
         .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
 
+        /* ISO FIX */
         .iso-key { display: none; }
         .kb-container.iso-mode .iso-key { display: flex; }
         .kb-container.iso-mode .ansi-key { display: none; }
         .kb-container.iso-mode .key[data-code="Enter"] { position: absolute; right: 0; top: -56px; height: 106px; width: 65px; z-index: 5; border-radius: 5px 5px 5px 15px; }
         .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 62px; }
 
-        /* --- 5. CONTROLLER SECTION (SIDE BY SIDE) --- */
-        .controllers-row {
-            width: 100%; max-width: 1280px;
+        /* --- 5. BOTTOM SECTION --- */
+        .bottom-section {
+            width: 100%; max-width: 1200px;
             display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-            margin-bottom: 30px;
+            margin-top: 40px; margin-bottom: 30px;
         }
 
-        /* --- Standard Gamepad --- */
+        /* Gamepad */
         .gamepad-container {
             background: #1e1e1e; border-radius: 20px; border: 2px solid #333;
             padding: 20px; display: flex; flex-direction: column; align-items: center;
-            transition: 0.3s;
+            opacity: 0.5; transition: 0.3s;
         }
-        .gamepad-container.active { border-color: #00e5ff; box-shadow: 0 0 20px rgba(0,229,255,0.1); }
+        .gamepad-container.active { opacity: 1; border-color: #00e5ff; box-shadow: 0 0 20px rgba(0,229,255,0.1); }
         .gp-status { color: #888; font-weight: bold; margin-bottom: 15px; font-size: 0.9rem; width:100%; display:flex; justify-content:space-between; align-items:center;}
         .rumble-btn { background: #ff4081; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size:0.7rem; font-weight:bold; display:none; }
         .gamepad-container.active .rumble-btn { display:block; }
-
+        
         .controller-body {
             position: relative; width: 400px; height: 260px;
             background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
@@ -124,6 +138,7 @@
         .btn-gp { position: absolute; display: flex; align-items: center; justify-content: center; background: #333; color: #888; border: 2px solid #444; font-size: 9px; font-weight: bold; transition: 0.1s; }
         .btn-gp.pressed { background: #00e5ff; color: #000; box-shadow: 0 0 15px #00e5ff; border-color: #fff; transform: scale(0.95); }
         
+        /* GP Pos */
         .gp-round { width: 30px; height: 30px; border-radius: 50%; }
         .pos-y { top: 50px; right: 70px; } .pos-x { top: 80px; right: 100px; } .pos-b { top: 80px; right: 40px; } .pos-a { top: 110px; right: 70px; }
         .gp-dpad { width: 24px; height: 24px; border-radius: 4px; }
@@ -146,38 +161,9 @@
         .stick-dot { width: 8px; height: 8px; background: #00e5ff; border-radius: 50%; position: absolute; box-shadow: 0 0 5px #00e5ff; transform: translate(0, 0); }
         .stick-vals { font-family: monospace; font-size: 0.75rem; color: #666; }
 
-        /* --- DualShock WebHID Specific --- */
-        .ds-container {
-            background: #1e1e1e; border-radius: 20px; border: 2px solid #333;
-            padding: 20px; display: flex; flex-direction: column; align-items: center;
-            justify-content: center;
-        }
-        .ds-connect-btn { background: #00a2ff; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-bottom: 15px; transition:0.2s;}
-        .ds-connect-btn:hover { background: #fff; box-shadow: 0 0 15px #00a2ff; }
-        .ds-connect-btn:disabled { background: #333; color: #555; cursor: not-allowed; box-shadow:none;}
-        
-        .ds-touchpad {
-            width: 300px; height: 180px; background: #222; border: 2px solid #444;
-            border-radius: 20px; position: relative; overflow: hidden;
-            box-shadow: inset 0 0 30px #000;
-        }
-        .ds-finger {
-            position: absolute; width: 30px; height: 30px; border-radius: 50%;
-            transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.7rem; opacity: 0; transition: opacity 0.1s;
-            pointer-events: none;
-        }
-        #ds-f1 { background: #00e5ff; box-shadow: 0 0 15px #00e5ff; }
-        #ds-f2 { background: #ff4081; box-shadow: 0 0 15px #ff4081; }
-        .ds-info { margin-top: 15px; font-family: monospace; font-size: 0.8rem; color: #888; text-align: center;}
-
-        /* --- 6. MOUSE SECTION (BELOW) --- */
-        .mouse-section {
-            width: 100%; max-width: 800px; margin-bottom: 50px;
-            background: #1e1e1e; border-radius: 20px; border: 2px solid #333;
-            padding: 30px; display: flex; flex-direction: column; align-items: center;
-        }
-        .mouse-layout { display: flex; gap: 50px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+        /* Mouse */
+        .mouse-container { background: #1e1e1e; border-radius: 20px; border: 2px solid #333; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .mouse-layout { display: flex; gap: 30px; align-items: flex-start; }
         .mouse-body { position: relative; width: 140px; height: 220px; background: #222; border-radius: 60px 60px 50px 50px; border: 2px solid #444; box-shadow: inset 0 0 20px #000; }
         .ms-btn { position: absolute; background: #333; border: 1px solid #444; transition: 0.1s; }
         .ms-btn.pressed { background: #00e5ff; box-shadow: 0 0 15px #00e5ff; }
@@ -187,8 +173,7 @@
         .ms-mid.scrolling { background: #ff4081; }
         .ms-side-fwd { top: 100px; left: -8px; width: 15px; height: 30px; border-radius: 5px 0 0 5px; background: #444; }
         .ms-side-back { top: 140px; left: -8px; width: 15px; height: 30px; border-radius: 5px 0 0 5px; background: #444; }
-        
-        .touchpad-area { width: 240px; height: 160px; background: #1a1a1a; border: 2px dashed #444; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .touchpad-area { width: 200px; height: 160px; background: #1a1a1a; border: 2px dashed #444; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-top: 30px; }
         .touch-label { color: #555; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; }
         .touch-coords { color: #00e5ff; font-family: monospace; font-size: 1.2rem; font-weight: bold; }
         .touch-scroll-indicator { position: absolute; color: #ff4081; font-weight: bold; font-size: 0.9rem; opacity: 0; transition: opacity 0.2s; }
@@ -201,9 +186,9 @@
 
         @media (max-width: 1200px) {
             .dashboard { grid-template-columns: 1fr; height: auto; }
-            .controllers-row { grid-template-columns: 1fr; }
-            .gamepad-container, .ds-container, .mouse-section { width: 100%; max-width: 100%; }
-            .wrapper { justify-content: flex-start; }
+            .bottom-section { grid-template-columns: 1fr; }
+            .gamepad-container, .mouse-container { width: 100%; max-width: 100%; }
+            .wrapper { justify-content: flex-start; } /* Allow left-align for scroll */
         }
     </style>
 </head>
@@ -294,11 +279,10 @@
         </div>
     </div>
 
-    <div class="controllers-row">
-        
+    <div class="bottom-section">
         <div class="gamepad-container" id="gp-container">
             <div class="gp-status">
-                <span id="gp-status">Standard Controller</span>
+                <span id="gp-status">Connect a Controller</span>
                 <button class="rumble-btn" id="rumble-btn" onclick="testRumble()">TEST VIBRATION</button>
             </div>
             <div class="controller-body">
@@ -319,32 +303,18 @@
             </div>
         </div>
 
-        <div class="ds-container">
-            <h3 style="color:#00a2ff; margin-bottom:10px;">DualShock Touchpad</h3>
-            <button class="ds-connect-btn" id="ds-connect">CONNECT USB (CHROME/EDGE)</button>
-            <div class="ds-touchpad">
-                <div id="ds-f1" class="ds-finger">1</div>
-                <div id="ds-f2" class="ds-finger">2</div>
-                <div style="position:absolute; top:50%; width:100%; height:1px; background:#333;"></div>
-                <div style="position:absolute; left:50%; height:100%; width:1px; background:#333;"></div>
-            </div>
-            <div class="ds-info" id="ds-data-1">F1: Inactive</div>
-            <div class="ds-info" id="ds-data-2">F2: Inactive</div>
-        </div>
-
-    </div>
-
-    <div class="mouse-section">
-        <div class="gp-status">Mouse & Touchpad</div>
-        <div class="mouse-layout">
-            <div class="mouse-body">
-                <div class="ms-btn ms-left" id="ms-0"></div><div class="ms-btn ms-right" id="ms-2"></div><div class="ms-btn ms-mid" id="ms-1"></div>
-                <div class="ms-btn ms-side-back" id="ms-3" title="Back"></div><div class="ms-btn ms-side-fwd" id="ms-4" title="Forward"></div>
-            </div>
-            <div class="touchpad-area" id="touch-area">
-                <div class="touch-label">Touch / Scroll</div>
-                <div class="touch-coords" id="touch-coords">X:0 Y:0</div>
-                <div class="touch-scroll-indicator" id="scroll-msg">SCROLLING...</div>
+        <div class="mouse-container">
+            <div class="gp-status">Mouse & Touchpad</div>
+            <div class="mouse-layout">
+                <div class="mouse-body">
+                    <div class="ms-btn ms-left" id="ms-0"></div><div class="ms-btn ms-right" id="ms-2"></div><div class="ms-btn ms-mid" id="ms-1"></div>
+                    <div class="ms-btn ms-side-back" id="ms-3" title="Back"></div><div class="ms-btn ms-side-fwd" id="ms-4" title="Forward"></div>
+                </div>
+                <div class="touchpad-area" id="touch-area">
+                    <div class="touch-label">Touch / Scroll</div>
+                    <div class="touch-coords" id="touch-coords">X:0 Y:0</div>
+                    <div class="touch-scroll-indicator" id="scroll-msg">SCROLLING...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -354,15 +324,7 @@
     </div>
 
     <script>
-        // --- 1. AUTO SCALE ---
-        function scaleKeyboard() {
-            const wrap = document.getElementById('kb-wrapper');
-            const kb = document.getElementById('kb-case');
-            // Remove complex auto-zoom to prevent disappearing
-            // Just center it. If too wide, scrollbar appears via CSS.
-        }
-
-        // --- 2. AUDIO & MIC ---
+        // AUDIO & MIC
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let noiseBuffer = null;
         function playSound() {
@@ -407,7 +369,7 @@
             } catch(e) { alert("Mic Permission Denied"); }
         }
 
-        // --- 3. KEYBOARD ---
+        // KEYBOARD
         let lastKeyTime = {}, startTime = null, count = 0, activeKeys = new Set(), maxSim = 0;
         function toggleLayout() {
             const iso = document.getElementById('layout-toggle').checked;
@@ -447,7 +409,7 @@
         });
         function clearLog() { document.getElementById('key-history').innerHTML = ''; }
 
-        // --- 4. GAMEPAD (STANDARD) ---
+        // GAMEPAD
         let gpIdx = null;
         window.addEventListener("gamepadconnected", e => {
             gpIdx = e.gamepad.index;
@@ -458,7 +420,7 @@
         window.addEventListener("gamepaddisconnected", e => {
             gpIdx = null;
             document.getElementById('gp-container').classList.remove('active');
-            document.getElementById('gp-status').innerText = "Standard Controller";
+            document.getElementById('gp-status').innerText = "Connect a Controller";
         });
         function loopGP() {
             if(gpIdx === null) return;
@@ -489,38 +451,7 @@
             else alert("Rumble not supported/detected");
         }
 
-        // --- 5. DUALSHOCK WEBHID ---
-        const dsBtn = document.getElementById('ds-connect');
-        const f1 = document.getElementById('ds-f1'), f2 = document.getElementById('ds-f2');
-        const v1 = document.getElementById('ds-data-1'), v2 = document.getElementById('ds-data-2');
-        dsBtn.addEventListener('click', async () => {
-            try {
-                const devs = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x054C }] });
-                if(devs.length===0) return;
-                const d = devs[0]; await d.open();
-                dsBtn.innerText = "CONNECTED"; dsBtn.disabled=true;
-                d.addEventListener('inputreport', e => {
-                    const data = new Uint8Array(e.data.buffer);
-                    let offset = 35; // Default DS4 Offset
-                    // Finger 1
-                    if (!(data[offset] & 0x80)) {
-                        const x = ((data[offset+2]&0x0F)<<8)|data[offset+1];
-                        const y = (data[offset+3]<<4)|((data[offset+2]&0xF0)>>4);
-                        f1.style.opacity=1; f1.style.left=(x/1920*100)+'%'; f1.style.top=(y/940*100)+'%';
-                        v1.innerText = `F1: ${x}, ${y}`;
-                    } else { f1.style.opacity=0; v1.innerText="F1: Inactive"; }
-                    // Finger 2
-                    if (!(data[offset+4] & 0x80)) {
-                        const x = ((data[offset+6]&0x0F)<<8)|data[offset+5];
-                        const y = (data[offset+7]<<4)|((data[offset+6]&0xF0)>>4);
-                        f2.style.opacity=1; f2.style.left=(x/1920*100)+'%'; f2.style.top=(y/940*100)+'%';
-                        v2.innerText = `F2: ${x}, ${y}`;
-                    } else { f2.style.opacity=0; v2.innerText="F2: Inactive"; }
-                });
-            } catch(e){ alert("WebHID Error: "+e.message); }
-        });
-
-        // --- 6. MOUSE & TOUCH ---
+        // MOUSE & TOUCH
         window.addEventListener('mousedown', e => {
             const btn = document.getElementById(`ms-${e.button}`);
             if(btn) { btn.classList.add('pressed'); e.preventDefault(); }
