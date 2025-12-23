@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Tester Sederhana</title>
+    <style>
+        body {
+            background-color: #222;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h1 { margin-bottom: 20px; }
+
+        /* Wadah Keyboard */
+        .keyboard-base {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 900px;
+            gap: 5px;
+            justify-content: center;
+            padding: 20px;
+            background: #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        /* Gaya Tombol */
+        .key {
+            width: 50px;
+            height: 50px;
+            background: #444;
+            border: 2px solid #555;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: #ccc;
+            transition: all 0.1s;
+            user-select: none;
+        }
+
+        /* Tombol Spesial (Lebar lebih besar) */
+        .key.wide { width: 80px; }
+        .key.extra-wide { width: 100px; }
+        .key.space { width: 300px; }
+
+        /* Efek saat tombol ditekan (Aktif) */
+        .key.active {
+            background-color: #00ff88;
+            color: #222;
+            border-color: #00ff88;
+            box-shadow: 0 0 15px #00ff88;
+            transform: scale(0.95);
+        }
+
+        /* Tampilan Log Tombol Terakhir */
+        #last-key {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Keyboard Tester</h1>
+    
+    <div class="keyboard-base" id="keyboard"></div>
+
+    <div id="last-key">Tekan tombol apa saja...</div>
+
+    <script>
+        // 1. Daftar tombol (Layout Sederhana)
+        // Kita menggunakan 'code' event (misal: KeyA, Enter) untuk identifikasi
+        const keysLayout = [
+            { label: 'Esc', code: 'Escape' },
+            { label: '1', code: 'Digit1' }, { label: '2', code: 'Digit2' }, { label: '3', code: 'Digit3' },
+            { label: '4', code: 'Digit4' }, { label: '5', code: 'Digit5' }, { label: '6', code: 'Digit6' },
+            { label: '7', code: 'Digit7' }, { label: '8', code: 'Digit8' }, { label: '9', code: 'Digit9' },
+            { label: '0', code: 'Digit0' }, { label: 'Bksp', code: 'Backspace', class: 'wide' },
+            
+            { label: 'Tab', code: 'Tab', class: 'wide' },
+            { label: 'Q', code: 'KeyQ' }, { label: 'W', code: 'KeyW' }, { label: 'E', code: 'KeyE' },
+            { label: 'R', code: 'KeyR' }, { label: 'T', code: 'KeyT' }, { label: 'Y', code: 'KeyY' },
+            { label: 'U', code: 'KeyU' }, { label: 'I', code: 'KeyI' }, { label: 'O', code: 'KeyO' },
+            { label: 'P', code: 'KeyP' }, { label: 'Enter', code: 'Enter', class: 'wide' },
+
+            { label: 'Caps', code: 'CapsLock', class: 'wide' },
+            { label: 'A', code: 'KeyA' }, { label: 'S', code: 'KeyS' }, { label: 'D', code: 'KeyD' },
+            { label: 'F', code: 'KeyF' }, { label: 'G', code: 'KeyG' }, { label: 'H', code: 'KeyH' },
+            { label: 'J', code: 'KeyJ' }, { label: 'K', code: 'KeyK' }, { label: 'L', code: 'KeyL' },
+            { label: ';', code: 'Semicolon' }, { label: "'", code: 'Quote' },
+
+            { label: 'Shift', code: 'ShiftLeft', class: 'extra-wide' },
+            { label: 'Z', code: 'KeyZ' }, { label: 'X', code: 'KeyX' }, { label: 'C', code: 'KeyC' },
+            { label: 'V', code: 'KeyV' }, { label: 'B', code: 'KeyB' }, { label: 'N', code: 'KeyN' },
+            { label: 'M', code: 'KeyM' }, { label: ',', code: 'Comma' }, { label: '.', code: 'Period' },
+            { label: 'Shift', code: 'ShiftRight', class: 'extra-wide' },
+
+            { label: 'Ctrl', code: 'ControlLeft' }, { label: 'Alt', code: 'AltLeft' },
+            { label: 'Space', code: 'Space', class: 'space' },
+            { label: 'Alt', code: 'AltRight' }, { label: 'Ctrl', code: 'ControlRight' }
+        ];
+
+        const keyboardContainer = document.getElementById('keyboard');
+        const lastKeyDisplay = document.getElementById('last-key');
+
+        // 2. Fungsi untuk membuat tombol HTML secara otomatis
+        keysLayout.forEach(key => {
+            const keyElement = document.createElement('div');
+            keyElement.classList.add('key');
+            
+            // Tambahkan kelas khusus jika ada (seperti wide/space)
+            if (key.class) {
+                keyElement.classList.add(key.class);
+            }
+
+            // Set atribut data-code agar mudah dicari nanti
+            keyElement.setAttribute('data-code', key.code);
+            keyElement.innerText = key.label;
+            
+            keyboardContainer.appendChild(keyElement);
+        });
+
+        // 3. Event Listener: Saat tombol ditekan (KeyDown)
+        document.addEventListener('keydown', (e) => {
+            // Mencegah aksi default browser untuk tombol tertentu (opsional)
+            // e.preventDefault(); 
+            
+            const keyInfo = e.code; // Contoh: "KeyA", "Space", "Enter"
+            
+            // Cari elemen div yang punya data-code sesuai tombol yang ditekan
+            const keyElement = document.querySelector(`.key[data-code="${keyInfo}"]`);
+            
+            if (keyElement) {
+                keyElement.classList.add('active'); // Tambah warna hijau
+                lastKeyDisplay.innerText = `Kamu menekan: ${keyInfo} (${e.key})`;
+            }
+        });
+
+        // 4. Event Listener: Saat tombol dilepas (KeyUp)
+        document.addEventListener('keyup', (e) => {
+            const keyInfo = e.code;
+            const keyElement = document.querySelector(`.key[data-code="${keyInfo}"]`);
+            
+            if (keyElement) {
+                keyElement.classList.remove('active'); // Hapus warna hijau
+            }
+        });
+
+    </script>
+</body>
+</html>
