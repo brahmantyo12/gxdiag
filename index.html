@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project GXDiag - Hardware Diagnostic Suite</title>
+    <title>Project GXDiag - Final Fixed</title>
     <style>
         /* --- 1. CORE RESET --- */
         * { box-sizing: border-box; }
@@ -16,29 +16,17 @@
             overflow-x: hidden;
         }
 
-        /* --- 2. HEADER & MENU --- */
+        /* --- 2. HEADER --- */
         .header-section {
             width: 100%; max-width: 1280px; display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
         }
-        h2 { margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,229,255,0.3); }
+        h2 { margin: 0; color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; }
         
-        .controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-        
-        .ctrl-box {
-            background: #1e1e1e; padding: 5px 15px; border-radius: 30px;
-            border: 1px solid #333; display: flex; align-items: center; gap: 10px;
-        }
+        .controls { display: flex; gap: 15px; align-items: center; }
+        .ctrl-box { background: #1e1e1e; padding: 5px 15px; border-radius: 30px; border: 1px solid #333; display: flex; align-items: center; gap: 10px; }
         .ctrl-label { font-size: 0.8rem; font-weight: bold; color: #aaa; }
-
-        /* Dead Pixel Buttons */
-        .pixel-menu { display: flex; gap: 5px; }
-        .pixel-btn {
-            width: 20px; height: 20px; border: 1px solid #555; border-radius: 50%; cursor: pointer; transition: 0.2s;
-        }
-        .pixel-btn:hover { transform: scale(1.2); }
-
-        /* Switches */
+        
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 34px; }
@@ -46,17 +34,25 @@
         input:checked + .slider { background-color: #00e5ff; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* --- 3. DASHBOARD (4 Columns) --- */
-        .dashboard {
+        /* --- 3. DASHBOARD (LAYOUT BARU) --- */
+        /* Baris 1: Log, Stats, Dead Pixel */
+        .dashboard-row-1 {
             width: 100%; max-width: 1280px; display: grid; 
-            grid-template-columns: 1.5fr 0.8fr 1fr 1fr; /* Log, Stats, Mic, Cam */
+            grid-template-columns: 1.5fr 0.8fr 1fr; 
+            gap: 15px; margin-bottom: 15px;
+        }
+        /* Baris 2: Mic & Webcam */
+        .dashboard-row-2 {
+            width: 100%; max-width: 1280px; display: grid; 
+            grid-template-columns: 1fr 1fr; 
             gap: 15px; margin-bottom: 30px;
         }
+
         .panel {
             background: #1e1e1e; border: 1px solid #333; border-radius: 12px;
             padding: 15px; height: 160px; display: flex; flex-direction: column; position: relative; overflow: hidden;
         }
-        .panel-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .panel-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
         /* Log */
         #key-history { flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
@@ -64,14 +60,31 @@
         .log-item.err { color: #ff4081; border-color: #ff4081; }
         
         /* Stats */
-        .stats-col { display: flex; flex-direction: column; justify-content: space-around; height: 100%; }
-        .stat-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed #333; padding-bottom: 2px; }
+        .stat-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed #333; padding-bottom: 5px; margin-top: 10px;}
         .stat-val { font-size: 1.2rem; font-weight: bold; color: #fff; font-family: monospace; }
         .stat-lbl { font-size: 0.7rem; color: #888; }
 
-        /* Media */
-        #mic-canvas, #cam-video { width: 100%; height: 100%; background: #000; border-radius: 5px; object-fit: cover; }
-        .media-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00e5ff; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; color:#000; z-index: 10; font-size: 0.8rem; white-space: nowrap;}
+        /* Dead Pixel Buttons */
+        .dp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; height: 100%; align-items: center; }
+        .dp-btn {
+            height: 50px; border: 2px solid #444; border-radius: 8px; cursor: pointer; transition: 0.2s;
+            font-size: 0.7rem; font-weight: bold; color: #000; text-transform: uppercase;
+        }
+        .dp-btn:hover { transform: scale(1.05); border-color: #fff; }
+
+        /* Media (Mic & Cam) */
+        .media-container { width: 100%; height: 100%; position: relative; background: #000; border-radius: 5px; overflow: hidden; }
+        #mic-canvas, #cam-video { width: 100%; height: 100%; object-fit: cover; }
+        .media-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5);
+            transition: opacity 0.3s;
+        }
+        .media-overlay.hidden { opacity: 0; pointer-events: none; }
+        .media-btn { 
+            background: #00e5ff; border: none; padding: 10px 20px; border-radius: 20px; 
+            font-weight: bold; cursor: pointer; color:#000; font-size: 0.9rem;
+        }
         .media-btn:hover { background: #fff; }
 
         /* --- 4. KEYBOARD --- */
@@ -149,7 +162,8 @@
         .touchpad-area { width: 200px; height: 160px; background: #1a1a1a; border: 2px dashed #444; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-top: 30px; }
         .touch-label { color: #555; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; }
         .touch-coords { color: #00e5ff; font-family: monospace; font-size: 1.2rem; font-weight: bold; }
-        .touch-hz { font-family: monospace; font-size: 0.8rem; color: #888; margin-top: 5px; }
+        .touch-scroll-indicator { position: absolute; color: #ff4081; font-weight: bold; font-size: 0.9rem; opacity: 0; transition: opacity 0.2s; }
+        .touch-scroll-indicator.visible { opacity: 1; }
 
         /* Multi Touch */
         .multi-touch-section { width: 100%; max-width: 1200px; margin-bottom: 50px; background: #1e1e1e; border: 2px solid #333; border-radius: 10px; height: 200px; position: relative; overflow: hidden; touch-action: none; display: flex; align-items: center; justify-content: center; }
@@ -161,9 +175,13 @@
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: black; z-index: 9999; display: none; cursor: none;
         }
+        #dp-exit-hint {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.3); font-size: 2rem; font-weight: bold; pointer-events: none;
+        }
 
         @media (max-width: 1200px) {
-            .dashboard { grid-template-columns: 1fr; height: auto; }
+            .dashboard-row-1, .dashboard-row-2 { grid-template-columns: 1fr; height: auto; }
             .bottom-section { grid-template-columns: 1fr; }
             .gamepad-container, .mouse-container { width: 100%; max-width: 100%; }
             .wrapper { justify-content: flex-start; }
@@ -172,20 +190,13 @@
 </head>
 <body>
 
-    <div id="dead-pixel-overlay" onclick="cyclePixelColor()"></div>
+    <div id="dead-pixel-overlay" onclick="exitDeadPixel()">
+        <div id="dp-exit-hint">CLICK TO EXIT</div>
+    </div>
 
     <div class="header-section">
         <h2>Project <span style="color:#fff">GXDiag</span></h2>
         
-        <div class="pixel-menu">
-            <span class="ctrl-label">Dead Pixel:</span>
-            <button class="pixel-btn" style="background:#f00" onclick="startDeadPixel('red')"></button>
-            <button class="pixel-btn" style="background:#0f0" onclick="startDeadPixel('lime')"></button>
-            <button class="pixel-btn" style="background:#00f" onclick="startDeadPixel('blue')"></button>
-            <button class="pixel-btn" style="background:#fff" onclick="startDeadPixel('white')"></button>
-            <button class="pixel-btn" style="background:#000" onclick="startDeadPixel('black')"></button>
-        </div>
-
         <div class="controls">
             <div class="ctrl-box">
                 <span class="ctrl-label">ANSI</span>
@@ -205,29 +216,53 @@
         </div>
     </div>
 
-    <div class="dashboard">
+    <div class="dashboard-row-1">
         <div class="panel">
             <div class="panel-head">INPUT LOG <span style="cursor:pointer; color:#ff4081" onclick="clearLog()">[CLEAR]</span></div>
             <div id="key-history"></div>
             <div id="chatter-alert" style="display:none; position:absolute; bottom:10px; right:10px; background:#b71c1c; color:#fff; padding:5px; border-radius:4px; font-size:0.8rem; font-weight:bold;">⚠️ Chatter!</div>
         </div>
+        
         <div class="panel">
             <div class="panel-head">KEYBOARD STATS</div>
             <div class="stats-col">
-                <div class="stat-row"><span class="stat-lbl">KPM</span><span class="stat-val" id="tpm-display">0</span></div>
+                <div class="stat-row"><span class="stat-lbl">KPM (SPEED)</span><span class="stat-val" id="tpm-display">0</span></div>
                 <div class="stat-row"><span class="stat-lbl">PRESSED</span><span class="stat-val" id="ghost-current" style="color:#fff">0</span></div>
-                <div class="stat-row"><span class="stat-lbl">MAX</span><span class="stat-val" id="ghost-max" style="color:#00e5ff">0</span></div>
+                <div class="stat-row"><span class="stat-lbl">MAX GHOSTING</span><span class="stat-val" id="ghost-max" style="color:#00e5ff">0</span></div>
             </div>
         </div>
+
         <div class="panel">
-            <div class="panel-head">MICROPHONE</div>
-            <canvas id="mic-canvas"></canvas>
-            <button class="media-btn" id="mic-btn" onclick="toggleMic()">START MIC</button>
+            <div class="panel-head">DEAD PIXEL CHECK</div>
+            <div class="dp-grid">
+                <button class="dp-btn" style="background:#f00;" onclick="startDeadPixel('red')">RED</button>
+                <button class="dp-btn" style="background:#0f0;" onclick="startDeadPixel('lime')">GRN</button>
+                <button class="dp-btn" style="background:#00f; color:#fff" onclick="startDeadPixel('blue')">BLU</button>
+                <button class="dp-btn" style="background:#fff;" onclick="startDeadPixel('white')">WHT</button>
+                <button class="dp-btn" style="background:#000; color:#fff; border-color:#555" onclick="startDeadPixel('black')">BLK</button>
+            </div>
         </div>
+    </div>
+
+    <div class="dashboard-row-2">
+        <div class="panel">
+            <div class="panel-head">MICROPHONE TEST</div>
+            <div class="media-container">
+                <canvas id="mic-canvas"></canvas>
+                <div class="media-overlay" id="mic-overlay">
+                    <button class="media-btn" id="mic-btn" onclick="toggleMic()">START MICROPHONE</button>
+                </div>
+            </div>
+        </div>
+
         <div class="panel">
             <div class="panel-head">WEBCAM TEST</div>
-            <video id="cam-video" autoplay playsinline muted></video>
-            <button class="media-btn" id="cam-btn" onclick="toggleCam()">START CAM</button>
+            <div class="media-container">
+                <video id="cam-video" autoplay playsinline muted></video>
+                <div class="media-overlay" id="cam-overlay">
+                    <button class="media-btn" id="cam-btn" onclick="toggleCam()">START CAMERA</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -278,7 +313,7 @@
         <div class="gamepad-container" id="gp-container">
             <div class="gp-status">
                 <span id="gp-status">Connect a Controller</span>
-                <button class="rumble-btn" id="rumble-btn" onclick="testRumble()">TEST RUMBLE</button>
+                <button class="rumble-btn" id="rumble-btn" onclick="testRumble()">TEST VIBRATION</button>
             </div>
             <div class="controller-body">
                 <div class="btn-gp gp-tr pos-lt" id="gp-b6">LT</div><div class="btn-gp gp-tr pos-rt" id="gp-b7">RT</div>
@@ -288,264 +323,4 @@
                 <div class="btn-gp gp-round pos-y" id="gp-b3" style="color:#eadd00">Y</div><div class="btn-gp gp-round pos-x" id="gp-b2" style="color:#0088ff">X</div>
                 <div class="btn-gp gp-round pos-a" id="gp-b0" style="color:#00ff88">A</div><div class="btn-gp gp-round pos-b" id="gp-b1" style="color:#ff4040">B</div><div class="btn-gp gp-stick pos-rs" id="gp-b11">R3</div>
                 <div class="btn-gp gp-small pos-sel" id="gp-b8">Sel</div><div class="btn-gp gp-small pos-start" id="gp-b9">Sta</div><div class="btn-gp gp-small pos-home" id="gp-b16">⌂</div>
-                <div class="btn-gp gp-paddle pos-p1" id="gp-b17">P1</div><div class="btn-gp gp-paddle pos-p2" id="gp-b18">P2</div>
-                <div class="btn-gp gp-paddle pos-p3" id="gp-b19">P3</div><div class="btn-gp gp-paddle pos-p4" id="gp-b20">P4</div>
-                <div class="pro-label">PRO CONTROLLER PADDLES</div>
-            </div>
-            <div class="analog-container">
-                <div class="stick-wrapper"><div class="stick-visual"><div class="stick-dot" id="dot-l"></div></div><div class="stick-vals" id="val-l">L: 0.00, 0.00</div></div>
-                <div class="stick-wrapper"><div class="stick-visual"><div class="stick-dot" id="dot-r"></div></div><div class="stick-vals" id="val-r">R: 0.00, 0.00</div></div>
-            </div>
-        </div>
-
-        <div class="mouse-container">
-            <div class="gp-status">Mouse & Touchpad</div>
-            <div class="mouse-layout">
-                <div class="mouse-body">
-                    <div class="ms-btn ms-left" id="ms-0"></div><div class="ms-btn ms-right" id="ms-2"></div><div class="ms-btn ms-mid" id="ms-1"></div>
-                    <div class="ms-btn ms-side-back" id="ms-3" title="Back"></div><div class="ms-btn ms-side-fwd" id="ms-4" title="Forward"></div>
-                </div>
-                <div class="touchpad-area" id="touch-area">
-                    <div class="touch-label">Polling Rate (Hz)</div>
-                    <div class="touch-coords" id="poll-rate">0 Hz</div>
-                    <div class="touch-hz" id="touch-coords">X:0 Y:0</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="multi-touch-section" id="multi-touch">
-        <div class="multi-touch-placeholder">TOUCHSCREEN & PEN TEST AREA</div>
-    </div>
-
-    <script>
-        // --- DEAD PIXEL ---
-        const dpOverlay = document.getElementById('dead-pixel-overlay');
-        const colors = ['red', 'lime', 'blue', 'white', 'black'];
-        let colorIdx = 0;
-        function startDeadPixel(c) {
-            dpOverlay.style.display = 'block';
-            dpOverlay.style.backgroundColor = c;
-            colorIdx = colors.indexOf(c);
-            document.documentElement.requestFullscreen();
-        }
-        function cyclePixelColor() {
-            colorIdx = (colorIdx + 1) % colors.length;
-            dpOverlay.style.backgroundColor = colors[colorIdx];
-            if (colorIdx === 0 && !document.fullscreenElement) {
-                // Exit on loop back or double click logic if needed
-                // But simplified: user press ESC to exit
-            }
-        }
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) dpOverlay.style.display = 'none';
-        });
-
-        // --- AUDIO & MIC ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let noiseBuffer = null;
-        function playSound() {
-            if (!document.getElementById('sound-toggle').checked) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (!noiseBuffer) {
-                const b = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
-                const d = b.getChannelData(0); for(let i=0; i<d.length; i++) d[i] = Math.random()*2-1;
-                noiseBuffer = b;
-            }
-            const s = audioCtx.createBufferSource(); s.buffer = noiseBuffer;
-            const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1200;
-            const g = audioCtx.createGain(); g.gain.setValueAtTime(0.5, audioCtx.currentTime); 
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.03);
-            s.connect(f); f.connect(g); g.connect(audioCtx.destination);
-            s.start(); s.stop(audioCtx.currentTime+0.04);
-        }
-
-        let micStream = null;
-        async function toggleMic() {
-            if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; document.getElementById('mic-btn').innerText = "START MIC"; return; }
-            try {
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                document.getElementById('mic-btn').style.display = 'none';
-                const src = audioCtx.createMediaStreamSource(micStream);
-                const anal = audioCtx.createAnalyser(); anal.fftSize = 256; src.connect(anal);
-                const buf = new Uint8Array(anal.frequencyBinCount);
-                const cvs = document.getElementById('mic-canvas'); const ctx = cvs.getContext('2d');
-                function drawMic() {
-                    if(!micStream) return;
-                    requestAnimationFrame(drawMic);
-                    anal.getByteFrequencyData(buf);
-                    ctx.fillStyle = '#111'; ctx.fillRect(0,0,cvs.width,cvs.height);
-                    const barW = (cvs.width/buf.length)*2.5; let x = 0;
-                    for(let i=0; i<buf.length; i++) {
-                        const h = buf[i]/2;
-                        ctx.fillStyle = `rgb(${h+100}, 255, 255)`;
-                        ctx.fillRect(x, cvs.height-h, barW, h); x += barW + 1;
-                    }
-                }
-                drawMic();
-            } catch(e) { alert("Mic Permission Denied"); }
-        }
-
-        // --- WEBCAM ---
-        let camStream = null;
-        async function toggleCam() {
-            const vid = document.getElementById('cam-video');
-            const btn = document.getElementById('cam-btn');
-            if(camStream) {
-                camStream.getTracks().forEach(t => t.stop()); camStream = null;
-                btn.innerText = "START CAM"; btn.style.display='block'; vid.srcObject=null;
-                return;
-            }
-            try {
-                camStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                vid.srcObject = camStream;
-                btn.style.display = 'none';
-            } catch(e) { alert("Camera Permission Denied"); }
-        }
-
-        // --- KEYBOARD ---
-        let lastKeyTime = {}, startTime = null, count = 0, activeKeys = new Set(), maxSim = 0;
-        function toggleLayout() {
-            const iso = document.getElementById('layout-toggle').checked;
-            const kb = document.getElementById('kb-case');
-            iso ? kb.classList.add('iso-mode') : kb.classList.remove('iso-mode');
-        }
-        function format(code) { return code.replace('Key','').replace('Digit','').replace('Numpad','Num '); }
-
-        window.addEventListener('keydown', e => {
-            if (e.repeat) return;
-            if (['Tab','AltLeft','AltRight'].includes(e.code) || e.code.startsWith('F')) e.preventDefault();
-            playSound();
-            const now = Date.now(), last = lastKeyTime[e.code] || 0;
-            if (last && now-last < 80) {
-                document.getElementById('chatter-key').innerText = format(e.code);
-                document.getElementById('chatter-alert').style.display = 'block';
-                setTimeout(()=>document.getElementById('chatter-alert').style.display='none',3000);
-            }
-            lastKeyTime[e.code] = now;
-            activeKeys.add(e.code); count++;
-            if(!startTime) { startTime=now; setInterval(()=>{
-                const m = (Date.now()-startTime)/60000;
-                document.getElementById('tpm-display').innerText = m>0?Math.round(count/m):0;
-            },1000); }
-            document.getElementById('ghost-current').innerText = activeKeys.size;
-            if(activeKeys.size > maxSim) { maxSim = activeKeys.size; document.getElementById('ghost-max').innerText = maxSim; }
-            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>{k.classList.add('active','tested')});
-            const l = document.createElement('div'); l.className = 'log-item';
-            if(now-last < 80) l.classList.add('err');
-            l.innerText = format(e.code);
-            document.getElementById('key-history').prepend(l);
-        });
-        window.addEventListener('keyup', e => {
-            activeKeys.delete(e.code);
-            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>k.classList.remove('active'));
-            document.getElementById('ghost-current').innerText = activeKeys.size;
-        });
-        function clearLog() { document.getElementById('key-history').innerHTML = ''; }
-
-        // --- GAMEPAD ---
-        let gpIdx = null;
-        window.addEventListener("gamepadconnected", e => {
-            gpIdx = e.gamepad.index;
-            document.getElementById('gp-container').classList.add('active');
-            document.getElementById('gp-status').innerText = "Connected: " + e.gamepad.id.substring(0,25);
-            loopGP();
-        });
-        window.addEventListener("gamepaddisconnected", e => {
-            gpIdx = null;
-            document.getElementById('gp-container').classList.remove('active');
-            document.getElementById('gp-status').innerText = "Connect a Controller";
-        });
-        function loopGP() {
-            if(gpIdx === null) return;
-            const gp = navigator.getGamepads()[gpIdx];
-            if(gp) {
-                gp.buttons.forEach((b,i)=>{
-                    const el = document.getElementById(`gp-b${i}`);
-                    if(el) b.pressed ? el.classList.add('pressed') : el.classList.remove('pressed');
-                });
-                const lx = gp.axes[0], ly = gp.axes[1];
-                document.getElementById('dot-l').style.transform = `translate(${lx*35}px, ${ly*35}px)`;
-                document.getElementById('val-l').innerText = `L: ${lx.toFixed(2)}, ${ly.toFixed(2)}`;
-                const ls = document.getElementById('gp-b10');
-                if(ls && (Math.abs(lx)>0.3 || Math.abs(ly)>0.3)) ls.classList.add('pressed'); else if(ls) ls.classList.remove('pressed');
-
-                const rx = gp.axes[2], ry = gp.axes[3];
-                document.getElementById('dot-r').style.transform = `translate(${rx*35}px, ${ry*35}px)`;
-                document.getElementById('val-r').innerText = `R: ${rx.toFixed(2)}, ${ry.toFixed(2)}`;
-                const rs = document.getElementById('gp-b11');
-                if(rs && (Math.abs(rx)>0.3 || Math.abs(ry)>0.3)) rs.classList.add('pressed'); else if(rs) rs.classList.remove('pressed');
-                requestAnimationFrame(loopGP);
-            }
-        }
-        function testRumble() {
-            if(gpIdx === null) return;
-            const gp = navigator.getGamepads()[gpIdx];
-            if (gp && gp.vibrationActuator) gp.vibrationActuator.playEffect("dual-rumble", { startDelay: 0, duration: 500, weakMagnitude: 1.0, strongMagnitude: 1.0 });
-            else alert("Rumble not supported/detected");
-        }
-
-        // --- MOUSE (POLLING RATE) & TOUCH ---
-        let lastMouseTime = performance.now();
-        let mousePolls = [];
-        window.addEventListener('mousedown', e => {
-            const btn = document.getElementById(`ms-${e.button}`);
-            if(btn) { btn.classList.add('pressed'); e.preventDefault(); }
-        });
-        window.addEventListener('mouseup', e => {
-            const btn = document.getElementById(`ms-${e.button}`);
-            if(btn) btn.classList.remove('pressed');
-        });
-        window.addEventListener('contextmenu', e => e.preventDefault());
-        
-        const touchArea = document.getElementById('touch-area');
-        touchArea.addEventListener('mousemove', e => {
-            // Polling Rate Logic
-            const now = performance.now();
-            const diff = now - lastMouseTime;
-            lastMouseTime = now;
-            if(diff > 0) {
-                mousePolls.push(1000/diff);
-                if(mousePolls.length > 50) mousePolls.shift();
-                const avg = Math.round(mousePolls.reduce((a,b)=>a+b)/mousePolls.length);
-                document.getElementById('poll-rate').innerText = avg + " Hz";
-            }
-            // Coords
-            const rect = touchArea.getBoundingClientRect();
-            document.getElementById('touch-coords').innerText = `X:${Math.round(e.clientX - rect.left)} Y:${Math.round(e.clientY - rect.top)}`;
-        });
-
-        // --- MULTI TOUCH + PEN PRESSURE ---
-        const multiTouch = document.getElementById('multi-touch');
-        multiTouch.addEventListener('pointerdown', handlePointer, {passive: false});
-        multiTouch.addEventListener('pointermove', handlePointer, {passive: false});
-        multiTouch.addEventListener('pointerup', handlePointer);
-        
-        const pointers = {};
-        function handlePointer(e) {
-            e.preventDefault();
-            if (e.type === 'pointerup') { delete pointers[e.pointerId]; }
-            else { pointers[e.pointerId] = e; }
-            
-            multiTouch.innerHTML = '';
-            const keys = Object.keys(pointers);
-            if(keys.length > 0) {
-                keys.forEach((pid, idx) => {
-                    const p = pointers[pid];
-                    const rect = multiTouch.getBoundingClientRect();
-                    const el = document.createElement('div');
-                    el.className = 'touch-point';
-                    el.style.left = (p.clientX - rect.left) + 'px';
-                    el.style.top = (p.clientY - rect.top) + 'px';
-                    // Pressure Check
-                    const pressure = p.pressure || 0.5;
-                    const scale = 0.5 + (pressure * 1.5); 
-                    el.style.transform = `translate(-50%, -50%) scale(${scale})`;
-                    el.innerText = (p.pointerType === 'pen' ? '🖊️' : idx+1);
-                    multiTouch.appendChild(el);
-                });
-            } else { multiTouch.innerHTML = '<div class="multi-touch-placeholder">TOUCHSCREEN & PEN TEST AREA</div>'; }
-        }
-    </script>
-</body>
-</html>
+                <div class="btn-gp gp-paddle pos-p1" id="gp-b17">P1</div>
