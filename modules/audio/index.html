@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>GXDiag - Audio</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        .audio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .spk-btn { padding: 40px; font-size: 1.5rem; background: #222; color: #fff; border: 2px solid #444; border-radius: 10px; width: 100%; }
+        .spk-btn:active { background: #00e5ff; color: #000; border-color: #00e5ff; }
+        #mic-canvas { width: 100%; height: 200px; background: #000; border-radius: 10px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← MENU</a>
+    <h2>Audio System</h2>
+    
+    <div class="panel">
+        <h3>Stereo Speaker Test</h3>
+        <div class="audio-grid">
+            <button class="spk-btn" onclick="play( -1 )">🔊 LEFT</button>
+            <button class="spk-btn" onclick="play( 1 )">RIGHT 🔊</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>Microphone Visualizer</h3>
+        <button onclick="startMic()" style="padding:10px 20px; background:#00e5ff; border:none; border-radius:5px; font-weight:bold; cursor:pointer;" id="mic-btn">START MIC</button>
+        <canvas id="mic-canvas"></canvas>
+    </div>
+
+    <script>
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function play(pan) {
+            if(ac.state==='suspended') ac.resume();
+            const osc = ac.createOscillator();
+            const panner = ac.createStereoPanner();
+            const g = ac.createGain();
+            osc.frequency.value = 440;
+            panner.pan.value = pan;
+            g.gain.value = 0.5;
+            osc.connect(panner).connect(g).connect(ac.destination);
+            osc.start(); osc.stop(ac.currentTime+0.5);
+        }
+
+        async function startMic() {
+            try {
+                const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+                document.getElementById('mic-btn').style.display='none';
+                const src = ac.createMediaStreamSource(s);
+                const an = ac.createAnalyser(); an.fftSize = 256;
+                src.connect(an);
+                const buf = new Uint8Array(an.frequencyBinCount);
+                const cvs = document.getElementById('mic-canvas');
+                const ctx = cvs.getContext('2d');
+                function draw() {
+                    requestAnimationFrame(draw);
+                    an.getByteFrequencyData(buf);
+                    ctx.fillStyle='#000'; ctx.fillRect(0,0,cvs.width,cvs.height);
+                    const bw = (cvs.width/buf.length)*2.5; let x=0;
+                    for(let i=0; i<buf.length; i++) {
+                        const h = buf[i]/1.5;
+                        ctx.fillStyle = `rgb(${h+50},255,255)`;
+                        ctx.fillRect(x,cvs.height-h,bw,h); x+=bw+1;
+                    }
+                }
+                draw();
+            } catch(e) { alert("Mic Error: "+e.message); }
+        }
+    </script>
+</body>
+</html>
