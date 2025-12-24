@@ -4,7 +4,6 @@
 > A lightweight, modular, and professional tool to test hardware peripherals and monitor system events directly from your browser.
 
 ![Project Banner](screenshots/banner.png)
-*(Note: Upload a screenshot of your dashboard to the 'screenshots' folder)*
 
 ## 🔗 Live Demo
 🚀 **[Click here to open GXDiag Live](https://gxdiag.brahmantyo12.my.id)**
@@ -86,4 +85,5 @@ GXDiag-Project/
 │   ├── screen-cam/          # Fullscreen & MediaStream
 │   └── specs/               # WebGL & Hardware Info
 ├── index.html               # Main Command Center
+├── LICENSE                  # MIT License File
 └── README.md                # Documentation
