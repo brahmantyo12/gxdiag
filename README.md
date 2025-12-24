@@ -4,7 +4,6 @@
 > A lightweight, modular, and professional tool to test hardware peripherals and monitor system events directly from your browser.
 
 ![Project Banner](screenshots/banner.png)
-*(Optional: Replace this with a screenshot of your new Command Center)*
 
 ## 🚀 Overview
 
