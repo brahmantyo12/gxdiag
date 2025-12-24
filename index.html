@@ -6,7 +6,7 @@
     <title>Project GXDiag - Command Center</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* --- DASHBOARD LAYOUT (3 KOLOM) --- */
+        /* --- DASHBOARD LAYOUT --- */
         .top-dashboard {
             width: 100%; max-width: 1280px; 
             display: grid; 
@@ -15,7 +15,7 @@
             align-items: stretch;
         }
 
-        /* --- 1. KIRI: JAM & LOKASI --- */
+        /* --- KIRI: JAM & LOKASI --- */
         .dash-left { text-align: left; display: flex; flex-direction: column; }
         .clock-big {
             font-size: 3.5rem; font-weight: 800; color: #fff; line-height: 1;
@@ -26,20 +26,36 @@
             border: 1px solid #333; flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
         }
         .prayer-row { color: #00e5ff; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;}
-        .loc-row { color: #888; font-size: 0.8rem; margin-top: 10px; display: flex; align-items: center; gap: 5px; border-top: 1px dashed #333; padding-top: 10px;}
+        .loc-row { 
+            color: #ccc; font-size: 0.85rem; margin-top: 15px; 
+            display: flex; align-items: flex-start; gap: 8px; 
+            border-top: 1px dashed #333; padding-top: 15px; line-height: 1.4;
+        }
 
-        /* --- 2. TENGAH: KALENDER INTERAKTIF --- */
+        /* --- TENGAH: KALENDER NAVIGASI --- */
         .dash-center {
             background: #151515; border: 1px solid #333; border-radius: 15px;
             padding: 20px; display: flex; flex-direction: column;
             box-shadow: inset 0 0 50px #080808;
         }
-        .cal-header { 
-            font-weight: 800; color: #fff; margin-bottom: 15px; 
-            text-transform: uppercase; letter-spacing: 2px; text-align: center; 
-            border-bottom: 1px solid #333; padding-bottom: 10px;
-        }
         
+        /* Header Kalender dengan Navigasi */
+        .cal-header-wrapper {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px;
+        }
+        .cal-nav-btn {
+            background: #222; border: 1px solid #444; color: #00e5ff;
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+            font-weight: bold; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; user-select: none;
+        }
+        .cal-nav-btn:hover { background: #00e5ff; color: #000; }
+        .cal-title { 
+            font-weight: 800; color: #fff; text-transform: uppercase; 
+            letter-spacing: 2px; font-size: 1.1rem;
+        }
+
         .calendar-grid {
             display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%;
             margin-bottom: 20px;
@@ -54,56 +70,34 @@
         .cal-date.today { background: rgba(0, 229, 255, 0.1); color: #00e5ff; border: 1px solid #00e5ff; font-weight: bold; }
         .cal-date.selected { background: #00e5ff; color: #000; font-weight: bold; box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); transform: scale(1.1); z-index: 2;}
         .cal-date.holiday { color: #ff4081; font-weight: bold; } 
+        .cal-date.other-month { opacity: 0.3; pointer-events: none; }
         .cal-date.has-event::after { content:''; position: absolute; bottom: 3px; width: 4px; height: 4px; background: #00ff88; border-radius: 50%; }
 
-        /* Event Sections (3 Panel) */
+        /* Event Panels */
         .event-sections {
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
-            margin-top: auto;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: auto;
         }
         .event-col {
             background: #222; padding: 12px; border-radius: 8px;
-            font-size: 0.8rem; border-left: 3px solid #555;
-            display: flex; flex-direction: column;
+            font-size: 0.8rem; border-left: 3px solid #555; display: flex; flex-direction: column;
         }
-        .ec-indo { border-color: #ff4081; } 
-        .ec-masehi { border-color: #00e5ff; } 
-        .ec-hijri { border-color: #00ff88; position: relative;}
-
+        .ec-indo { border-color: #ff4081; } .ec-masehi { border-color: #00e5ff; } .ec-hijri { border-color: #00ff88; position: relative;}
         .ec-title { font-size: 0.7rem; color: #aaa; text-transform: uppercase; margin-bottom: 6px; font-weight: bold; letter-spacing: 0.5px;}
         .ec-content { color: #fff; font-weight: 500; line-height: 1.3; flex-grow: 1;}
         .ec-highlight { color: #00ff88; font-weight: bold; margin-top: 3px;}
-        .ec-reminder { 
-            margin-top: 8px; padding-top: 8px; border-top: 1px dashed #444; 
-            font-size: 0.75rem; color: #aaa;
-        }
-        .rem-badge { 
-            background: #333; padding: 2px 6px; border-radius: 4px; 
-            color: #fff; font-size: 0.7rem; display: inline-block; margin-bottom: 2px;
-        }
+        .hijri-adj-box { position: absolute; top: 10px; right: 10px; }
+        .hijri-select { background: #111; color: #00ff88; border: 1px solid #333; font-size: 0.65rem; border-radius: 4px; cursor: pointer; }
 
-        /* Correction Dropdown */
-        .hijri-adj-box {
-            position: absolute; top: 10px; right: 10px;
-        }
-        .hijri-select {
-            background: #111; color: #00ff88; border: 1px solid #333; 
-            font-size: 0.65rem; border-radius: 4px; cursor: pointer;
-        }
-
-        /* --- 3. KANAN: Steam Sale --- */
+        /* --- KANAN: Steam Sale --- */
         .dash-right {
-            text-align: right;
-            background: linear-gradient(135deg, #1a2a3a, #0f1519);
+            text-align: right; background: linear-gradient(135deg, #1a2a3a, #0f1519);
             padding: 20px; border-radius: 15px; border: 1px solid #333;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3); 
-            display: flex; flex-direction: column; justify-content: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; justify-content: center;
         }
         .steam-label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
         .steam-title { font-size: 1.3rem; color: #66c0f4; font-weight: 800; margin: 5px 0; text-shadow: 0 0 10px rgba(102, 192, 244, 0.3);}
         .steam-timer { font-size: 1.6rem; color: #fff; font-family: monospace; font-weight: bold; }
         .sale-live { color: #00ff88; animation: pulse 1.5s infinite; }
-        
         @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
 
         /* --- MENU GRID --- */
@@ -125,9 +119,9 @@
         @media (max-width: 900px) {
             .top-dashboard { grid-template-columns: 1fr; gap: 15px;}
             .dash-left, .dash-right, .dash-center { text-align: center; }
-            .prayer-row, .loc-row { justify-content: center; }
+            .prayer-row, .loc-row { justify-content: center; text-align: center;}
             .event-sections { grid-template-columns: 1fr; text-align: left;}
-            .hijri-adj-box { position: relative; top: 0; right: 0; margin-bottom: 5px; text-align: right;}
+            .cal-header-wrapper { justify-content: center; gap: 20px; }
         }
     </style>
 </head>
@@ -138,7 +132,7 @@
         <div class="dash-left">
             <div class="clock-big" id="clock">00:00:00</div>
             <div class="info-box">
-                <div style="font-size:0.8rem; color:#aaa; margin-bottom:10px; text-transform: uppercase; letter-spacing:1px; font-weight:bold;">Jadwal Sholat</div>
+                <div style="font-size:0.8rem; color:#aaa; margin-bottom:10px; text-transform: uppercase; letter-spacing:1px; font-weight:bold;">Jadwal Sholat (Kemenag)</div>
                 <div class="prayer-row">
                     <span>Berikutnya</span> <span id="next-prayer-name" style="color:#fff;">...</span>
                 </div>
@@ -147,31 +141,29 @@
                     <span style="font-size:0.9rem; color:#666;">WIB/Local</span>
                 </div>
                 <div class="loc-row">
-                    <span>📍</span> <span id="user-loc">Mencari Lokasi...</span>
+                    <span style="font-size:1.2rem;">📍</span> 
+                    <span id="user-loc-name">Mendeteksi Kota...<br><span style="font-size:0.7rem; color:#555;">(Menggunakan Koordinat GPS)</span></span>
                 </div>
             </div>
         </div>
 
         <div class="dash-center">
-            <div class="cal-header" id="cal-month-year">MONTH YEAR</div>
+            <div class="cal-header-wrapper">
+                <button class="cal-nav-btn" onclick="changeMonth(-1)">&lt;</button>
+                <div class="cal-title" id="cal-month-year">MONTH YEAR</div>
+                <button class="cal-nav-btn" onclick="changeMonth(1)">&gt;</button>
+            </div>
+            
             <div class="calendar-grid" id="calendar-grid"></div>
             
             <div class="event-sections">
                 <div class="event-col ec-indo">
                     <div class="ec-title">🇮🇩 Nasional</div>
                     <div class="ec-content" id="info-indo">-</div>
-                    <div class="ec-reminder" id="rem-indo">
-                        <span class="rem-badge">UPCOMING</span><br>
-                        Checking...
-                    </div>
                 </div>
                 <div class="event-col ec-masehi">
-                    <div class="ec-title">📅 Hari Ini</div>
+                    <div class="ec-title">📅 Detail</div>
                     <div class="ec-content" id="info-masehi">-</div>
-                    <div class="ec-reminder">
-                        <span class="rem-badge">WETON (EST)</span><br>
-                        <span id="info-weton">...</span>
-                    </div>
                 </div>
                 <div class="event-col ec-hijri">
                     <div class="hijri-adj-box">
@@ -185,10 +177,6 @@
                     </div>
                     <div class="ec-title">☪️ Hijriyah</div>
                     <div class="ec-content" id="info-hijri">-</div>
-                    <div class="ec-reminder" id="rem-hijri">
-                        <span class="rem-badge">UPCOMING</span><br>
-                        Checking...
-                    </div>
                 </div>
             </div>
         </div>
@@ -198,13 +186,13 @@
             <div class="steam-label">STEAM EVENT MONITOR</div>
             <div class="steam-title" id="sale-name">Checking DB...</div>
             <div class="steam-timer" id="sale-countdown">--d --h</div>
-            <div style="font-size:0.7rem; color:#555; margin-top:10px;">*Based on SteamDB 2025 Schedule</div>
+            <div style="font-size:0.7rem; color:#555; margin-top:10px;">*Based on SteamDB Schedule</div>
         </div>
     </div>
 
     <div style="text-align:center; margin-bottom:20px;">
         <h2 style="margin:0; color:#00e5ff; font-size: 1.8rem; letter-spacing: 3px; font-weight:900;">PROJECT GXDIAG</h2>
-        <div style="font-size: 0.8rem; color: #555; letter-spacing:1px;">PROFESSIONAL DIAGNOSTIC SUITE V2.1</div>
+        <div style="font-size: 0.8rem; color: #555; letter-spacing:1px;">PROFESSIONAL DIAGNOSTIC SUITE V3.0</div>
     </div>
 
     <div class="menu-grid">
@@ -223,45 +211,50 @@
     </footer>
 
     <script>
-        // --- 1. DATABASE EVENT 2025 (Updated SKB 3 Menteri) ---
+        // --- 1. DATA EVENT INDONESIA (2025 Fixed) ---
         const indoEvents = {
-            "1-1": "Tahun Baru 2025", "1-27": "Isra Mi'raj", "1-29": "Tahun Baru Imlek 2576",
-            "3-29": "Hari Raya Nyepi", "3-31": "Idul Fitri 1446H", "4-1": "Idul Fitri 1446H",
-            "4-18": "Wafat Isa Al Masih", "5-1": "Hari Buruh", "5-12": "Hari Waisak 2569",
-            "5-29": "Kenaikan Isa Al Masih", "6-1": "Lahir Pancasila", "6-6": "Idul Adha 1446H",
-            "6-27": "1 Muharram 1447H", "8-17": "HUT RI ke-80", "9-5": "Maulid Nabi",
+            "1-1": "Tahun Baru", "1-27": "Isra Mi'raj", "1-29": "Imlek",
+            "3-29": "Nyepi", "3-31": "Idul Fitri", "4-1": "Idul Fitri",
+            "4-18": "Wafat Isa Al Masih", "5-1": "Hari Buruh", "5-12": "Waisak",
+            "5-29": "Kenaikan Isa Al Masih", "6-1": "Lahir Pancasila", "6-6": "Idul Adha",
+            "6-27": "1 Muharram", "8-17": "HUT RI ke-80", "9-5": "Maulid Nabi",
             "12-25": "Hari Raya Natal"
         };
 
-        // --- 2. ENGINE KALENDER & REMINDER SYSTEM ---
-        const now = new Date();
-        let selectedDate = new Date();
+        // --- 2. ENGINE KALENDER UTAMA ---
+        let currentDate = new Date(); // Hari ini
+        let viewDate = new Date();    // Bulan yang sedang dilihat di kalender
+        let selectedDate = new Date(); // Tanggal yang diklik user
+        
         let hijriOffset = parseInt(localStorage.getItem('gx_hijri_offset')) || 0;
         document.getElementById('hijri-offset').value = hijriOffset;
+
+        function updateClock() {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID', { hour12: false });
+        }
+        setInterval(updateClock, 1000); updateClock();
 
         function updateOffset() {
             hijriOffset = parseInt(document.getElementById('hijri-offset').value);
             localStorage.setItem('gx_hijri_offset', hijriOffset);
             updateInfoPanel(selectedDate);
-            updateReminders(); // Update reminder saat offset berubah
+            renderCalendar(); // Re-render untuk update dot hijau
         }
 
-        // Clock
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID', { hour12: false });
-        }, 1000);
+        function changeMonth(step) {
+            viewDate.setMonth(viewDate.getMonth() + step);
+            renderCalendar();
+        }
 
-        // Helper: Adjust Hijri Date
         function getAdjustedDate(baseDate) {
             const adj = new Date(baseDate);
             adj.setDate(adj.getDate() + hijriOffset);
             return adj;
         }
 
-        // Logic Pasaran Jawa (Weton) Sederhana
         function getWeton(date) {
             const pasaran = ['Legi', 'Pahing', 'Pon', 'Wage', 'Kliwon'];
-            const baseDate = new Date(1900, 0, 1); // 1 Jan 1900 = Senin Pahing
+            const baseDate = new Date(1900, 0, 1);
             const diff = Math.floor((date - baseDate) / (86400000));
             const pasaranIdx = (diff + 1) % 5; 
             return pasaran[pasaranIdx >= 0 ? pasaranIdx : pasaranIdx + 5];
@@ -271,7 +264,7 @@
             const adjDate = getAdjustedDate(date);
             const hijriFull = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric' }).format(adjDate);
             const [hMonth, hDay] = hijriFull.split('/').map(Number);
-            const dayOfWeek = date.getDay(); // Hari asli Masehi
+            const dayOfWeek = date.getDay();
 
             let events = [];
             if (dayOfWeek === 1) events.push("✨ Puasa Senin");
@@ -285,63 +278,27 @@
             return events.length > 0 ? events.join("<br>") : null;
         }
 
-        // --- SMART REMINDER (UPCOMING) ---
-        function updateReminders() {
-            const today = new Date();
-            
-            // 1. Cari Next Indo Event
-            let nextIndo = null;
-            let daysDiffIndo = 999;
-            for(let k in indoEvents) {
-                const [m, d] = k.split('-').map(Number);
-                const evDate = new Date(today.getFullYear(), m-1, d);
-                if(evDate < today) evDate.setFullYear(today.getFullYear() + 1); // Event tahun depan
-                
-                const diff = Math.ceil((evDate - today) / (86400000));
-                if(diff >= 0 && diff < daysDiffIndo) {
-                    daysDiffIndo = diff;
-                    nextIndo = { name: indoEvents[k], days: diff };
-                }
-            }
-            if(nextIndo) {
-                const timeStr = nextIndo.days === 0 ? "HARI INI" : (nextIndo.days === 1 ? "BESOK" : `${nextIndo.days} Hari Lagi`);
-                document.getElementById('rem-indo').innerHTML = `<span class="rem-badge">NEXT</span> ${nextIndo.name}<br><span style="color:#fff; font-weight:bold;">${timeStr}</span>`;
-            }
-
-            // 2. Cari Next Hijri Event (Puasa Ayyamul Bidh / Senin Kamis)
-            // Logika sederhana: cek 7 hari ke depan
-            let nextHijriText = "Tidak ada event dekat";
-            for(let i=0; i<=7; i++) {
-                const check = new Date(today);
-                check.setDate(today.getDate() + i);
-                const evs = getIslamicEvents(check);
-                if(evs) {
-                    // Ambil event pertama saja
-                    const firstEv = evs.split('<br>')[0].replace('✨ ','').replace('🌕 ','').replace('🌙 ','');
-                    const timeStr = i === 0 ? "HARI INI" : (i === 1 ? "BESOK" : `${i} Hari Lagi`);
-                    nextHijriText = `<span class="rem-badge">NEXT</span> ${firstEv}<br><span style="color:#fff; font-weight:bold;">${timeStr}</span>`;
-                    break;
-                }
-            }
-            document.getElementById('rem-hijri').innerHTML = nextHijriText;
-        }
-
-        // --- UPDATE INFO PANEL (ON CLICK) ---
         function updateInfoPanel(date) {
             // Indo
+            // Cek libur tetap (M-D)
             const dateKey = `${date.getMonth() + 1}-${date.getDate()}`;
-            const indoEv = indoEvents[dateKey];
+            // Validasi tahun untuk libur 2025
+            const is2025 = date.getFullYear() === 2025;
+            const indoEv = is2025 ? indoEvents[dateKey] : null;
             const isSunday = date.getDay() === 0;
-            let indoText = "<span style='color:#666'>Tidak ada libur</span>";
+            
+            let indoText = "<span style='color:#666'>-</span>";
             if (indoEv) indoText = `<span style="color:#ff4081; font-weight:bold;">${indoEv}</span>`;
             else if (isSunday) indoText = `<span style="color:#ff4081;">Libur Akhir Pekan</span>`;
             document.getElementById('info-indo').innerHTML = indoText;
 
-            // Masehi & Weton
+            // Masehi
             const dayName = date.toLocaleDateString('id-ID', { weekday: 'long' });
             const fullDate = date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('info-masehi').innerText = `${dayName}, ${fullDate}`;
-            document.getElementById('info-weton').innerText = `${dayName} ${getWeton(date)}`;
+            document.getElementById('info-masehi').innerHTML = `
+                ${dayName}, ${fullDate}<br>
+                <span style="color:#00e5ff; font-size:0.75rem;">Pasaran: ${getWeton(date)}</span>
+            `;
 
             // Hijri
             const adjDate = getAdjustedDate(date);
@@ -356,10 +313,11 @@
         }
 
         function renderCalendar() {
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const today = now.getDate();
-            document.getElementById('cal-month-year').innerText = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+            
+            // Set Header
+            document.getElementById('cal-month-year').innerText = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -367,22 +325,32 @@
             grid.innerHTML = "";
             
             ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].forEach(d => grid.innerHTML += `<div class="cal-day-name">${d}</div>`);
+            
+            // Empty slots
             for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="cal-date empty"></div>`;
 
+            // Dates
             for (let i = 1; i <= daysInMonth; i++) {
                 const dateKey = `${month + 1}-${i}`;
                 const checkDate = new Date(year, month, i);
+                const is2025 = year === 2025;
+                
                 const el = document.createElement('div');
                 el.className = "cal-date";
                 el.innerText = i;
                 
-                if (i === today) el.classList.add('today');
-                if (checkDate.getDay() === 0 || indoEvents[dateKey]) el.classList.add('holiday');
-                if (selectedDate.getDate() === i && selectedDate.getMonth() === month) el.classList.add('selected');
+                // Highlight Hari Ini
+                if (i === currentDate.getDate() && month === currentDate.getMonth() && year === currentDate.getFullYear()) el.classList.add('today');
                 
-                // Dot indicator jika ada event hijriyah penting (cth: Ayyamul Bidh)
+                // Highlight Tanggal Merah
+                if (checkDate.getDay() === 0 || (is2025 && indoEvents[dateKey])) el.classList.add('holiday');
+                
+                // Highlight Selected
+                if (selectedDate.getDate() === i && selectedDate.getMonth() === month && selectedDate.getFullYear() === year) el.classList.add('selected');
+                
+                // Dot indicator Event Islam
                 const hEv = getIslamicEvents(checkDate);
-                if(hEv && (hEv.includes("Ayyamul") || hEv.includes("Idul"))) el.classList.add('has-event');
+                if(hEv && (hEv.includes("Ayyamul") || hEv.includes("Idul") || hEv.includes("Arafah"))) el.classList.add('has-event');
 
                 el.onclick = () => {
                     document.querySelectorAll('.cal-date').forEach(d => d.classList.remove('selected'));
@@ -395,21 +363,32 @@
         }
 
         renderCalendar();
-        updateInfoPanel(now);
-        updateReminders();
+        updateInfoPanel(currentDate);
 
-        // --- 3. API PRAYER & LOCATION ---
+        // --- 3. API PRAYER & NOMINATIM CITY NAME ---
         if(navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const { latitude, longitude } = pos.coords;
-                // Reverse Geo Fake (Show LatLong)
-                document.getElementById('user-loc').innerText = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                
+                // A. GET CITY NAME (Nominatim OpenStreetMap)
+                try {
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const geoData = await geoRes.json();
+                    const addr = geoData.address;
+                    // Prioritas nama: City > Town > County > Region
+                    const cityName = addr.city || addr.town || addr.county || addr.state || "Lokasi Terdeteksi";
+                    document.getElementById('user-loc-name').innerHTML = `${cityName}<br><span style="font-size:0.7rem; color:#555;">${latitude.toFixed(4)}, ${longitude.toFixed(4)}</span>`;
+                } catch(e) {
+                    document.getElementById('user-loc-name').innerText = "Lokasi: Koordinat GPS";
+                }
+
+                // B. GET PRAYER TIMES (Aladhan - Kemenag Method 20)
                 try {
                     const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=20`);
                     const json = await res.json();
                     if(json.code === 200) {
                         const t = json.data.timings;
-                        const curMin = now.getHours() * 60 + now.getMinutes();
+                        const curMin = currentDate.getHours() * 60 + currentDate.getMinutes();
                         const prayers = [{n:"Subuh", t:t.Fajr}, {n:"Dzuhur", t:t.Dhuhr}, {n:"Ashar", t:t.Asr}, {n:"Maghrib", t:t.Maghrib}, {n:"Isya", t:t.Isha}];
                         let next = prayers[0];
                         for(let p of prayers) {
@@ -420,12 +399,14 @@
                         document.getElementById('next-prayer-time').innerText = next.t;
                     }
                 } catch(e) { document.getElementById('next-prayer-name').innerText = "Err"; }
-            }, () => { document.getElementById('user-loc').innerText = "Loc Access Denied"; });
-        } else { document.getElementById('user-loc').innerText = "Not Supported"; }
+            }, () => { 
+                document.getElementById('user-loc-name').innerText = "Akses Lokasi Ditolak"; 
+                document.getElementById('next-prayer-time').innerText = "--:--";
+            });
+        } else { document.getElementById('user-loc-name').innerText = "GPS Tidak Support"; }
 
-        // --- 4. STEAM SALE MONITOR (UPDATED 2025 DATES) ---
+        // --- 4. STEAM SALE MONITOR ---
         const steamSales = [
-            // Dates estimasi/confirmed berdasarkan bocoran 2025
             { name: "Spring Sale", start: new Date("2025-03-14T00:00:00"), end: new Date("2025-03-21T00:00:00") },
             { name: "Summer Sale", start: new Date("2025-06-27T00:00:00"), end: new Date("2025-07-11T00:00:00") },
             { name: "Autumn Sale", start: new Date("2025-11-26T00:00:00"), end: new Date("2025-12-03T00:00:00") },
@@ -437,43 +418,32 @@
             let activeSale = null;
             let nextSale = null;
 
-            // Cek Status
             for(let s of steamSales) {
-                if (today >= s.start && today <= s.end) {
-                    activeSale = s;
-                    break;
-                }
-                if (today < s.start && !nextSale) {
-                    nextSale = s;
-                }
+                if (today >= s.start && today <= s.end) { activeSale = s; break; }
+                if (today < s.start && !nextSale) { nextSale = s; }
             }
 
             if (activeSale) {
-                // SEDANG BERLANGSUNG
                 document.getElementById('sale-name').innerText = activeSale.name;
                 document.getElementById('sale-name').classList.add('sale-live');
                 const diff = activeSale.end - today;
                 const days = Math.floor(diff / (86400000));
-                document.getElementById('sale-countdown').innerText = `ENDS IN ${days}d`;
+                document.getElementById('sale-countdown').innerText = `ENDS ${days}d`;
                 document.querySelector('.steam-label').innerText = "🔴 LIVE NOW";
                 document.querySelector('.steam-label').style.color = "#00ff88";
             } else if (nextSale) {
-                // UPCOMING
                 document.getElementById('sale-name').innerText = nextSale.name;
                 document.getElementById('sale-name').classList.remove('sale-live');
                 const diff = nextSale.start - today;
                 const days = Math.floor(diff / (86400000));
-                const hours = Math.floor((diff % (86400000)) / 3600000);
-                document.getElementById('sale-countdown').innerText = `${days}d ${hours}h`;
+                document.getElementById('sale-countdown').innerText = `${days} Days`;
                 document.querySelector('.steam-label').innerText = "UPCOMING EVENT";
                 document.querySelector('.steam-label').style.color = "#888";
             } else {
-                document.getElementById('sale-name').innerText = "Wait for 2026";
-                document.getElementById('sale-countdown').innerText = "-";
+                document.getElementById('sale-name').innerText = "Wait 2026";
             }
         }
         checkSteamSale();
-
     </script>
 </body>
 </html>
