@@ -2,38 +2,42 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>GXDiag - Typing Challenge</title>
+    <title>GXDiag - Multi-Language Typing Test</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
         /* --- CSS KHUSUS TYPING --- */
         
-        /* Container Kata (PENTING: position relative agar scroll akurat) */
-        .word-box { 
-            position: relative; /* KUNCI PERBAIKAN: Agar offsetTop dihitung dari kotak ini */
-            background: #111; 
-            padding: 15px; 
-            border-radius: 10px; 
-            font-size: 1.5rem; 
-            height: 110px; /* Menampilkan sekitar 2 baris teks */
-            overflow: hidden; /* Sembunyikan teks yang meluap ke bawah */
-            color: #555; 
-            line-height: 1.6; 
-            margin-bottom: 20px; 
-            border: 2px solid #333; 
-            font-family: 'Courier New', Courier, monospace; /* Monospace agar rapi */
-            user-select: none;
-            box-shadow: inset 0 0 20px #000;
+        /* Font Stack yang mendukung karakter CJK (China/Jepang/Korea) & Thai */
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', 'Meiryo', 'Malgun Gothic', 'Thonburi', sans-serif;
         }
 
-        /* Kata yang sedang diketik */
+        /* Container Kata */
+        .word-box { 
+            position: relative; /* KUNCI SCROLL */
+            background: #111; 
+            padding: 20px; 
+            border-radius: 10px; 
+            font-size: 1.6rem; 
+            height: 130px; /* Sedikit lebih tinggi untuk karakter non-latin */
+            overflow: hidden; 
+            color: #666; 
+            line-height: 1.8; 
+            margin-bottom: 20px; 
+            border: 2px solid #333; 
+            user-select: none;
+            box-shadow: inset 0 0 20px #000;
+            white-space: pre-wrap; /* Agar spasi terbaca jelas */
+        }
+
+        /* Kata aktif */
         .word-active { 
             color: #111; 
             background: #00e5ff; 
-            padding: 2px 5px; 
+            padding: 2px 6px; 
             border-radius: 4px; 
         }
 
-        /* Status Kata */
         .word-correct { color: #eee; } 
         .word-wrong { color: #ff4081; text-decoration: line-through; } 
 
@@ -46,67 +50,130 @@
         .input-box:focus { border-color: #00e5ff; box-shadow: 0 0 15px rgba(0, 229, 255, 0.1); }
         .input-box:disabled { background: #1a1a1a; color: #555; border-color: #333; cursor: not-allowed; }
 
-        /* Stats Bar */
+        /* Stats Bar & Controls */
+        .stats-container {
+            display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;
+        }
         .stats { 
-            display: flex; justify-content: space-between; 
+            display: flex; justify-content: space-between; align-items: center;
             font-weight: bold; font-size: 1.2rem; color: #00e5ff; 
-            margin-bottom: 10px; background: #1e1e1e; padding: 10px 15px; border-radius: 8px; border: 1px solid #333;
+            background: #1e1e1e; padding: 15px; border-radius: 8px; border: 1px solid #333;
         }
         
+        /* Language Select */
+        .lang-select {
+            background: #111; color: #fff; border: 1px solid #444; 
+            padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; cursor: pointer;
+        }
+        .lang-select:focus { border-color: #00e5ff; outline: none; }
+
         .restart-btn {
-            width: 100%; margin-top: 15px; padding: 12px; 
+            width: 100%; padding: 12px; 
             background: #333; color: white; border: none; border-radius: 8px; 
-            font-weight: bold; font-size: 1rem; transition: 0.2s;
+            font-weight: bold; font-size: 1rem; transition: 0.2s; cursor: pointer;
         }
         .restart-btn:hover { background: #444; color: #00e5ff; }
     </style>
 </head>
 <body>
     <a href="../../index.html" class="back-btn">← MENU</a>
-    <h2>Typing Speed Challenge</h2>
+    <h2 style="margin-top: 40px;">Typing Speed Challenge</h2>
     
     <div class="panel">
-        <div class="stats">
-            <span id="time">Time: 60s</span>
-            <span id="wpm">Speed: 0 WPM</span>
+        <div class="stats-container">
+            <div class="stats">
+                <select id="lang-picker" class="lang-select" onchange="changeLanguage()">
+                    <option value="en">🇺🇸 English</option>
+                    <option value="id">🇮🇩 Indonesia</option>
+                    <option value="jp">🇯🇵 Japanese</option>
+                    <option value="cn">🇨🇳 Chinese</option>
+                    <option value="kr">🇰🇷 Korean</option>
+                    <option value="th">🇹🇭 Thai</option>
+                    <option value="es">🇪🇸 Spanish</option>
+                    <option value="de">🇩🇪 German</option>
+                </select>
+                
+                <span id="time">Time: 60s</span>
+                <span id="wpm">Speed: 0 WPM</span>
+            </div>
         </div>
         
         <div class="word-box" id="display" onclick="document.getElementById('input').focus()"></div>
         
-        <input type="text" class="input-box" id="input" placeholder="Type here to start..." autocomplete="off">
+        <input type="text" class="input-box" id="input" placeholder="Type here..." autocomplete="off">
         
-        <button onclick="location.reload()" class="restart-btn">RESTART TEST</button>
+        <button onclick="changeLanguage()" class="restart-btn">RESTART TEST</button>
     </div>
 
     <script>
-        // Database Kata (English Standard)
-        const wordsSource = "the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" ");
-        
-        // Generate 200 kata acak
-        let wordList = []; 
-        for(let i=0; i<200; i++) wordList.push(wordsSource[Math.floor(Math.random() * wordsSource.length)]);
-        
+        // --- DATABASE KATA ---
+        const wordBanks = {
+            en: "the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" "),
+            
+            id: "yang dan di aku saya kamu dia mereka kita bisa ada untuk dengan ini itu dari dalam pada juga akan sudah atau tapi karena jika ya tidak makan minum tidur kerja sekolah rumah buku tulis baca jalan lihat dengar suka cinta bahagia sedih marah takut berani kuat lemah cepat lambat besar kecil panjang pendek tinggi rendah jauh dekat bagus jelek pagi siang malam hari waktu orang dunia hidup mati temen keluarga uang pasar kantor".split(" "),
+            
+            jp: "私 あなた 彼 彼女 私たち これ それ あれ 誰 何 いつ どこ なぜ はい いいえ 行く 来る 見る 聞く 話す 食べる 飲む 寝る 起きる 勉強 仕事 愛 好き 嫌い 大きい 小さい 新しい 古い 良い 悪い 高い 低い 暑い 寒い 今日 明日 昨日 今 時間 場所 人 男 女 子供 大人 友達 家族 学校 先生 学生 電車 車 日本 語 本 読む 書く".split(" "),
+            
+            cn: "我 你 他 她 我们 这 那 谁 什么 时候 哪儿 为什么 是 不 有 去 来 看 听 说 吃 喝 睡觉 起床 学习 工作 爱 喜欢 讨厌 大 小 新 旧 好 坏 高 低 热 冷 今天 明天 昨天 现在 时间 地方 人 男 女 孩子 大人 朋友 家人 学校 老师 学生 钱 东西 快乐 难过 漂亮 帅 谢谢 对不起".split(" "),
+            
+            kr: "나 너 그 그녀 우리 이것 저것 누구 무엇 언제 어디 왜 네 아니요 가다 오다 보다 듣다 말하다 먹다 마시다 자다 일어나다 공부 일 사랑 좋아하다 싫어하다 크다 작다 새롭다 오래된 좋다 나쁘다 높다 낮다 덥다 춥다 오늘 내일 어제 지금 시간 장소 사람 남자 여자 아이 어른 친구 가족 학교 선생님 학생".split(" "),
+            
+            th: "ฉัน คุณ เขา เธอ เรา นี้ นั้น ใคร อะไร เมื่อไหร่ ที่ไหน ทำไม ใช่ ไม่ ไป มา ดู ฟัง พูด กิน ดื่ม นอน ตื่น เรียน งาน รัก ชอบ เกลียด ใหญ่ เล็ก ใหม่ เก่า ดี เลว สูง ต่ำ ร้อน หนาว วันนี้ พรุ่งนี้ เมื่อวาน ตอนนี้ เวลา สถานที่ คน ผู้ชาย ผู้หญิง เด็ก ผู้ใหญ่ เพื่อน ครอบครัว โรงเรียน ครู นักเรียน".split(" "),
+            
+            es: "el la de que y en un ser se no haber por con su para como estar tener le lo todo pero más hacer o poder decir este ir otro ese si me ya ver porque dar cuando muy sin vez mucho saber qué sobre mi alguno mismo yo también hasta año dos querer entre así primero desde grande eso ni nos llegar pasar tiempo ella sí día".split(" "),
+            
+            de: "das ist du ich nicht die es und der was wir zu ein er in sie mir mit ja wie den auf mich dass so hier eine wenn hat all sind von dich war haben für an habe da nein bin noch dir uns sich nur einen kann dem sein jetzt leben dann vor haus mann frau kind".split(" ")
+        };
+
         const displayDiv = document.getElementById('display');
         const inputEl = document.getElementById('input');
         const wpmEl = document.getElementById('wpm');
         const timeEl = document.getElementById('time');
+        const langPicker = document.getElementById('lang-picker');
 
-        // Render HTML kata-kata
-        displayDiv.innerHTML = wordList.map((w, i) => `<span id="w-${i}">${w}</span>`).join(" ");
-        
+        let wordList = [];
         let currentIdx = 0;
         let isRunning = false;
         let timer = 60;
         let correctChars = 0;
         let timerInterval = null;
 
-        // Highlight kata pertama & Auto Focus
-        const spans = displayDiv.querySelectorAll('span');
-        spans[0].classList.add('word-active');
-        inputEl.focus(); 
+        // Fungsi Load Bahasa & Reset
+        function changeLanguage() {
+            // Reset Variable
+            clearInterval(timerInterval);
+            isRunning = false;
+            timer = 60;
+            correctChars = 0;
+            currentIdx = 0;
+            
+            // Reset UI
+            inputEl.value = "";
+            inputEl.disabled = false;
+            inputEl.focus();
+            timeEl.innerText = "Time: 60s";
+            wpmEl.innerText = "Speed: 0 WPM";
+            displayDiv.scrollTop = 0;
 
+            // Load Kata sesuai pilihan dropdown
+            const selectedLang = langPicker.value;
+            const source = wordBanks[selectedLang];
+            
+            // Generate 150 kata acak dari bank kata
+            wordList = [];
+            for(let i=0; i<150; i++) {
+                wordList.push(source[Math.floor(Math.random() * source.length)]);
+            }
+
+            // Render HTML
+            displayDiv.innerHTML = wordList.map((w, i) => `<span id="w-${i}">${w}</span>`).join(" ");
+            
+            // Highlight kata pertama
+            document.getElementById(`w-0`).classList.add('word-active');
+        }
+
+        // --- CORE LOGIC (Sama seperti versi fix sebelumnya) ---
         inputEl.addEventListener('input', e => {
-            // Mulai timer otomatis saat ketikan pertama
             if (!isRunning && inputEl.value.length > 0) {
                 isRunning = true;
                 startTimer();
@@ -114,38 +181,32 @@
 
             const val = inputEl.value;
 
-            // Cek jika user menekan Spasi (tanda selesai satu kata)
+            // Jika spasi ditekan
             if (val.endsWith(' ')) {
                 const typedWord = val.trim();
                 const targetWord = wordList[currentIdx];
                 const currentSpan = document.getElementById(`w-${currentIdx}`);
 
-                // Validasi Benar/Salah
+                // Cek Benar/Salah
                 if (typedWord === targetWord) {
                     currentSpan.className = 'word-correct';
-                    correctChars += targetWord.length + 1; // +1 poin untuk spasi
+                    correctChars += targetWord.length + 1; // +1 spasi
                 } else {
                     currentSpan.className = 'word-wrong';
                 }
 
-                // Pindah ke kata berikutnya
                 currentIdx++;
                 
                 if (currentIdx < wordList.length) {
                     const nextSpan = document.getElementById(`w-${currentIdx}`);
                     nextSpan.classList.add('word-active');
 
-                    // --- LOGIKA SCROLL BARU (FIXED) ---
-                    // Logika: Jika kata aktif ada di posisi bawah (offset > 55px dari atas tampilan),
-                    // maka scroll container ke bawah mengikuti kata tersebut.
-                    // Angka 55px disesuaikan dengan line-height dan font-size agar pas di baris kedua.
-                    
+                    // Auto Scroll Logic (Fixed)
+                    // Jika kata baru ada di posisi > 55px dari atas visible area
                     if (nextSpan.offsetTop > displayDiv.scrollTop + 55) {
-                        displayDiv.scrollTop = nextSpan.offsetTop - 10; 
+                        displayDiv.scrollTop = nextSpan.offsetTop - 10;
                     }
                 }
-
-                // Reset input box jadi kosong lagi
                 inputEl.value = '';
             }
         });
@@ -155,27 +216,26 @@
                 timer--;
                 timeEl.innerText = `Time: ${timer}s`;
                 
-                // Hitung WPM Live
-                // Rumus WPM: (Total Karakter Benar / 5) / (Waktu Berjalan dalam Menit)
                 const timeElapsed = (60 - timer) / 60;
                 if(timeElapsed > 0) {
                     const wpm = Math.round((correctChars / 5) / timeElapsed);
                     wpmEl.innerText = `Speed: ${wpm} WPM`;
                 }
 
-                // Selesai
                 if (timer <= 0) {
                     clearInterval(timerInterval);
                     inputEl.disabled = true;
                     inputEl.value = "Test Finished!";
-                    
                     setTimeout(() => {
                         const finalWpm = Math.round((correctChars / 5));
-                        alert(`Time's up!\n\nYour Typing Speed: ${finalWpm} WPM`);
+                        alert(`Time's up!\nYour Speed (${langPicker.options[langPicker.selectedIndex].text}): ${finalWpm} WPM`);
                     }, 100);
                 }
             }, 1000);
         }
+
+        // Initialize First Load
+        window.onload = changeLanguage;
     </script>
 </body>
 </html>
