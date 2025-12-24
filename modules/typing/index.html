@@ -2,68 +2,178 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>GXDiag - Typing</title>
+    <title>GXDiag - Typing Challenge</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        .word-box { background: #111; padding: 20px; border-radius: 10px; font-size: 1.5rem; height: 100px; overflow: hidden; color: #555; line-height: 1.5; margin-bottom: 20px; border: 2px solid #333; }
-        .word-active { color: #fff; background: #333; padding: 2px 5px; border-radius: 4px; }
-        .word-correct { color: #00e5ff; }
-        .word-wrong { color: #ff4081; text-decoration: line-through; }
-        .input-box { width: 100%; padding: 15px; font-size: 1.2rem; background: #222; border: 2px solid #444; color: #fff; border-radius: 10px; outline: none; }
-        .input-box:focus { border-color: #00e5ff; }
-        .stats { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; color: #00e5ff; margin-bottom: 10px; }
+        /* --- CSS KHUSUS TYPING --- */
+        
+        /* Container Kata (PENTING: position relative agar scroll akurat) */
+        .word-box { 
+            position: relative; /* KUNCI PERBAIKAN: Agar offsetTop dihitung dari kotak ini */
+            background: #111; 
+            padding: 15px; 
+            border-radius: 10px; 
+            font-size: 1.5rem; 
+            height: 110px; /* Menampilkan sekitar 2 baris teks */
+            overflow: hidden; /* Sembunyikan teks yang meluap ke bawah */
+            color: #555; 
+            line-height: 1.6; 
+            margin-bottom: 20px; 
+            border: 2px solid #333; 
+            font-family: 'Courier New', Courier, monospace; /* Monospace agar rapi */
+            user-select: none;
+            box-shadow: inset 0 0 20px #000;
+        }
+
+        /* Kata yang sedang diketik */
+        .word-active { 
+            color: #111; 
+            background: #00e5ff; 
+            padding: 2px 5px; 
+            border-radius: 4px; 
+        }
+
+        /* Status Kata */
+        .word-correct { color: #eee; } 
+        .word-wrong { color: #ff4081; text-decoration: line-through; } 
+
+        /* Input Area */
+        .input-box { 
+            width: 100%; padding: 15px; font-size: 1.3rem; 
+            background: #222; border: 2px solid #444; color: #fff; 
+            border-radius: 10px; outline: none; transition: 0.2s;
+        }
+        .input-box:focus { border-color: #00e5ff; box-shadow: 0 0 15px rgba(0, 229, 255, 0.1); }
+        .input-box:disabled { background: #1a1a1a; color: #555; border-color: #333; cursor: not-allowed; }
+
+        /* Stats Bar */
+        .stats { 
+            display: flex; justify-content: space-between; 
+            font-weight: bold; font-size: 1.2rem; color: #00e5ff; 
+            margin-bottom: 10px; background: #1e1e1e; padding: 10px 15px; border-radius: 8px; border: 1px solid #333;
+        }
+        
+        .restart-btn {
+            width: 100%; margin-top: 15px; padding: 12px; 
+            background: #333; color: white; border: none; border-radius: 8px; 
+            font-weight: bold; font-size: 1rem; transition: 0.2s;
+        }
+        .restart-btn:hover { background: #444; color: #00e5ff; }
     </style>
 </head>
 <body>
     <a href="../../index.html" class="back-btn">← MENU</a>
     <h2>Typing Speed Challenge</h2>
+    
     <div class="panel">
         <div class="stats">
-            <span id="time">60s</span>
-            <span id="wpm">0 WPM</span>
+            <span id="time">Time: 60s</span>
+            <span id="wpm">Speed: 0 WPM</span>
         </div>
-        <div class="word-box" id="display"></div>
-        <input type="text" class="input-box" id="input" placeholder="Type words here..." autocomplete="off">
-        <button onclick="location.reload()" style="width:100%; margin-top:15px; padding:10px; background:#333; color:white; border:none; border-radius:5px;">RESTART</button>
+        
+        <div class="word-box" id="display" onclick="document.getElementById('input').focus()"></div>
+        
+        <input type="text" class="input-box" id="input" placeholder="Type here to start..." autocomplete="off">
+        
+        <button onclick="location.reload()" class="restart-btn">RESTART TEST</button>
     </div>
-    <script>
-        const words = "the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" ");
-        let list = []; for(let i=0; i<150; i++) list.push(words[Math.floor(Math.random()*words.length)]);
-        
-        const disp = document.getElementById('display');
-        const inp = document.getElementById('input');
-        disp.innerHTML = list.map((w,i)=>`<span id="w-${i}">${w}</span>`).join(" ");
-        
-        let curr=0, running=false, time=60, correct=0;
-        document.getElementById(`w-0`).classList.add('word-active');
 
-        inp.addEventListener('input', e => {
-            if(!running && time>0) { running=true; startTimer(); }
-            const val = inp.value;
-            if(val.endsWith(' ')) {
-                const target = list[curr];
-                const typed = val.trim();
-                const span = document.getElementById(`w-${curr}`);
-                
-                if(typed === target) { span.className='word-correct'; correct += target.length + 1; }
-                else { span.className='word-wrong'; }
-                
-                curr++;
-                if(curr < list.length) {
-                    const next = document.getElementById(`w-${curr}`);
-                    next.classList.add('word-active');
-                    if(next.offsetTop > disp.offsetHeight) disp.scrollTop = next.offsetTop;
+    <script>
+        // Database Kata (English Standard)
+        const wordsSource = "the be to of and a in that have I it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us".split(" ");
+        
+        // Generate 200 kata acak
+        let wordList = []; 
+        for(let i=0; i<200; i++) wordList.push(wordsSource[Math.floor(Math.random() * wordsSource.length)]);
+        
+        const displayDiv = document.getElementById('display');
+        const inputEl = document.getElementById('input');
+        const wpmEl = document.getElementById('wpm');
+        const timeEl = document.getElementById('time');
+
+        // Render HTML kata-kata
+        displayDiv.innerHTML = wordList.map((w, i) => `<span id="w-${i}">${w}</span>`).join(" ");
+        
+        let currentIdx = 0;
+        let isRunning = false;
+        let timer = 60;
+        let correctChars = 0;
+        let timerInterval = null;
+
+        // Highlight kata pertama & Auto Focus
+        const spans = displayDiv.querySelectorAll('span');
+        spans[0].classList.add('word-active');
+        inputEl.focus(); 
+
+        inputEl.addEventListener('input', e => {
+            // Mulai timer otomatis saat ketikan pertama
+            if (!isRunning && inputEl.value.length > 0) {
+                isRunning = true;
+                startTimer();
+            }
+
+            const val = inputEl.value;
+
+            // Cek jika user menekan Spasi (tanda selesai satu kata)
+            if (val.endsWith(' ')) {
+                const typedWord = val.trim();
+                const targetWord = wordList[currentIdx];
+                const currentSpan = document.getElementById(`w-${currentIdx}`);
+
+                // Validasi Benar/Salah
+                if (typedWord === targetWord) {
+                    currentSpan.className = 'word-correct';
+                    correctChars += targetWord.length + 1; // +1 poin untuk spasi
+                } else {
+                    currentSpan.className = 'word-wrong';
                 }
-                inp.value='';
+
+                // Pindah ke kata berikutnya
+                currentIdx++;
+                
+                if (currentIdx < wordList.length) {
+                    const nextSpan = document.getElementById(`w-${currentIdx}`);
+                    nextSpan.classList.add('word-active');
+
+                    // --- LOGIKA SCROLL BARU (FIXED) ---
+                    // Logika: Jika kata aktif ada di posisi bawah (offset > 55px dari atas tampilan),
+                    // maka scroll container ke bawah mengikuti kata tersebut.
+                    // Angka 55px disesuaikan dengan line-height dan font-size agar pas di baris kedua.
+                    
+                    if (nextSpan.offsetTop > displayDiv.scrollTop + 55) {
+                        displayDiv.scrollTop = nextSpan.offsetTop - 10; 
+                    }
+                }
+
+                // Reset input box jadi kosong lagi
+                inputEl.value = '';
             }
         });
 
         function startTimer() {
-            const t = setInterval(() => {
-                time--; document.getElementById('time').innerText = time + 's';
-                const wpm = Math.round((correct/5) / ((60-time)/60)) || 0;
-                document.getElementById('wpm').innerText = wpm + ' WPM';
-                if(time<=0) { clearInterval(t); inp.disabled=true; alert("Finished! Score: " + wpm + " WPM"); }
+            timerInterval = setInterval(() => {
+                timer--;
+                timeEl.innerText = `Time: ${timer}s`;
+                
+                // Hitung WPM Live
+                // Rumus WPM: (Total Karakter Benar / 5) / (Waktu Berjalan dalam Menit)
+                const timeElapsed = (60 - timer) / 60;
+                if(timeElapsed > 0) {
+                    const wpm = Math.round((correctChars / 5) / timeElapsed);
+                    wpmEl.innerText = `Speed: ${wpm} WPM`;
+                }
+
+                // Selesai
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    inputEl.disabled = true;
+                    inputEl.value = "Test Finished!";
+                    
+                    setTimeout(() => {
+                        const finalWpm = Math.round((correctChars / 5));
+                        alert(`Time's up!\n\nYour Typing Speed: ${finalWpm} WPM`);
+                    }, 100);
+                }
             }, 1000);
         }
     </script>
