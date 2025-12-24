@@ -6,12 +6,12 @@
     <title>GXDiag - Mobile Sensors</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width:100%; max-width:800px; }
+        .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width:100%; max-width:800px; margin-bottom: 20px; }
         
-        /* Bubble Level Visualizer */
+        /* Bubble Level */
         .bubble-level {
-            width: 100%; height: 200px; background: #222; border: 2px solid #444;
-            border-radius: 15px; position: relative; overflow: hidden; margin-bottom: 20px;
+            width: 100%; height: 180px; background: #222; border: 2px solid #444;
+            border-radius: 15px; position: relative; overflow: hidden; margin-bottom: 15px;
         }
         .crosshair {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -19,34 +19,43 @@
         }
         .crosshair.v { width: 2px; height: 100%; }
         .bubble {
-            width: 50px; height: 50px; background: #00e5ff; border-radius: 50%;
+            width: 40px; height: 40px; background: #00e5ff; border-radius: 50%;
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             box-shadow: 0 0 20px #00e5ff; transition: 0.1s linear;
         }
 
         /* Data Box */
-        .data-box { background: #111; padding: 15px; border-radius: 8px; font-family: monospace; color: #aaa; margin-bottom: 10px; }
+        .data-box { background: #1a1a1a; padding: 12px; border-radius: 8px; font-family: monospace; color: #aaa; font-size: 0.85rem; border: 1px solid #333; }
         .val { color: #fff; font-weight: bold; }
+        .label { display: block; font-size: 0.7rem; color: #666; margin-bottom: 2px; text-transform: uppercase;}
 
         /* Battery */
         .battery-container { 
-            display: flex; align-items: center; gap: 15px; background: #111; 
-            padding: 20px; border-radius: 10px; margin-top: 10px; border: 1px solid #333;
+            display: flex; align-items: center; gap: 15px; background: #1a1a1a; 
+            padding: 15px; border-radius: 10px; border: 1px solid #333;
         }
-        .bat-icon { width: 60px; height: 30px; border: 3px solid #aaa; border-radius: 5px; position: relative; padding: 2px; }
-        .bat-icon::after { content:''; position: absolute; right: -6px; top: 8px; width: 4px; height: 10px; background: #aaa; border-radius: 0 2px 2px 0; }
+        .bat-icon { width: 50px; height: 25px; border: 2px solid #aaa; border-radius: 4px; position: relative; padding: 2px; }
+        .bat-icon::after { content:''; position: absolute; right: -5px; top: 6px; width: 3px; height: 8px; background: #aaa; border-radius: 0 2px 2px 0; }
         .bat-fill { height: 100%; background: #0f0; width: 50%; transition: 0.5s; }
         .charging { animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* GPS & Network */
+        .info-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding: 8px 0; font-size: 0.9rem; }
+        .info-row:last-child { border-bottom: none; }
+        .hl { color: #00e5ff; font-weight: bold; font-family: monospace; }
+        
+        button { cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
     <a href="../../index.html" class="back-btn">← MENU</a>
-    <h2>Mobile Sensors</h2>
+    <h2>Mobile Diagnostics</h2>
 
     <div class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <h3>Gyroscope & Tilt</h3>
+            <h3>Gyroscope & Motion</h3>
             <button onclick="reqPerm()" style="background:#333; color:#fff; border:1px solid #555; padding:5px 10px; border-radius:5px; font-size:0.7rem;">iOS Permission</button>
         </div>
         
@@ -54,87 +63,143 @@
             <div class="crosshair"></div><div class="crosshair v"></div>
             <div id="bubble" class="bubble"></div>
         </div>
-        <div class="sensor-grid">
-            <div class="data-box">Alpha (Z): <span id="alpha" class="val">0</span>°</div>
-            <div class="data-box">Beta (X): <span id="beta" class="val">0</span>°</div>
-            <div class="data-box">Gamma (Y): <span id="gamma" class="val">0</span>°</div>
+        <div class="sensor-grid" style="margin-bottom:0; grid-template-columns: 1fr 1fr 1fr;">
+            <div class="data-box"><span class="label">X (Beta)</span><span id="beta" class="val">0</span>°</div>
+            <div class="data-box"><span class="label">Y (Gamma)</span><span id="gamma" class="val">0</span>°</div>
+            <div class="data-box"><span class="label">Z (Alpha)</span><span id="alpha" class="val">0</span>°</div>
         </div>
     </div>
 
     <div class="panel">
-        <h3>Haptics & Power</h3>
-        <div class="sensor-grid">
-            <button onclick="navigator.vibrate(200)" style="padding:20px; background:#00e5ff; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">📳 PULSE</button>
-            <button onclick="navigator.vibrate([100,50,100,50,500])" style="padding:20px; background:#ff4081; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🆘 SOS PATTERN</button>
-        </div>
+        <h3>Device & Network Specs</h3>
+        <div class="info-row"><span>Status</span> <span id="net-status" class="hl">Checking...</span></div>
+        <div class="info-row"><span>Connection Type</span> <span id="net-type" class="hl">Unknown</span></div>
+        <div class="info-row"><span>Est. Speed (Downlink)</span> <span id="net-speed" class="hl">Unknown</span></div>
+        <div class="info-row"><span>Screen Resolution</span> <span id="screen-res" class="hl">-</span></div>
+        <div class="info-row"><span>Pixel Ratio (DPI)</span> <span id="pixel-ratio" class="hl">-</span></div>
+        <div class="info-row"><span>CPU Cores (Est)</span> <span id="cpu-cores" class="hl">-</span></div>
+        <div class="info-row"><span>RAM (Est, Chrome Only)</span> <span id="ram-est" class="hl">-</span></div>
+    </div>
 
+    <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>GPS Location</h3>
+            <button onclick="getLoc()" style="background:#00e5ff; border:none; padding:5px 15px; border-radius:15px; font-weight:bold; color:#000; font-size:0.8rem;">GET LOCATION</button>
+        </div>
+        <div style="margin-top:15px;">
+            <div class="info-row"><span>Latitude</span> <span id="geo-lat" class="hl">Waiting...</span></div>
+            <div class="info-row"><span>Longitude</span> <span id="geo-long" class="hl">Waiting...</span></div>
+            <div class="info-row"><span>Accuracy</span> <span id="geo-acc" class="hl">Waiting...</span></div>
+            <p style="font-size:0.7rem; color:#666; margin-top:5px;">*Requires GPS Permission</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>Power & Haptics</h3>
+        
         <div class="battery-container">
             <div class="bat-icon"><div id="bat-level" class="bat-fill"></div></div>
-            <div>
-                <div style="font-size:1.5rem; font-weight:bold;" id="bat-perc">--%</div>
+            <div style="flex-grow:1;">
+                <div style="font-size:1.4rem; font-weight:bold; color:#fff;" id="bat-perc">--%</div>
                 <div style="font-size:0.8rem; color:#888;" id="bat-status">Unknown</div>
             </div>
+        </div>
+
+        <div class="sensor-grid" style="margin-top:20px; margin-bottom:0;">
+            <button onclick="navigator.vibrate(200)" style="padding:15px; background:#333; color:white; border:1px solid #555; border-radius:8px; font-weight:bold;">📳 SHORT</button>
+            <button onclick="navigator.vibrate([100,50,100,50,500])" style="padding:15px; background:#ff4081; color:white; border:none; border-radius:8px; font-weight:bold;">🆘 PATTERN</button>
         </div>
     </div>
 
     <script>
-        // GYROSCOPE
+        // --- 1. GYROSCOPE ---
         const bubble = document.getElementById('bubble');
-        
         function handleOrientation(e) {
-            document.getElementById('alpha').innerText = Math.round(e.alpha);
-            document.getElementById('beta').innerText = Math.round(e.beta);
-            document.getElementById('gamma').innerText = Math.round(e.gamma);
+            document.getElementById('alpha').innerText = e.alpha ? Math.round(e.alpha) : 0;
+            document.getElementById('beta').innerText = e.beta ? Math.round(e.beta) : 0;
+            document.getElementById('gamma').innerText = e.gamma ? Math.round(e.gamma) : 0;
 
-            // Visual Bubble (Batasi pergerakan agar tidak keluar kotak)
-            // Gamma (Kiri-Kanan): -90 s/d 90
-            // Beta (Atas-Bawah): -180 s/d 180
-            let x = e.gamma * 3; 
-            let y = e.beta * 3;
+            let x = (e.gamma || 0) * 2; 
+            let y = (e.beta || 0) * 2;
             
-            // Limit visual
+            // Limit visual bubble
             if(x > 140) x = 140; if(x < -140) x = -140;
-            if(y > 90) y = 90; if(y < -90) y = -90;
+            if(y > 80) y = 80; if(y < -80) y = -80;
 
             bubble.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
         }
-
         window.addEventListener('deviceorientation', handleOrientation);
 
-        // iOS Permission Request
         function reqPerm() {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
                     .then(response => {
                         if (response == 'granted') window.addEventListener('deviceorientation', handleOrientation);
                         else alert("Permission Denied");
-                    })
-                    .catch(console.error);
-            } else { alert("Not needed on this device/Android."); }
+                    }).catch(console.error);
+            } else { alert("Not required on this device/browser."); }
         }
 
-        // BATTERY API
-        navigator.getBattery().then(bat => {
-            function updateBat() {
-                const level = Math.round(bat.level * 100);
-                document.getElementById('bat-perc').innerText = level + "%";
-                document.getElementById('bat-level').style.width = level + "%";
-                
-                if(bat.charging) {
-                    document.getElementById('bat-status').innerText = "⚡ Charging";
-                    document.getElementById('bat-level').classList.add('charging');
-                    document.getElementById('bat-level').style.background = "#0f0";
-                } else {
-                    document.getElementById('bat-status').innerText = "Discharging";
-                    document.getElementById('bat-level').classList.remove('charging');
-                    if(level < 20) document.getElementById('bat-level').style.background = "#f00";
-                    else document.getElementById('bat-level').style.background = "#fff";
-                }
+        // --- 2. DEVICE INFO ---
+        document.getElementById('screen-res').innerText = `${window.screen.width} x ${window.screen.height}`;
+        document.getElementById('pixel-ratio').innerText = window.devicePixelRatio + "x";
+        document.getElementById('cpu-cores').innerText = navigator.hardwareConcurrency || "Unknown";
+        document.getElementById('ram-est').innerText = navigator.deviceMemory ? `~${navigator.deviceMemory} GB` : "Unknown (Chrome only)";
+
+        // --- 3. NETWORK INFO ---
+        function updateNetwork() {
+            document.getElementById('net-status').innerText = navigator.onLine ? "ONLINE 🟢" : "OFFLINE 🔴";
+            
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn) {
+                document.getElementById('net-type').innerText = (conn.effectiveType || "Unknown").toUpperCase();
+                document.getElementById('net-speed').innerText = conn.downlink ? `~${conn.downlink} Mbps` : "Unknown";
             }
-            updateBat();
-            bat.addEventListener('levelchange', updateBat);
-            bat.addEventListener('chargingchange', updateBat);
-        });
+        }
+        updateNetwork();
+        window.addEventListener('online', updateNetwork);
+        window.addEventListener('offline', updateNetwork);
+
+        // --- 4. GPS ---
+        function getLoc() {
+            if(!navigator.geolocation) { alert("GPS not supported"); return; }
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    document.getElementById('geo-lat').innerText = pos.coords.latitude.toFixed(6);
+                    document.getElementById('geo-long').innerText = pos.coords.longitude.toFixed(6);
+                    document.getElementById('geo-acc').innerText = `±${Math.round(pos.coords.accuracy)} meters`;
+                },
+                (err) => { alert("GPS Error: " + err.message); },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        // --- 5. BATTERY ---
+        if(navigator.getBattery) {
+            navigator.getBattery().then(bat => {
+                function updateBat() {
+                    const level = Math.round(bat.level * 100);
+                    document.getElementById('bat-perc').innerText = level + "%";
+                    document.getElementById('bat-level').style.width = level + "%";
+                    
+                    if(bat.charging) {
+                        document.getElementById('bat-status').innerText = "⚡ Charging";
+                        document.getElementById('bat-level').classList.add('charging');
+                        document.getElementById('bat-level').style.background = "#0f0";
+                    } else {
+                        document.getElementById('bat-status').innerText = "Discharging";
+                        document.getElementById('bat-level').classList.remove('charging');
+                        if(level < 20) document.getElementById('bat-level').style.background = "#f00";
+                        else document.getElementById('bat-level').style.background = "#fff";
+                    }
+                }
+                updateBat();
+                bat.addEventListener('levelchange', updateBat);
+                bat.addEventListener('chargingchange', updateBat);
+            });
+        } else {
+            document.getElementById('bat-status').innerText = "API Not Supported";
+        }
     </script>
 </body>
 </html>
