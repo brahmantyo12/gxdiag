@@ -87,3 +87,26 @@ GXDiag-Project/
 │   └── specs/               # WebGL & Hardware Info
 ├── index.html               # Main Command Center
 └── README.md                # Documentation
+
+🛠️ APIs & Credits
+This project uses the following open-source APIs to power the dashboard:
+
+Aladhan API: For Prayer Times & Hijri conversion.
+
+Nominatim (OSM): For Reverse Geocoding (Coordinates to City Name).
+
+API-HariLibur: For syncing Indonesia's National Holidays (SKB 3 Menteri).
+
+🚀 How to Run
+Option 1: Live Demo
+🔗 Click here to open Live Demo
+
+Option 2: Local Development
+Clone this repository.
+
+Open index.html in any modern browser.
+
+Note: For features like Geolocation, Microphone, and WebHID, the browser requires a secure context (HTTPS or localhost). It is recommended to use "Live Server" extension in VS Code.
+
+📄 License
+This project is open-source and available under the MIT License.
