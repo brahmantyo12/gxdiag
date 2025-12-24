@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Specs & GPU</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        .spec-grid { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-width: 800px; }
+        
+        .info-card {
+            background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #333;
+            position: relative; overflow: hidden;
+        }
+        .info-card::before {
+            content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:#00e5ff;
+        }
+        
+        .section-title { color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold; }
+        
+        .spec-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding: 8px 0; font-family: monospace; font-size: 0.95rem; }
+        .spec-row:last-child { border-bottom: none; }
+        
+        .val { color: #fff; font-weight: bold; text-align: right; }
+        .warning { color: #ff4081; }
+        
+        /* GPU Box Highlight */
+        .gpu-box { background: #222; border: 2px solid #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.1); }
+        .gpu-val { font-size: 1.1rem; color: #00e5ff; margin-top: 5px; display: block; word-break: break-word;}
+
+        .detect-note { font-size: 0.8rem; color: #666; margin-top: 20px; text-align: center; font-style: italic;}
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← MENU</a>
+    <h2>Device & GPU Inspector</h2>
+
+    <div class="spec-grid">
+        
+        <div class="info-card gpu-box">
+            <div class="section-title">GRAPHICS PROCESSING UNIT (GPU)</div>
+            <p style="font-size:0.8rem; color:#aaa; margin:0;">Nama GPU ini diambil langsung dari driver WebGL. Sulit dipalsukan oleh HDC murah.</p>
+            <div style="margin-top:15px;">
+                <span style="color:#888;">Vendor:</span> <span id="gpu-vendor" class="val">Detecting...</span><br>
+                <span style="color:#888;">Renderer:</span> <span id="gpu-renderer" class="gpu-val">Detecting...</span>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="section-title">SYSTEM HARDWARE</div>
+            <div class="spec-row"><span>CPU Cores (Threads)</span> <span id="cpu" class="val">-</span></div>
+            <div class="spec-row"><span>RAM (Estimasi)</span> <span id="ram" class="val">-</span></div>
+            <div class="spec-row"><span>Platform/OS</span> <span id="platform" class="val">-</span></div>
+            <div class="spec-row"><span>Touch Points</span> <span id="touch" class="val">-</span></div>
+        </div>
+
+        <div class="info-card">
+            <div class="section-title">DISPLAY REALITY</div>
+            <div class="spec-row"><span>Resolution (Viewport)</span> <span id="res-view" class="val">-</span></div>
+            <div class="spec-row"><span>Resolution (Screen)</span> <span id="res-screen" class="val">-</span></div>
+            <div class="spec-row"><span>Color Depth</span> <span id="color-depth" class="val">-</span></div>
+            <div class="spec-row"><span>Pixel Ratio (DPI)</span> <span id="dpr" class="val">-</span></div>
+        </div>
+
+    </div>
+
+    <div class="detect-note">
+        *Tips: Jika HP mengaku "iPhone" tapi GPU Renderer tertulis "Mali", "Adreno", atau "PowerVR" (seri rendah), kemungkinan besar itu HDC/Android Replika. iPhone asli menggunakan "Apple GPU".
+    </div>
+
+    <script>
+        // 1. GPU DETECTION (WebGL)
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+
+            if (gl && debugInfo) {
+                const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                
+                document.getElementById('gpu-vendor').innerText = vendor;
+                document.getElementById('gpu-renderer').innerText = renderer;
+            } else {
+                document.getElementById('gpu-renderer').innerText = "WebGL Blocked/Not Supported";
+            }
+        } catch(e) {
+            document.getElementById('gpu-renderer').innerText = "Error Detecting GPU";
+        }
+
+        // 2. HARDWARE INFO
+        document.getElementById('cpu').innerText = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Cores` : "Hidden";
+        document.getElementById('ram').innerText = navigator.deviceMemory ? `~${navigator.deviceMemory} GB` : "Hidden (Browser Limit)";
+        
+        // Cek Platform (HDC iPhone sering bocor disini tertulis 'Linux armv' atau 'Android')
+        // Note: iOS 13+ di iPad sering ngaku 'MacIntel', tapi iPhone biasanya 'iPhone'.
+        let osInfo = navigator.platform;
+        if(navigator.userAgent.includes("Android")) osInfo += " (Android Detected)";
+        document.getElementById('platform').innerText = osInfo;
+
+        document.getElementById('touch').innerText = navigator.maxTouchPoints > 0 ? `${navigator.maxTouchPoints} Points` : "No Touch";
+
+        // 3. SCREEN INFO
+        document.getElementById('res-view').innerText = `${window.innerWidth} x ${window.innerHeight}`;
+        document.getElementById('res-screen').innerText = `${window.screen.width} x ${window.screen.height}`;
+        document.getElementById('color-depth').innerText = `${window.screen.colorDepth}-bit`;
+        document.getElementById('dpr').innerText = window.devicePixelRatio.toFixed(2) + "x Density";
+
+    </script>
+</body>
+</html>
