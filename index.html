@@ -3,87 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project GXDiag - Main Menu</title>
+    <title>Project GXDiag - Main Command</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
+        /* --- DASHBOARD HEADER STYLE --- */
+        .top-dashboard {
+            width: 100%; max-width: 1100px; 
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-top: 20px; margin-bottom: 20px; flex-wrap: wrap; gap: 20px;
+        }
+
+        /* KIRI: Waktu, Adzan, Kalender */
+        .dash-left {
+            text-align: left; flex: 1; min-width: 300px;
+        }
+        .clock-big {
+            font-size: 3.5rem; font-weight: 800; color: #fff; line-height: 1;
+            text-shadow: 0 0 20px rgba(255,255,255,0.2); letter-spacing: -2px;
+        }
+        .adzan-box {
+            font-size: 1.2rem; color: #00e5ff; font-weight: bold; margin-top: 5px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .date-line {
+            font-size: 0.9rem; color: #aaa; margin-top: 8px; font-weight: 500;
+            border-left: 3px solid #00e5ff; padding-left: 10px;
+        }
+        .hijri-line {
+            font-size: 0.85rem; color: #888; font-style: italic; margin-top: 2px; padding-left: 13px;
+        }
+        .events-ticker {
+            margin-top: 10px; font-size: 0.8rem; color: #ff4081; 
+            background: rgba(255, 64, 129, 0.1); padding: 5px 10px; 
+            border-radius: 5px; display: inline-block; border: 1px solid rgba(255, 64, 129, 0.3);
+        }
+
+        /* KANAN: Steam Sale */
+        .dash-right {
+            text-align: right; min-width: 250px;
+            background: linear-gradient(135deg, #1a2a3a, #121212);
+            padding: 15px 25px; border-radius: 15px; border: 1px solid #333;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        .steam-label { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .steam-title { font-size: 1.4rem; color: #66c0f4; font-weight: 800; margin: 5px 0; }
+        .steam-timer { font-size: 1.8rem; color: #fff; font-family: monospace; font-weight: bold; }
+        .steam-icon { font-size: 2rem; margin-bottom: 5px; }
+
+        /* GRID MENU (Existing) */
         .menu-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px; width: 100%; max-width: 1000px; margin-top: 20px; margin-bottom: 40px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px; width: 100%; max-width: 1100px; margin-top: 10px; margin-bottom: 40px;
         }
         .card {
             background: #1e1e1e; border: 1px solid #333; border-radius: 15px;
-            padding: 35px 20px; text-align: center; transition: 0.3s;
+            padding: 30px 20px; text-align: center; transition: 0.3s;
             display: flex; flex-direction: column; align-items: center; cursor: pointer;
-            text-decoration: none; color: #eee;
+            text-decoration: none; color: #eee; position: relative; overflow: hidden;
         }
-        .card:hover { 
-            transform: translateY(-5px); 
-            border-color: #00e5ff; 
-            box-shadow: 0 0 25px rgba(0, 229, 255, 0.15); 
+        .card:hover { transform: translateY(-5px); border-color: #00e5ff; box-shadow: 0 0 25px rgba(0, 229, 255, 0.15); }
+        .icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .title { font-size: 1rem; font-weight: 800; color: #00e5ff; margin-bottom: 5px; text-transform: uppercase; }
+        .desc { font-size: 0.75rem; color: #777; line-height: 1.4; }
+
+        /* Footer */
+        .branding { text-align: center; margin-bottom: 40px; }
+        .branding h1 { font-size: 3.5rem; margin: 0; letter-spacing: 3px; opacity: 0.1; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: -1; width: 100%; pointer-events: none;}
+        
+        @media (max-width: 768px) {
+            .top-dashboard { flex-direction: column; align-items: center; text-align: center; }
+            .dash-left, .dash-right { text-align: center; width: 100%; }
+            .date-line, .hijri-line { border: none; padding: 0; }
+            .adzan-box { justify-content: center; }
         }
-        .icon { font-size: 3rem; margin-bottom: 15px; }
-        .title { font-size: 1.1rem; font-weight: 800; color: #00e5ff; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .desc { font-size: 0.8rem; color: #777; line-height: 1.4; }
     </style>
 </head>
 <body>
-    <div style="text-align:center; margin-bottom:30px; margin-top:30px;">
-        <h1 style="font-size: 3rem; margin:0; letter-spacing: 2px;">PROJECT <span style="color:#00e5ff">GXDIAG</span></h1>
-        <p style="color:#888; margin-top:5px; font-weight: 300;">Professional Hardware Diagnostic Suite v2.0</p>
+
+    <div class="top-dashboard">
+        <div class="dash-left">
+            <div class="clock-big" id="clock">00:00:00</div>
+            <div class="adzan-box">
+                <span>🕋</span> <span id="next-prayer">Loading Prayer...</span>
+            </div>
+            <div class="date-line" id="date-gregorian">Detecting Date...</div>
+            <div class="hijri-line" id="date-hijri">Loading Hijri...</div>
+            <div class="events-ticker" id="upcoming-events">Checking Events...</div>
+        </div>
+
+        <div class="dash-right">
+            <div class="steam-icon">🎮</div>
+            <div class="steam-label">NEXT STEAM SALE</div>
+            <div class="steam-title" id="sale-name">Checking...</div>
+            <div class="steam-timer" id="sale-countdown">--d --h</div>
+        </div>
+    </div>
+
+    <div style="text-align:center; margin-bottom:20px; position:relative; height: 50px;">
+        <h2 style="margin:0; color:#00e5ff; font-size: 1.5rem; letter-spacing: 2px;">PROJECT GXDIAG</h2>
+        <div style="font-size: 0.7rem; color: #555;">SYSTEM DIAGNOSTIC SUITE V2.0</div>
     </div>
 
     <div class="menu-grid">
         <a href="modules/keyboard/index.html" class="card">
             <div class="icon">⌨️</div>
-            <div class="title">Keyboard Tester</div>
-            <div class="desc">Ghosting, Chatter Check & Layout Visualizer</div>
+            <div class="title">Keyboard</div>
+            <div class="desc">Ghosting & Chatter</div>
         </a>
-
         <a href="modules/typing/index.html" class="card">
             <div class="icon">⚡</div>
-            <div class="title">Typing Speed</div>
-            <div class="desc">WPM Challenge & Multi-Language Test</div>
+            <div class="title">Typing</div>
+            <div class="desc">Speed & Accuracy</div>
         </a>
-
         <a href="modules/mouse/index.html" class="card">
             <div class="icon">🖱️</div>
-            <div class="title">Mouse & Touch</div>
-            <div class="desc">Buttons, Polling Rate (Hz) & Multi-touch</div>
+            <div class="title">Mouse</div>
+            <div class="desc">Polling Rate & Buttons</div>
         </a>
-
         <a href="modules/gamepad/index.html" class="card">
             <div class="icon">🎮</div>
-            <div class="title">Game Controller</div>
-            <div class="desc">Analog Deadzone, Paddles, & Sony WebHID</div>
+            <div class="title">Controller</div>
+            <div class="desc">Deadzone & WebHID</div>
         </a>
-
         <a href="modules/audio/index.html" class="card">
             <div class="icon">🔊</div>
-            <div class="title">Audio System</div>
-            <div class="desc">Stereo L/R Output & Microphone Input</div>
+            <div class="title">Audio</div>
+            <div class="desc">Stereo & Mic Test</div>
         </a>
-
         <a href="modules/sensors/index.html" class="card">
             <div class="icon">📱</div>
-            <div class="title">Mobile Sensors</div>
-            <div class="desc">Gyroscope, Accelerometer, & Battery Health</div>
+            <div class="title">Sensors</div>
+            <div class="desc">Gyro & Battery</div>
         </a>
-
         <a href="modules/screen-cam/index.html" class="card">
-            <div class="icon">🖥️</div>
-            <div class="title">Screen & Cam</div>
-            <div class="desc">Dead Pixel Check & Webcam Resolution</div>
+            <div class="icon">📸</div>
+            <div class="title">Screen/Cam</div>
+            <div class="desc">Dead Pixel & Webcam</div>
         </a>
-
         <a href="modules/specs/index.html" class="card">
             <div class="icon">🔍</div>
-            <div class="title">Specs & GPU</div>
-            <div class="desc">Detect Fake/HDC via WebGL Renderer</div>
+            <div class="title">Specs/GPU</div>
+            <div class="desc">HDC Detector</div>
         </a>
     </div>
 
-    <footer style="margin-bottom: 20px; color: #444; font-size: 0.8rem;">
-        &copy; 2024 Project GXDiag. All tests run locally in your browser.
+    <footer style="margin-bottom: 20px; color: #444; font-size: 0.7rem; text-align: center;">
+        &copy; 2024 Project GXDiag. Local Client-Side Execution.
     </footer>
+
+    <script>
+        // --- 1. CLOCK & GREGORIAN DATE ---
+        function updateClock() {
+            const now = new Date();
+            // Clock
+            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
+            // Date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-gregorian').innerText = now.toLocaleDateString('id-ID', options);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- 2. PRAYER TIMES & HIJRI (Aladhan API) ---
+        async function getPrayerData() {
+            if (!navigator.geolocation) {
+                document.getElementById('next-prayer').innerText = "Location needed for Prayer Time";
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const long = position.coords.longitude;
+                
+                // Method 20 = Kemenag RI
+                // Jika di luar indo, API akan mencoba menyesuaikan atau kita bisa buat logic fallback
+                // Tapi untuk sekarang kita set Method 20 (Kemenag) sebagai preferensi
+                const apiURL = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${long}&method=20`;
+
+                try {
+                    const res = await fetch(apiURL);
+                    const data = await res.json();
+                    
+                    if(data.code === 200) {
+                        const t = data.data.timings;
+                        const h = data.data.date.hijri;
+                        
+                        // 1. Set Tanggal Hijriyah
+                        document.getElementById('date-hijri').innerText = `${h.day} ${h.month.en} ${h.year} H`;
+
+                        // 2. Cek Puasa Sunnah (Ayyamul Bidh)
+                        let eventText = "No Upcoming Events";
+                        const day = parseInt(h.day);
+                        
+                        // Logika Sederhana Event
+                        if (h.month.number === 9) eventText = "🌙 Ramadhan Fasting";
+                        else if (day >= 13 && day <= 15) eventText = "✨ Puasa Ayyamul Bidh (Now)";
+                        else if (day < 13) eventText = `✨ Next Ayyamul Bidh: ${13-day} days left`;
+                        else if (day === 10 && h.month.number === 12) eventText = "🐏 Eid al-Adha";
+                        else if (day === 1 && h.month.number === 10) eventText = "🕌 Eid al-Fitr";
+                        else eventText = "Waiting for next Holy Month";
+
+                        document.getElementById('upcoming-events').innerText = eventText;
+
+                        // 3. Cari Next Prayer
+                        const now = new Date();
+                        const curTimeVal = now.getHours() * 60 + now.getMinutes();
+                        
+                        const prayerList = [
+                            { name: "Subuh", time: t.Fajr },
+                            { name: "Dzuhur", time: t.Dhuhr },
+                            { name: "Ashar", time: t.Asr },
+                            { name: "Maghrib", time: t.Maghrib },
+                            { name: "Isya", time: t.Isha }
+                        ];
+
+                        let nextP = prayerList[0];
+                        for(let p of prayerList) {
+                            const [ph, pm] = p.time.split(':').map(Number);
+                            if (ph * 60 + pm > curTimeVal) {
+                                nextP = p;
+                                break;
+                            }
+                        }
+                        document.getElementById('next-prayer').innerText = `Next: ${nextP.name} at ${nextP.time}`;
+                    }
+                } catch(e) {
+                    document.getElementById('next-prayer').innerText = "Network Error";
+                }
+            }, () => {
+                document.getElementById('next-prayer').innerText = "Location Denied";
+            });
+        }
+        getPrayerData();
+
+        // --- 3. STEAM SALES ESTIMATOR ---
+        // Estimasi jadwal Sale 2025 (Berdasarkan pola tahunan)
+        const steamSales = [
+            { name: "Spring Sale", date: new Date("2025-03-14") },
+            { name: "Summer Sale", date: new Date("2025-06-27") },
+            { name: "Autumn Sale", date: new Date("2025-11-26") },
+            { name: "Winter Sale", date: new Date("2025-12-19") }
+        ];
+
+        function updateSteamSale() {
+            const now = new Date();
+            let nextSale = null;
+
+            for(let sale of steamSales) {
+                if(sale.date > now) {
+                    nextSale = sale;
+                    break;
+                }
+            }
+
+            if(nextSale) {
+                document.getElementById('sale-name').innerText = nextSale.name;
+                const diff = nextSale.date - now;
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                document.getElementById('sale-countdown').innerText = `${days}d ${hours}h`;
+            } else {
+                document.getElementById('sale-name').innerText = "No Data / Wait 2026";
+                document.getElementById('sale-countdown').innerText = "-";
+            }
+        }
+        updateSteamSale();
+    </script>
 </body>
 </html>
