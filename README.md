@@ -4,31 +4,41 @@
 > A lightweight, modular, and professional tool to test hardware peripherals and monitor system events directly from your browser.
 
 ![Project Banner](screenshots/banner.png)
+*(Note: Upload a screenshot of your dashboard to the 'screenshots' folder)*
+
+## 🔗 Live Demo
+🚀 **[Click here to open GXDiag Live](https://gxdiag.brahmantyo12.my.id)**
+
+---
 
 ## 🚀 Overview
 
-**Project GXDiag** has evolved from a simple tester into a comprehensive **Diagnostic Suite**. It features a powerful "Command Center" dashboard that aggregates real-time data (Time, Prayer Schedules, Calendars, Gaming Events) and provides access to 8 specialized hardware testing modules.
+**Project GXDiag** is a comprehensive hardware diagnostic tool built entirely with **Vanilla HTML5, CSS3, and JavaScript**. It creates a centralized "Command Center" dashboard that aggregates real-time environmental data (Time, Prayer Schedules, Calendars, Gaming Events) and provides quick access to 8 specialized hardware testing modules.
 
-Built entirely with **Vanilla HTML5, CSS3, and JavaScript**, ensuring zero dependencies and maximum performance on any device (Desktop & Mobile).
+It is designed to be **lightweight, privacy-focused (client-side only), and responsive** for both Desktop and Mobile devices.
+
+---
 
 ## 🎛️ The Command Center (Dashboard)
 
-The main menu (`index.html`) is no longer just a list of links. It is now a fully functional smart dashboard featuring:
+The main menu (`index.html`) serves as a smart information hub:
 
 ### 1. 🕌 Smart Prayer Schedule
-* **Real-time Coordinates:** Detects user location (City/District) via Geolocation API & OpenStreetMap.
-* **Kemenag Standard:** Uses `Method 20` (Kemenag RI) via **Aladhan API** for accurate prayer times in Indonesia.
-* **5-Time List:** Displays full schedule (Subuh - Isya) with active time highlighting.
+* **Auto-Location:** Detects City/District names using **Nominatim (OpenStreetMap)** via Geolocation.
+* **Accurate Times:** Uses **Aladhan API** with `Method 20` (Kementerian Agama RI standard).
+* **5-Time List:** Displays the full daily schedule (Subuh to Isya) with active time highlighting.
 
 ### 2. 📅 Ultimate Interactive Calendar
-* **Hybrid Holiday System:** Combines hardcoded fixed holidays (fast loading) with **Auto-Sync** from `api-harilibur` (for changing dates like SKB 3 Menteri updates).
-* **Hijri Support:** Full Hijriyah calendar with **Manual Moon Sighting Correction** (Koreksi Hilal -2 to +2 days) saved in local storage.
-* **Islamic Events:** Auto-detects Sunnah Fasting (Mon/Thu), Ayyamul Bidh, and Major Holidays (Eid, Ramadhan).
-* **Javanese Weton:** Displays Pasaran (Legi, Pahing, etc.) for local context.
+* **Hybrid Holiday System:**
+    * **Fixed:** Hardcoded dates for static holidays (e.g., Independence Day).
+    * **Dynamic:** Auto-syncs with **API-HariLibur** for changing dates (e.g., SKB 3 Menteri updates, Eid, Nyepi).
+* **Hijri Support:** Full Hijriyah calendar with **Manual Moon Sighting Correction** (Koreksi Hilal -2 to +2 days) saved in local browser storage.
+* **Smart Events:** Auto-detects Sunnah Fasting (Mon/Thu), Ayyamul Bidh, and Major Islamic Holidays.
+* **Local Culture:** Displays "Weton" (Javanese Pasaran: Legi, Pahing, etc.).
 
 ### 3. 🎮 Steam Sale Monitor
-* **Live Tracker:** Detects if a major Steam Sale is currently **LIVE**.
-* **Roadmap:** Displays a countdown to the next sale and a list of future confirmed sales for 2025 (Spring, Summer, Autumn, Winter).
+* **Live Tracker:** Visual indicator if a major Steam Sale is currently **LIVE**.
+* **Roadmap:** Displays a countdown to the next sale and a list of future confirmed sales for 2025 (Spring, Summer, Autumn, Winter) based on SteamDB data.
 
 ---
 
@@ -36,37 +46,27 @@ The main menu (`index.html`) is no longer just a list of links. It is now a full
 
 The suite includes **8 Specialized Modules** to test every aspect of your device:
 
-### 1. ⌨️ Keyboard Tester
-* **Ghosting & Chatter Check:** Visualizes active keystrokes and detects double-typing switches (<80ms).
-* **Auto-Scale:** Automatically fits the full 104-key layout to any screen size.
+| Module | Icon | Description |
+| :--- | :---: | :--- |
+| **Keyboard Tester** | ⌨️ | Visualizes keystrokes, detects Ghosting, and checks for switch chatter (<80ms). |
+| **Typing Speed** | ⚡ | WPM & Accuracy test supporting multiple languages (EN, ID, JP, CN, KR, etc.). |
+| **Mouse & Touch** | 🖱️ | Checks Polling Rate (Hz), button actuation, and Multi-touch points. |
+| **Game Controller** | 🎮 | WebHID support for Sony DualSense/DS4 (touchpad data) & analog drift visualization. |
+| **Audio System** | 🔊 | Stereo L/R frequency generator and Microphone waveform visualizer. |
+| **Mobile Sensors** | 📱 | Visual Bubble Level (Gyroscope) and Battery health/charging monitor. |
+| **Screen & Cam** | 📸 | Dead Pixel test (RGBW cycling) and Webcam resolution checker. |
+| **Specs & GPU** | 🔍 | **HDC Detector:** Exposes true GPU Renderer (WebGL) to detect fake/replica phones. |
 
-### 2. ⚡ Typing Speed
-* **Multi-Language:** Supports English, Indonesian, Japanese, Chinese, Korean, etc.
-* **WPM & Accuracy:** Real-time calculation of Words Per Minute.
+---
 
-### 3. 🖱️ Mouse & Touch
-* **Polling Rate (Hz):** Real-time sensor reporting rate checker.
-* **Multi-Touch:** Test up to 10 simultaneous touch points.
+## 🛠️ APIs & Data Sources
 
-### 4. 🎮 Game Controller
-* **WebHID Support:** Native support for Sony DualShock/DualSense (read raw touchpad data).
-* **Drift Visualizer:** Precise float precision (0.00 - 1.00) for analog sticks and triggers.
+This project relies on the following open-source services:
 
-### 5. 🔊 Audio System
-* **Stereo Check:** Independent Left/Right channel frequency generator.
-* **Mic Visualizer:** Real-time waveform rendering for microphone input.
-
-### 6. 📱 Mobile Sensors (New)
-* **Gyroscope & Tilt:** Bubble level visualizer using device orientation.
-* **Battery Health:** Charging status and percentage monitor.
-
-### 7. 🖥️ Screen & Cam (New)
-* **Dead Pixel Test:** Fullscreen color cycling (Red, Green, Blue, White, Black).
-* **Webcam Info:** Checks camera resolution and stream capability.
-
-### 8. 🔍 Specs & GPU Inspector (New)
-* **HDC/Fake Detector:** The "Killer Feature" to detect fake phones (HDC).
-* **WebGL Renderer:** Exposes the true GPU name (e.g., "Mali-400" on a fake iPhone vs "Apple GPU" on a real one).
+1.  **[Aladhan API](https://aladhan.com/):** Prayer Times & Hijri conversion.
+2.  **[Nominatim (OSM)](https://nominatim.org/):** Reverse Geocoding (Coordinates to City Name).
+3.  **[API-HariLibur](https://api-harilibur.vercel.app/):** Syncing Indonesia's National Holidays (SKB 3 Menteri).
+4.  **[SteamDB](https://steamdb.info/):** Source data for Steam Sale schedule logic.
 
 ---
 
@@ -87,26 +87,3 @@ GXDiag-Project/
 │   └── specs/               # WebGL & Hardware Info
 ├── index.html               # Main Command Center
 └── README.md                # Documentation
-
-🛠️ APIs & Credits
-This project uses the following open-source APIs to power the dashboard:
-
-Aladhan API: For Prayer Times & Hijri conversion.
-
-Nominatim (OSM): For Reverse Geocoding (Coordinates to City Name).
-
-API-HariLibur: For syncing Indonesia's National Holidays (SKB 3 Menteri).
-
-🚀 How to Run
-Option 1: Live Demo
-🔗 Click here to open Live Demo
-
-Option 2: Local Development
-Clone this repository.
-
-Open index.html in any modern browser.
-
-Note: For features like Geolocation, Microphone, and WebHID, the browser requires a secure context (HTTPS or localhost). It is recommended to use "Live Server" extension in VS Code.
-
-📄 License
-This project is open-source and available under the MIT License.
