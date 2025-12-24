@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Mobile Sensors</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width:100%; max-width:800px; }
+        
+        /* Bubble Level Visualizer */
+        .bubble-level {
+            width: 100%; height: 200px; background: #222; border: 2px solid #444;
+            border-radius: 15px; position: relative; overflow: hidden; margin-bottom: 20px;
+        }
+        .crosshair {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 100%; height: 2px; background: rgba(255,255,255,0.1);
+        }
+        .crosshair.v { width: 2px; height: 100%; }
+        .bubble {
+            width: 50px; height: 50px; background: #00e5ff; border-radius: 50%;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #00e5ff; transition: 0.1s linear;
+        }
+
+        /* Data Box */
+        .data-box { background: #111; padding: 15px; border-radius: 8px; font-family: monospace; color: #aaa; margin-bottom: 10px; }
+        .val { color: #fff; font-weight: bold; }
+
+        /* Battery */
+        .battery-container { 
+            display: flex; align-items: center; gap: 15px; background: #111; 
+            padding: 20px; border-radius: 10px; margin-top: 10px; border: 1px solid #333;
+        }
+        .bat-icon { width: 60px; height: 30px; border: 3px solid #aaa; border-radius: 5px; position: relative; padding: 2px; }
+        .bat-icon::after { content:''; position: absolute; right: -6px; top: 8px; width: 4px; height: 10px; background: #aaa; border-radius: 0 2px 2px 0; }
+        .bat-fill { height: 100%; background: #0f0; width: 50%; transition: 0.5s; }
+        .charging { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">← MENU</a>
+    <h2>Mobile Sensors</h2>
+
+    <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3>Gyroscope & Tilt</h3>
+            <button onclick="reqPerm()" style="background:#333; color:#fff; border:1px solid #555; padding:5px 10px; border-radius:5px; font-size:0.7rem;">iOS Permission</button>
+        </div>
+        
+        <div class="bubble-level">
+            <div class="crosshair"></div><div class="crosshair v"></div>
+            <div id="bubble" class="bubble"></div>
+        </div>
+        <div class="sensor-grid">
+            <div class="data-box">Alpha (Z): <span id="alpha" class="val">0</span>°</div>
+            <div class="data-box">Beta (X): <span id="beta" class="val">0</span>°</div>
+            <div class="data-box">Gamma (Y): <span id="gamma" class="val">0</span>°</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>Haptics & Power</h3>
+        <div class="sensor-grid">
+            <button onclick="navigator.vibrate(200)" style="padding:20px; background:#00e5ff; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">📳 PULSE</button>
+            <button onclick="navigator.vibrate([100,50,100,50,500])" style="padding:20px; background:#ff4081; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🆘 SOS PATTERN</button>
+        </div>
+
+        <div class="battery-container">
+            <div class="bat-icon"><div id="bat-level" class="bat-fill"></div></div>
+            <div>
+                <div style="font-size:1.5rem; font-weight:bold;" id="bat-perc">--%</div>
+                <div style="font-size:0.8rem; color:#888;" id="bat-status">Unknown</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GYROSCOPE
+        const bubble = document.getElementById('bubble');
+        
+        function handleOrientation(e) {
+            document.getElementById('alpha').innerText = Math.round(e.alpha);
+            document.getElementById('beta').innerText = Math.round(e.beta);
+            document.getElementById('gamma').innerText = Math.round(e.gamma);
+
+            // Visual Bubble (Batasi pergerakan agar tidak keluar kotak)
+            // Gamma (Kiri-Kanan): -90 s/d 90
+            // Beta (Atas-Bawah): -180 s/d 180
+            let x = e.gamma * 3; 
+            let y = e.beta * 3;
+            
+            // Limit visual
+            if(x > 140) x = 140; if(x < -140) x = -140;
+            if(y > 90) y = 90; if(y < -90) y = -90;
+
+            bubble.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        }
+
+        window.addEventListener('deviceorientation', handleOrientation);
+
+        // iOS Permission Request
+        function reqPerm() {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response == 'granted') window.addEventListener('deviceorientation', handleOrientation);
+                        else alert("Permission Denied");
+                    })
+                    .catch(console.error);
+            } else { alert("Not needed on this device/Android."); }
+        }
+
+        // BATTERY API
+        navigator.getBattery().then(bat => {
+            function updateBat() {
+                const level = Math.round(bat.level * 100);
+                document.getElementById('bat-perc').innerText = level + "%";
+                document.getElementById('bat-level').style.width = level + "%";
+                
+                if(bat.charging) {
+                    document.getElementById('bat-status').innerText = "⚡ Charging";
+                    document.getElementById('bat-level').classList.add('charging');
+                    document.getElementById('bat-level').style.background = "#0f0";
+                } else {
+                    document.getElementById('bat-status').innerText = "Discharging";
+                    document.getElementById('bat-level').classList.remove('charging');
+                    if(level < 20) document.getElementById('bat-level').style.background = "#f00";
+                    else document.getElementById('bat-level').style.background = "#fff";
+                }
+            }
+            updateBat();
+            bat.addEventListener('levelchange', updateBat);
+            bat.addEventListener('chargingchange', updateBat);
+        });
+    </script>
+</body>
+</html>
