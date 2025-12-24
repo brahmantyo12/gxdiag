@@ -3,15 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project GXDiag - Command Center</title>
+    
+    <title>GXDiag - Hardware Diagnostic Suite & Command Center</title>
+    <meta name="description" content="Professional web-based hardware diagnostic tool. Test Keyboard (Ghosting), Mouse (Polling Rate), Gamepad (Drift), Screen (Dead Pixel), and monitor Real-time System Events.">
+    <meta name="keywords" content="keyboard tester, mouse polling rate, gamepad drift test, dead pixel check, cek hp hdc, steam sale countdown, jadwal sholat, hardware diagnostic, webhid tester, gxdiag, brahmantyo">
+    <meta name="author" content="Brahmantyo">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <link rel="canonical" href="https://gxdiag.brahmantyo12.my.id/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gxdiag.brahmantyo12.my.id/">
+    <meta property="og:title" content="GXDiag - Command Center">
+    <meta property="og:description" content="All-in-one Hardware Tester: Keyboard, Mouse, Gamepad, Screen, & Sensors. Check your gear now!">
+    <meta property="og:image" content="https://gxdiag.brahmantyo12.my.id/screenshots/gxdiag32.jpeg">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://gxdiag.brahmantyo12.my.id/">
+    <meta property="twitter:title" content="GXDiag - Command Center">
+    <meta property="twitter:description" content="Professional Hardware Diagnostic Suite. No install required.">
+    <meta property="twitter:image" content="https://gxdiag.brahmantyo12.my.id/screenshots/gxdiag32.jpeg">
+
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* --- LAYOUT UTAMA --- */
+        /* --- DASHBOARD LAYOUT V3.2 --- */
         .top-dashboard {
             width: 100%; max-width: 1280px; 
             display: grid; 
-            /* Grid diubah: Kiri & Kanan sedikit lebih lebar agar muat List */
-            grid-template-columns: 300px 1fr 300px; 
+            grid-template-columns: 300px 1fr 300px; /* Optimized Widths */
             gap: 20px; margin-top: 20px; margin-bottom: 30px;
             align-items: stretch;
         }
@@ -48,6 +70,7 @@
         .cal-nav-btn { background: #222; border: 1px solid #444; color: #00e5ff; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; user-select: none; }
         .cal-nav-btn:hover { background: #00e5ff; color: #000; }
         .cal-title { font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 2px; font-size: 1.1rem; }
+        
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; margin-bottom: 20px; }
         .cal-day-name { font-size: 0.75rem; color: #666; text-align: center; font-weight: bold; padding-bottom: 5px;}
         .cal-date { height: 35px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #ccc; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; position: relative; }
@@ -57,7 +80,6 @@
         .cal-date.holiday { color: #ff4081; font-weight: bold; } 
         .cal-date.has-event::after { content:''; position: absolute; bottom: 3px; width: 4px; height: 4px; background: #00ff88; border-radius: 50%; }
         
-        /* Event Sections Compact */
         .event-sections { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: auto; }
         .event-col { background: #222; padding: 10px; border-radius: 8px; font-size: 0.75rem; border-left: 3px solid #555; display: flex; flex-direction: column; }
         .ec-indo { border-color: #ff4081; } .ec-masehi { border-color: #00e5ff; } .ec-hijri { border-color: #00ff88; position: relative;}
@@ -77,6 +99,8 @@
         .steam-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
         .steam-title { font-size: 1.2rem; color: #66c0f4; font-weight: 800; margin-bottom: 5px; text-shadow: 0 0 10px rgba(102, 192, 244, 0.3); }
         .steam-timer { font-size: 1.8rem; color: #fff; font-family: monospace; font-weight: bold; }
+        .sale-live { color: #00ff88; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
         
         /* Box 2: Roadmap List */
         .steam-roadmap {
@@ -96,6 +120,7 @@
         .title { font-size: 1rem; font-weight: 800; color: #00e5ff; margin-bottom: 5px; text-transform: uppercase; }
         .desc { font-size: 0.75rem; color: #777; line-height: 1.4; }
 
+        /* Responsive */
         @media (max-width: 900px) {
             .top-dashboard { grid-template-columns: 1fr; gap: 15px;}
             .event-sections { grid-template-columns: 1fr; }
