@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - NFC</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        body { background: #050505; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+        .nfc-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; }
+        .signal-circle { width: 150px; height: 150px; border-radius: 50%; border: 2px dashed #333; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #333; transition: 0.3s; }
+        .signal-circle.scanning { border-color: #00e5ff; color: #00e5ff; animation: pulse 1s infinite; }
+        .signal-circle.success { border-color: #00ff88; color: #00ff88; border-style: solid; box-shadow: 0 0 30px rgba(0,255,136,0.3); }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.4); } 100% { box-shadow: 0 0 0 20px transparent; } }
+        .log-box { width: 100%; max-width: 400px; background: #111; border: 1px solid #333; border-radius: 10px; padding: 15px; font-family: monospace; min-height: 100px; }
+        .scan-btn { padding: 15px 40px; background: #00e5ff; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; color: #000; }
+        .scan-btn:disabled { background: #333; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="mod-header"><a href="../../index.html" class="back-btn">← DASHBOARD</a></div>
+    <div class="nfc-container">
+        <div class="signal-circle" id="nfc-icon">📡</div>
+        <div style="color:#aaa;" id="status-text">Tap Start</div>
+        <div class="log-box" id="log-area"><div style="color:#555; text-align:center; padding-top:30px;">Waiting...</div></div>
+        <button class="scan-btn" id="btn-scan" onclick="startNFC()">START SCAN</button>
+    </div>
+    <script>
+        const btn = document.getElementById('btn-scan');
+        const icon = document.getElementById('nfc-icon');
+        const logArea = document.getElementById('log-area');
+
+        if (!('NDEFReader' in window)) {
+            document.getElementById('status-text').innerText = "NFC API Not Supported";
+            btn.disabled = true;
+        }
+
+        async function startNFC() {
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan();
+                btn.innerText = "SCANNING..."; btn.disabled = true; icon.classList.add('scanning');
+                ndef.onreading = event => {
+                    const serial = event.serialNumber;
+                    icon.classList.remove('scanning'); icon.classList.add('success');
+                    if(navigator.vibrate) navigator.vibrate(200);
+                    logArea.innerHTML = `<div style="color:#888;">SERIAL / UID:</div><div style="color:#00ff88; font-size:1.2rem;">${serial || 'Encrypted'}</div>`;
+                    setTimeout(() => { icon.classList.remove('success'); icon.classList.add('scanning'); }, 3000);
+                };
+            } catch (error) { document.getElementById('status-text').innerText = "Error: " + error; }
+        }
+    </script>
+</body>
+</html>
