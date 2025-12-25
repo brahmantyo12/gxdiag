@@ -3,88 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Network</title>
+    <title>GXDiag - Realtime Network</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
         body { background: #0b0b0b; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; }
+        
+        .mod-header {
+            padding: 15px 20px; background: #111; border-bottom: 1px solid #333; 
+            display: flex; align-items: center; justify-content: space-between;
+        }
         .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
         
-        .net-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; }
-        .ping-circle { width: 180px; height: 180px; border-radius: 50%; border: 8px solid #222; border-top-color: #00e5ff; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .ping-val { font-size: 3.5rem; font-weight: 800; color: #fff; line-height: 1; }
+        .net-container {
+            flex-grow: 1; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; gap: 25px; padding: 20px;
+        }
+
+        /* PING CIRCLE UI */
+        .ping-wrapper { position: relative; width: 200px; height: 200px; }
+        .ping-circle {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: radial-gradient(circle, #1a1a1a 40%, #000 100%);
+            border: 4px solid #333; border-top-color: #00e5ff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); transition: border-color 0.2s;
+            position: relative; z-index: 2;
+        }
+        .ping-circle.live { animation: spinBorder 2s linear infinite; }
         
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 500px; }
-        .info-card { background: #151515; padding: 15px; border-radius: 10px; border: 1px solid #333; text-align: center; }
-        .ic-label { font-size: 0.75rem; color: #666; text-transform: uppercase; }
-        .ic-val { font-size: 1.1rem; color: #fff; font-weight: bold; font-family: monospace; margin-top: 5px; }
-        .refresh-btn { margin-top: 20px; padding: 10px 30px; background: #00e5ff; color: #000; border-radius: 20px; cursor: pointer; font-weight: bold; border: none; }
+        @keyframes spinBorder { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .ping-inner-content { transform: rotate(0deg) !important; /* Counter rotate fix if needed, but easier to separate */ }
+
+        .ping-val { font-size: 4rem; font-weight: 800; color: #fff; line-height: 1; }
+        .ping-label { color: #888; text-transform: uppercase; font-size: 0.9rem; margin-top: 5px; }
+
+        /* PULSE EFFECT */
+        .pulse-ring {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%; border: 2px solid #00e5ff; opacity: 0; z-index: 1;
+        }
+        .pulsing { animation: ripple 1.5s infinite; }
+        @keyframes ripple { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
+
+        /* INFO GRID */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; }
+        .info-card { background: #151515; padding: 12px; border-radius: 10px; border: 1px solid #333; text-align: center; }
+        .ic-lbl { font-size: 0.7rem; color: #666; text-transform: uppercase; }
+        .ic-val { font-size: 1rem; color: #fff; font-weight: bold; font-family: monospace; margin-top: 4px; }
+
+        /* TOGGLE BUTTON */
+        .live-btn {
+            padding: 15px 40px; border-radius: 30px; font-weight: bold; cursor: pointer; border: none;
+            font-size: 1rem; transition: 0.3s; background: #222; color: #fff; border: 1px solid #444;
+        }
+        .live-btn.active { background: #00e5ff; color: #000; box-shadow: 0 0 20px rgba(0,229,255,0.4); border-color: #00e5ff; }
+
+        /* GRAPH BAR (Visualizer Sederhana) */
+        .ping-graph {
+            display: flex; align-items: flex-end; gap: 2px; height: 40px; width: 100%; max-width: 300px;
+            opacity: 0.5; overflow: hidden;
+        }
+        .bar { flex: 1; background: #333; border-radius: 2px 2px 0 0; transition: height 0.2s; }
+        .bar.high { background: #ff4081; }
+        .bar.med { background: #ffb300; }
+        .bar.low { background: #00ff88; }
     </style>
 </head>
 <body>
-    <div class="mod-header"><a href="../../index.html" class="back-btn">← DASHBOARD</a></div>
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-size:0.8rem; color:#666;">SERVER: CLOUDFLARE (1.1.1.1)</div>
+    </div>
 
     <div class="net-container">
-        <div class="ping-circle" id="ping-ring">
-            <div class="ping-val" id="ping-text">--</div>
-            <div style="color:#888;">ms</div>
+        
+        <div class="ping-wrapper">
+            <div class="pulse-ring" id="pulse"></div>
+            <div class="ping-circle" id="main-circle">
+                <div class="ping-val" id="ping-text">--</div>
+                <div class="ping-label">MS LATENCY</div>
+            </div>
         </div>
+
+        <div class="ping-graph" id="graph">
+            </div>
 
         <div class="info-grid">
             <div class="info-card">
-                <div class="ic-label">Status</div>
+                <div class="ic-lbl">Status</div>
                 <div class="ic-val" id="net-status">Checking...</div>
             </div>
             <div class="info-card">
-                <div class="ic-label">Type</div>
+                <div class="ic-lbl">Connection</div>
                 <div class="ic-val" id="net-type">-</div>
             </div>
-            <div class="info-card" style="grid-column: span 2;">
-                <div class="ic-label">Public IP</div>
-                <div class="ic-val" id="ip-address">Detecting...</div>
+            <div class="info-card">
+                <div class="ic-lbl">Jitter</div>
+                <div class="ic-val" id="jitter-val">0 ms</div>
+            </div>
+            <div class="info-card">
+                <div class="ic-lbl">Public IP</div>
+                <div class="ic-val" id="ip-address">...</div>
             </div>
         </div>
-        <button class="refresh-btn" onclick="runDiagnostics()">REFRESH</button>
+
+        <button class="live-btn" id="btn-toggle" onclick="toggleLivePing()">▶ START LIVE PING</button>
     </div>
 
     <script>
+        let isLive = false;
+        let pingInterval = null;
+        let lastPing = 0;
+        
+        // Setup Graph Bars
+        const graphContainer = document.getElementById('graph');
+        const totalBars = 20;
+        const bars = [];
+        for(let i=0; i<totalBars; i++) {
+            const b = document.createElement('div');
+            b.className = 'bar';
+            b.style.height = '10%';
+            graphContainer.appendChild(b);
+            bars.push(b);
+        }
+
+        // --- 1. CORE PING LOGIC ---
+        async function doPing() {
+            if(!isLive) return;
+
+            const start = performance.now();
+            try {
+                // Fetch ke Cloudflare Trace (No Cache)
+                await fetch('https://1.1.1.1/cdn-cgi/trace', { mode: 'no-cors', cache: 'no-store' });
+                
+                const end = performance.now();
+                const ping = Math.round(end - start);
+                
+                updateUI(ping);
+                
+                // Recursive loop (ping lagi setelah selesai, delay 1 detik)
+                if(isLive) setTimeout(doPing, 1000);
+
+            } catch(e) {
+                if(isLive) setTimeout(doPing, 2000); // Retry slow if error
+            }
+        }
+
+        function updateUI(ping) {
+            const txt = document.getElementById('ping-text');
+            const circle = document.getElementById('main-circle');
+            const jitterDisplay = document.getElementById('jitter-val');
+            
+            // Update Text
+            txt.innerText = ping;
+            
+            // Hitung Jitter (Beda ping sekarang vs sebelumnya)
+            if(lastPing > 0) {
+                const jitter = Math.abs(ping - lastPing);
+                jitterDisplay.innerText = `±${jitter} ms`;
+            }
+            lastPing = ping;
+
+            // Color Coding
+            let color = "#00ff88"; // Good
+            if(ping > 100) color = "#ffb300"; // Med
+            if(ping > 200) color = "#ff4081"; // Bad
+
+            txt.style.color = color;
+            circle.style.borderTopColor = color;
+            document.getElementById('pulse').style.borderColor = color;
+
+            // Update Graph (Shift Left)
+            // Hapus class lama
+            for(let i=0; i<totalBars-1; i++) {
+                bars[i].style.height = bars[i+1].style.height;
+                bars[i].className = bars[i+1].className;
+            }
+            // Update bar paling kanan
+            const lastBar = bars[totalBars-1];
+            // Height logic: max height 100% at 300ms
+            const h = Math.min(100, Math.max(10, (ping / 300) * 100)); 
+            lastBar.style.height = h + "%";
+            lastBar.className = 'bar ' + (ping < 100 ? 'low' : (ping < 200 ? 'med' : 'high'));
+        }
+
+        // --- 2. CONTROLLER ---
+        function toggleLivePing() {
+            isLive = !isLive;
+            const btn = document.getElementById('btn-toggle');
+            const pulse = document.getElementById('pulse');
+
+            if(isLive) {
+                btn.innerHTML = "⏹ STOP PING";
+                btn.classList.add('active');
+                pulse.classList.add('pulsing');
+                doPing(); // Start Loop
+            } else {
+                btn.innerHTML = "▶ START LIVE PING";
+                btn.classList.remove('active');
+                pulse.classList.remove('pulsing');
+            }
+        }
+
+        // --- 3. BASIC INFO (IP & TYPE) ---
         async function getIP() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
                 document.getElementById('ip-address').innerText = data.ip;
-                document.getElementById('ip-address').style.color = "#00e5ff";
-            } catch(e) { document.getElementById('ip-address').innerText = "Hidden / Error"; }
+            } catch(e) { document.getElementById('ip-address').innerText = "Hidden"; }
         }
 
-        async function checkPing() {
-            const start = performance.now();
-            try {
-                await fetch('https://1.1.1.1/cdn-cgi/trace', { mode: 'no-cors', cache: 'no-store' });
-                const end = performance.now();
-                const ping = Math.round(end - start);
-                const pingText = document.getElementById('ping-text');
-                const pingRing = document.getElementById('ping-ring');
-                
-                pingText.innerText = ping;
-                if(ping < 50) { pingRing.style.borderTopColor = "#00ff88"; pingText.style.color = "#00ff88"; } 
-                else if(ping < 150) { pingRing.style.borderTopColor = "#ffb300"; pingText.style.color = "#ffb300"; }
-                else { pingRing.style.borderTopColor = "#ff4081"; pingText.style.color = "#ff4081"; }
-            } catch(e) { document.getElementById('ping-text').innerText = "Err"; }
-        }
-
-        function checkConnInfo() {
+        function checkConn() {
             const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             document.getElementById('net-type').innerText = conn ? (conn.effectiveType || "Unknown").toUpperCase() : "WiFi/LAN";
-            document.getElementById('net-status').innerText = navigator.onLine ? "Online" : "Offline";
-            document.getElementById('net-status').style.color = navigator.onLine ? "#00ff88" : "#ff4081";
+            const stat = document.getElementById('net-status');
+            stat.innerText = navigator.onLine ? "Connected" : "No Internet";
+            stat.style.color = navigator.onLine ? "#00ff88" : "#ff4081";
         }
 
-        function runDiagnostics() {
-            document.getElementById('ping-text').innerText = "...";
-            checkConnInfo(); getIP(); checkPing();
-        }
-        runDiagnostics();
+        // Init Data Awal
+        checkConn();
+        getIP();
+        
+        // Auto start for UX
+        toggleLivePing();
+
     </script>
 </body>
 </html>
