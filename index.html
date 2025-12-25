@@ -1,8 +1,7 @@
-<!DOCTYPE html>
-<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project GXDiag - Command Center</title>
     
     <title>GXDiag - Hardware Diagnostic Suite & Command Center</title>
     <meta name="description" content="Professional web-based hardware diagnostic tool. Test Keyboard (Ghosting), Mouse (Polling Rate), Gamepad (Drift), Screen (Dead Pixel), and monitor Real-time System Events.">
@@ -27,393 +26,49 @@
 
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
-    <link rel="stylesheet" href="css/style.css">
-    <style>
+<link rel="stylesheet" href="css/style.css">
+<style>
+        /* --- LAYOUT UTAMA --- */
         /* --- DASHBOARD LAYOUT V3.2 --- */
-        .top-dashboard {
-            width: 100%; max-width: 1280px; 
-            display: grid; 
+.top-dashboard {
+width: 100%; max-width: 1280px; 
+display: grid; 
+            /* Grid diubah: Kiri & Kanan sedikit lebih lebar agar muat List */
+            grid-template-columns: 300px 1fr 300px; 
             grid-template-columns: 300px 1fr 300px; /* Optimized Widths */
-            gap: 20px; margin-top: 20px; margin-bottom: 30px;
-            align-items: stretch;
-        }
-
-        /* --- LEFT: PRAYER SCHEDULE --- */
-        .dash-left { display: flex; flex-direction: column; }
-        .clock-wrapper { text-align: center; margin-bottom: 15px; }
-        .clock-big { font-size: 3.5rem; font-weight: 800; color: #fff; line-height: 1; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
-        .clock-date { font-size: 0.9rem; color: #aaa; font-weight: 500; margin-top: 5px; }
-
-        .prayer-card {
-            background: #1a1a1a; border-radius: 12px; border: 1px solid #333; 
-            flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;
-        }
-        .loc-header {
-            background: #222; padding: 10px 15px; font-size: 0.8rem; color: #ccc;
-            border-bottom: 1px solid #333; display: flex; align-items: center; gap: 8px;
-        }
-        .prayer-list { padding: 10px 0; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-        .prayer-item {
-            display: flex; justify-content: space-between; padding: 8px 20px;
-            font-size: 0.95rem; color: #888; border-left: 3px solid transparent;
-            transition: 0.2s;
-        }
-        .prayer-item.active {
-            background: rgba(0, 229, 255, 0.1); color: #fff; border-left-color: #00e5ff; font-weight: bold;
-        }
-        .prayer-item.passed { color: #555; text-decoration: line-through; }
-        .prayer-time { font-family: monospace; }
-
-        /* --- CENTER: CALENDAR --- */
-        .dash-center { background: #151515; border: 1px solid #333; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; box-shadow: inset 0 0 50px #080808; }
-        .cal-header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .cal-nav-btn { background: #222; border: 1px solid #444; color: #00e5ff; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; user-select: none; }
-        .cal-nav-btn:hover { background: #00e5ff; color: #000; }
-        .cal-title { font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 2px; font-size: 1.1rem; }
+gap: 20px; margin-top: 20px; margin-bottom: 30px;
+align-items: stretch;
+}
+@@ -48,6 +70,7 @@
+.cal-nav-btn { background: #222; border: 1px solid #444; color: #00e5ff; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; user-select: none; }
+.cal-nav-btn:hover { background: #00e5ff; color: #000; }
+.cal-title { font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 2px; font-size: 1.1rem; }
         
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; margin-bottom: 20px; }
-        .cal-day-name { font-size: 0.75rem; color: #666; text-align: center; font-weight: bold; padding-bottom: 5px;}
-        .cal-date { height: 35px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #ccc; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; position: relative; }
-        .cal-date:hover { background: #333; border-color: #555; }
-        .cal-date.today { background: rgba(0, 229, 255, 0.1); color: #00e5ff; border: 1px solid #00e5ff; font-weight: bold; }
-        .cal-date.selected { background: #00e5ff; color: #000; font-weight: bold; box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); transform: scale(1.1); z-index: 2;}
-        .cal-date.holiday { color: #ff4081; font-weight: bold; } 
-        .cal-date.has-event::after { content:''; position: absolute; bottom: 3px; width: 4px; height: 4px; background: #00ff88; border-radius: 50%; }
-        
-        .event-sections { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: auto; }
-        .event-col { background: #222; padding: 10px; border-radius: 8px; font-size: 0.75rem; border-left: 3px solid #555; display: flex; flex-direction: column; }
-        .ec-indo { border-color: #ff4081; } .ec-masehi { border-color: #00e5ff; } .ec-hijri { border-color: #00ff88; position: relative;}
-        .ec-title { font-size: 0.65rem; color: #aaa; text-transform: uppercase; margin-bottom: 4px; font-weight: bold; }
-        .ec-content { color: #fff; font-weight: 500; line-height: 1.3; }
-        .hijri-select { background: #111; color: #00ff88; border: 1px solid #333; font-size: 0.65rem; border-radius: 4px; float: right;}
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; margin-bottom: 20px; }
+.cal-day-name { font-size: 0.75rem; color: #666; text-align: center; font-weight: bold; padding-bottom: 5px;}
+.cal-date { height: 35px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #ccc; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; position: relative; }
+@@ -57,7 +80,6 @@
+.cal-date.holiday { color: #ff4081; font-weight: bold; } 
+.cal-date.has-event::after { content:''; position: absolute; bottom: 3px; width: 4px; height: 4px; background: #00ff88; border-radius: 50%; }
 
-        /* --- RIGHT: STEAM ROADMAP --- */
-        .dash-right { display: flex; flex-direction: column; gap: 15px; }
-        
-        /* Box 1: Main Countdown */
-        .steam-hero {
-            background: linear-gradient(135deg, #1a2a3a, #0f1519);
-            padding: 20px; border-radius: 12px; border: 1px solid #333; text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        }
-        .steam-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .steam-title { font-size: 1.2rem; color: #66c0f4; font-weight: 800; margin-bottom: 5px; text-shadow: 0 0 10px rgba(102, 192, 244, 0.3); }
-        .steam-timer { font-size: 1.8rem; color: #fff; font-family: monospace; font-weight: bold; }
+        /* Event Sections Compact */
+.event-sections { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: auto; }
+.event-col { background: #222; padding: 10px; border-radius: 8px; font-size: 0.75rem; border-left: 3px solid #555; display: flex; flex-direction: column; }
+.ec-indo { border-color: #ff4081; } .ec-masehi { border-color: #00e5ff; } .ec-hijri { border-color: #00ff88; position: relative;}
+@@ -77,6 +99,8 @@
+.steam-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.steam-title { font-size: 1.2rem; color: #66c0f4; font-weight: 800; margin-bottom: 5px; text-shadow: 0 0 10px rgba(102, 192, 244, 0.3); }
+.steam-timer { font-size: 1.8rem; color: #fff; font-family: monospace; font-weight: bold; }
         .sale-live { color: #00ff88; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
-        
-        /* Box 2: Roadmap List */
-        .steam-roadmap {
-            background: #1a1a1a; border-radius: 12px; border: 1px solid #333; 
-            flex-grow: 1; padding: 15px; display: flex; flex-direction: column;
-        }
-        .roadmap-title { font-size: 0.8rem; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 10px; font-weight: bold; }
-        .roadmap-list { display: flex; flex-direction: column; gap: 8px; }
-        .roadmap-item { display: flex; justify-content: space-between; font-size: 0.85rem; color: #777; padding: 5px 0; }
-        .roadmap-item span:last-child { color: #66c0f4; font-weight: bold; }
 
-        /* MENU GRID */
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; width: 100%; max-width: 1280px; margin-top: 10px; margin-bottom: 40px; }
-        .card { background: #1e1e1e; border: 1px solid #333; border-radius: 15px; padding: 25px 20px; text-align: center; transition: 0.3s; display: flex; flex-direction: column; align-items: center; cursor: pointer; text-decoration: none; color: #eee; }
-        .card:hover { transform: translateY(-5px); border-color: #00e5ff; box-shadow: 0 0 25px rgba(0, 229, 255, 0.15); }
-        .icon { font-size: 2.2rem; margin-bottom: 10px; }
-        .title { font-size: 1rem; font-weight: 800; color: #00e5ff; margin-bottom: 5px; text-transform: uppercase; }
-        .desc { font-size: 0.75rem; color: #777; line-height: 1.4; }
+/* Box 2: Roadmap List */
+.steam-roadmap {
+@@ -96,6 +120,7 @@
+.title { font-size: 1rem; font-weight: 800; color: #00e5ff; margin-bottom: 5px; text-transform: uppercase; }
+.desc { font-size: 0.75rem; color: #777; line-height: 1.4; }
 
         /* Responsive */
-        @media (max-width: 900px) {
-            .top-dashboard { grid-template-columns: 1fr; gap: 15px;}
-            .event-sections { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="top-dashboard">
-        
-        <div class="dash-left">
-            <div class="clock-wrapper">
-                <div class="clock-big" id="clock">00:00</div>
-                <div class="clock-date" id="clock-date">Searching Date...</div>
-            </div>
-            
-            <div class="prayer-card">
-                <div class="loc-header">
-                    <span>📍</span> <span id="loc-name">Mendeteksi Lokasi...</span>
-                </div>
-                <div class="prayer-list" id="prayer-list">
-                    <div class="prayer-item"><span>Subuh</span><span class="prayer-time">--:--</span></div>
-                    <div class="prayer-item"><span>Dzuhur</span><span class="prayer-time">--:--</span></div>
-                    <div class="prayer-item"><span>Ashar</span><span class="prayer-time">--:--</span></div>
-                    <div class="prayer-item"><span>Maghrib</span><span class="prayer-time">--:--</span></div>
-                    <div class="prayer-item"><span>Isya</span><span class="prayer-time">--:--</span></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="dash-center">
-            <div class="cal-header-wrapper">
-                <button class="cal-nav-btn" onclick="changeMonth(-1)">&lt;</button>
-                <div class="cal-title" id="cal-month-year">MONTH YEAR</div>
-                <button class="cal-nav-btn" onclick="changeMonth(1)">&gt;</button>
-            </div>
-            
-            <div class="calendar-grid" id="calendar-grid"></div>
-            
-            <div class="event-sections">
-                <div class="event-col ec-indo">
-                    <div class="ec-title">🇮🇩 Nasional</div>
-                    <div class="ec-content" id="info-indo">-</div>
-                </div>
-                <div class="event-col ec-masehi">
-                    <div class="ec-title">📅 Detail</div>
-                    <div class="ec-content" id="info-masehi">-</div>
-                </div>
-                <div class="event-col ec-hijri">
-                    <div class="ec-title" style="display:flex; justify-content:space-between;">
-                        <span>☪️ Hijriyah</span>
-                        <select id="hijri-offset" class="hijri-select" onchange="updateOffset()"><option value="-1">-1</option><option value="0" selected>0</option><option value="1">+1</option></select>
-                    </div>
-                    <div class="ec-content" id="info-hijri">-</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="dash-right">
-            <div class="steam-hero">
-                <div style="font-size:1.5rem; margin-bottom:5px;">🎮</div>
-                <div class="steam-label" id="steam-status-label">NEXT MAJOR SALE</div>
-                <div class="steam-title" id="sale-name">Checking...</div>
-                <div class="steam-timer" id="sale-countdown">--d --h</div>
-            </div>
-
-            <div class="steam-roadmap">
-                <div class="roadmap-title">Upcoming Schedule</div>
-                <div class="roadmap-list" id="steam-roadmap-list">
-                    <div class="roadmap-item">Loading...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div style="text-align:center; margin-bottom:20px;">
-        <h2 style="margin:0; color:#00e5ff; font-size: 1.8rem; letter-spacing: 3px; font-weight:900;">PROJECT GXDIAG</h2>
-        <div style="font-size: 0.8rem; color: #555; letter-spacing:1px;">PROFESSIONAL DIAGNOSTIC SUITE V3.2</div>
-    </div>
-
-    <div class="menu-grid">
-        <a href="modules/keyboard/index.html" class="card"><div class="icon">⌨️</div><div class="title">Keyboard</div><div class="desc">Ghosting & Chatter</div></a>
-        <a href="modules/typing/index.html" class="card"><div class="icon">⚡</div><div class="title">Typing</div><div class="desc">Speed & Accuracy</div></a>
-        <a href="modules/mouse/index.html" class="card"><div class="icon">🖱️</div><div class="title">Mouse</div><div class="desc">Polling Rate & Buttons</div></a>
-        <a href="modules/gamepad/index.html" class="card"><div class="icon">🎮</div><div class="title">Controller</div><div class="desc">Deadzone & WebHID</div></a>
-        <a href="modules/audio/index.html" class="card"><div class="icon">🔊</div><div class="title">Audio</div><div class="desc">Stereo & Mic Test</div></a>
-        <a href="modules/sensors/index.html" class="card"><div class="icon">📱</div><div class="title">Sensors</div><div class="desc">Gyro & Battery</div></a>
-        <a href="modules/screen-cam/index.html" class="card"><div class="icon">📸</div><div class="title">Screen/Cam</div><div class="desc">Dead Pixel & Webcam</div></a>
-        <a href="modules/specs/index.html" class="card"><div class="icon">🔍</div><div class="title">Specs/GPU</div><div class="desc">HDC Detector</div></a>
-        <a href="modules/livescore/index.html" class="card"><div class="icon">🏆</div><div class="title">Live Score</div><div class="desc">Liga 1, EPL & Esports Standings</div>
-</a>
-    </div>
-
-    <footer style="margin-bottom: 20px; color: #333; font-size: 0.7rem; text-align: center;">
-        &copy; 2025 Project GXDiag. All Systems Operational.
-    </footer>
-
-    <script>
-        // --- 1. DATA EVENT & CONFIG ---
-        const fixedHolidays = { "1-1":"Tahun Baru", "5-1":"Hari Buruh", "6-1":"Lahir Pancasila", "8-17":"HUT RI", "12-25":"Natal" };
-        let skbHolidays = {}; 
-        let currentDate = new Date();
-        let viewDate = new Date();
-        let selectedDate = new Date();
-        let hijriOffset = parseInt(localStorage.getItem('gx_hijri_offset')) || 0;
-        document.getElementById('hijri-offset').value = hijriOffset;
-
-        // --- 2. CLOCK & DATE ---
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
-            document.getElementById('clock-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
-        }
-        setInterval(updateClock, 1000); updateClock();
-
-        // --- 3. PRAYER SCHEDULE LOGIC (OPTIMIZED LIST) ---
-        function renderPrayerList(timings) {
-            if(!timings) return;
-            const prayers = [
-                {n:"Subuh", t:timings.Fajr}, {n:"Dzuhur", t:timings.Dhuhr}, 
-                {n:"Ashar", t:timings.Asr}, {n:"Maghrib", t:timings.Maghrib}, {n:"Isya", t:timings.Isha}
-            ];
-            
-            const now = new Date();
-            const curMin = now.getHours() * 60 + now.getMinutes();
-            let html = "";
-            let nextFound = false;
-
-            prayers.forEach(p => {
-                const [h, m] = p.t.split(':').map(Number);
-                const pMin = h * 60 + m;
-                let statusClass = "";
-
-                if (pMin < curMin) {
-                    statusClass = "passed"; // Lewat
-                } else if (!nextFound) {
-                    statusClass = "active"; // Next Prayer
-                    nextFound = true;
-                }
-
-                html += `<div class="prayer-item ${statusClass}">
-                            <span>${p.n}</span><span class="prayer-time">${p.t}</span>
-                         </div>`;
-            });
-            document.getElementById('prayer-list').innerHTML = html;
-        }
-
-        if(navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const { latitude, longitude } = pos.coords;
-                // City Name
-                try {
-                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                    const geoData = await geoRes.json();
-                    const addr = geoData.address;
-                    const city = addr.city || addr.town || addr.county || "Detected Location";
-                    document.getElementById('loc-name').innerText = city;
-                } catch(e) { document.getElementById('loc-name').innerText = "GPS Coordinate"; }
-                
-                // Prayer API
-                try {
-                    const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=20`);
-                    const json = await res.json();
-                    if(json.code === 200) renderPrayerList(json.data.timings);
-                } catch(e) { document.getElementById('prayer-list').innerHTML = "<div style='text-align:center; padding:10px; color:#f00'>API Error</div>"; }
-            }, () => { document.getElementById('loc-name').innerText = "Loc Denied"; });
-        }
-
-        // --- 4. STEAM SALE ROADMAP ---
-        const steamSales = [
-            { name: "Spring Sale", start: new Date("2025-03-14"), end: new Date("2025-03-21") },
-            { name: "Summer Sale", start: new Date("2025-06-27"), end: new Date("2025-07-11") },
-            { name: "Autumn Sale", start: new Date("2025-11-26"), end: new Date("2025-12-03") },
-            { name: "Winter Sale", start: new Date("2025-12-19"), end: new Date("2026-01-02") }
-        ];
-
-        function renderSteamInfo() {
-            const today = new Date();
-            let activeSale = null;
-            let nextSale = null;
-            let futureSales = [];
-
-            // Categorize Sales
-            steamSales.forEach(s => {
-                if (today >= s.start && today <= s.end) activeSale = s;
-                else if (today < s.start) {
-                    if(!nextSale) nextSale = s;
-                    else futureSales.push(s);
-                }
-            });
-
-            // A. Render Hero (Active/Next)
-            const targetSale = activeSale || nextSale;
-            if(targetSale) {
-                document.getElementById('sale-name').innerText = targetSale.name;
-                const diff = activeSale ? (activeSale.end - today) : (nextSale.start - today);
-                const days = Math.floor(diff / 86400000);
-                
-                if(activeSale) {
-                    document.getElementById('sale-countdown').innerText = `ENDS ${days}d`;
-                    document.getElementById('steam-status-label').innerText = "🔴 LIVE NOW";
-                    document.getElementById('steam-status-label').style.color = "#00ff88";
-                    document.getElementById('sale-name').classList.add('sale-live');
-                } else {
-                    document.getElementById('sale-countdown').innerText = `${days} Days`;
-                    document.getElementById('steam-status-label').innerText = "UPCOMING EVENT";
-                    document.getElementById('sale-name').classList.remove('sale-live');
-                }
-            }
-
-            // B. Render Roadmap (Future Sales)
-            let roadmapHtml = "";
-            futureSales.forEach(s => {
-                const monthName = s.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                roadmapHtml += `<div class="roadmap-item"><span>${s.name}</span><span>${monthName}</span></div>`;
-            });
-            if(futureSales.length === 0) roadmapHtml = "<div style='color:#555; font-size:0.8rem; text-align:center;'>See you in 2026!</div>";
-            document.getElementById('steam-roadmap-list').innerHTML = roadmapHtml;
-        }
-        renderSteamInfo();
-
-        // --- 5. CALENDAR & HOLIDAYS (Standard Logic) ---
-        async function fetchHolidays() {
-            try {
-                const res = await fetch(`https://api-harilibur.vercel.app/api?year=${viewDate.getFullYear()}`);
-                const data = await res.json();
-                skbHolidays = {};
-                data.forEach(item => { if(item.is_national_holiday) {
-                    const d = new Date(item.holiday_date);
-                    skbHolidays[`${d.getMonth()+1}-${d.getDate()}`] = item.holiday_name;
-                }});
-                renderCalendar();
-                updateInfoPanel(selectedDate);
-            } catch(e) {}
-        }
-
-        function updateOffset() {
-            hijriOffset = parseInt(document.getElementById('hijri-offset').value);
-            localStorage.setItem('gx_hijri_offset', hijriOffset);
-            updateInfoPanel(selectedDate); renderCalendar();
-        }
-        function changeMonth(step) { viewDate.setMonth(viewDate.getMonth() + step); fetchHolidays(); renderCalendar(); }
-        function getAdjustedDate(d) { const a = new Date(d); a.setDate(a.getDate() + hijriOffset); return a; }
-        
-        function getIslamicEvents(d) {
-            const hFull = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {day:'numeric', month:'numeric'}).format(getAdjustedDate(d));
-            const [hM, hD] = hFull.split('/').map(Number);
-            const w = d.getDay();
-            let ev=[];
-            if(w===1)ev.push("Puasa Senin"); if(w===4)ev.push("Puasa Kamis");
-            if([13,14,15].includes(hD))ev.push("Ayyamul Bidh");
-            if(hM===9)ev.push("Ramadhan"); if(hM===10&&hD===1)ev.push("Idul Fitri");
-            if(hM===12&&hD===9)ev.push("Arafah"); if(hM===12&&hD===10)ev.push("Idul Adha");
-            return ev.length>0?ev.join(", "):null;
-        }
-
-        function updateInfoPanel(d) {
-            const key = `${d.getMonth()+1}-${d.getDate()}`;
-            const hName = skbHolidays[key] || fixedHolidays[key];
-            document.getElementById('info-indo').innerHTML = hName ? `<span style="color:#ff4081; font-weight:bold;">${hName}</span>` : "<span style='color:#666'>-</span>";
-            
-            document.getElementById('info-masehi').innerHTML = d.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
-            
-            const hDate = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {day:'numeric', month:'long', year:'numeric'}).format(getAdjustedDate(d));
-            const hEv = getIslamicEvents(d);
-            document.getElementById('info-hijri').innerHTML = `<div style="margin-bottom:2px; font-size:0.7rem; color:#aaa;">${hDate}</div>` + (hEv ? `<div class="ec-highlight">${hEv}</div>` : "");
-        }
-
-        function renderCalendar() {
-            const y = viewDate.getFullYear(), m = viewDate.getMonth();
-            document.getElementById('cal-month-year').innerText = viewDate.toLocaleDateString('en-US', {month:'long', year:'numeric'});
-            const first = new Date(y, m, 1).getDay(), total = new Date(y, m+1, 0).getDate();
-            const grid = document.getElementById('calendar-grid'); grid.innerHTML = "";
-            
-            ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>grid.innerHTML+=`<div class="cal-day-name">${d}</div>`);
-            for(let i=0; i<first; i++) grid.innerHTML+=`<div class="cal-date empty"></div>`;
-            
-            for(let i=1; i<=total; i++) {
-                const d = new Date(y, m, i);
-                const key = `${m+1}-${i}`;
-                const el = document.createElement('div'); el.className = "cal-date"; el.innerText = i;
-                
-                if(i===currentDate.getDate() && m===currentDate.getMonth() && y===currentDate.getFullYear()) el.classList.add('today');
-                if(d.getDay()===0 || skbHolidays[key] || fixedHolidays[key]) el.classList.add('holiday');
-                if(i===selectedDate.getDate() && m===selectedDate.getMonth() && y===selectedDate.getFullYear()) el.classList.add('selected');
-                if(getIslamicEvents(d)) el.classList.add('has-event');
-
-                el.onclick = () => { selectedDate = d; renderCalendar(); updateInfoPanel(d); };
-                grid.appendChild(el);
-            }
-        }
-        
-        fetchHolidays(); renderCalendar(); updateInfoPanel(currentDate);
-    </script>
-</body>
-</html>
+@media (max-width: 900px) {
+.top-dashboard { grid-template-columns: 1fr; gap: 15px;}
+.event-sections { grid-template-columns: 1fr; }
