@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Emergency & Morse</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        body { 
+            background: #000; color: #fff; height: 100vh; overflow: hidden; 
+            display: flex; flex-direction: column; transition: background 0.1s;
+        }
+        
+        /* HEADER */
+        .mod-header {
+            padding: 15px 20px; background: #111; border-bottom: 1px solid #333; 
+            display: flex; justify-content: space-between; align-items: center; z-index: 10;
+        }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+
+        .container {
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; 
+            padding: 20px; overflow-y: auto; gap: 20px; z-index: 5;
+        }
+
+        /* SOS BUTTON */
+        .sos-btn {
+            width: 200px; height: 200px; border-radius: 50%;
+            background: radial-gradient(#ff4081, #d81b60);
+            border: 5px solid #fff; box-shadow: 0 0 50px rgba(255, 64, 129, 0.5);
+            color: #fff; font-size: 4rem; font-weight: 900; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            animation: pulse 2s infinite; user-select: none;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .sos-btn.active { animation: none; background: #fff; color: #f00; border-color: #f00; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* TEXT TO MORSE */
+        .morse-box {
+            width: 100%; max-width: 500px; background: #1a1a1a; padding: 20px;
+            border-radius: 15px; border: 1px solid #333; display: flex; flex-direction: column; gap: 10px;
+        }
+        .input-row { display: flex; gap: 10px; }
+        input {
+            flex-grow: 1; background: #222; border: 1px solid #444; color: #fff; 
+            padding: 12px; border-radius: 8px; text-transform: uppercase; font-weight: bold;
+        }
+        .send-btn {
+            background: #00e5ff; color: #000; border: none; padding: 0 25px;
+            border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+
+        .morse-display {
+            font-family: monospace; font-size: 1.5rem; color: #00e5ff; 
+            text-align: center; letter-spacing: 5px; min-height: 30px; word-break: break-all;
+        }
+
+        /* TOOLS GRID */
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; }
+        .tool-btn {
+            background: #222; border: 1px solid #444; color: #fff; padding: 15px;
+            border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .tool-btn:active { background: #fff; color: #000; }
+        
+        /* STATUS */
+        .status-text { color: #888; font-size: 0.8rem; margin-top: auto; margin-bottom: 20px; }
+
+        /* Screen Flash Overlay */
+        #flash-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; opacity: 0; pointer-events: none; z-index: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-size:0.8rem; color:#aaa;">EMERGENCY TOOLKIT</div>
+    </div>
+
+    <div class="container">
+        
+        <div class="sos-btn" id="btn-sos" onclick="toggleSOS()">SOS</div>
+        <div style="color:#ff4081; font-weight:bold; font-size:0.9rem;">TAP TO SIGNAL</div>
+
+        <div class="morse-box">
+            <div style="font-size:0.8rem; color:#888; text-transform:uppercase;">Text transmitter</div>
+            <div class="input-row">
+                <input type="text" id="morse-input" placeholder="TYPE MESSAGE (E.G. HELP)">
+                <button class="send-btn" onclick="startCustomMorse()">SEND</button>
+            </div>
+            <div class="morse-display" id="morse-output">... --- ...</div>
+        </div>
+
+        <div class="tools-grid">
+            <button class="tool-btn" onmousedown="signalOn()" onmouseup="signalOff()" ontouchstart="signalOn()" ontouchend="signalOff()">
+                <span>🔦</span> MANUAL KEY
+            </button>
+            <button class="tool-btn" onclick="toggleStrobe()">
+                <span>🚨</span> STROBE
+            </button>
+        </div>
+
+        <div class="status-text" id="status">Ready.</div>
+    </div>
+
+    <div id="flash-overlay"></div>
+
+    <script>
+        // --- MORSE DICTIONARY ---
+        const MORSE_CODE = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--',
+            '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..',
+            '9': '----.', '0': '-----', ' ': '/'
+        };
+
+        // AUDIO CONTEXT
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = null;
+
+        // FLASHLIGHT VARS
+        let track = null;
+        let isTorchSupported = false;
+
+        // STATE VARS
+        let isTransmitting = false;
+        let strobeInterval = null;
+        let sosLoop = null;
+
+        // --- 1. INIT FLASHLIGHT ---
+        async function initCamera() {
+            try {
+                // Request camera untuk akses Torch
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                track = stream.getVideoTracks()[0];
+                const caps = track.getCapabilities();
+                if (caps.torch) isTorchSupported = true;
+            } catch (err) {
+                console.log("Torch access denied/unsupported. Using Screen Flash.");
+            }
+        }
+        initCamera();
+
+        // --- 2. SIGNAL FUNCTIONS (LIGHT + SOUND + VIBE) ---
+        function signalOn() {
+            // Audio
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            if(!osc) {
+                osc = audioCtx.createOscillator();
+                osc.type = 'square';
+                osc.frequency.value = 600; // Nada Beep
+                osc.connect(audioCtx.destination);
+                osc.start();
+            }
+
+            // Flashlight (Hardware)
+            if(isTorchSupported && track) {
+                track.applyConstraints({ advanced: [{ torch: true }] }).catch(e=>{});
+            }
+            
+            // Screen Flash (Software Fallback/Addon)
+            document.getElementById('flash-overlay').style.opacity = '1';
+
+            // Haptic
+            if(navigator.vibrate) navigator.vibrate(10000); // Vibrate continuous
+        }
+
+        function signalOff() {
+            // Audio
+            if(osc) { osc.stop(); osc = null; }
+
+            // Flashlight
+            if(isTorchSupported && track) {
+                track.applyConstraints({ advanced: [{ torch: false }] }).catch(e=>{});
+            }
+
+            // Screen
+            document.getElementById('flash-overlay').style.opacity = '0';
+
+            // Haptic
+            if(navigator.vibrate) navigator.vibrate(0);
+        }
+
+        // --- 3. MORSE LOGIC ---
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        async function transmitPattern(text) {
+            if(isTransmitting) return;
+            isTransmitting = true;
+            document.getElementById('status').innerText = "Transmitting: " + text;
+            
+            const cleanText = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+            const codes = cleanText.split('').map(c => MORSE_CODE[c] || '');
+            const display = document.getElementById('morse-output');
+            
+            // Tampilkan kode morse di layar
+            display.innerText = codes.join(' ');
+
+            // UNIT WAKTU (Standard Morse: Dot=1 unit, Dash=3 unit)
+            const UNIT = 150; // Kecepatan (ms)
+
+            for (let charCode of codes) {
+                if(!isTransmitting) break; // Emergency Stop
+
+                if (charCode === '/') { // Spasi antar kata
+                    await sleep(UNIT * 7);
+                    continue;
+                }
+
+                for (let symbol of charCode) {
+                    if(!isTransmitting) break;
+
+                    signalOn();
+                    // Dot (.) = 1 unit, Dash (-) = 3 unit
+                    await sleep(symbol === '.' ? UNIT : UNIT * 3);
+                    
+                    signalOff();
+                    await sleep(UNIT); // Jeda antar simbol
+                }
+                await sleep(UNIT * 3); // Jeda antar huruf
+            }
+
+            isTransmitting = false;
+            document.getElementById('status').innerText = "Transmission Complete.";
+            // Reset SOS UI if active
+            const sosBtn = document.getElementById('btn-sos');
+            if(sosBtn.classList.contains('active')) sosBtn.classList.remove('active');
+        }
+
+        // --- 4. CONTROLS ---
+        function toggleSOS() {
+            const btn = document.getElementById('btn-sos');
+            
+            if(isTransmitting) {
+                // STOP
+                isTransmitting = false;
+                signalOff();
+                btn.classList.remove('active');
+                btn.innerText = "SOS";
+                document.getElementById('status').innerText = "Stopped.";
+            } else {
+                // START
+                btn.classList.add('active');
+                btn.innerText = "STOP";
+                // Loop SOS forever
+                (async () => {
+                    while(btn.classList.contains('active')) {
+                        await transmitPattern("SOS");
+                        await sleep(1000); // Jeda antar loop SOS
+                    }
+                })();
+            }
+        }
+
+        function startCustomMorse() {
+            const txt = document.getElementById('morse-input').value;
+            if(txt) transmitPattern(txt);
+        }
+
+        function toggleStrobe() {
+            if(strobeInterval) {
+                clearInterval(strobeInterval);
+                strobeInterval = null;
+                document.body.style.background = "#000";
+                document.getElementById('status').innerText = "Strobe Off";
+            } else {
+                document.getElementById('status').innerText = "Strobe Active!";
+                let color = true;
+                strobeInterval = setInterval(() => {
+                    document.body.style.background = color ? "#fff" : "#ff0000"; // Merah Putih Police
+                    color = !color;
+                }, 100);
+            }
+        }
+    </script>
+</body>
+</html>
