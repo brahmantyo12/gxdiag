@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Barcode & QR</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <style>
+        body { background: #0a0a0a; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+        
+        .tabs { display: flex; border-bottom: 1px solid #333; background: #151515; }
+        .tab { flex: 1; padding: 15px; text-align: center; color: #888; cursor: pointer; font-weight: bold; }
+        .tab.active { color: #00e5ff; background: #222; border-bottom: 2px solid #00e5ff; }
+
+        .tab-content { display: none; flex-grow: 1; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto; }
+        .tab-content.active { display: flex; }
+
+        #reader { width: 100%; max-width: 400px; border-radius: 10px; overflow: hidden; border: 2px solid #333; }
+        .scan-result { margin-top: 20px; width: 100%; max-width: 400px; background: #222; padding: 15px; border-radius: 8px; border: 1px solid #444; display: none; word-break: break-all; }
+        
+        .gen-box { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        input { background: #222; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 8px; width: 100%; max-width: 300px; margin-bottom: 15px; outline: none; }
+        .gen-btn { background: #00e5ff; color: #000; padding: 10px 30px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="mod-header"><a href="../../index.html" class="back-btn">← DASHBOARD</a></div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('scan')">SCANNER (ALL)</div>
+        <div class="tab" onclick="switchTab('gen')">GENERATOR</div>
+    </div>
+
+    <div id="scan" class="tab-content active">
+        <div id="reader"></div>
+        <div style="color:#555; font-size:0.8rem; margin-top:10px;">Supports: QR, UPC, EAN (Snacks), Code128</div>
+        <div class="scan-result" id="scan-res-box">
+            <div style="color:#888; font-size:0.75rem;">RESULT:</div>
+            <div id="scan-data" style="color:#fff; font-family:monospace; font-size:1.1rem; font-weight:bold;">-</div>
+            <div id="scan-format" style="color:#00e5ff; font-size:0.8rem; margin-top:5px;">-</div>
+        </div>
+    </div>
+
+    <div id="gen" class="tab-content">
+        <div class="gen-box" id="qrcode"></div>
+        <input type="text" id="qr-text" placeholder="Type text / URL..." value="GXDiag Pro">
+        <button class="gen-btn" onclick="makeCode()">GENERATE</button>
+    </div>
+
+    <script>
+        function switchTab(id) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if(id === 'scan') startScanner();
+        }
+
+        // SCANNER
+        let scanner = null;
+        function onScanSuccess(decodedText, decodedResult) {
+            document.getElementById('scan-res-box').style.display = 'block';
+            document.getElementById('scan-data').innerText = decodedText;
+            document.getElementById('scan-format').innerText = decodedResult.result.format?.formatName || "Detected";
+            if(navigator.vibrate) navigator.vibrate(50);
+        }
+
+        function startScanner() {
+            if(!scanner) {
+                // Config default mendukung scanning UPC/EAN (Barcode Makanan) secara otomatis
+                scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} });
+                scanner.render(onScanSuccess);
+            }
+        }
+        startScanner();
+
+        // GENERATOR
+        let qrcodeObj = new QRCode(document.getElementById("qrcode"), { width: 180, height: 180 });
+        function makeCode() {
+            const elText = document.getElementById("qr-text");
+            if(elText.value) qrcodeObj.makeCode(elText.value);
+        }
+        makeCode();
+    </script>
+</body>
+</html>
