@@ -1,60 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
    
-<url>
-<loc>https://gxdiag.brahmantyo12.my.id/</loc>
-<lastmod>2025-01-01</lastmod>
-<changefreq>weekly</changefreq>
-<priority>1.0</priority>
-</url>
-
-<url>
-<loc>https://gxdiag.brahmantyo12.my.id/modules/keyboard/index.html</loc>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/</loc>
       <lastmod>2025-01-01</lastmod>
-      <priority>0.8</priority>
+      <priority>1.0</priority>
    </url>
 
    <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/keyboard/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/typing/index.html</loc>
-      <lastmod>2025-01-01</lastmod>
-<priority>0.8</priority>
-</url>
-
-<url>
-<loc>https://gxdiag.brahmantyo12.my.id/modules/mouse/index.html</loc>
-      <lastmod>2025-01-01</lastmod>
-<priority>0.8</priority>
-</url>
-
-<url>
-<loc>https://gxdiag.brahmantyo12.my.id/modules/gamepad/index.html</loc>
-      <lastmod>2025-01-01</lastmod>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/mouse/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/gamepad/index.html</loc>
       <priority>0.8</priority>
    </url>
 
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/audio/index.html</loc>
-      <lastmod>2025-01-01</lastmod>
       <priority>0.8</priority>
    </url>
-
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/screen-cam/index.html</loc>
+      <priority>0.8</priority>
+   </url>
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/sensors/index.html</loc>
-      <lastmod>2025-01-01</lastmod>
-<priority>0.8</priority>
-</url>
-
-<url>
-<loc>https://gxdiag.brahmantyo12.my.id/modules/screen-cam/index.html</loc>
-      <lastmod>2025-01-01</lastmod>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/specs/index.html</loc>
       <priority>0.8</priority>
    </url>
 
    <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/specs/index.html</loc>
-      <lastmod>2025-01-01</lastmod>
-<priority>0.8</priority>
-</url>
-   </urlset>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/network/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/benchmark/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/nfc/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/qr/index.html</loc>
+      <priority>0.8</priority>
+   </url>
 
 </urlset>
