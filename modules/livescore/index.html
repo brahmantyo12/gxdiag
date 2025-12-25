@@ -12,7 +12,7 @@
             display: flex; 
             flex-direction: column; 
             height: 100vh; 
-            background: #0d0d0d; /* Background lebih gelap agar seamless */
+            background: #0d0d0d; 
             margin: 0;
         }
         
@@ -50,8 +50,8 @@
             position: relative; 
             background: #151515;
             width: 100%; 
-            height: calc(100vh - 110px); /* Kurangi tinggi header + tabs */
-            overflow: hidden; /* ScoreAxis punya scrollbar sendiri di dalam iframe */
+            height: calc(100vh - 110px); 
+            overflow: hidden; 
         }
         
         iframe { 
@@ -83,7 +83,7 @@
         <button class="tab-btn" onclick="loadSource('epl')">🇬🇧 EPL</button>
         <button class="tab-btn" onclick="loadSource('seriea')">🇮🇹 Serie A</button>
         <button class="tab-btn" onclick="loadSource('esports')">🎮 MPL ID (Live)</button>
-        <button class="tab-btn" onclick="loadSource('livescore')">⚽ Live Goals</button>
+        <button class="tab-btn" onclick="loadSource('livescore')">⚽ Live Matches</button>
     </div>
 
     <div class="iframe-container">
@@ -92,23 +92,27 @@
     </div>
 
     <script>
-        // --- CONFIG SCOREAXIS (NATIVE DARK MODE) ---
-        // Kita set background color (bg) ke #151515 dan text color (txt) ke #FFFFFF
-        // inst=1 menonaktifkan instruksi widget
-        const saParams = "bodyBackground=%23151515&textColor=%23ffffff&font=1&inst=1&autoHeight=1";
+        // --- CONFIG SCOREAXIS V2 (FIXED IDs) ---
+        // Parameter Dark Mode Wajib
+        const saParams = "autoHeight=1&bodyBackground=%23151515&textColor=%23ffffff&links=0";
         const myDomain = "gxdiag.brahmantyo12.my.id"; 
 
         const sources = {
-            // ScoreAxis Widgets (Standings)
-            'liga1': `https://www.scoreaxis.com/widget/standings-widget/IDN-Liga-1?${saParams}`,
-            'epl': `https://www.scoreaxis.com/widget/standings-widget/ENG-Premier-League?${saParams}`,
-            'seriea': `https://www.scoreaxis.com/widget/standings-widget/ITA-Serie-A?${saParams}`,
+            // FIX: Menggunakan endpoint 'league-standings' (V2) dan ID Numerik
+            // ID 564 = Indonesia Liga 1
+            'liga1': `https://www.scoreaxis.com/widget/league-standings/564?${saParams}`,
+            
+            // ID 8 = Premier League
+            'epl': `https://www.scoreaxis.com/widget/league-standings/8?${saParams}`,
+            
+            // ID 13 = Serie A
+            'seriea': `https://www.scoreaxis.com/widget/league-standings/13?${saParams}`,
             
             // Twitch Embed (Esports)
             'esports': `https://player.twitch.tv/?channel=mpl_id&parent=${myDomain}&muted=false`,
             
-            // ScoreBat (Live Goals)
-            'livescore': 'https://www.scorebat.com/embed/'
+            // ScoreBat (Live Matches - All Leagues)
+            'livescore': 'https://www.scorebat.com/embed/livescore/'
         };
 
         const frame = document.getElementById('score-frame');
@@ -127,14 +131,13 @@
                 console.warn("Twitch Embed mungkin tidak muncul jika domain tidak sesuai.");
             }
 
-            // Load URL
+            // Load URL with delay
             setTimeout(() => {
                 frame.src = sources[key];
                 
-                // ScoreBat butuh background putih sebenarnya, tapi kita biarkan default
-                // Jika ingin ScoreBat terlihat lebih baik, bisa tambahkan logic khusus di sini
+                // ScoreBat butuh background putih agar terbaca
                 if(key === 'livescore') {
-                    frame.style.background = "#fff"; // ScoreBat biasanya background putih
+                    frame.style.background = "#fff"; 
                 } else {
                     frame.style.background = "transparent";
                 }
@@ -143,15 +146,12 @@
             }, 200);
         }
 
-        // Init Load Default
+        // Init Load Default (Cek Localhost untuk Twitch)
         window.onload = () => { 
-            // Cek apakah sedang di localhost/domain asli untuk Twitch
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                // Jika di localhost, update parent twitch agar jalan
                 sources['esports'] = `https://player.twitch.tv/?channel=mpl_id&parent=localhost&parent=127.0.0.1&muted=false`;
             }
-            
-            // Load Liga 1
+            // Load Liga 1 Pertama kali
             frame.src = sources['liga1']; 
         }
     </script>
