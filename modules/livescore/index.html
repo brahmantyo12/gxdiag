@@ -6,9 +6,9 @@
     <title>GXDiag - Live Score & Standings</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        body { overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        body { overflow: hidden; display: flex; flex-direction: column; height: 100vh; background: #000; }
         
-        /* HEADER KHUSUS MODUL */
+        /* HEADER */
         .mod-header {
             padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
             background: #111; border-bottom: 1px solid #333; z-index: 10;
@@ -16,13 +16,13 @@
         .back-btn { text-decoration: none; color: #fff; display: flex; align-items: center; gap: 8px; font-weight: bold; transition: 0.3s; }
         .back-btn:hover { color: #00e5ff; }
 
-        /* TABS NAVIGATION */
+        /* TABS */
         .score-tabs {
             display: flex; gap: 10px; overflow-x: auto; padding: 10px 20px;
             background: #151515; border-bottom: 1px solid #333;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
-        .score-tabs::-webkit-scrollbar { display: none; } /* Chrome */
+        .score-tabs::-webkit-scrollbar { display: none; }
         
         .tab-btn {
             background: #222; border: 1px solid #333; color: #aaa;
@@ -36,36 +36,26 @@
             box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
         }
 
-        /* IFRAME CONTAINER */
+        /* CONTAINER */
         .iframe-container {
-            flex-grow: 1; position: relative; background: #000;
-            width: 100%; height: 100%;
+            flex-grow: 1; position: relative; background: #151515;
+            width: 100%; height: 100%; overflow: hidden;
         }
-        iframe {
-            width: 100%; height: 100%; border: none;
-            /* Filter ini trik agar widget putih jadi agak gelap (opsional, tergantung selera) */
-            /* filter: invert(0.9) hue-rotate(180deg); */ 
-        }
+        iframe { width: 100%; height: 100%; border: none; }
         
-        /* LOADING SPINNER */
         .loader {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #00e5ff; font-family: monospace; font-size: 1.2rem;
+            color: #00e5ff; font-family: monospace; font-size: 1rem;
             animation: blink 1s infinite; pointer-events: none; z-index: 0;
         }
         @keyframes blink { 50% { opacity: 0.5; } }
-
-        @media (max-width: 600px) {
-            .score-tabs { padding: 10px; }
-            .tab-btn { font-size: 0.75rem; padding: 6px 12px; }
-        }
     </style>
 </head>
 <body>
 
     <div class="mod-header">
         <a href="../../index.html" class="back-btn">
-            <span>←</span> BACK TO DASHBOARD
+            <span>←</span> DASHBOARD
         </a>
         <div style="font-size:0.9rem; color:#888;">LIVE CENTER</div>
     </div>
@@ -73,50 +63,63 @@
     <div class="score-tabs">
         <button class="tab-btn active" onclick="loadSource('liga1')">🇮🇩 Liga 1</button>
         <button class="tab-btn" onclick="loadSource('epl')">🇬🇧 EPL</button>
-        <button class="tab-btn" onclick="loadSource('ucl')">🇪🇺 UCL</button>
-        <button class="tab-btn" onclick="loadSource('esports')">🎮 Esports</button>
-        <button class="tab-btn" onclick="loadSource('badminton')">🏸 Badminton</button>
+        <button class="tab-btn" onclick="loadSource('seriea')">🇮🇹 Serie A</button>
+        <button class="tab-btn" onclick="loadSource('esports')">🎮 MPL ID (Live)</button>
+        <button class="tab-btn" onclick="loadSource('livescore')">⚽ Live Goals</button>
     </div>
 
     <div class="iframe-container">
-        <div class="loader">Connect to Satellite...</div>
+        <div class="loader">Connecting to Server...</div>
         <iframe id="score-frame" src="" allowfullscreen></iframe>
     </div>
 
     <script>
-        // --- DATA SUMBER WIDGET (SofaScore / ScoreBat) ---
-        // Tips: URL ini mengarah ke widget/halaman embed yang mobile-friendly
+        /* URL BUILDER (DARK MODE HACK)
+           Kita menggunakan parameter URL FCTables untuk memaksa widget menjadi gelap:
+           bg=151515 (Background hitam)
+           fc=FFFFFF (Font putih)
+        */
+        const commonParams = "type=table&lang_id=2&country=103&template=10&team=&timezone=Asia/Jakarta&time=24&width=100%&height=700&font=Verdana&fs=12&lh=22&bg=151515&fc=FFFFFF&logo=1&tlink=1&scfs=22&scfc=333333&scb=1&sclg=1&team_strips=1&promoted=1&non_active=1";
+        
+        // PENTING: Ganti 'gxdiag.brahmantyo12.my.id' dengan domain kamu jika Twitch tidak muncul
+        const myDomain = "gxdiag.brahmantyo12.my.id"; 
+
         const sources = {
-            'liga1': 'https://www.sofascore.com/tournament/football/indonesia/liga-1/33923/standings/tables/embed',
-            'epl': 'https://www.sofascore.com/tournament/football/england/premier-league/17/standings/tables/embed',
-            'ucl': 'https://www.sofascore.com/tournament/football/europe/uefa-champions-league/7/standings/tables/embed',
-            'esports': 'https://www.sofascore.com/esports', // Halaman Esport
-            'badminton': 'https://www.sofascore.com/badminton'
+            // FCTables (Klasemen Dark Mode)
+            'liga1': `https://www.fctables.com/indonesia/super-league/iframe/?${commonParams}`,
+            'epl': `https://www.fctables.com/england/premier-league/iframe/?${commonParams}`,
+            'seriea': `https://www.fctables.com/italy/serie-a/iframe/?${commonParams}`,
+            
+            // Twitch Embed (Untuk Esports Live) - Mengarah ke MPL Indonesia
+            'esports': `https://player.twitch.tv/?channel=mpl_id&parent=${myDomain}&muted=false`,
+            
+            // ScoreBat (Untuk Live Goal Videos)
+            'livescore': 'https://www.scorebat.com/embed/'
         };
 
         const frame = document.getElementById('score-frame');
         const buttons = document.querySelectorAll('.tab-btn');
 
         function loadSource(key) {
-            // 1. Update Buttons
             buttons.forEach(btn => btn.classList.remove('active'));
             event.currentTarget.classList.add('active');
 
-            // 2. Load URL
-            // Kita tambahkan sedikit delay visual agar terasa "memuat"
             frame.style.opacity = 0;
+            
+            // Khusus Twitch perlu penanganan beda dikit biar ga numpuk history
+            if(key === 'esports' && window.location.hostname !== myDomain && window.location.hostname !== 'localhost') {
+                // Fallback jika domain belum update (di local development)
+                alert("Twitch Embed hanya jalan di domain: " + myDomain);
+            }
+
             setTimeout(() => {
                 frame.src = sources[key];
-                frame.onload = () => {
-                    frame.style.opacity = 1;
-                };
+                frame.onload = () => { frame.style.opacity = 1; };
             }, 300);
         }
 
-        // Init Load (Liga 1 Default)
-        window.onload = () => {
-            frame.src = sources['liga1'];
-        }
+        // Init Load
+        window.onload = () => { frame.src = sources['liga1']; }
     </script>
 </body>
 </html>
