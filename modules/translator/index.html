@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Translator</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        body { 
+            background: #0b0b0b; display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
+            font-family: sans-serif;
+        }
+        
+        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+
+        .container {
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; 
+            padding: 20px; gap: 20px; max-width: 800px; margin: 0 auto; width: 100%;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex; background: #151515; border-radius: 12px; padding: 5px; 
+            border: 1px solid #333; width: 100%; max-width: 500px;
+        }
+        .tab-btn {
+            flex: 1; background: transparent; border: none; color: #888; 
+            padding: 10px; cursor: pointer; font-weight: bold; border-radius: 8px; transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .tab-btn.active { background: #222; color: #00e5ff; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+
+        /* TRANSLATION BOXES */
+        .trans-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; flex-grow: 1;
+        }
+        .box-wrapper {
+            display: flex; flex-direction: column; gap: 10px; height: 100%;
+        }
+        
+        .box-label { font-size: 0.8rem; color: #00e5ff; font-weight: bold; text-transform: uppercase; }
+        
+        textarea {
+            flex-grow: 1; background: #1a1a1a; border: 1px solid #333; color: #fff;
+            padding: 15px; border-radius: 10px; resize: none; font-family: monospace;
+            font-size: 1rem; line-height: 1.5; outline: none;
+        }
+        textarea:focus { border-color: #00e5ff; background: #222; }
+
+        /* ACTION BAR */
+        .actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+        }
+        .act-btn {
+            background: #222; border: 1px solid #444; color: #fff; padding: 8px 15px;
+            border-radius: 5px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;
+        }
+        .act-btn:hover { border-color: #00e5ff; color: #00e5ff; }
+        .play-btn { background: #00e5ff; color: #000; border: none; font-weight: bold; }
+
+        @media (max-width: 700px) {
+            .trans-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-size:0.8rem; color:#888;">CIPHER TOOLS</div>
+    </div>
+
+    <div class="container">
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="setMode('morse')">MORSE</button>
+            <button class="tab-btn" onclick="setMode('binary')">BINARY</button>
+            <button class="tab-btn" onclick="setMode('hex')">HEX</button>
+            <button class="tab-btn" onclick="setMode('base64')">BASE64</button>
+        </div>
+
+        <div class="trans-grid">
+            <div class="box-wrapper">
+                <div class="box-label">Input (Text)</div>
+                <textarea id="input-text" placeholder="Type here to encode..." oninput="encode()"></textarea>
+                <div class="actions">
+                    <button class="act-btn" onclick="clearAll()">Clear</button>
+                    <button class="act-btn" onclick="pasteToInput()">Paste</button>
+                </div>
+            </div>
+
+            <div class="box-wrapper">
+                <div class="box-label" id="out-label">Output (Morse)</div>
+                <textarea id="output-text" placeholder="Result..." oninput="decode()"></textarea>
+                <div class="actions">
+                    <button class="act-btn play-btn" id="btn-play" onclick="playMorse()" style="display:flex;">▶ Play</button>
+                    <button class="act-btn" onclick="copyOutput()">Copy</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentMode = 'morse';
+        const inp = document.getElementById('input-text');
+        const out = document.getElementById('output-text');
+        const lbl = document.getElementById('out-label');
+        const btnPlay = document.getElementById('btn-play');
+
+        // --- DICTIONARIES ---
+        const MORSE = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--',
+            '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..',
+            '9': '----.', '0': '-----', ' ': '/', '.':'.-.-.-', ',':'--..--'
+        };
+        // Reverse Morse for decoding
+        const REVERSE_MORSE = Object.fromEntries(Object.entries(MORSE).map(([k, v]) => [v, k]));
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            lbl.innerText = `OUTPUT (${mode.toUpperCase()})`;
+            
+            // Show/Hide Play Button (Only for Morse)
+            btnPlay.style.display = mode === 'morse' ? 'flex' : 'none';
+
+            // Re-trigger translation
+            if(inp.value) encode();
+        }
+
+        // --- ENCODER LOGIC (Text -> Code) ---
+        function encode() {
+            const val = inp.value;
+            let res = "";
+
+            try {
+                if (currentMode === 'morse') {
+                    res = val.toUpperCase().split('').map(c => MORSE[c] || c).join(' ');
+                } 
+                else if (currentMode === 'binary') {
+                    res = val.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+                }
+                else if (currentMode === 'hex') {
+                    res = val.split('').map(c => c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')).join(' ');
+                }
+                else if (currentMode === 'base64') {
+                    res = btoa(val);
+                }
+                out.value = res;
+            } catch (e) {
+                out.value = "Error Encoding";
+            }
+        }
+
+        // --- DECODER LOGIC (Code -> Text) ---
+        function decode() {
+            const val = out.value;
+            let res = "";
+
+            try {
+                if (currentMode === 'morse') {
+                    res = val.split(' ').map(c => REVERSE_MORSE[c] || '').join('');
+                }
+                else if (currentMode === 'binary') {
+                    res = val.split(' ').map(b => String.fromCharCode(parseInt(b, 2))).join('');
+                }
+                else if (currentMode === 'hex') {
+                    res = val.split(' ').map(h => String.fromCharCode(parseInt(h, 16))).join('');
+                }
+                else if (currentMode === 'base64') {
+                    res = atob(val);
+                }
+                inp.value = res;
+            } catch (e) {
+                // Silent error or simple placeholder
+            }
+        }
+
+        // --- UTILS ---
+        function clearAll() { inp.value = ""; out.value = ""; }
+        function copyOutput() { navigator.clipboard.writeText(out.value); alert("Copied!"); }
+        async function pasteToInput() { inp.value = await navigator.clipboard.readText(); encode(); }
+
+        // --- AUDIO MORSE PLAYER ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        async function playMorse() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const code = out.value;
+            const UNIT = 100; // ms per dot
+
+            for (const char of code) {
+                if (char === ' ') {
+                    await new Promise(r => setTimeout(r, UNIT * 3));
+                    continue;
+                }
+
+                // Play Tone
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 700;
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                
+                // Duration: Dot = 1 unit, Dash = 3 units
+                const duration = (char === '.') ? UNIT : (UNIT * 3);
+                
+                // Fade out to prevent popping
+                gain.gain.setValueAtTime(1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration/1000));
+                
+                await new Promise(r => setTimeout(r, duration));
+                osc.stop();
+                
+                // Pause between parts of same letter
+                await new Promise(r => setTimeout(r, UNIT));
+            }
+        }
+    </script>
+</body>
+</html>
