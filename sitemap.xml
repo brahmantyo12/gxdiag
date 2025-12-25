@@ -46,6 +46,10 @@
       <priority>0.8</priority>
    </url>
    <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/subnet/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/nfc/index.html</loc>
       <priority>0.8</priority>
    </url>
@@ -64,6 +68,15 @@
    </url>
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/gameid/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/emergency/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/translator/index.html</loc>
       <priority>0.8</priority>
    </url>
 
