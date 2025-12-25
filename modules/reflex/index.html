@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Reflex Test</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        body { 
+            background: #0b0b0b; height: 100vh; overflow: hidden; 
+            display: flex; flex-direction: column; user-select: none;
+            font-family: sans-serif;
+        }
+        
+        /* HEADER (Overlay) */
+        .mod-header {
+            position: absolute; top: 0; left: 0; width: 100%; box-sizing: border-box;
+            padding: 15px 20px; background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(255,255,255,0.1); 
+            display: flex; align-items: center; justify-content: space-between; z-index: 10;
+        }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; display: flex; align-items: center; gap: 8px;}
+        .back-btn:hover { color: #00e5ff; }
+
+        /* GAME AREA */
+        .game-area {
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.1s; text-align: center; padding: 20px;
+            width: 100%; height: 100%;
+        }
+
+        /* STATE COLORS */
+        .state-idle { background: #1a1a1a; }
+        .state-wait { background: #ce2029; } /* Merah */
+        .state-go { background: #00ff88; }   /* Hijau */
+        .state-result { background: #00e5ff; } /* Biru */
+
+        /* TEXT STYLES */
+        .big-icon { font-size: 5rem; margin-bottom: 20px; display: block; }
+        .main-text { font-size: 2rem; font-weight: 800; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3); letter-spacing: 1px;}
+        .sub-text { font-size: 1rem; color: rgba(255,255,255,0.8); margin-top: 10px; max-width: 400px; line-height: 1.5; }
+        
+        .score-val { font-size: 5rem; font-weight: 900; color: #fff; font-family: monospace; }
+        .score-unit { font-size: 1.5rem; font-weight: normal; }
+
+        /* RANK BADGE */
+        .rank-badge {
+            margin-top: 15px; padding: 8px 20px; border-radius: 30px; 
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.4);
+            font-weight: bold; font-size: 1rem; color: #fff; text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn"><span>←</span> DASHBOARD</a>
+        <div style="font-size:0.8rem; color:rgba(255,255,255,0.7);">REACTION TIME</div>
+    </div>
+
+    <div id="area" class="game-area state-idle" onmousedown="handleClick()" ontouchstart="handleClick()">
+        
+        <div id="content-idle">
+            <span class="big-icon">⚡</span>
+            <div class="main-text">REFLEX TEST</div>
+            <div class="sub-text">Tap anywhere to start.<br>When red turns <b>GREEN</b>, click fast!</div>
+        </div>
+
+        <div id="content-wait" style="display:none;">
+            <span class="big-icon">✋</span>
+            <div class="main-text">WAIT FOR GREEN...</div>
+            <div class="sub-text">Steady...</div>
+        </div>
+
+        <div id="content-go" style="display:none;">
+            <span class="big-icon">👊</span>
+            <div class="main-text">CLICK NOW!</div>
+        </div>
+
+        <div id="content-result" style="display:none;">
+            <span class="big-icon">⏱️</span>
+            <div class="score-val" id="score">0<span class="score-unit">ms</span></div>
+            <div class="rank-badge" id="rank">Rank</div>
+            <div class="sub-text">Click to try again</div>
+        </div>
+
+        <div id="content-early" style="display:none;">
+            <span class="big-icon">⚠️</span>
+            <div class="main-text">TOO SOON!</div>
+            <div class="sub-text">You clicked before green.<br>Click to try again.</div>
+        </div>
+
+    </div>
+
+    <script>
+        const area = document.getElementById('area');
+        let state = 'idle'; // idle, wait, go, result, early
+        let timer = null;
+        let startTime = 0;
+
+        function setView(id) {
+            ['content-idle', 'content-wait', 'content-go', 'content-result', 'content-early'].forEach(el => {
+                document.getElementById(el).style.display = 'none';
+            });
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function handleClick() {
+            // Prevent double firing on touch devices
+            if (event.type === 'touchstart') event.preventDefault(); 
+
+            if (state === 'idle' || state === 'result' || state === 'early') {
+                startGame();
+            } else if (state === 'wait') {
+                triggerEarly();
+            } else if (state === 'go') {
+                finishGame();
+            }
+        }
+
+        function startGame() {
+            state = 'wait';
+            area.className = 'game-area state-wait';
+            setView('content-wait');
+
+            // Random delay antara 2 sampai 5 detik
+            const delay = Math.floor(Math.random() * 3000) + 2000;
+            
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                if(state === 'wait') {
+                    state = 'go';
+                    area.className = 'game-area state-go';
+                    setView('content-go');
+                    startTime = performance.now();
+                }
+            }, delay);
+        }
+
+        function triggerEarly() {
+            state = 'early';
+            clearTimeout(timer);
+            // Tetap merah
+            setView('content-early');
+        }
+
+        function finishGame() {
+            const endTime = performance.now();
+            const ms = Math.round(endTime - startTime);
+            state = 'result';
+            area.className = 'game-area state-result';
+            
+            document.getElementById('score').innerHTML = ms + '<span class="score-unit">ms</span>';
+            
+            // Logika Rank Lucu-lucuan
+            let rank = "🐢 Turtle";
+            if(ms < 150) rank = "👽 Godlike!";
+            else if(ms < 200) rank = "⚡ Pro Player";
+            else if(ms < 250) rank = "🎮 Average Gamer";
+            else if(ms < 350) rank = "☕ Need Coffee";
+            else rank = "🐌 Internet Explorer";
+
+            document.getElementById('rank').innerText = rank;
+            setView('content-result');
+        }
+    </script>
+</body>
+</html>
