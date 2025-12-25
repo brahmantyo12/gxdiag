@@ -6,28 +6,36 @@
     <title>GXDiag - Live Score & Standings</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        body { overflow: hidden; display: flex; flex-direction: column; height: 100vh; background: #000; }
+        /* Layout Fix: Pastikan halaman penuh dan tidak bisa di-scroll body-nya */
+        body { 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            background: #0d0d0d; /* Background lebih gelap agar seamless */
+            margin: 0;
+        }
         
         /* HEADER */
         .mod-header {
             padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
-            background: #111; border-bottom: 1px solid #333; z-index: 10;
+            background: #111; border-bottom: 1px solid #333; z-index: 10; height: 60px; box-sizing: border-box;
         }
-        .back-btn { text-decoration: none; color: #fff; display: flex; align-items: center; gap: 8px; font-weight: bold; transition: 0.3s; }
+        .back-btn { text-decoration: none; color: #fff; display: flex; align-items: center; gap: 8px; font-weight: bold; transition: 0.3s; font-size: 0.9rem; }
         .back-btn:hover { color: #00e5ff; }
 
         /* TABS */
         .score-tabs {
             display: flex; gap: 10px; overflow-x: auto; padding: 10px 20px;
             background: #151515; border-bottom: 1px solid #333;
-            scrollbar-width: none;
+            scrollbar-width: none; height: 50px; box-sizing: border-box; align-items: center;
         }
         .score-tabs::-webkit-scrollbar { display: none; }
         
         .tab-btn {
             background: #222; border: 1px solid #333; color: #aaa;
-            padding: 8px 16px; border-radius: 20px; cursor: pointer;
-            font-size: 0.85rem; font-weight: bold; white-space: nowrap; transition: 0.3s;
+            padding: 6px 14px; border-radius: 20px; cursor: pointer;
+            font-size: 0.8rem; font-weight: bold; white-space: nowrap; transition: 0.3s;
             display: flex; align-items: center; gap: 6px;
         }
         .tab-btn:hover { background: #333; color: #fff; }
@@ -36,12 +44,22 @@
             box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
         }
 
-        /* CONTAINER */
+        /* CONTAINER IFRAME */
         .iframe-container {
-            flex-grow: 1; position: relative; background: #151515;
-            width: 100%; height: 100%; overflow: hidden;
+            flex-grow: 1; 
+            position: relative; 
+            background: #151515;
+            width: 100%; 
+            height: calc(100vh - 110px); /* Kurangi tinggi header + tabs */
+            overflow: hidden; /* ScoreAxis punya scrollbar sendiri di dalam iframe */
         }
-        iframe { width: 100%; height: 100%; border: none; }
+        
+        iframe { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            display: block;
+        }
         
         .loader {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -74,26 +92,22 @@
     </div>
 
     <script>
-        /* URL BUILDER (DARK MODE HACK)
-           Kita menggunakan parameter URL FCTables untuk memaksa widget menjadi gelap:
-           bg=151515 (Background hitam)
-           fc=FFFFFF (Font putih)
-        */
-        const commonParams = "type=table&lang_id=2&country=103&template=10&team=&timezone=Asia/Jakarta&time=24&width=100%&height=700&font=Verdana&fs=12&lh=22&bg=151515&fc=FFFFFF&logo=1&tlink=1&scfs=22&scfc=333333&scb=1&sclg=1&team_strips=1&promoted=1&non_active=1";
-        
-        // PENTING: Ganti 'gxdiag.brahmantyo12.my.id' dengan domain kamu jika Twitch tidak muncul
+        // --- CONFIG SCOREAXIS (NATIVE DARK MODE) ---
+        // Kita set background color (bg) ke #151515 dan text color (txt) ke #FFFFFF
+        // inst=1 menonaktifkan instruksi widget
+        const saParams = "bodyBackground=%23151515&textColor=%23ffffff&font=1&inst=1&autoHeight=1";
         const myDomain = "gxdiag.brahmantyo12.my.id"; 
 
         const sources = {
-            // FCTables (Klasemen Dark Mode)
-            'liga1': `https://www.fctables.com/indonesia/super-league/iframe/?${commonParams}`,
-            'epl': `https://www.fctables.com/england/premier-league/iframe/?${commonParams}`,
-            'seriea': `https://www.fctables.com/italy/serie-a/iframe/?${commonParams}`,
+            // ScoreAxis Widgets (Standings)
+            'liga1': `https://www.scoreaxis.com/widget/standings-widget/IDN-Liga-1?${saParams}`,
+            'epl': `https://www.scoreaxis.com/widget/standings-widget/ENG-Premier-League?${saParams}`,
+            'seriea': `https://www.scoreaxis.com/widget/standings-widget/ITA-Serie-A?${saParams}`,
             
-            // Twitch Embed (Untuk Esports Live) - Mengarah ke MPL Indonesia
+            // Twitch Embed (Esports)
             'esports': `https://player.twitch.tv/?channel=mpl_id&parent=${myDomain}&muted=false`,
             
-            // ScoreBat (Untuk Live Goal Videos)
+            // ScoreBat (Live Goals)
             'livescore': 'https://www.scorebat.com/embed/'
         };
 
@@ -101,25 +115,45 @@
         const buttons = document.querySelectorAll('.tab-btn');
 
         function loadSource(key) {
+            // Update Active Tab
             buttons.forEach(btn => btn.classList.remove('active'));
             event.currentTarget.classList.add('active');
 
+            // Reset Opacity (Loading Effect)
             frame.style.opacity = 0;
             
-            // Khusus Twitch perlu penanganan beda dikit biar ga numpuk history
-            if(key === 'esports' && window.location.hostname !== myDomain && window.location.hostname !== 'localhost') {
-                // Fallback jika domain belum update (di local development)
-                alert("Twitch Embed hanya jalan di domain: " + myDomain);
+            // Twitch Warning untuk Localhost
+            if(key === 'esports' && window.location.hostname !== myDomain && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                console.warn("Twitch Embed mungkin tidak muncul jika domain tidak sesuai.");
             }
 
+            // Load URL
             setTimeout(() => {
                 frame.src = sources[key];
+                
+                // ScoreBat butuh background putih sebenarnya, tapi kita biarkan default
+                // Jika ingin ScoreBat terlihat lebih baik, bisa tambahkan logic khusus di sini
+                if(key === 'livescore') {
+                    frame.style.background = "#fff"; // ScoreBat biasanya background putih
+                } else {
+                    frame.style.background = "transparent";
+                }
+
                 frame.onload = () => { frame.style.opacity = 1; };
-            }, 300);
+            }, 200);
         }
 
-        // Init Load
-        window.onload = () => { frame.src = sources['liga1']; }
+        // Init Load Default
+        window.onload = () => { 
+            // Cek apakah sedang di localhost/domain asli untuk Twitch
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                // Jika di localhost, update parent twitch agar jalan
+                sources['esports'] = `https://player.twitch.tv/?channel=mpl_id&parent=localhost&parent=127.0.0.1&muted=false`;
+            }
+            
+            // Load Liga 1
+            frame.src = sources['liga1']; 
+        }
     </script>
 </body>
 </html>
