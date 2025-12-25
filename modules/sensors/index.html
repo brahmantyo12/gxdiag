@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Mobile Sensors Hub</title>
+    <title>GXDiag - Mobile Hub</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
+        * { box-sizing: border-box; }
         body { 
             display: flex; flex-direction: column; height: 100vh; 
-            background: #0a0a0a; overflow: hidden; touch-action: manipulation;
+            background: #0a0a0a; overflow: hidden; touch-action: manipulation; margin: 0;
         }
 
         /* HEADER */
@@ -16,114 +17,109 @@
             padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
             background: #111; border-bottom: 1px solid #333; flex-shrink: 0;
         }
-        .back-btn { text-decoration: none; color: #fff; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .back-btn:hover { color: #00e5ff; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; display: flex; align-items: center; gap: 8px; }
 
-        /* TABS NAVIGATION */
+        /* TABS */
         .sensor-tabs {
-            display: flex; justify-content: center; gap: 10px; padding: 15px;
-            background: #151515; border-bottom: 1px solid #333; flex-shrink: 0;
+            display: flex; justify-content: center; gap: 10px; padding: 10px;
+            background: #151515; border-bottom: 1px solid #333; flex-shrink: 0; overflow-x: auto;
         }
         .tab-btn {
             background: #222; border: 1px solid #333; color: #888;
-            padding: 8px 16px; border-radius: 20px; cursor: pointer;
-            font-size: 0.85rem; font-weight: bold; transition: 0.3s;
+            padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap;
+            font-size: 0.8rem; font-weight: bold; transition: 0.3s;
             display: flex; align-items: center; gap: 6px;
         }
         .tab-btn.active {
             background: rgba(0, 229, 255, 0.15); color: #00e5ff; border-color: #00e5ff;
-            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
         }
-        .tab-btn:hover { background: #333; color: #fff; }
 
-        /* MAIN CONTENT AREA */
+        /* CONTENT AREA */
         .content-area {
-            flex-grow: 1; position: relative; overflow-y: auto;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            flex-grow: 1; position: relative; overflow-y: auto; overflow-x: hidden;
+            width: 100%;
         }
         .tab-content {
-            display: none; width: 100%; height: 100%;
+            display: none; width: 100%; min-height: 100%;
             flex-direction: column; align-items: center; justify-content: center;
-            animation: fadeIn 0.3s;
+            padding: 20px; animation: fadeIn 0.3s;
         }
         .tab-content.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- TAB 1: MOTION (GYRO) --- */
+        /* --- MOTION (RESPONSIVE SIZE) --- */
         .bubble-level {
-            width: 250px; height: 250px; border-radius: 50%;
-            background: radial-gradient(circle, #222 0%, #111 100%);
-            border: 5px solid #333; position: relative;
-            box-shadow: inset 0 0 20px #000;
+            /* Gunakan vmin agar responsif terhadap lebar/tinggi layar */
+            width: 65vmin; height: 65vmin; max-width: 280px; max-height: 280px;
+            border-radius: 50%; background: radial-gradient(circle, #222 0%, #111 100%);
+            border: 4px solid #333; position: relative;
+            box-shadow: inset 0 0 20px #000; margin-bottom: 20px;
         }
         .bubble-center {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 50px; height: 50px; border: 2px solid #555; border-radius: 50%; z-index: 1;
+            width: 20%; height: 20%; border: 2px solid #555; border-radius: 50%; z-index: 1;
         }
         .bubble {
-            width: 40px; height: 40px; background: #00e5ff; border-radius: 50%;
+            width: 15%; height: 15%; background: #00e5ff; border-radius: 50%;
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             box-shadow: 0 0 15px #00e5ff; transition: transform 0.1s linear;
         }
+        
         .axis-info {
-            margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; text-align: center;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 350px;
         }
-        .axis-box { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; min-width: 80px; }
-        .axis-label { color: #888; font-size: 0.7rem; margin-bottom: 5px; }
-        .axis-val { color: #fff; font-family: monospace; font-size: 1.1rem; }
+        .axis-box { background: #1a1a1a; padding: 10px 5px; border-radius: 8px; border: 1px solid #333; text-align: center; }
+        .axis-label { color: #888; font-size: 0.65rem; margin-bottom: 5px; }
+        .axis-val { color: #fff; font-family: monospace; font-size: 1rem; }
 
-        /* --- TAB 2: BATTERY --- */
+        /* --- BATTERY (RESPONSIVE SIZE) --- */
         .batt-circle {
-            width: 200px; height: 200px; border-radius: 50%;
-            background: conic-gradient(#00e5ff 0% 0%, #222 0% 100%);
-            position: relative; margin-bottom: 20px;
+            width: 55vmin; height: 55vmin; max-width: 220px; max-height: 220px;
+            border-radius: 50%; background: conic-gradient(#00e5ff 0% 0%, #222 0% 100%);
+            position: relative; margin-bottom: 25px;
             box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
             transition: background 1s;
         }
         .batt-inner {
-            position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
+            position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
             background: #0a0a0a; border-radius: 50%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .batt-percent { font-size: 3rem; font-weight: bold; color: #fff; }
-        .batt-status { font-size: 0.9rem; color: #888; margin-top: 5px; text-transform: uppercase; }
+        .batt-percent { font-size: 2.5rem; font-weight: bold; color: #fff; }
+        .batt-status { font-size: 0.8rem; color: #888; margin-top: 5px; text-transform: uppercase; }
         
-        .batt-details { display: flex; gap: 15px; }
-        .bd-item { background: #1a1a1a; padding: 10px 20px; border-radius: 8px; border: 1px solid #333; text-align: center; }
-        .charging-anim { animation: pulseCharge 2s infinite; color: #00ff88 !important; }
-        @keyframes pulseCharge { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-
-        /* --- TAB 3: VIBRATION (HAPTIC) --- */
+        .batt-details { display: flex; gap: 10px; width: 100%; max-width: 300px; justify-content: center; }
+        .bd-item { flex: 1; background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; text-align: center; }
+        
+        /* --- VIBRATION --- */
         .vib-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 350px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 350px;
         }
         .vib-btn {
             background: #1a1a1a; border: 1px solid #333; color: #fff;
-            padding: 20px; border-radius: 12px; font-size: 1rem; font-weight: bold;
-            cursor: pointer; transition: 0.1s; display: flex; flex-direction: column; align-items: center; gap: 10px;
+            padding: 15px; border-radius: 12px; font-size: 0.9rem; font-weight: bold;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;
+            -webkit-tap-highlight-color: transparent;
         }
         .vib-btn span { font-size: 1.5rem; }
-        .vib-btn:active, .vib-btn.active {
-            background: #00e5ff; color: #000; border-color: #00e5ff; transform: scale(0.95);
-        }
-        .vib-btn.stop { background: #ff4081; color: #fff; border-color: #ff4081; grid-column: span 2; }
-        .vib-btn.stop:active { background: #d81b60; }
-
-        /* UTILS */
-        .perm-btn { margin-top: 20px; padding: 10px 20px; background: #00e5ff; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; display: none; }
+        .vib-btn:active, .vib-btn.active { background: #00e5ff; color: #000; transform: scale(0.98); }
+        .vib-btn.stop { background: #ff4081; grid-column: span 2; }
+        
+        /* HELPER */
+        .perm-btn { margin-top: 15px; padding: 8px 20px; background: #00e5ff; border: none; border-radius: 5px; cursor: pointer; display: none; }
     </style>
 </head>
 <body>
 
     <div class="mod-header">
         <a href="../../index.html" class="back-btn"><span>←</span> DASHBOARD</a>
-        <div style="font-size:0.9rem; color:#888;">SENSORS HUB</div>
+        <div style="font-size:0.9rem; color:#888;">MOBILE HUB</div>
     </div>
 
     <div class="sensor-tabs">
         <button class="tab-btn active" onclick="switchTab('motion')">🧭 Motion</button>
         <button class="tab-btn" onclick="switchTab('battery')">🔋 Battery</button>
-        <button class="tab-btn" onclick="switchTab('vibro')">📳 Vibration</button>
+        <button class="tab-btn" onclick="switchTab('vibro')">📳 Vibro</button>
     </div>
 
     <div class="content-area">
@@ -139,7 +135,6 @@
                 <div class="axis-box"><div class="axis-label">Z-AXIS</div><div class="axis-val" id="val-z">0</div></div>
             </div>
             <button class="perm-btn" id="ios-perm-btn" onclick="requestIOSPerm()">Enable Sensors (iOS)</button>
-            <div style="margin-top:15px; font-size:0.8rem; color:#555;">Place device on flat surface</div>
         </div>
 
         <div id="battery" class="tab-content">
@@ -150,16 +145,15 @@
                 </div>
             </div>
             <div class="batt-details">
-                <div class="bd-item"><div style="font-size:0.7rem; color:#888;">TIME TO FULL</div><div id="time-full" style="font-weight:bold;">-</div></div>
-                <div class="bd-item"><div style="font-size:0.7rem; color:#888;">TIME LEFT</div><div id="time-left" style="font-weight:bold;">-</div></div>
+                <div class="bd-item"><div style="font-size:0.65rem; color:#888;">TO FULL</div><div id="time-full" style="font-weight:bold;">-</div></div>
+                <div class="bd-item"><div style="font-size:0.65rem; color:#888;">TIME LEFT</div><div id="time-left" style="font-weight:bold;">-</div></div>
             </div>
-            <div id="batt-unsupported" style="margin-top:20px; color:#ff4081; display:none;">Battery API not supported on this browser</div>
         </div>
 
         <div id="vibro" class="tab-content">
             <div style="margin-bottom:20px; text-align:center;">
-                <div style="font-size:3rem; margin-bottom:5px;" id="vib-icon">📳</div>
-                <div style="color:#888; font-size:0.9rem;" id="vib-status">Select Pattern</div>
+                <div style="font-size:2.5rem;" id="vib-icon">📳</div>
+                <div style="color:#888; font-size:0.8rem;" id="vib-status">Select Pattern</div>
             </div>
             <div class="vib-grid">
                 <button class="vib-btn" onclick="doVibrate(200)"><span>⚡</span>Short</button>
@@ -169,13 +163,12 @@
                 <button class="vib-btn" id="inf-btn" onclick="toggleLoop()"><span>🔄</span>Loop</button>
                 <button class="vib-btn stop" onclick="stopVibrate()"><span>🛑</span>STOP</button>
             </div>
-            <div style="margin-top:20px; color:#555; font-size:0.8rem;">Note: iOS does not support Web Vibration</div>
         </div>
 
     </div>
 
     <script>
-        // --- TABS LOGIC ---
+        // TABS
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
@@ -183,57 +176,43 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- 1. MOTION LOGIC ---
+        // MOTION
         const bubble = document.getElementById('bubble');
         const valX = document.getElementById('val-x');
         const valY = document.getElementById('val-y');
         const valZ = document.getElementById('val-z');
 
         function handleMotion(e) {
-            // Gyroscope/Accelerometer data
             let x = e.accelerationIncludingGravity.x || 0;
             let y = e.accelerationIncludingGravity.y || 0;
             let z = e.accelerationIncludingGravity.z || 0;
 
-            // Update Text
-            valX.innerText = x.toFixed(1);
-            valY.innerText = y.toFixed(1);
-            valZ.innerText = z.toFixed(1);
+            valX.innerText = x.toFixed(1); valY.innerText = y.toFixed(1); valZ.innerText = z.toFixed(1);
 
-            // Update Bubble Visual (Limit movement to 40px)
-            // Note: X/Y axis mapping depends on device orientation, simplistic approach:
-            let moveX = x * 5; 
-            let moveY = y * -5; 
+            // Bubble math: Scale movement relative to bubble container size
+            // Using clamp to ensure bubble stays inside
+            let moveX = x * 3; 
+            let moveY = y * -3; 
+            moveX = Math.max(-40, Math.min(40, moveX)); // Percentage limit
+            moveY = Math.max(-40, Math.min(40, moveY));
             
-            // Clamp values
-            moveX = Math.max(-80, Math.min(80, moveX));
-            moveY = Math.max(-80, Math.min(80, moveY));
-
-            bubble.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+            bubble.style.transform = `translate(calc(-50% + ${moveX}%), calc(-50% + ${moveY}%))`;
         }
 
-        // Init Motion
-        if (window.DeviceMotionEvent) {
-            window.addEventListener('devicemotion', handleMotion);
-        } else {
-            valX.innerText = "N/A";
-        }
-
-        // iOS 13+ Permission Handler
+        if (window.DeviceMotionEvent) window.addEventListener('devicemotion', handleMotion);
+        
         function requestIOSPerm() {
             if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                DeviceMotionEvent.requestPermission()
-                    .then(response => {
-                        if (response == 'granted') window.addEventListener('devicemotion', handleMotion);
-                    })
-                    .catch(console.error);
+                DeviceMotionEvent.requestPermission().then(r => {
+                    if (r == 'granted') window.addEventListener('devicemotion', handleMotion);
+                });
             }
         }
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
             document.getElementById('ios-perm-btn').style.display = 'block';
         }
 
-        // --- 2. BATTERY LOGIC ---
+        // BATTERY
         const battLevel = document.getElementById('batt-level');
         const battState = document.getElementById('batt-state');
         const battRing = document.getElementById('batt-ring');
@@ -241,39 +220,23 @@
         function updateBattery(b) {
             const pct = Math.round(b.level * 100);
             battLevel.innerText = pct + "%";
-            
-            // Color Logic
-            let color = pct > 20 ? "#00e5ff" : "#ff4081";
-            if(b.charging) {
-                color = "#00ff88";
-                battState.innerText = "⚡ CHARGING";
-                battState.classList.add('charging-anim');
-            } else {
-                battState.innerText = "DISCHARGING";
-                battState.classList.remove('charging-anim');
-            }
-
-            // Update Ring Gradient
+            let color = b.charging ? "#00ff88" : (pct > 20 ? "#00e5ff" : "#ff4081");
+            battState.innerText = b.charging ? "⚡ CHARGING" : "DISCHARGING";
+            battState.style.color = color;
             battRing.style.background = `conic-gradient(${color} 0% ${pct}%, #222 ${pct}% 100%)`;
-            battRing.style.boxShadow = `0 0 30px ${color}40`; // 40 is alpha
-
-            // Time Info
-            document.getElementById('time-full').innerText = b.chargingTime === Infinity ? "-" : (b.chargingTime/60).toFixed(0) + "m";
-            document.getElementById('time-left').innerText = b.dischargingTime === Infinity ? "-" : (b.dischargingTime/60).toFixed(0) + "m";
+            battRing.style.boxShadow = `0 0 20px ${color}40`;
+            
+            document.getElementById('time-full').innerText = b.chargingTime === Infinity ? "-" : (b.chargingTime/60).toFixed(0)+"m";
+            document.getElementById('time-left').innerText = b.dischargingTime === Infinity ? "-" : (b.dischargingTime/60).toFixed(0)+"m";
         }
 
-        if ('getBattery' in navigator) {
-            navigator.getBattery().then(batt => {
-                updateBattery(batt);
-                batt.addEventListener('levelchange', () => updateBattery(batt));
-                batt.addEventListener('chargingchange', () => updateBattery(batt));
-            });
-        } else {
-            document.getElementById('batt-unsupported').style.display = 'block';
-            battState.innerText = "Not Supported";
-        }
+        if ('getBattery' in navigator) navigator.getBattery().then(b => {
+            updateBattery(b);
+            b.addEventListener('levelchange', () => updateBattery(b));
+            b.addEventListener('chargingchange', () => updateBattery(b));
+        });
 
-        // --- 3. VIBRATION LOGIC ---
+        // VIBRATION
         let loopId = null;
         const vibIcon = document.getElementById('vib-icon');
         const vibStat = document.getElementById('vib-status');
@@ -281,40 +244,26 @@
         function doVibrate(pat) {
             stopVibrate();
             if(!navigator.vibrate) return;
-            
             navigator.vibrate(pat);
             vibIcon.style.transform = "scale(1.2)";
             vibStat.innerText = "Vibrating...";
             vibStat.style.color = "#00e5ff";
-            
-            // Reset UI after roughly duration
             let dur = typeof pat === 'number' ? pat : pat.reduce((a,b)=>a+b,0);
-            setTimeout(() => {
-                if(!loopId) {
-                    vibIcon.style.transform = "scale(1)";
-                    vibStat.innerText = "Motor Idle";
-                    vibStat.style.color = "#888";
-                }
-            }, dur);
+            setTimeout(() => { if(!loopId) stopVibrate(); }, dur);
         }
-
         function toggleLoop() {
             if(loopId) { stopVibrate(); return; }
             document.getElementById('inf-btn').classList.add('active');
-            vibStat.innerText = "Loop Active";
-            vibStat.style.color = "#ff4081";
-            
+            vibStat.innerText = "Loop Active"; vibStat.style.color = "#ff4081";
             navigator.vibrate(200);
             loopId = setInterval(() => navigator.vibrate(200), 250);
         }
-
         function stopVibrate() {
             if(navigator.vibrate) navigator.vibrate(0);
             if(loopId) { clearInterval(loopId); loopId = null; }
             document.getElementById('inf-btn').classList.remove('active');
             vibIcon.style.transform = "scale(1)";
-            vibStat.innerText = "Motor Stopped";
-            vibStat.style.color = "#888";
+            vibStat.innerText = "Idle"; vibStat.style.color = "#888";
         }
     </script>
 </body>
