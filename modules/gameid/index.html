@@ -3,274 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Game ID Checker</title>
+    <title>GXDiag - Pro Game Check</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
         body { background: #0b0b0b; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; font-size: 0.9rem; }
         
-        .mod-header {
-            padding: 15px 20px; background: #111; border-bottom: 1px solid #333; 
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
-
         .container {
-            flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            padding: 20px; gap: 20px; width: 100%; max-width: 500px; margin: 0 auto;
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; 
+            padding: 20px; gap: 15px; width: 100%; max-width: 550px; margin: 0 auto; overflow-y: auto;
         }
 
-        /* GAME SELECTOR */
-        .game-select {
-            display: flex; gap: 10px; overflow-x: auto; width: 100%; padding-bottom: 5px;
-            scrollbar-width: none; justify-content: flex-start;
+        /* GRID SELECTOR GAME */
+        .game-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; margin-bottom: 10px;
         }
-        .game-select::-webkit-scrollbar { display: none; }
-        
         .game-opt {
-            background: #1a1a1a; border: 1px solid #333; padding: 10px 15px; border-radius: 10px;
-            cursor: pointer; display: flex; align-items: center; gap: 8px; min-width: 120px; transition: 0.2s;
+            background: #1a1a1a; border: 1px solid #333; border-radius: 10px;
+            padding: 10px 5px; cursor: pointer; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; gap: 5px; transition: 0.2s;
+            height: 70px;
         }
-        .game-opt img { width: 24px; height: 24px; border-radius: 5px; } /* Placeholder for icons */
-        .game-opt span { font-size: 0.85rem; font-weight: bold; color: #888; white-space: nowrap; }
-        
-        .game-opt.active { background: #00e5ff; border-color: #00e5ff; }
-        .game-opt.active span { color: #000; }
+        .game-opt:hover { background: #222; }
+        .game-opt.active { background: rgba(0, 229, 255, 0.15); border-color: #00e5ff; }
+        .game-icon { font-size: 1.5rem; }
+        .game-name { font-size: 0.65rem; color: #aaa; font-weight: bold; text-align: center; line-height: 1.2; }
+        .game-opt.active .game-name { color: #00e5ff; }
 
         /* INPUT AREA */
-        .input-box {
+        .input-card {
             width: 100%; background: #151515; padding: 20px; border-radius: 15px; 
             border: 1px solid #333; display: flex; flex-direction: column; gap: 15px;
         }
         
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        .form-label { font-size: 0.75rem; color: #00e5ff; text-transform: uppercase; font-weight: bold; }
-        
-        input, select {
-            background: #222; border: 1px solid #444; color: #fff; padding: 12px; 
-            border-radius: 8px; outline: none; font-size: 1rem; width: 100%;
-        }
-        input:focus { border-color: #00e5ff; }
-
-        /* DOUBLE INPUT (For MLBB Zone) */
-        .dual-input { display: flex; gap: 10px; }
+        .input-group { display: flex; gap: 10px; }
+        .w-full { flex: 1; }
         .w-70 { flex: 7; }
         .w-30 { flex: 3; }
 
+        .lbl { font-size: 0.7rem; color: #00e5ff; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; display: block; }
+        
+        input, select {
+            background: #222; border: 1px solid #444; color: #fff; padding: 12px; 
+            border-radius: 8px; outline: none; font-size: 0.95rem; width: 100%; box-sizing: border-box;
+        }
+        input:focus { border-color: #00e5ff; }
+
         .check-btn {
-            background: #00e5ff; color: #000; font-weight: bold; padding: 15px; 
-            border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+            background: #00e5ff; color: #000; font-weight: bold; padding: 12px; 
+            border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
         }
         .check-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
 
-        /* RESULT CARD */
+        /* RESULT AREA */
         .result-card {
-            width: 100%; background: #1a1a1a; border-radius: 15px; padding: 20px;
-            border: 1px solid #333; display: none; position: relative; overflow: hidden;
+            width: 100%; background: #1a1a1a; border-radius: 12px; padding: 15px;
+            border: 1px solid #333; display: none; position: relative; animation: slideUp 0.3s;
         }
-        .result-card.success { border-color: #00ff88; display: block; animation: slideUp 0.3s; }
-        .result-card.error { border-color: #ff4081; display: block; animation: shake 0.3s; }
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .res-valid { border-color: #00ff88; }
+        .res-invalid { border-color: #ff4081; }
+        .res-warning { border-color: #ffb300; }
 
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes shake { 0%{transform: translateX(0)} 25%{transform: translateX(5px)} 50%{transform: translateX(-5px)} 100%{transform: translateX(0)} }
+        .res-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .res-badge { font-size: 0.7rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+        .badge-ok { background: rgba(0,255,136,0.2); color: #00ff88; }
+        .badge-err { background: rgba(255,64,129,0.2); color: #ff4081; }
+        .badge-warn { background: rgba(255,179,0,0.2); color: #ffb300; }
 
-        .res-label { font-size: 0.7rem; color: #888; }
-        .res-nick { font-size: 1.5rem; color: #fff; font-weight: 800; margin: 5px 0 15px 0; }
-        .res-id { font-family: monospace; color: #00e5ff; background: rgba(0,229,255,0.1); padding: 5px 10px; border-radius: 5px; display: inline-block; }
-
+        .nick-display { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 5px; word-break: break-all; }
+        .id-display { font-family: monospace; color: #888; font-size: 0.9rem; }
+        
         .copy-btn {
-            position: absolute; top: 15px; right: 15px;
-            background: #222; border: 1px solid #444; color: #fff; 
-            padding: 5px 12px; border-radius: 5px; font-size: 0.7rem; cursor: pointer;
+            background: #222; border: 1px solid #444; color: #fff; padding: 5px 10px; 
+            border-radius: 5px; font-size: 0.7rem; cursor: pointer;
         }
+
+        /* Note footer */
+        .note { font-size: 0.7rem; color: #555; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="mod-header">
         <a href="../../index.html" class="back-btn">← DASHBOARD</a>
-        <div style="font-size:0.9rem; color:#888;">ID CHECKER</div>
+        <div style="font-size:0.8rem; color:#888;">TOURNAMENT CHECKER</div>
     </div>
 
     <div class="container">
         
-        <div class="game-select">
-            <div class="game-opt active" onclick="setGame('mlbb')"><span>Mobile Legends</span></div>
-            <div class="game-opt" onclick="setGame('ff')"><span>Free Fire</span></div>
-            <div class="game-opt" onclick="setGame('pubgm')"><span>PUBG Mobile</span></div>
-            <div class="game-opt" onclick="setGame('genshin')"><span>Genshin Impact</span></div>
-            </div>
-
-        <div class="input-box">
-            <div class="form-group" id="input-group">
-                </div>
-            <button class="check-btn" id="btn-check" onclick="checkID()">
-                🔍 CHECK VALIDITY
-            </button>
+        <div class="game-grid">
+            <div class="game-opt active" onclick="sel('mlbb')"><span class="game-icon">📱</span><span class="game-name">MLBB</span></div>
+            <div class="game-opt" onclick="sel('ff')"><span class="game-icon">🔫</span><span class="game-name">Free Fire</span></div>
+            <div class="game-opt" onclick="sel('pubgm')"><span class="game-icon">🪖</span><span class="game-name">PUBG M</span></div>
+            <div class="game-opt" onclick="sel('codm')"><span class="game-icon">💀</span><span class="game-name">CODM</span></div>
+            
+            <div class="game-opt" onclick="sel('aov')"><span class="game-icon">🛡️</span><span class="game-name">AOV</span></div>
+            <div class="game-opt" onclick="sel('hok')"><span class="game-icon">👑</span><span class="game-name">HOK</span></div>
+            <div class="game-opt" onclick="sel('genshin')"><span class="game-icon">✨</span><span class="game-name">Genshin</span></div>
+            <div class="game-opt" onclick="sel('hsr')"><span class="game-icon">🚂</span><span class="game-name">Honkai SR</span></div>
+            
+            <div class="game-opt" onclick="sel('valo')"><span class="game-icon">🎯</span><span class="game-name">Valorant</span></div>
+            <div class="game-opt" onclick="sel('pb')"><span class="game-icon">💣</span><span class="game-name">PointBlank</span></div>
+            <div class="game-opt" onclick="sel('lolwr')"><span class="game-icon">🐲</span><span class="game-name">Wild Rift</span></div>
+            <div class="game-opt" onclick="sel('sausage')"><span class="game-icon">🌭</span><span class="game-name">Sausage</span></div>
         </div>
 
-        <div id="result-area" class="result-card">
-            </div>
+        <div class="input-card">
+            <div id="form-area">
+                </div>
+            <button class="check-btn" id="btn-check" onclick="verifyID()">🔍 CHECK ID</button>
+        </div>
 
+        <div id="result-box" class="result-card"></div>
+        
+        <div class="note">Supports Garena, Riot, Hoyoverse & Moonton IDs</div>
     </div>
 
     <script>
-        // CONFIG
+        // --- KONFIGURASI GAME LENGKAP ---
         const games = {
-            'mlbb': { 
-                name: 'Mobile Legends', 
-                fields: ['id', 'zone'], 
-                apiSlug: 'mobile-legends', // Slug untuk API isan
-                placeholder: ['User ID (e.g 12345678)', 'Zone (e.g 1234)'] 
-            },
-            'ff': { 
-                name: 'Free Fire', 
-                fields: ['id'], 
-                apiSlug: 'free-fire',
-                placeholder: ['Player ID (e.g 123456789)'] 
-            },
-            'pubgm': { 
-                name: 'PUBG Mobile', 
-                fields: ['id'], 
-                apiSlug: 'pubg-mobile',
-                placeholder: ['Character ID (e.g 512345678)'] 
-            },
-            'genshin': { 
-                name: 'Genshin Impact', 
-                fields: ['id', 'server'], 
-                apiSlug: 'genshin-impact',
-                placeholder: ['UID', 'Select Server'] 
-            }
+            'mlbb': { name: 'Mobile Legends', type: 'dual', inputs: ['User ID', 'Zone ID'], api: 'ml', hint: 'Ex: 12345678 (1234)' },
+            'ff': { name: 'Free Fire', type: 'single', inputs: ['Player ID'], api: 'ff', hint: 'Ex: 536281923' },
+            'pubgm': { name: 'PUBG Mobile', type: 'single', inputs: ['Character ID'], api: 'pubgm', hint: 'Ex: 5123456789' },
+            'codm': { name: 'Call of Duty Mobile', type: 'single', inputs: ['Open ID / UID'], api: 'cod', hint: 'Garena/Global OpenID' },
+            'aov': { name: 'Arena of Valor', type: 'single', inputs: ['Open ID'], api: 'aov', hint: 'Garena OpenID (Numeric)' },
+            'hok': { name: 'Honor of Kings', type: 'single', inputs: ['UID'], api: 'hok', hint: 'Global UID' },
+            'genshin': { name: 'Genshin Impact', type: 'server', inputs: ['UID'], api: 'gi', hint: 'Ex: 800012345' },
+            'hsr': { name: 'Honkai: Star Rail', type: 'server', inputs: ['UID'], api: 'hsr', hint: 'Ex: 800012345' },
+            'valo': { name: 'Valorant', type: 'single', inputs: ['Riot ID (Nick#Tag)'], api: 'valo', hint: 'Ex: Forsaken#PRX' },
+            'pb': { name: 'Point Blank', type: 'single', inputs: ['Zepetto ID'], api: 'pb', hint: 'Username ID' },
+            'lolwr': { name: 'Wild Rift', type: 'single', inputs: ['Riot ID (Nick#Tag)'], api: 'lol', hint: 'Ex: Faker#T1' },
+            'sausage': { name: 'Sausage Man', type: 'single', inputs: ['Player ID'], api: 'sm', hint: 'Ex: 5sn9jf' }
         };
 
-        let activeGame = 'mlbb';
+        let curGame = 'mlbb';
 
-        function setGame(key) {
-            activeGame = key;
-            
-            // Update UI Tabs
+        function sel(key) {
+            curGame = key;
             document.querySelectorAll('.game-opt').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
-
-            // Reset Result
-            document.getElementById('result-area').className = 'result-card';
-            document.getElementById('result-area').style.display = 'none';
-
-            // Render Inputs
-            const group = document.getElementById('input-group');
-            const conf = games[key];
-            let html = '';
-
-            if(key === 'mlbb') {
-                html = `
-                    <div class="form-label">ACCOUNT DETAILS</div>
-                    <div class="dual-input">
-                        <input type="number" id="inp-id" class="w-70" placeholder="${conf.placeholder[0]}">
-                        <input type="number" id="inp-zone" class="w-30" placeholder="${conf.placeholder[1]}">
-                    </div>`;
-            } else if (key === 'genshin') {
-                html = `
-                    <div class="form-label">UID & SERVER</div>
-                    <div class="dual-input">
-                        <input type="number" id="inp-id" class="w-70" placeholder="${conf.placeholder[0]}">
-                        <select id="inp-zone" class="w-30">
-                            <option value="os_asia">Asia</option>
-                            <option value="os_usa">NA</option>
-                            <option value="os_euro">EU</option>
-                        </select>
-                    </div>`;
-            } else {
-                html = `
-                    <div class="form-label">PLAYER ID</div>
-                    <input type="number" id="inp-id" placeholder="${conf.placeholder[0]}">`;
-            }
-            group.innerHTML = html;
+            renderForm();
+            document.getElementById('result-box').style.display = 'none';
         }
 
-        async function checkID() {
-            const btn = document.getElementById('btn-check');
-            const resArea = document.getElementById('result-area');
-            const idVal = document.getElementById('inp-id').value;
-            const zoneVal = document.getElementById('inp-zone') ? document.getElementById('inp-zone').value : '';
+        function renderForm() {
+            const g = games[curGame];
+            const area = document.getElementById('form-area');
+            let html = `<label class="lbl">${g.name.toUpperCase()} INFO</label>`;
 
-            // Basic Validation
-            if(!idVal) { alert("Please enter ID"); return; }
-            if(activeGame === 'mlbb' && !zoneVal) { alert("Please enter Zone ID"); return; }
+            if(g.type === 'dual') {
+                html += `<div class="input-group">
+                    <input id="inp-1" class="w-70" placeholder="${g.inputs[0]}" type="number">
+                    <input id="inp-2" class="w-30" placeholder="${g.inputs[1]}" type="number">
+                </div>`;
+            } else if(g.type === 'server') {
+                html += `<div class="input-group">
+                    <input id="inp-1" class="w-70" placeholder="${g.inputs[0]}" type="number">
+                    <select id="inp-2" class="w-30">
+                        <option value="os_asia">Asia</option>
+                        <option value="os_usa">NA</option>
+                        <option value="os_euro">EU</option>
+                    </select>
+                </div>`;
+            } else {
+                html += `<input id="inp-1" placeholder="${g.inputs[0]}">`;
+            }
+            html += `<div style="font-size:0.7rem; color:#555; margin-top:5px;">${g.hint}</div>`;
+            area.innerHTML = html;
+        }
+
+        async function verifyID() {
+            const btn = document.getElementById('btn-check');
+            const resBox = document.getElementById('result-box');
+            const val1 = document.getElementById('inp-1').value.trim();
+            const val2 = document.getElementById('inp-2') ? document.getElementById('inp-2').value.trim() : '';
+            
+            if(!val1) { alert("Please enter ID"); return; }
 
             // UI Loading
-            btn.innerHTML = "⏳ CONNECTING TO SERVER...";
+            btn.innerHTML = "⏳ CHECKING SERVER...";
             btn.disabled = true;
-            resArea.style.display = 'none';
+            resBox.style.display = 'none';
 
+            // --- STRATEGI CHECKER ---
+            // 1. Coba API Publik (isan.eu.org)
+            // 2. Jika API gagal/down, lakukan Format Validation (Regex) sebagai fallback
+            
             try {
-                // --- API CALL ---
-                // Menggunakan Public API (isan.eu.org). 
-                // Note: Jika API ini down, kita harus ganti provider atau pakai mock data.
+                // Construct URL
+                // API isan supports: ml, ff, cod, aov, gi, hsr, valo, etc.
+                const g = games[curGame];
+                let apiUrl = `https://api.isan.eu.org/nickname/${g.api}?id=${val1}`;
+                if(val2) apiUrl += `&server=${val2}`;
                 
-                let url = '';
-                if(activeGame === 'mlbb') {
-                    url = `https://api.isan.eu.org/nickname/mobile-legends?id=${idVal}&zone=${zoneVal}`;
-                } else if(activeGame === 'ff') {
-                    url = `https://api.isan.eu.org/nickname/free-fire?id=${idVal}`;
-                } else if(activeGame === 'pubgm') {
-                    url = `https://api.isan.eu.org/nickname/pubg-mobile?id=${idVal}`;
-                } else {
-                    // Fallback untuk game yg API-nya belum support di endpoint ini
-                    throw new Error("Game server not responding (API limit)");
+                // Khusus Valorant/WildRift (Nick#Tag) harus diencode
+                if(curGame === 'valo' || curGame === 'lolwr') {
+                    apiUrl = `https://api.isan.eu.org/nickname/${g.api}?id=${encodeURIComponent(val1)}`;
                 }
 
-                const req = await fetch(url);
+                const req = await fetch(apiUrl);
                 const data = await req.json();
 
                 if(data.success === true && data.name) {
-                    // SUKSES
-                    showResult(true, data.name, idVal, zoneVal);
+                    showRes(true, data.name, val1 + (val2 ? ` (${val2})` : ''));
                 } else {
-                    // GAGAL
-                    throw new Error("ID Not Found");
+                    // API Balikin Error / ID Salah
+                    throw new Error("API_FAIL");
                 }
 
             } catch (e) {
-                // ERROR HANDLER
-                console.error(e);
-                showResult(false, "Invalid ID / Server Error");
+                // FALLBACK: FORMAT VALIDATION
+                // Jika API down atau limit, kita cek format ID-nya saja
+                // Ini berguna agar panitia minimal tau formatnya bener (bukan typo kurang angka)
+                
+                const isValidFormat = checkFormat(curGame, val1);
+                if(isValidFormat) {
+                    showRes('warn', "Format ID Valid", val1 + (val2 ? ` (${val2})` : ''), "Server Busy / Unreachable, but ID format looks correct.");
+                } else {
+                    showRes(false, "Invalid ID Format", "ID Not Found");
+                }
             } finally {
-                btn.innerHTML = "🔍 CHECK VALIDITY";
+                btn.innerHTML = "🔍 CHECK ID";
                 btn.disabled = false;
             }
         }
 
-        function showResult(isSuccess, nameOrError, id, zone) {
-            const el = document.getElementById('result-area');
-            const fullID = zone ? `${id} (${zone})` : id;
-
-            if(isSuccess) {
-                el.className = 'result-card success';
-                el.innerHTML = `
-                    <button class="copy-btn" onclick="copyText('${nameOrError}')">COPY NICK</button>
-                    <div class="res-label">VALID ACCOUNT FOUND</div>
-                    <div class="res-nick">${nameOrError}</div>
-                    <div class="res-label">ID REGISTERED</div>
-                    <div class="res-id">${fullID}</div>
-                `;
-            } else {
-                el.className = 'result-card error';
-                el.innerHTML = `
-                    <div class="res-label" style="color:#ff4081">ERROR</div>
-                    <div class="res-nick" style="font-size:1.2rem">${nameOrError}</div>
-                    <div style="font-size:0.8rem; color:#666">Check ID numbers or try again later.</div>
-                `;
-            }
+        function checkFormat(game, id) {
+            // Logika Regex Sederhana
+            if(game === 'mlbb') return /^\d{4,12}$/.test(id);
+            if(game === 'ff') return /^\d{8,12}$/.test(id);
+            if(game === 'pubgm') return /^\d{8,12}$/.test(id);
+            if(game === 'aov') return /^\d{10,20}$/.test(id); // OpenID panjang
+            if(game === 'codm') return /^\d{10,20}$/.test(id);
+            if(game === 'hok') return /^\d{5,15}$/.test(id); 
+            return id.length > 3; // Default loose check
         }
 
-        function copyText(txt) {
+        function showRes(status, nick, id, subMsg="") {
+            const box = document.getElementById('result-box');
+            let cls = '', badge = '', msg = '';
+
+            if(status === true) {
+                cls = 'res-valid'; badge = '<span class="res-badge badge-ok">VERIFIED</span>';
+                msg = 'Account Found';
+            } else if(status === 'warn') {
+                cls = 'res-warning'; badge = '<span class="res-badge badge-warn">OFFLINE CHECK</span>';
+                msg = subMsg || 'Format Valid (Server Down)';
+            } else {
+                cls = 'res-invalid'; badge = '<span class="res-badge badge-err">NOT FOUND</span>';
+                msg = 'ID Not Registered or Wrong Format';
+            }
+
+            box.className = `result-card ${cls}`;
+            box.style.display = 'block';
+            box.innerHTML = `
+                <div class="res-header">
+                    ${badge}
+                    ${status === true ? `<button class="copy-btn" onclick="cp('${nick}')">COPY NICK</button>` : ''}
+                </div>
+                <div class="nick-display">${nick}</div>
+                <div class="id-display">ID: ${id}</div>
+                <div style="font-size:0.75rem; color:#666; margin-top:5px;">${msg}</div>
+            `;
+        }
+
+        function cp(txt) {
             navigator.clipboard.writeText(txt);
             alert("Nickname Copied!");
         }
 
-        // Init Default
-        setGame('mlbb');
-
+        // Init
+        renderForm();
     </script>
 </body>
 </html>
