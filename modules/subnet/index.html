@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Subnet Calc</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        body { 
+            background: #0b0b0b; display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
+            font-family: 'Courier New', Courier, monospace; /* Font ala Terminal */
+        }
+        
+        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; font-family: sans-serif; }
+
+        .container {
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; 
+            padding: 20px; gap: 20px; max-width: 600px; margin: 0 auto; width: 100%; overflow-y: auto;
+        }
+
+        /* TABS */
+        .tabs { display: flex; width: 100%; background: #151515; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: #888; cursor: pointer; font-weight: bold; border-right: 1px solid #333; transition: 0.2s; }
+        .tab-btn:last-child { border-right: none; }
+        .tab-btn.active { background: #222; color: #00e5ff; }
+
+        /* INPUT CARD */
+        .card-box { width: 100%; background: #151515; padding: 20px; border: 1px solid #333; border-radius: 10px; display: none; flex-direction: column; gap: 15px; }
+        .card-box.active { display: flex; }
+
+        .lbl { color: #00e5ff; font-size: 0.8rem; margin-bottom: 5px; font-weight: bold; }
+        
+        input, select {
+            background: #000; border: 1px solid #444; color: #00ff88; padding: 12px; 
+            border-radius: 5px; font-family: monospace; font-size: 1.1rem; width: 100%; outline: none;
+        }
+        input:focus { border-color: #00ff88; }
+
+        button.calc-btn {
+            background: #00e5ff; color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 5px; font-size: 1rem; margin-top: 10px;
+        }
+        button.calc-btn:hover { background: #fff; }
+
+        /* RESULT TABLE */
+        .res-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        .res-table td { padding: 8px; border-bottom: 1px solid #333; color: #ddd; }
+        .res-table td:first-child { color: #888; width: 40%; }
+        .res-val { color: #fff; font-weight: bold; }
+        .res-bin { color: #555; font-size: 0.75rem; display: block; margin-top: 2px; }
+
+        .copy-hint { font-size: 0.7rem; color: #555; text-align: center; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-size:0.8rem; color:#888;">NETWORK PLANNER</div>
+    </div>
+
+    <div class="container">
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('calc')">IP CALCULATOR</button>
+            <button class="tab-btn" onclick="switchTab('plan')">HOST PLANNER</button>
+        </div>
+
+        <div id="tab-calc" class="card-box active">
+            <div>
+                <div class="lbl">IP ADDRESS & CIDR</div>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="ip-in" value="192.168.1.1" placeholder="192.168.1.1" style="flex:3;">
+                    <select id="cidr-in" style="flex:1;">
+                        <option value="32">/32</option><option value="30">/30</option>
+                        <option value="29">/29</option><option value="28">/28</option>
+                        <option value="27">/27</option><option value="26">/26</option>
+                        <option value="25">/25</option><option value="24" selected>/24</option>
+                        <option value="23">/23</option><option value="22">/22</option>
+                        <option value="16">/16</option><option value="8">/8</option>
+                    </select>
+                </div>
+            </div>
+            <button class="calc-btn" onclick="calcIP()">ANALYZE NETWORK</button>
+
+            <table class="res-table" id="res-calc" style="display:none;">
+                <tr><td>Network IP</td><td class="res-val" id="out-net">...</td></tr>
+                <tr><td>Broadcast IP</td><td class="res-val" id="out-broad">...</td></tr>
+                <tr><td>Subnet Mask</td><td class="res-val" id="out-mask">...</td></tr>
+                <tr><td>First Host</td><td class="res-val" id="out-first">...</td></tr>
+                <tr><td>Last Host</td><td class="res-val" id="out-last">...</td></tr>
+                <tr><td>Total Hosts</td><td class="res-val" id="out-total" style="color:#00ff88">...</td></tr>
+                <tr><td>Usable Hosts</td><td class="res-val" id="out-usable">...</td></tr>
+            </table>
+        </div>
+
+        <div id="tab-plan" class="card-box">
+            <div>
+                <div class="lbl">HOW MANY USERS / DEVICES?</div>
+                <input type="number" id="host-req" placeholder="Ex: 50 Computers">
+            </div>
+            <button class="calc-btn" onclick="planNetwork()">FIND BEST SUBNET</button>
+
+            <div id="plan-res" style="display:none; text-align:center; padding:20px; border:1px solid #333; margin-top:10px; border-radius:8px;">
+                <div style="color:#888; font-size:0.8rem;">RECOMMENDED PREFIX</div>
+                <div style="font-size:3rem; font-weight:bold; color:#00e5ff;" id="rec-cidr">/26</div>
+                <div style="color:#fff; margin:10px 0;">Subnet Mask: <span id="rec-mask" style="font-family:monospace; color:#00ff88;">255.255.255.192</span></div>
+                <div style="font-size:0.8rem; color:#aaa;" id="rec-detail">Fits 62 hosts (12 wasted)</div>
+            </div>
+        </div>
+
+        <div class="copy-hint">Pro Tip: Results are standards based on IPv4 Class C/B/A</div>
+
+    </div>
+
+    <script>
+        function switchTab(id) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.card-box').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + id).classList.add('active');
+        }
+
+        // --- UTILS: IP to INT & INT to IP ---
+        function ip2long(ip) {
+            return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+        }
+        function long2ip(long) {
+            return [long >>> 24, long >> 16 & 255, long >> 8 & 255, long & 255].join('.');
+        }
+
+        // --- MODE 1: IP CALCULATOR ---
+        function calcIP() {
+            const ipStr = document.getElementById('ip-in').value;
+            const cidr = parseInt(document.getElementById('cidr-in').value);
+
+            if(!ipStr.match(/^(\d{1,3}\.){3}\d{1,3}$/)) { alert("Invalid IP Format"); return; }
+
+            const ipLong = ip2long(ipStr);
+            const maskLong = -1 << (32 - cidr);
+            
+            const netLong = ipLong & maskLong;
+            const broadLong = netLong | (~maskLong);
+
+            const totalHosts = Math.pow(2, 32 - cidr);
+            const usableHosts = totalHosts - 2 > 0 ? totalHosts - 2 : 0;
+
+            document.getElementById('out-net').innerText = long2ip(netLong);
+            document.getElementById('out-broad').innerText = long2ip(broadLong);
+            document.getElementById('out-mask').innerText = long2ip(maskLong);
+            
+            // Usable Range
+            if(cidr < 31) {
+                document.getElementById('out-first').innerText = long2ip(netLong + 1);
+                document.getElementById('out-last').innerText = long2ip(broadLong - 1);
+            } else {
+                document.getElementById('out-first').innerText = "N/A";
+                document.getElementById('out-last').innerText = "N/A";
+            }
+            
+            document.getElementById('out-total').innerText = totalHosts.toLocaleString();
+            document.getElementById('out-usable').innerText = usableHosts.toLocaleString();
+
+            document.getElementById('res-calc').style.display = 'table';
+        }
+
+        // --- MODE 2: HOST PLANNER ---
+        function planNetwork() {
+            const req = parseInt(document.getElementById('host-req').value);
+            if(!req || req < 1) return;
+
+            // Cari pangkat 2 terdekat yg lebih besar dari req + 2 (Network + Broadcast)
+            let bits = 0;
+            while (Math.pow(2, bits) - 2 < req) {
+                bits++;
+            }
+            
+            // CIDR = 32 - bits host
+            const cidr = 32 - bits;
+            const maxHosts = Math.pow(2, bits) - 2;
+            const maskLong = -1 << bits;
+
+            document.getElementById('rec-cidr').innerText = "/" + cidr;
+            document.getElementById('rec-mask').innerText = long2ip(maskLong);
+            document.getElementById('rec-detail').innerText = `Max Capacity: ${maxHosts} hosts`;
+            
+            document.getElementById('plan-res').style.display = 'block';
+        }
+
+        // Auto calc on load
+        calcIP();
+    </script>
+</body>
+</html>
