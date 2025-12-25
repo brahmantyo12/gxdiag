@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Benchmark</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        body { background: #050505; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+        
+        .bench-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); }
+        .score-ring { width: 220px; height: 220px; border-radius: 50%; background: conic-gradient(#333 0% 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .score-inner { width: 200px; height: 200px; background: #0a0a0a; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-val { font-size: 3.5rem; font-weight: 800; color: #fff; }
+        .progress-area { width: 80%; max-width: 400px; height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: #00e5ff; transition: width 0.1s linear; }
+        .start-btn { padding: 15px 50px; background: #00e5ff; color: #000; font-size: 1.1rem; font-weight: 900; border-radius: 30px; cursor: pointer; border: none; }
+        .start-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="mod-header"><a href="../../index.html" class="back-btn">← DASHBOARD</a></div>
+    <div class="bench-container">
+        <div class="score-ring" id="ring"><div class="score-inner"><div class="score-val" id="score">0</div><div style="font-size:0.8rem; color:#888;">POINTS</div></div></div>
+        <div style="color:#00e5ff;" id="status">Ready</div>
+        <div class="progress-area"><div class="progress-fill" id="prog-bar"></div></div>
+        <button class="start-btn" id="btn-run" onclick="startBenchmark()">RUN TEST</button>
+    </div>
+    <script>
+        const btn = document.getElementById('btn-run');
+        const status = document.getElementById('status');
+        const prog = document.getElementById('prog-bar');
+        const scoreDisplay = document.getElementById('score');
+
+        function isPrime(num) {
+            for (let i = 2, s = Math.sqrt(num); i <= s; i++) if (num % i === 0) return false;
+            return num > 1;
+        }
+
+        function startBenchmark() {
+            btn.disabled = true; scoreDisplay.innerText = "0"; prog.style.width = "0%";
+            let count = 0; let num = 2; const duration = 5000; const start = performance.now();
+            
+            function loop() {
+                const now = performance.now();
+                const elapsed = now - start;
+                prog.style.width = Math.min(100, (elapsed / duration) * 100) + "%";
+                status.innerText = `Computing... ${(duration - elapsed).toFixed(0)}ms`;
+
+                const chunkEnd = now + 15;
+                while (performance.now() < chunkEnd) {
+                    if(isPrime(num)) count++;
+                    num++;
+                }
+
+                if (elapsed < duration) requestAnimationFrame(loop);
+                else finish(count);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        function finish(count) {
+            btn.disabled = false; status.innerText = "Complete"; prog.style.width = "100%";
+            const finalScore = Math.round(count * 0.05);
+            let current = 0;
+            const anim = setInterval(() => {
+                current += Math.ceil(finalScore/50);
+                if(current >= finalScore) { current = finalScore; clearInterval(anim); }
+                scoreDisplay.innerText = current;
+            }, 20);
+            document.getElementById('ring').style.background = `conic-gradient(#00e5ff 0% 100%)`;
+        }
+    </script>
+</body>
+</html>
