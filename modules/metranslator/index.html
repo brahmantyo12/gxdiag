@@ -22,7 +22,7 @@
             --glow: 0 0 10px rgba(212, 175, 55, 0.3);
         }
 
-        /* THEME CLASSES (TARGET Language determines the look) */
+        /* THEME CLASSES */
         body.theme-sindarin { --primary: #FFD700; --secondary: #AA8800; --font-head: 'Cinzel', serif; --bg-grad: radial-gradient(circle, #1a2520, #000); }
         body.theme-quenya { --primary: #00BFFF; --secondary: #C0C0C0; --font-head: 'Cinzel', serif; --bg-grad: linear-gradient(to top, #001f3f, #000); }
         body.theme-khuzdul { --primary: #cd7f32; --secondary: #3e2723; --font-head: 'Rye', serif; --bg-grad: linear-gradient(to bottom, #2b1d14, #000); }
@@ -44,7 +44,7 @@
             overflow: hidden;
         }
 
-        /* --- PARTICLES CSS (YANG HILANG TADI) --- */
+        /* --- PARTICLES CSS --- */
         #particles { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; opacity: 0; }
@@ -62,7 +62,7 @@
             border: 1px solid var(--secondary);
             border-radius: 12px;
             padding: 30px;
-            width: 95%; max-width: 800px;
+            width: 95%; max-width: 900px; /* Lebar ditambah sedikit agar teks muat */
             text-align: center;
             box-shadow: 0 10px 50px rgba(0,0,0,0.8);
             backdrop-filter: blur(5px);
@@ -98,16 +98,18 @@
             cursor: pointer;
             text-align: center;
             outline: none;
-            text-transform: uppercase; /* Agar rapi */
+            font-size: 0.9rem; /* Sedikit dikecilkan agar teks panjang muat di HP */
+            text-transform: uppercase;
         }
         
-        select option { background: #111; color: #ccc; font-family: sans-serif; }
+        select option { background: #111; color: #ccc; font-family: sans-serif; text-transform: none;}
 
         .swap-btn {
             background: none; border: 1px solid var(--primary);
             color: var(--primary); width: 40px; height: 40px;
             border-radius: 50%; cursor: pointer; font-size: 1.2rem;
             transition: 0.3s;
+            flex-shrink: 0; /* Agar tombol tidak tergencet */
         }
         .swap-btn:hover { background: var(--primary); color: #000; transform: rotate(180deg); }
 
@@ -154,8 +156,6 @@
         .copy-btn:hover { color: var(--primary); }
 
         #status { font-size: 0.7rem; color: #777; margin-top: 15px; }
-        
-        /* Untranslated words style */
         .raw { font-family: sans-serif; font-size: 0.5em; opacity: 0.5; font-style: normal; }
 
         @media (min-width: 768px) {
@@ -163,7 +163,9 @@
         }
     </style>
 </head>
-<body class="theme-en"> <div id="particles"></div>
+<body class="theme-en">
+
+    <div id="particles"></div>
     <audio id="sfx" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <div class="container">
@@ -171,23 +173,23 @@
         
         <div class="selector-box">
             <select id="sourceLang">
-                <option value="en" selected>English</option>
-                <option value="sindarin">Sindarin</option>
-                <option value="quenya">Quenya</option>
-                <option value="khuzdul">Khuzdul</option>
-                <option value="rohirric">Rohirric</option>
-                <option value="blackspeech">Black Speech</option>
+                <option value="en" selected>English (Common)</option>
+                <option value="sindarin">Sindarin (Grey Elves)</option>
+                <option value="quenya">Quenya (High Elves)</option>
+                <option value="khuzdul">Khuzdul (Dwarves)</option>
+                <option value="rohirric">Rohirric (Rohan)</option>
+                <option value="blackspeech">Black Speech (Mordor)</option>
             </select>
 
             <button class="swap-btn" onclick="swapLanguages()" title="Swap">⇄</button>
 
             <select id="targetLang" onchange="updateTheme()">
-                <option value="en">English</option>
-                <option value="sindarin" selected>Sindarin</option>
-                <option value="quenya">Quenya</option>
-                <option value="khuzdul">Khuzdul</option>
-                <option value="rohirric">Rohirric</option>
-                <option value="blackspeech">Black Speech</option>
+                <option value="en">English (Common)</option>
+                <option value="sindarin" selected>Sindarin (Grey Elves)</option>
+                <option value="quenya">Quenya (High Elves)</option>
+                <option value="khuzdul">Khuzdul (Dwarves)</option>
+                <option value="rohirric">Rohirric (Rohan)</option>
+                <option value="blackspeech">Black Speech (Mordor)</option>
             </select>
         </div>
 
@@ -204,37 +206,31 @@
     </div>
 
     <script>
-        // --- VARIABLES ---
         let db = {};
         let isLoaded = false;
 
-        // --- 1. LOAD DATA ---
         fetch('data.json')
             .then(res => res.json())
             .then(data => {
                 db = data;
                 isLoaded = true;
                 document.getElementById('status').innerText = "Archives Loaded.";
-                updateTheme(); // Load theme awal
+                updateTheme();
             })
             .catch(err => {
                 console.error(err);
                 document.getElementById('status').innerText = "Error loading data.json";
             });
 
-        // --- 2. THEME & PARTICLES ---
         function updateTheme() {
-            // Tema mengikuti bahasa TUJUAN (Target)
             const target = document.getElementById('targetLang').value;
             document.body.className = `theme-${target}`;
-            
-            // Generate Partikel
             initParticles(target);
         }
 
         function initParticles(race) {
             const container = document.getElementById('particles');
-            container.innerHTML = ""; // Reset
+            container.innerHTML = ""; 
 
             let type = 'star';
             let color = 'white';
@@ -244,13 +240,13 @@
             else if (race === 'blackspeech') { type = 'ember'; color = '#ff4500'; count = 50; }
             else if (race === 'rohirric') { type = 'pollen'; color = '#90EE90'; count = 25; }
             else if (race === 'quenya') { type = 'star'; color = '#00BFFF'; count = 60; }
-            else if (race === 'en') { count = 0; } // No particles for English theme
+            else if (race === 'en') { count = 0; } 
 
             for (let i = 0; i < count; i++) {
                 let p = document.createElement('div');
                 p.className = type === 'ember' ? 'ember' : (type === 'dust' || type === 'pollen' ? 'dust' : 'star');
                 p.style.left = Math.random() * 100 + 'vw';
-                p.style.backgroundColor = color; // Set color dynamic
+                p.style.backgroundColor = color; 
 
                 if (type === 'star') {
                     p.style.top = Math.random() * 100 + 'vh';
@@ -274,19 +270,15 @@
             src.value = tgt.value;
             tgt.value = temp;
             
-            // Tukar isi text juga jika ada
             let inText = document.getElementById('inputText');
             let outText = document.getElementById('outputText');
-            // Hanya tukar text jika output bukan "..."
             if(outText.innerText !== "...") {
-                inText.value = outText.innerText.replace(/<[^>]*>/g, ''); // Remove tags
+                inText.value = outText.innerText.replace(/<[^>]*>/g, ''); 
                 outText.innerHTML = "...";
             }
-
             updateTheme();
         }
 
-        // --- 3. TRANSLATION LOGIC (THE PIVOT) ---
         function translate() {
             if (!isLoaded) return;
 
@@ -300,44 +292,38 @@
 
             if (!rawInput) return;
 
-            // Bersihkan input
             let words = rawInput.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"").split(/\s+/);
             let result = [];
 
-            // --- FUNGSI PENCARI KATA ---
-            // Helper: Mencari arti bahasa Inggris dari sebuah kata asing
+            // --- FUNGSI PENCARI MAKNA (PIVOT KE INGGRIS) ---
             function findEnglishMeaning(word, language) {
-                if (language === 'en') return word; // Jika asalnya Inggris, ya artinya itu sendiri
+                if (language === 'en') return word; 
                 
-                // Cari di database bahasa tersebut (Reverse Lookup)
                 let dict = db[language];
+                // Reverse Search: Cari Value yang cocok, ambil Key-nya
                 for (let enKey in dict) {
-                    if (dict[enKey] === word) return enKey; // Ketemu English-nya!
+                    if (dict[enKey] === word) return enKey; 
                 }
-                return null; // Tidak ketemu
-            }
-
-            // Helper: Mencari terjemahan ke bahasa target dari kata Inggris
-            function findTargetWord(englishWord, language) {
-                if (language === 'en') return englishWord; // Jika targetnya Inggris, kembalikan kata itu
-                
-                let dict = db[language];
-                if (dict[englishWord]) return dict[englishWord]; // Ketemu!
                 return null;
             }
 
-            // --- PROSES TRANSLASI KATA PER KATA ---
+            // --- FUNGSI TERJEMAH KE TARGET ---
+            function findTargetWord(englishWord, language) {
+                if (language === 'en') return englishWord; 
+                
+                let dict = db[language];
+                if (dict && dict[englishWord]) return dict[englishWord]; 
+                return null;
+            }
+
             words.forEach(w => {
                 if(!w) return;
 
-                // 1. Dapatkan makna Inggris (Pivot)
-                // Jika input Inggris: "friend" -> pivot "friend"
-                // Jika input Sindarin: "mellon" -> pivot "friend"
+                // 1. Pivot ke Inggris
                 let pivotWord = findEnglishMeaning(w, srcLang);
 
                 if (pivotWord) {
-                    // 2. Terjemahkan Pivot ke Bahasa Target
-                    // Jika target Khuzdul: pivot "friend" -> "menû"
+                    // 2. Dari Inggris ke Target
                     let finalWord = findTargetWord(pivotWord, tgtLang);
 
                     if (finalWord) {
