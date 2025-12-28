@@ -3,414 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Middle-earth Universal Translator</title>
+    <title>Middle-earth Translator</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Creepster&family=Lato:ital,wght@0,400;0,700;1,400&family=MedievalSharp&family=Playfair+Display:ital,wght@0,400;1,400&family=Rye&display=swap" rel="stylesheet">
+
     <style>
-        /* --- IMPORT FONTS (Google Fonts) --- */
-        /* Cinzel: Elves | Rye: Dwarves | Creepster: Mordor | MedievalSharp: Rohan */
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital@0;1&family=Rye&family=Creepster&family=MedievalSharp&family=Lato&display=swap');
-
-        /* --- THEME ENGINE VARIABLES --- */
+        /* --- 2. CSS VARIABLES (Tema Default: Sindarin) --- */
         :root {
-            /* Default: Sindarin (Gold/Stars) */
-            --primary: #FFD700;
-            --secondary: #AA8800;
-            --bg-glass: rgba(10, 20, 15, 0.9);
+            --primary-color: #FFD700;       /* Emas */
+            --secondary-color: #AA8800;     /* Emas Gelap */
+            --bg-glass: rgba(20, 30, 25, 0.85);
             --font-title: 'Cinzel', serif;
             --font-body: 'Playfair Display', serif;
-            --glow-color: rgba(255, 215, 0, 0.5);
             --bg-gradient: radial-gradient(circle at center, #1a2520 0%, #000000 100%);
+            --shadow-glow: 0 0 15px rgba(255, 215, 0, 0.3);
         }
 
-        /* 1. QUENYA (High Elf) - Divine Blue/Silver */
-        body.theme-quenya {
-            --primary: #00BFFF;
-            --secondary: #C0C0C0;
-            --bg-glass: rgba(240, 248, 255, 0.1); /* Crystal clear */
-            --font-title: 'Cinzel', serif;
-            --font-body: 'Playfair Display', serif;
-            --glow-color: rgba(0, 191, 255, 0.7);
-            --bg-gradient: linear-gradient(to top, #001f3f, #000000);
-        }
+        /* --- 3. RESET & BASE --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* 2. KHUZDUL (Dwarves) - Bronze/Stone */
-        body.theme-khuzdul {
-            --primary: #cd7f32; /* Bronze */
-            --secondary: #5C4033;
-            --bg-glass: rgba(20, 10, 5, 0.95);
-            --font-title: 'Rye', serif; /* Heavy Font */
-            --font-body: 'Lato', sans-serif;
-            --glow-color: rgba(205, 127, 50, 0.4);
-            --bg-gradient: linear-gradient(to bottom, #2b1d14, #0f0f0f);
-        }
-
-        /* 3. BLACK SPEECH (Mordor) - Red/Fire */
-        body.theme-blackspeech {
-            --primary: #ff3300;
-            --secondary: #520000;
-            --bg-glass: rgba(10, 0, 0, 0.95);
-            --font-title: 'Creepster', cursive; /* Scary Font */
-            --font-body: 'Lato', sans-serif;
-            --glow-color: rgba(255, 0, 0, 0.8);
-            --bg-gradient: radial-gradient(circle, #3a0000, #000000);
-        }
-
-        /* 4. ROHIRRIC (Rohan) - Green/Wood */
-        body.theme-rohirric {
-            --primary: #76c043; /* Grass Green */
-            --secondary: #DAA520;
-            --bg-glass: rgba(20, 30, 20, 0.9);
-            --font-title: 'MedievalSharp', cursive; /* Anglo-Saxon style */
-            --font-body: 'Lato', sans-serif;
-            --glow-color: rgba(118, 192, 67, 0.5);
-            --bg-gradient: linear-gradient(to bottom, #1a2510, #000000);
-        }
-
-        /* --- GLOBAL LAYOUT --- */
         body {
             background: var(--bg-gradient);
             font-family: var(--font-body);
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; margin: 0; color: #eee;
-            overflow: hidden; transition: background 1.5s ease;
+            color: #eee;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Mencegah scrollbar saat animasi partikel */
+            transition: background 1s ease; /* Efek transisi halus saat ganti tema */
         }
 
-        /* --- PARTICLES (Stars, Dust, Embers) --- */
-        .particle-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-        
-        .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; opacity: 0; }
-        .dust { position: absolute; background: #cd7f32; border-radius: 50%; animation: floatUp 8s linear infinite; opacity: 0.3; }
-        .ember { position: absolute; background: #ff4500; width: 4px; height: 4px; box-shadow: 0 0 10px #ff0000; animation: floatUp 4s linear infinite; opacity: 0; }
-        .pollen { position: absolute; background: #90EE90; border-radius: 50%; animation: floatUp 10s linear infinite; opacity: 0.4; }
+        /* --- 4. BACKGROUND LAYERS (Untuk Partikel) --- */
+        #particle-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
 
-        @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
-        @keyframes floatUp { from { transform: translateY(110vh) translateX(-20px); opacity:0; } 20% { opacity: 1;} to { transform: translateY(-10vh) translateX(20px); opacity:0; } }
-
-        /* --- MAIN UI CONTAINER --- */
-        .container {
-            position: relative; background: var(--bg-glass);
-            border: 2px solid var(--secondary); padding: 30px;
-            border-radius: 16px; box-shadow: 0 0 60px rgba(0,0,0,0.8);
-            width: 90%; max-width: 700px; text-align: center;
-            z-index: 10; transition: all 0.5s ease;
+        /* --- 5. MAIN CONTAINER (Glassmorphism) --- */
+        .app-container {
+            position: relative;
+            z-index: 10;
+            background: var(--bg-glass);
+            border: 1px solid var(--secondary-color);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 700px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
             backdrop-filter: blur(8px);
+            transition: all 0.5s ease;
         }
 
+        /* --- 6. TYPOGRAPHY & TITLE --- */
         h1 {
-            font-family: var(--font-title); color: var(--primary);
-            font-size: 2.5em; margin: 0 0 15px 0;
-            text-shadow: 0 0 20px var(--glow-color); letter-spacing: 2px;
-            transition: 0.5s;
+            font-family: var(--font-title);
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: var(--shadow-glow);
+            letter-spacing: 2px;
         }
 
-        /* --- CONTROLS --- */
-        .race-select {
-            background: rgba(0,0,0,0.5); color: var(--primary);
-            border: 1px solid var(--primary); padding: 12px;
-            font-family: var(--font-title); font-size: 1.1em;
-            border-radius: 8px; cursor: pointer; outline: none; margin-bottom: 20px;
-            width: 100%; text-align: center; transition: 0.3s;
+        .subtitle {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 1.5rem;
+            font-family: 'Lato', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        /* --- 7. FORM ELEMENTS --- */
+        /* Dropdown Bahasa */
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            font-family: var(--font-title);
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            outline: none;
+            text-align: center;
             text-transform: uppercase;
+            transition: 0.3s;
         }
-        .race-select:hover { box-shadow: 0 0 15px var(--glow-color); background: rgba(0,0,0,0.7); }
-        .race-select option { background: #000; color: #fff; }
+        select:hover { box-shadow: var(--shadow-glow); }
+        select option { background: #111; color: #eee; }
 
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 5px; }
-        .mode-text { font-family: var(--font-title); color: var(--primary); font-size: 0.9em; }
-        .switch-btn { 
-            background: transparent; border: 1px solid var(--secondary); color: var(--secondary); 
-            padding: 5px 15px; border-radius: 20px; cursor: pointer; 
-            font-family: var(--font-title); font-size: 0.8em; transition: 0.3s; 
-        }
-        .switch-btn:hover { background: var(--secondary); color: #000; }
-
-        /* --- INPUT & OUTPUT --- */
+        /* Input Textarea */
         textarea {
-            width: 100%; height: 120px; padding: 15px; box-sizing: border-box;
-            background-color: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px; font-family: var(--font-body); font-size: 1.3em; color: #fff;
-            resize: none; outline: none; transition: 0.3s;
+            width: 100%;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            color: #fff;
+            font-family: var(--font-body);
+            font-size: 1.2rem;
+            resize: none;
+            outline: none;
+            transition: 0.3s;
         }
-        textarea:focus { border-color: var(--primary); box-shadow: 0 0 15px var(--glow-color); }
-
-        .translate-btn {
-            background: linear-gradient(135deg, var(--secondary), var(--primary));
-            border: none; color: #000; padding: 14px 0; width: 100%;
-            border-radius: 8px; font-family: var(--font-title); font-weight: bold; font-size: 1.2em;
-            cursor: pointer; margin-top: 20px; letter-spacing: 1px; transition: 0.3s;
+        textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-glow);
         }
-        .translate-btn:hover { filter: brightness(1.2); box-shadow: 0 0 25px var(--glow-color); transform: translateY(-2px); }
 
-        .result-box {
-            margin-top: 25px; padding: 20px; min-height: 80px;
+        /* --- 8. BUTTONS & CONTROLS --- */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 0 5px;
+        }
+
+        .mode-label {
+            font-family: var(--font-title);
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        button {
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-icon {
+            background: none;
+            border: 1px solid var(--secondary-color);
+            color: var(--secondary-color);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .btn-icon:hover { background: var(--secondary-color); color: #000; }
+
+        .btn-translate {
+            width: 100%;
+            padding: 14px;
+            margin-top: 15px;
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-family: var(--font-title);
+            font-weight: bold;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+        .btn-translate:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+            filter: brightness(1.2);
+        }
+        .btn-translate:active { transform: scale(0.98); }
+
+        /* --- 9. OUTPUT AREA --- */
+        .result-area {
+            margin-top: 25px;
+            padding: 20px;
+            min-height: 80px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 1.8em; color: var(--primary); font-family: var(--font-body);
-            font-style: italic; text-shadow: 0 0 10px var(--glow-color);
-            position: relative; display: flex; align-items: center; justify-content: center;
-            word-wrap: break-word; line-height: 1.4;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .untranslated { font-size: 0.6em; opacity: 0.5; font-style: normal; font-family: 'Lato', sans-serif; }
-        
-        .copy-icon { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 1.2em; cursor: pointer; color: #666; transition: 0.3s; }
-        .copy-icon:hover { color: var(--primary); }
+        #output-text {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            font-style: italic;
+            text-shadow: var(--shadow-glow);
+            word-wrap: break-word;
+        }
 
-        .loading-text { font-size: 0.8em; color: var(--secondary); margin-bottom: 10px; }
+        .btn-copy {
+            position: absolute;
+            top: 5px; right: 5px;
+            background: none; border: none;
+            color: #666; font-size: 1.2rem;
+        }
+        .btn-copy:hover { color: var(--primary-color); }
+
+        .status-bar {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: #666;
+            font-family: sans-serif;
+        }
+
+        /* --- 10. HELPER CLASSES FOR UNTRANSLATED WORDS --- */
+        .untranslated {
+            font-size: 0.6em;
+            opacity: 0.5;
+            font-style: normal;
+            font-family: 'Lato', sans-serif;
+        }
     </style>
 </head>
 <body class="theme-sindarin">
 
-    <div id="particles" class="particle-container"></div>
-    <audio id="sfx" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <div id="particle-canvas"></div>
 
-    <div class="container">
-        <select class="race-select" id="raceSelect" onchange="changeRace()">
-            <option value="sindarin">🧝 Sindarin (Grey Elves)</option>
-            <option value="quenya">✨ Quenya (High Elves)</option>
-            <option value="khuzdul">⛏️ Khuzdul (Dwarves)</option>
-            <option value="rohirric">🐎 Rohirric (Rohan)</option>
-            <option value="blackspeech">🔥 Black Speech (Mordor)</option>
+    <audio id="sfx-magic" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
+    <div class="app-container">
+        <h1 id="app-title">MIDDLE-EARTH</h1>
+        <p class="subtitle" id="app-subtitle">Universal Translator</p>
+
+        <select id="language-select" onchange="changeTheme()">
+            <option value="sindarin">🧝 SINDARIN (Grey Elves)</option>
+            <option value="quenya">✨ QUENYA (High Elves)</option>
+            <option value="khuzdul">⛏️ KHUZDUL (Dwarves)</option>
+            <option value="rohirric">🐎 ROHIRRIC (Rohan)</option>
+            <option value="blackspeech">🔥 BLACK SPEECH (Mordor)</option>
         </select>
 
-        <h1 id="appTitle">ELVEN TRANSLATOR</h1>
-        <div id="statusMsg" class="loading-text">Connecting to Archives...</div>
-
-        <div class="controls">
-            <span id="modeDisplay" class="mode-text">EN ➡ SINDARIN</span>
-            <button class="switch-btn" onclick="switchMode()">⇄ REVERSE</button>
+        <div class="input-wrapper">
+            <textarea id="input-text" placeholder="Type words here... (e.g. friend, star, war)"></textarea>
+            <div class="controls">
+                <span id="mode-display" class="mode-label">EN ➡ ELF</span>
+                <button class="btn-icon" onclick="toggleDirection()">⇄ Switch</button>
+            </div>
         </div>
 
-        <div style="position:relative;">
-            <textarea id="input" placeholder="Loading database..."></textarea>
-            <button onclick="diceRoll()" style="position:absolute; bottom:10px; right:10px; background:none; border:none; font-size:1.5em; cursor:pointer; opacity:0.8;" title="Random Phrase">🎲</button>
+        <button class="btn-translate" onclick="translateText()">TRANSLATE</button>
+
+        <div class="result-area">
+            <button class="btn-copy" onclick="copyToClipboard()" title="Copy Result">📋</button>
+            <div id="output-text">...</div>
         </div>
 
-        <button class="translate-btn" onclick="translateText()">TRANSLATE</button>
-
-        <div class="result-box">
-            <div id="output">...</div>
-            <button class="copy-icon" onclick="copyText()" title="Copy to Clipboard">📋</button>
-        </div>
+        <div class="status-bar" id="status-msg">Waiting for Database...</div>
     </div>
 
     <script>
-        // --- GLOBAL VARIABLES ---
-        let db = {};              // Menyimpan seluruh data dari JSON
-        let currentDict = {};     // Kamus bahasa yang sedang dipilih
-        let reverseDict = {};     // Kamus terbalik (Target -> Inggris)
-        let currentRace = "sindarin";
-        let isEnToTarget = true;  // Arah terjemahan
-        let isLoaded = false;
-
-        // --- 1. LOAD DATABASE (JSON) ---
-        fetch('data.json')
-            .then(response => response.json())
-            .then(data => {
-                db = data;
-                isLoaded = true;
-                changeRace(); // Set default tampilan
-            })
-            .catch(error => {
-                console.error("Gagal memuat database:", error);
-                document.getElementById('statusMsg').innerText = "Error: data.json not found! Check console.";
-                document.getElementById('input').placeholder = "Error loading data.";
-            });
-
-        // --- 2. THEME & RACE ENGINE ---
-        function changeRace() {
-            if (!isLoaded) return;
-
-            // Ambil pilihan user
-            currentRace = document.getElementById("raceSelect").value;
-            currentDict = db[currentRace];
-
-            // Buat Kamus Terbalik Otomatis
-            reverseDict = {};
-            for (let enKey in currentDict) {
-                let val = currentDict[enKey];
-                // Hindari duplikat key di reverse dict (ambil yang pertama ketemu)
-                if (!reverseDict[val]) reverseDict[val] = enKey;
-            }
-
-            // Update UI (Judul, Status, Input Placeholder)
-            const titles = {
-                "sindarin": "GREY ELF ARCHIVE",
-                "quenya": "HIGH ELF SCROLLS",
-                "khuzdul": "DWARVEN FORGE",
-                "rohirric": "RIDERS OF ROHAN",
-                "blackspeech": "EYE OF SAURON"
-            };
-            document.getElementById("appTitle").innerText = titles[currentRace];
-            
-            const count = Object.keys(currentDict).length;
-            document.getElementById("statusMsg").innerText = `Database Loaded: ${count} Words`;
-            
-            document.getElementById("input").value = "";
-            document.getElementById("output").innerText = "...";
-            
-            // Set Placeholder
-            if(currentRace === "blackspeech") document.getElementById("input").placeholder = "Try: One ring to rule them all...";
-            else if(currentRace === "khuzdul") document.getElementById("input").placeholder = "Try: Axes of the dwarves...";
-            else document.getElementById("input").placeholder = "Try: Friend, Star, King...";
-
-            // Update Mode Text
-            updateModeLabel();
-
-            // GANTI TEMA CSS
-            document.body.className = `theme-${currentRace}`;
-
-            // GANTI PARTIKEL
-            initParticles(currentRace);
-        }
-
-        // --- 3. PARTICLE SYSTEM ---
-        function initParticles(race) {
-            const container = document.getElementById('particles');
-            container.innerHTML = ""; // Bersihkan partikel lama
-
-            let type = 'star';
-            let color = 'white';
-            let count = 40;
-
-            // Tentukan tipe partikel berdasarkan ras
-            if (race === 'khuzdul') { type = 'dust'; color = '#cd7f32'; count = 30; }
-            else if (race === 'blackspeech') { type = 'ember'; color = '#ff4500'; count = 50; }
-            else if (race === 'rohirric') { type = 'pollen'; color = '#90EE90'; count = 25; }
-            else if (race === 'quenya') { type = 'star'; color = '#00BFFF'; count = 60; }
-            
-            for (let i = 0; i < count; i++) {
-                let p = document.createElement('div');
-                p.className = type;
-                
-                // Posisi Random
-                p.style.left = Math.random() * 100 + 'vw';
-                
-                if (type === 'star') {
-                    p.style.top = Math.random() * 100 + 'vh';
-                    let s = Math.random() * 3 + 'px';
-                    p.style.width = s; p.style.height = s;
-                    p.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                    p.style.backgroundColor = color;
-                } else {
-                    // Dust/Ember/Pollen bergerak ke atas
-                    let s = Math.random() * 5 + 2 + 'px';
-                    p.style.width = s; p.style.height = s;
-                    p.style.animationDuration = (Math.random() * 5 + 4) + 's';
-                    p.style.animationDelay = (Math.random() * 5) + 's';
-                }
-                container.appendChild(p);
-            }
-        }
-
-        // --- 4. TRANSLATION LOGIC ---
-        function switchMode() {
-            if (!isLoaded) return;
-            isEnToTarget = !isEnToTarget;
-            updateModeLabel();
-            document.getElementById("input").value = "";
-            document.getElementById("output").innerText = "...";
-        }
-
-        function updateModeLabel() {
-            const raceNames = {
-                "sindarin": "SINDARIN", "quenya": "QUENYA",
-                "khuzdul": "KHUZDUL", "rohirric": "ROHIRRIC",
-                "blackspeech": "BLACK SPEECH"
-            };
-            const target = raceNames[currentRace];
-            const label = isEnToTarget ? `EN ➡ ${target}` : `${target} ➡ EN`;
-            document.getElementById("modeDisplay").innerText = label;
-        }
-
-        function translateText() {
-            if (!isLoaded) return;
-            
-            const rawInput = document.getElementById("input").value.toLowerCase();
-            const outputDiv = document.getElementById("output");
-            
-            // Efek Suara
-            const audio = document.getElementById("sfx");
-            audio.currentTime = 0; audio.play().catch(()=>{});
-
-            // LOGIKA FRASA (PENTING): Cek kalimat panjang dulu sebelum dipecah kata
-            let processedInput = rawInput;
-            
-            // Hanya jalankan pencarian frasa jika mode EN -> Target
-            if (isEnToTarget) {
-                // Ambil semua key yang punya spasi (kalimat)
-                const phrases = Object.keys(currentDict).filter(k => k.includes(" "));
-                // Urutkan dari yang terpanjang agar tidak tertimpa (greedy match)
-                phrases.sort((a, b) => b.length - a.length);
-
-                phrases.forEach(phrase => {
-                    if (processedInput.includes(phrase)) {
-                        // Ganti spasi dengan token ___ agar tidak terpecah saat split()
-                        // Contoh: "lord of the rings" -> "herdir en curyll" (tokenized: herdir___en___curyll)
-                        const translation = currentDict[phrase];
-                        const tokenizedTrans = translation.replace(/ /g, "___");
-                        // Replace semua kemunculan di input
-                        processedInput = processedInput.split(phrase).join(tokenizedTrans);
-                    }
-                });
-            }
-
-            // Bersihkan tanda baca dasar dan split menjadi array kata
-            let words = processedInput.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"").split(/\s+/);
-            let result = [];
-            
-            // Tentukan kamus mana yang dipakai
-            let activeDict = isEnToTarget ? currentDict : reverseDict;
-
-            words.forEach(w => {
-                if(!w) return;
-                
-                // 1. Cek apakah kata ini adalah token hasil terjemahan frasa tadi?
-                if (w.includes("___")) {
-                    result.push(w.replace(/___/g, " ")); // Kembalikan spasi
-                } 
-                // 2. Cek di kamus normal
-                else if (activeDict[w]) {
-                    result.push(activeDict[w]);
-                } 
-                // 3. Cek plural sederhana (hanya works di EN -> Target)
-                else if (isEnToTarget && w.endsWith('s') && activeDict[w.slice(0, -1)]) {
-                    result.push(activeDict[w.slice(0, -1)] + "*"); // Tanda bintang artinya estimasi plural
-                } 
-                // 4. Tidak ketemu
-                else {
-                    result.push(`<span class="untranslated">(${w})</span>`);
-                }
-            });
-
-            outputDiv.innerHTML = result.length > 0 ? result.join(" ") : "...";
-        }
-
-        function diceRoll() {
-            if (!isLoaded) return;
-            
-            // Database frasa acak per bangsa
-            const randoms = {
-                "sindarin": ["The star shines on the river", "Speak friend and enter", "One ring to rule them all"],
-                "quenya": ["Hail high king", "Star of the high sea", "Farewell my friend"],
-                "khuzdul": ["Axes of the dwarves", "Gold in the deep mountain", "The lord of Moria"],
-                "blackspeech": ["One ring to find them", "Fire and death", "The eye sees all"],
-                "rohirric": ["Horse and rider", "The sun rises red", "King of the mark"]
-            };
-
-            const list = randoms[currentRace];
-            const randPhrase = list[Math.floor(Math.random() * list.length)];
-            
-            if(!isEnToTarget) switchMode(); // Paksa ke mode EN -> Target
-            document.getElementById("input").value = randPhrase;
-            translateText();
-        }
-
-        function copyText() {
-            const text = document.getElementById("output").innerText;
-            if(text && text !== "...") {
-                navigator.clipboard.writeText(text);
-                alert("Copied to clipboard!");
-            }
-        }
+        // Placeholder agar tombol tidak error saat ditekan
+        function changeTheme() { console.log("Theme changed"); }
+        function toggleDirection() { console.log("Direction switched"); }
+        function translateText() { console.log("Translate clicked"); }
+        function copyToClipboard() { console.log("Copy clicked"); }
     </script>
+
 </body>
 </html>
