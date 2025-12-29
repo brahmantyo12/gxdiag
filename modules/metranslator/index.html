@@ -35,16 +35,17 @@
             background: var(--bg-grad);
             color: #eee;
             font-family: var(--font-body);
-            height: 100vh;
+            min-height: 100vh; /* Ganti height jadi min-height agar tidak terpotong jika konten panjang */
             display: flex;
             justify-content: center;
             align-items: center;
             transition: background 1s ease;
-            overflow: hidden;
+            overflow-x: hidden; /* Hanya hide horizontal scroll */
+            padding: 20px 0; /* Memberi ruang atas bawah */
         }
 
         /* --- PARTICLES --- */
-        #particles { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        #particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; opacity: 0; }
         .dust { position: absolute; background: #cd7f32; border-radius: 50%; animation: floatUp 8s linear infinite; opacity: 0.3; }
         .ember { position: absolute; background: #ff4500; width: 4px; height: 4px; box-shadow: 0 0 10px #ff0000; animation: floatUp 4s linear infinite; opacity: 0; }
@@ -73,7 +74,7 @@
             text-shadow: var(--glow); letter-spacing: 1px;
         }
 
-        /* --- UI ELEMENTS --- */
+        /* --- SELECTORS --- */
         .selector-box {
             display: flex; justify-content: space-between; align-items: center;
             gap: 10px; margin-bottom: 20px;
@@ -98,7 +99,16 @@
         }
         .swap-btn:hover { background: var(--primary); color: #000; transform: rotate(180deg); }
 
+        /* --- INPUT & OUTPUT AREA --- */
         .io-area { display: flex; flex-direction: column; gap: 15px; }
+
+        /* Wrapper untuk Input agar tombol dadu & metadata rapi */
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
 
         textarea, .result-div {
             width: 100%; height: 120px;
@@ -117,6 +127,7 @@
             position: relative; word-wrap: break-word;
         }
 
+        /* --- BUTTONS --- */
         .translate-btn {
             width: 100%; padding: 15px; margin-top: 20px;
             background: linear-gradient(135deg, var(--secondary), var(--primary));
@@ -133,10 +144,64 @@
         }
         .copy-btn:hover { color: var(--primary); }
 
+        /* Style Tombol Dadu (Random) */
+        .random-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: 0.3s;
+            z-index: 5;
+        }
+        .random-btn:hover {
+            opacity: 1;
+            transform: scale(1.2) rotate(20deg);
+        }
+
+        /* --- METADATA / TRIVIA BOX --- */
+        .quote-metadata {
+            margin-top: 8px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-left: 3px solid var(--primary);
+            border-radius: 4px;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #ddd;
+            font-family: var(--font-body);
+            line-height: 1.4;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .quote-metadata strong {
+            color: var(--primary);
+            font-family: var(--font-head);
+            font-size: 1rem;
+            display: inline-block;
+            margin-bottom: 2px;
+        }
+
+        .quote-metadata em {
+            color: #bbb;
+            font-size: 0.85rem;
+            display: block;
+            margin-top: 2px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
         #status { font-size: 0.7rem; color: #777; margin-top: 15px; }
         .raw { font-family: sans-serif; font-size: 0.5em; opacity: 0.5; font-style: normal; }
 
-        @media (min-width: 768px) { .io-area { flex-direction: row; } }
+        /* Responsive Layout */
+        @media (min-width: 768px) { 
+            .io-area { flex-direction: row; align-items: flex-start; }
+            .input-wrapper, .result-div { flex: 1; }
+        }
     </style>
 </head>
 <body class="theme-en">
@@ -170,7 +235,13 @@
         </div>
 
         <div class="io-area">
-            <textarea id="inputText" placeholder="Type here..."></textarea>
+            <div class="input-wrapper">
+                <textarea id="inputText" placeholder="Type here or click the dice..."></textarea>
+                <button class="random-btn" onclick="randomizeInput()" title="Random Lore Quote">🎲</button>
+                
+                <div id="quoteMetadata" class="quote-metadata" style="display: none;"></div>
+            </div>
+            
             <div id="outputText" class="result-div">
                 ...
                 <button class="copy-btn" onclick="copyResult()">📋</button>
