@@ -12,7 +12,6 @@
     <style>
         /* --- CSS VARIABLES --- */
         :root {
-            /* Default Theme: Neutral/English */
             --primary: #d4af37;
             --secondary: #5c4033;
             --glass: rgba(20, 15, 10, 0.9);
@@ -22,7 +21,7 @@
             --glow: 0 0 10px rgba(212, 175, 55, 0.3);
         }
 
-        /* THEME CLASSES (TARGET Language determines the look) */
+        /* THEME CLASSES */
         body.theme-sindarin { --primary: #FFD700; --secondary: #AA8800; --font-head: 'Cinzel', serif; --bg-grad: radial-gradient(circle, #1a2520, #000); }
         body.theme-quenya { --primary: #00BFFF; --secondary: #C0C0C0; --font-head: 'Cinzel', serif; --bg-grad: linear-gradient(to top, #001f3f, #000); }
         body.theme-khuzdul { --primary: #cd7f32; --secondary: #3e2723; --font-head: 'Rye', serif; --bg-grad: linear-gradient(to bottom, #2b1d14, #000); }
@@ -41,12 +40,11 @@
             justify-content: center;
             align-items: center;
             transition: background 1s ease;
-            overflow: hidden; /* Mencegah scrollbar saat animasi partikel */
+            overflow: hidden;
         }
 
-        /* --- PARTICLES CSS --- */
+        /* --- PARTICLES --- */
         #particles { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-        
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; opacity: 0; }
         .dust { position: absolute; background: #cd7f32; border-radius: 50%; animation: floatUp 8s linear infinite; opacity: 0.3; }
         .ember { position: absolute; background: #ff4500; width: 4px; height: 4px; box-shadow: 0 0 10px #ff0000; animation: floatUp 4s linear infinite; opacity: 0; }
@@ -62,7 +60,7 @@
             border: 1px solid var(--secondary);
             border-radius: 12px;
             padding: 30px;
-            width: 95%; max-width: 800px;
+            width: 95%; max-width: 900px;
             text-align: center;
             box-shadow: 0 10px 50px rgba(0,0,0,0.8);
             backdrop-filter: blur(5px);
@@ -75,68 +73,48 @@
             text-shadow: var(--glow); letter-spacing: 1px;
         }
 
-        /* --- DUAL SELECTOR LAYOUT --- */
+        /* --- UI ELEMENTS --- */
         .selector-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: rgba(0,0,0,0.3);
-            padding: 10px;
-            border-radius: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; margin-bottom: 20px;
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
         }
 
         select {
-            flex: 1;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--secondary);
-            color: var(--primary);
-            padding: 10px;
-            border-radius: 5px;
-            font-family: var(--font-head);
-            cursor: pointer;
-            text-align: center;
-            outline: none;
-            font-size: 0.9rem;
-            text-transform: uppercase;
+            flex: 1; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--secondary); color: var(--primary);
+            padding: 10px; border-radius: 5px;
+            font-family: var(--font-head); cursor: pointer;
+            text-align: center; outline: none;
+            font-size: 0.9rem; text-transform: uppercase;
         }
-        
         select option { background: #111; color: #ccc; font-family: sans-serif; text-transform: none; }
 
         .swap-btn {
             background: none; border: 1px solid var(--primary);
             color: var(--primary); width: 40px; height: 40px;
             border-radius: 50%; cursor: pointer; font-size: 1.2rem;
-            transition: 0.3s;
-            flex-shrink: 0;
+            transition: 0.3s; flex-shrink: 0;
         }
         .swap-btn:hover { background: var(--primary); color: #000; transform: rotate(180deg); }
 
-        /* --- INPUT & OUTPUT --- */
         .io-area { display: flex; flex-direction: column; gap: 15px; }
 
         textarea, .result-div {
             width: 100%; height: 120px;
             background: rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 15px;
-            font-family: var(--font-body);
-            font-size: 1.2rem;
-            color: #fff;
+            border-radius: 8px; padding: 15px;
+            font-family: var(--font-body); font-size: 1.2rem; color: #fff;
             resize: none; outline: none;
         }
-        
         textarea:focus { border-color: var(--primary); box-shadow: var(--glow); }
 
         .result-div {
             display: flex; align-items: center; justify-content: center;
             color: var(--primary); font-style: italic;
-            font-family: var(--font-head); 
-            font-size: 1.5rem;
-            position: relative;
-            word-wrap: break-word;
+            font-family: var(--font-head); font-size: 1.5rem;
+            position: relative; word-wrap: break-word;
         }
 
         .translate-btn {
@@ -158,9 +136,7 @@
         #status { font-size: 0.7rem; color: #777; margin-top: 15px; }
         .raw { font-family: sans-serif; font-size: 0.5em; opacity: 0.5; font-style: normal; }
 
-        @media (min-width: 768px) {
-            .io-area { flex-direction: row; }
-        }
+        @media (min-width: 768px) { .io-area { flex-direction: row; } }
     </style>
 </head>
 <body class="theme-en">
@@ -205,153 +181,7 @@
         <div id="status">Connecting to Archives...</div>
     </div>
 
-    <script>
-        // --- VARIABLES ---
-        let db = {};
-        let isLoaded = false;
+    <script src="script.js"></script> 
 
-        // --- LOAD DATA ---
-        fetch('data.json')
-            .then(res => res.json())
-            .then(data => {
-                db = data;
-                isLoaded = true;
-                document.getElementById('status').innerText = "Archives Loaded.";
-                updateTheme(); // Load theme awal
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('status').innerText = "Error loading data.json (Check Console)";
-            });
-
-        // --- THEME & PARTICLES ---
-        function updateTheme() {
-            const target = document.getElementById('targetLang').value;
-            document.body.className = `theme-${target}`;
-            initParticles(target);
-        }
-
-        function initParticles(race) {
-            const container = document.getElementById('particles');
-            container.innerHTML = ""; 
-
-            let type = 'star';
-            let color = 'white';
-            let count = 40;
-
-            if (race === 'khuzdul') { type = 'dust'; color = '#cd7f32'; count = 30; }
-            else if (race === 'blackspeech') { type = 'ember'; color = '#ff4500'; count = 50; }
-            else if (race === 'rohirric') { type = 'pollen'; color = '#90EE90'; count = 25; }
-            else if (race === 'quenya') { type = 'star'; color = '#00BFFF'; count = 60; }
-            else if (race === 'en') { count = 0; } 
-
-            for (let i = 0; i < count; i++) {
-                let p = document.createElement('div');
-                p.className = type === 'ember' ? 'ember' : (type === 'dust' || type === 'pollen' ? 'dust' : 'star');
-                p.style.left = Math.random() * 100 + 'vw';
-                p.style.backgroundColor = color; 
-
-                if (type === 'star') {
-                    p.style.top = Math.random() * 100 + 'vh';
-                    let s = Math.random() * 3 + 'px';
-                    p.style.width = s; p.style.height = s;
-                    p.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                } else {
-                    let s = Math.random() * 5 + 2 + 'px';
-                    p.style.width = s; p.style.height = s;
-                    p.style.animationDuration = (Math.random() * 5 + 4) + 's';
-                    p.style.animationDelay = (Math.random() * 5) + 's';
-                }
-                container.appendChild(p);
-            }
-        }
-
-        function swapLanguages() {
-            let src = document.getElementById('sourceLang');
-            let tgt = document.getElementById('targetLang');
-            let temp = src.value;
-            src.value = tgt.value;
-            tgt.value = temp;
-            
-            let inText = document.getElementById('inputText');
-            let outText = document.getElementById('outputText');
-            if(outText.innerText !== "...") {
-                inText.value = outText.innerText.replace(/<[^>]*>/g, ''); 
-                outText.innerHTML = "...";
-            }
-            updateTheme();
-        }
-
-        // --- TRANSLATION LOGIC (RENAMED TO AVOID CONFLICT) ---
-        function runTranslate() {
-            if (!isLoaded) return;
-
-            const srcLang = document.getElementById('sourceLang').value;
-            const tgtLang = document.getElementById('targetLang').value;
-            const rawInput = document.getElementById('inputText').value.toLowerCase();
-            const outputDiv = document.getElementById('outputText');
-            const audio = document.getElementById('sfx');
-
-            // Play Sound Effect
-            audio.currentTime = 0; audio.play().catch(()=>{});
-
-            if (!rawInput) return;
-
-            let words = rawInput.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"").split(/\s+/);
-            let result = [];
-
-            // --- FUNGSI PENCARI MAKNA (PIVOT KE INGGRIS) ---
-            function findEnglishMeaning(word, language) {
-                if (language === 'en') return word; 
-                
-                let dict = db[language];
-                if (!dict) return null; // Safety check
-
-                // Reverse Search
-                for (let enKey in dict) {
-                    if (dict[enKey] === word) return enKey; 
-                }
-                return null;
-            }
-
-            // --- FUNGSI TERJEMAH KE TARGET ---
-            function findTargetWord(englishWord, language) {
-                if (language === 'en') return englishWord; 
-                
-                let dict = db[language];
-                if (dict && dict[englishWord]) return dict[englishWord]; 
-                return null;
-            }
-
-            words.forEach(w => {
-                if(!w) return;
-
-                // 1. Pivot ke Inggris
-                let pivotWord = findEnglishMeaning(w, srcLang);
-
-                if (pivotWord) {
-                    // 2. Dari Inggris ke Target
-                    let finalWord = findTargetWord(pivotWord, tgtLang);
-
-                    if (finalWord) {
-                        result.push(finalWord);
-                    } else {
-                        // Kata ada di source, tapi tidak ada di target
-                        result.push(`<span class="raw">(${pivotWord}?)</span>`);
-                    }
-                } else {
-                    // Kata tidak ditemukan di bahasa asal
-                    result.push(`<span class="raw">(${w})</span>`);
-                }
-            });
-
-            outputDiv.innerHTML = result.join(" ");
-        }
-
-        function copyResult() {
-            const t = document.getElementById('outputText').innerText;
-            navigator.clipboard.writeText(t);
-        }
-    </script>
 </body>
 </html>
