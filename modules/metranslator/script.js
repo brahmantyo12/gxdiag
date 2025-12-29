@@ -74,7 +74,7 @@ function swapLanguages() {
     let outText = document.getElementById('outputText');
     
     if(outText.innerText !== "...") {
-        inText.value = outText.innerText.replace(/<[^>]*>/g, ''); // Bersihkan tag HTML
+        inText.value = outText.innerText.replace(/<[^>]*>/g, ''); 
         outText.innerHTML = "...";
     }
     updateTheme();
@@ -105,18 +105,26 @@ function runTranslate() {
     let result = [];
 
     // --- RULES TATA BAHASA ---
-    // Daftar kata kerja bantu "to be"
-    const ignoreList = ['is', 'am', 'are', 'was', 'were'];
+    const copulaList = ['is', 'am', 'are', 'was', 'were'];
+    const articleList = ['the', 'a', 'an'];
     
-    // Daftar bahasa yang TIDAK pakai "to be" (Zero Copula)
-    // NOTE: Rohirric TIDAK masuk sini karena dia pakai "is" (Old English style)
+    // 1. Bahasa yang TIDAK pakai "to be" (Zero Copula)
+    // Rohirric dihapus dari sini karena dia pakai "is"
     const zeroCopulaLangs = ['sindarin', 'quenya', 'khuzdul', 'blackspeech'];
+
+    // 2. Bahasa yang TIDAK pakai "the/a/an" (Zero Article)
+    // Sindarin/Quenya/Rohirric punya kata "the", jadi tidak dimasukkan sini
+    const zeroArticleLangs = ['khuzdul', 'blackspeech'];
 
     // --- HELPER: Cari makna Inggris (Pivot) ---
     function findEnglishMeaning(word, language) {
         if (language === 'en') return word; 
         
         let dict = db[language];
+        // Cek juga dictionary Neo jika ada
+        if (language === 'khuzdul' && !dict[word] && db['khuzdul_neo']) dict = {...dict, ...db['khuzdul_neo']};
+        if (language === 'blackspeech' && !dict[word] && db['blackspeech_neo']) dict = {...dict, ...db['blackspeech_neo']};
+
         if (!dict) return null;
 
         // Reverse Search (Value -> Key)
@@ -126,12 +134,22 @@ function runTranslate() {
         return null;
     }
 
-    // --- HELPER: Cari kata Target ---
+    // --- HELPER: Cari kata Target (Support Neo-Languages) ---
     function findTargetWord(englishWord, language) {
         if (language === 'en') return englishWord; 
         
+        // 1. Cek Database Utama (Canon)
         let dict = db[language];
-        if (dict && dict[englishWord]) return dict[englishWord]; 
+        if (dict && dict[englishWord]) return dict[englishWord];
+
+        // 2. Cek Database Neo (Ekspansi)
+        if (language === 'khuzdul' && db['khuzdul_neo'] && db['khuzdul_neo'][englishWord]) {
+            return db['khuzdul_neo'][englishWord];
+        }
+        if (language === 'blackspeech' && db['blackspeech_neo'] && db['blackspeech_neo'][englishWord]) {
+            return db['blackspeech_neo'][englishWord];
+        }
+
         return null;
     }
 
@@ -139,11 +157,14 @@ function runTranslate() {
     words.forEach(w => {
         if(!w) return;
 
-        // LOGIC PINTAR: 
-        // Jika target bahasa ada di daftar zeroCopulaLangs, DAN kata ini adalah "is/am/are",
-        // maka SKIP kata ini (jangan diterjemahkan).
-        if (zeroCopulaLangs.includes(tgtLang) && ignoreList.includes(w)) {
+        // RULE 1: Skip "is/am/are" untuk bahasa tertentu
+        if (zeroCopulaLangs.includes(tgtLang) && copulaList.includes(w)) {
             return; 
+        }
+
+        // RULE 2: Skip "the/a/an" KECUALI untuk Sindarin/Quenya/Rohirric
+        if (zeroArticleLangs.includes(tgtLang) && articleList.includes(w)) {
+            return;
         }
 
         // 1. Pivot ke Inggris dulu
@@ -160,13 +181,14 @@ function runTranslate() {
                 result.push(`<span class="raw">(${pivotWord}?)</span>`);
             }
         } else {
-            // Kata tidak ditemukan di kamus manapun
-            // Cek lagi: jika ini stopwords (is/am/are) yang lolos filter (misal utk Rohirric), biarkan saja
-            if (!ignoreList.includes(w)) {
+            // Kata tidak ditemukan, tapi cek apakah ini artikel/copula yang lolos filter
+            // (Misal: "the" di Sindarin tapi lupa dimasukkan ke data.json)
+            if (!copulaList.includes(w) && !articleList.includes(w)) {
                 result.push(`<span class="raw">(${w})</span>`);
             } else {
-                 // Jika ini "is" di Rohirric tapi tidak ada di kamus, biarkan dalam kurung
-                 result.push(`<span class="raw">(${w})</span>`);
+                // Kalau cuma artikel yang tidak ketemu, biarkan kosong atau beri tanda tanya
+                // Untuk Rohirric "the" = "se", kalau belum ada di DB akan muncul (the?)
+                result.push(`<span class="raw">(${w}?)</span>`);
             }
         }
     });
