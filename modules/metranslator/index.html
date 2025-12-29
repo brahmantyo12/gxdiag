@@ -12,7 +12,7 @@
     <style>
         /* --- CSS VARIABLES --- */
         :root {
-            /* Default Theme: Neutral */
+            /* Default Theme: Neutral/English */
             --primary: #d4af37;
             --secondary: #5c4033;
             --glass: rgba(20, 15, 10, 0.9);
@@ -22,7 +22,7 @@
             --glow: 0 0 10px rgba(212, 175, 55, 0.3);
         }
 
-        /* THEME CLASSES */
+        /* THEME CLASSES (TARGET Language determines the look) */
         body.theme-sindarin { --primary: #FFD700; --secondary: #AA8800; --font-head: 'Cinzel', serif; --bg-grad: radial-gradient(circle, #1a2520, #000); }
         body.theme-quenya { --primary: #00BFFF; --secondary: #C0C0C0; --font-head: 'Cinzel', serif; --bg-grad: linear-gradient(to top, #001f3f, #000); }
         body.theme-khuzdul { --primary: #cd7f32; --secondary: #3e2723; --font-head: 'Rye', serif; --bg-grad: linear-gradient(to bottom, #2b1d14, #000); }
@@ -41,7 +41,7 @@
             justify-content: center;
             align-items: center;
             transition: background 1s ease;
-            overflow: hidden;
+            overflow: hidden; /* Mencegah scrollbar saat animasi partikel */
         }
 
         /* --- PARTICLES CSS --- */
@@ -62,7 +62,7 @@
             border: 1px solid var(--secondary);
             border-radius: 12px;
             padding: 30px;
-            width: 95%; max-width: 900px; /* Lebar ditambah sedikit agar teks muat */
+            width: 95%; max-width: 800px;
             text-align: center;
             box-shadow: 0 10px 50px rgba(0,0,0,0.8);
             backdrop-filter: blur(5px);
@@ -98,18 +98,18 @@
             cursor: pointer;
             text-align: center;
             outline: none;
-            font-size: 0.9rem; /* Sedikit dikecilkan agar teks panjang muat di HP */
+            font-size: 0.9rem;
             text-transform: uppercase;
         }
         
-        select option { background: #111; color: #ccc; font-family: sans-serif; text-transform: none;}
+        select option { background: #111; color: #ccc; font-family: sans-serif; text-transform: none; }
 
         .swap-btn {
             background: none; border: 1px solid var(--primary);
             color: var(--primary); width: 40px; height: 40px;
             border-radius: 50%; cursor: pointer; font-size: 1.2rem;
             transition: 0.3s;
-            flex-shrink: 0; /* Agar tombol tidak tergencet */
+            flex-shrink: 0;
         }
         .swap-btn:hover { background: var(--primary); color: #000; transform: rotate(180deg); }
 
@@ -201,27 +201,30 @@
             </div>
         </div>
 
-        <button class="translate-btn" onclick="translate()">TRANSLATE</button>
+        <button class="translate-btn" onclick="runTranslate()">TRANSLATE</button>
         <div id="status">Connecting to Archives...</div>
     </div>
 
     <script>
+        // --- VARIABLES ---
         let db = {};
         let isLoaded = false;
 
+        // --- LOAD DATA ---
         fetch('data.json')
             .then(res => res.json())
             .then(data => {
                 db = data;
                 isLoaded = true;
                 document.getElementById('status').innerText = "Archives Loaded.";
-                updateTheme();
+                updateTheme(); // Load theme awal
             })
             .catch(err => {
                 console.error(err);
-                document.getElementById('status').innerText = "Error loading data.json";
+                document.getElementById('status').innerText = "Error loading data.json (Check Console)";
             });
 
+        // --- THEME & PARTICLES ---
         function updateTheme() {
             const target = document.getElementById('targetLang').value;
             document.body.className = `theme-${target}`;
@@ -279,7 +282,8 @@
             updateTheme();
         }
 
-        function translate() {
+        // --- TRANSLATION LOGIC (RENAMED TO AVOID CONFLICT) ---
+        function runTranslate() {
             if (!isLoaded) return;
 
             const srcLang = document.getElementById('sourceLang').value;
@@ -288,6 +292,7 @@
             const outputDiv = document.getElementById('outputText');
             const audio = document.getElementById('sfx');
 
+            // Play Sound Effect
             audio.currentTime = 0; audio.play().catch(()=>{});
 
             if (!rawInput) return;
@@ -300,7 +305,9 @@
                 if (language === 'en') return word; 
                 
                 let dict = db[language];
-                // Reverse Search: Cari Value yang cocok, ambil Key-nya
+                if (!dict) return null; // Safety check
+
+                // Reverse Search
                 for (let enKey in dict) {
                     if (dict[enKey] === word) return enKey; 
                 }
