@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Meta & AI Forensics</title>
+    <title>GXDiag - Meta Forensics</title>
     <meta name="theme-color" content="#1a1a1a">
     
     <link rel="stylesheet" href="../../css/style.css">
@@ -11,102 +11,100 @@
 
     <style>
         body { background: #111; color: #eee; font-family: 'Segoe UI', sans-serif; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 950px; margin: 0 auto; }
         
         .module-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
         .back-btn { text-decoration: none; color: #888; font-size: 1.1rem; }
         .back-btn:hover { color: #fff; }
         .module-title { font-size: 1.4rem; font-weight: 800; color: #ff4081; text-transform: uppercase; letter-spacing: 2px; }
 
-        .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .layout-grid { grid-template-columns: 1fr; } }
+        .layout-grid { display: grid; grid-template-columns: 350px 1fr; gap: 25px; }
+        @media (max-width: 800px) { .layout-grid { grid-template-columns: 1fr; } }
 
         /* Left: Drop Zone & Preview */
         .drop-zone {
             background: #1a1a1a; border: 2px dashed #444; border-radius: 15px;
             padding: 30px; text-align: center; transition: 0.3s; cursor: pointer;
-            margin-bottom: 20px; min-height: 200px; display: flex; flex-direction: column; justify-content: center;
+            min-height: 200px; display: flex; flex-direction: column; justify-content: center;
         }
         .drop-zone:hover { border-color: #ff4081; background: rgba(255, 64, 129, 0.05); }
-        .preview-box img { max-width: 100%; border-radius: 10px; border: 1px solid #333; display: none; }
+        
+        .preview-wrapper { position: relative; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid #333; display: none; }
+        .preview-wrapper img { width: 100%; display: block; }
+        .file-info { font-size: 0.75rem; color: #777; margin-top: 10px; text-align: center; }
 
         /* Right: Analysis Result */
         .result-panel { display: none; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Verdict Cards */
-        .verdict-box { margin-bottom: 15px; padding: 15px; border-radius: 10px; border-left: 5px solid; background: #1f1f1f; display: flex; align-items: center; gap: 15px; }
-        .vb-safe { border-color: #00ff88; }
-        .vb-warn { border-color: #ff9100; }
-        .vb-danger { border-color: #ff4081; }
-        .vb-ai { border-color: #00e5ff; background: rgba(0, 229, 255, 0.05); }
+        .verdict-box { margin-bottom: 15px; padding: 15px 20px; border-radius: 10px; border-left: 5px solid; background: #1f1f1f; display: flex; align-items: start; gap: 15px; }
+        
+        /* Status Colors */
+        .vb-safe { border-color: #00ff88; background: rgba(0, 255, 136, 0.05); } /* Original Camera */
+        .vb-warn { border-color: #ffb300; background: rgba(255, 179, 0, 0.05); } /* Edited / Photoshop */
+        .vb-ai { border-color: #00e5ff; background: rgba(0, 229, 255, 0.05); } /* AI Generated */
+        .vb-null { border-color: #777; background: #222; } /* No Data */
 
-        .vb-icon { font-size: 2rem; }
-        .vb-content h4 { margin: 0; font-size: 1rem; color: #fff; }
-        .vb-content p { margin: 3px 0 0 0; font-size: 0.8rem; color: #aaa; }
+        .vb-icon { font-size: 1.8rem; line-height: 1; margin-top: 2px; }
+        .vb-content h4 { margin: 0 0 5px 0; font-size: 1rem; color: #fff; font-weight: 700; }
+        .vb-content p { margin: 0; font-size: 0.85rem; color: #bbb; line-height: 1.4; }
 
-        /* Detail List */
-        .evidence-list { list-style: none; padding: 0; margin: 0; }
-        .evidence-item { padding: 8px 0; border-bottom: 1px solid #333; font-size: 0.85rem; display: flex; justify-content: space-between; }
-        .ev-label { color: #888; }
-        .ev-val { font-weight: bold; color: #eee; text-align: right; max-width: 60%; word-break: break-word;}
-        .ev-flag { color: #ff4081; }
+        /* Evidence Table */
+        .evidence-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .evidence-table td { padding: 8px 0; border-bottom: 1px solid #333; font-size: 0.85rem; }
+        .evidence-table td:first-child { color: #888; width: 40%; }
+        .evidence-table td:last-child { color: #eee; font-weight: 600; text-align: right; word-break: break-all; }
+
+        .tag-highlight { padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+        .th-red { background: rgba(255, 64, 129, 0.2); color: #ff4081; border: 1px solid #ff4081; }
+        .th-blue { background: rgba(0, 229, 255, 0.2); color: #00e5ff; border: 1px solid #00e5ff; }
 
         .ai-prompt-box {
-            background: #151515; border: 1px solid #333; padding: 10px; border-radius: 8px;
-            font-family: monospace; font-size: 0.75rem; color: #00e5ff; margin-top: 10px;
-            max-height: 100px; overflow-y: auto; display: none;
+            background: #111; border: 1px solid #333; padding: 15px; border-radius: 8px;
+            font-family: monospace; font-size: 0.75rem; color: #00e5ff; margin-top: 15px;
+            max-height: 150px; overflow-y: auto; display: none; line-height: 1.5;
         }
+        .ai-label { font-size: 0.7rem; color: #555; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="module-header">
-            <a href="../../index.html" class="back-btn">⬅ Back</a>
-            <div class="module-title">Forensic & AI Detector</div>
+            <a href="../../index.html" class="back-btn">⬅ Dashboard</a>
+            <div class="module-title">Image Forensics</div>
         </div>
 
         <div class="layout-grid">
             <div>
                 <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-                    <div style="font-size:2.5rem;">📁</div>
-                    <div style="margin:10px 0; font-weight:bold; color:#888;">Click or Drop Image Here</div>
-                    <div style="font-size:0.7rem; color:#555;">JPG/JPEG/TIFF supported</div>
+                    <div style="font-size:2.5rem; margin-bottom:10px;">🔍</div>
+                    <div style="font-weight:bold; color:#ccc;">Select Image to Analyze</div>
+                    <div style="font-size:0.8rem; color:#666; margin-top:5px;">Supports JPG/TIFF Metadata</div>
                     <input type="file" id="file-input" accept="image/jpeg, image/jpg, image/tiff" style="display:none;">
                 </div>
-                <div class="preview-box">
+                
+                <div class="preview-wrapper" id="preview-wrapper">
                     <img id="preview-img" src="" alt="Preview">
                 </div>
+                <div class="file-info" id="file-info"></div>
             </div>
 
             <div class="result-panel" id="result-panel">
-                <h3 style="margin-top:0; color:#fff;">Analysis Report</h3>
+                <h3 style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">Analysis Report</h3>
                 
-                <div id="ai-verdict" class="verdict-box vb-safe" style="display:none;">
-                    <div class="vb-icon">🤖</div>
-                    <div class="vb-content">
-                        <h4>AI Generation Check</h4>
-                        <p id="ai-text">No obvious AI signatures found.</p>
+                <div id="main-verdict">
                     </div>
-                </div>
 
-                <div id="edit-verdict" class="verdict-box vb-safe">
-                    <div class="vb-icon">🖌️</div>
-                    <div class="vb-content">
-                        <h4>Software Modification</h4>
-                        <p id="edit-text">Analyzing...</p>
-                    </div>
-                </div>
-
-                <div style="background: #222; padding: 15px; border-radius: 10px; margin-top:20px;">
-                    <h5 style="margin:0 0 10px 0; color:#888; text-transform:uppercase;">Metadata Evidence</h5>
-                    <ul class="evidence-list" id="evidence-list">
-                        </ul>
+                <div style="background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #333;">
+                    <h5 style="margin:0 0 15px 0; color:#aaa; text-transform:uppercase; letter-spacing:1px; font-size:0.75rem;">Metadata Extract</h5>
+                    <table class="evidence-table" id="evidence-table">
+                        </table>
                 </div>
 
                 <div id="ai-prompt-box" class="ai-prompt-box">
-                    <strong>📄 FOUND GENERATION PROMPT:</strong><br>
+                    <span class="ai-label">Detected Generation Parameters:</span>
                     <span id="prompt-content"></span>
                 </div>
 
@@ -117,137 +115,142 @@
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
-        const resultPanel = document.getElementById('result-panel');
-        const previewImg = document.getElementById('preview-img');
-
-        // Drag & Drop Handlers
+        
+        // Drag & Drop
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'););
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
         fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
 
         function handleFile(file) {
             if (!file) return;
+            
+            // Show file info size
+            document.getElementById('file-info').innerText = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+            
             const reader = new FileReader();
             reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                previewImg.style.display = 'block';
-                resultPanel.style.display = 'block';
-                dropZone.style.display = 'none'; // Sembunyikan dropzone biar rapi
+                const img = document.getElementById('preview-img');
+                img.src = e.target.result;
+                document.getElementById('preview-wrapper').style.display = 'block';
+                dropZone.style.display = 'none';
+                document.getElementById('result-panel').style.display = 'block';
                 
-                // Delay sedikit agar gambar render sebelum analisis
-                setTimeout(() => analyzeImage(previewImg), 200);
+                setTimeout(() => analyzeImage(img), 200);
             };
             reader.readAsDataURL(file);
         }
 
         function analyzeImage(img) {
             EXIF.getData(img, function() {
-                // 1. Ambil Data Mentah
-                const make = EXIF.getTag(this, "Make") || "Unknown";
-                const model = EXIF.getTag(this, "Model") || "Unknown";
-                const software = EXIF.getTag(this, "Software") || "Unknown";
-                const dateOriginal = EXIF.getTag(this, "DateTimeOriginal");
-                const dateDigitized = EXIF.getTag(this, "DateTimeDigitized");
-                const userComment = EXIF.getTag(this, "UserComment") || ""; // Tempat AI biasa sembunyiin prompt
-                const imageDesc = EXIF.getTag(this, "ImageDescription") || "";
+                // 1. Raw Data Extraction
+                const make = EXIF.getTag(this, "Make") || "-";
+                const model = EXIF.getTag(this, "Model") || "-";
+                const software = (EXIF.getTag(this, "Software") || "Unknown").toString();
+                const dateTime = EXIF.getTag(this, "DateTimeOriginal") || EXIF.getTag(this, "DateTime") || "-";
+                const iso = EXIF.getTag(this, "ISOSpeedRatings") || "-";
+                const userComment = EXIF.getTag(this, "UserComment") || "";
 
-                // --- DETEKSI 1: AI GENERATOR ---
-                let isAI = false;
-                let aiTool = "";
-                let aiPrompt = "";
-
-                // Keywords umum di metadata AI
-                const aiKeywords = ["Stable Diffusion", "Midjourney", "DALL-E", "NovelAI", "ComfyUI", "Automatic1111"];
+                // 2. Logic Classification
+                const analysis = classifyImage(software, userComment);
                 
-                // Cek Software Tag
-                if (aiKeywords.some(k => software.includes(k))) { isAI = true; aiTool = software; }
-                
-                // Cek UserComment (Biasanya berisi "Steps: 20, Sampler: Euler a, ...")
-                const commentStr = String.fromCharCode(...(userComment || [])); // Convert code array to string
-                if (commentStr.includes("Steps:") || commentStr.includes("Seed:") || commentStr.includes("CFG scale:")) {
-                    isAI = true; 
-                    aiTool = "Stable Diffusion / SDXL";
-                    aiPrompt = commentStr.replace(/[^\x20-\x7E]/g, ''); // Bersihkan karakter aneh
-                }
-
-                updateAIVerdict(isAI, aiTool, aiPrompt);
-
-                // --- DETEKSI 2: SOFTWARE EDITING ---
-                const editKeywords = ["Photoshop", "GIMP", "Canva", "Lightroom", "Paint", "Editor", "Picasa"];
-                let isEdited = false;
-                let flags = [];
-
-                if (editKeywords.some(k => software.toLowerCase().includes(k.toLowerCase()))) {
-                    isEdited = true;
-                    flags.push(`Software Signature detected: ${software}`);
-                }
-
-                // Cek ketidakcocokan tanggal (Tanda file dimodifikasi setelah dipotret)
-                if (dateOriginal && dateDigitized && dateOriginal !== dateDigitized) {
-                    // Note: Kadang beda dikit wajar, tapi kalau beda hari = edit
-                    flags.push("Timestamp Mismatch (Original vs Digitized)");
-                }
-
-                updateEditVerdict(isEdited, software, flags);
-                renderEvidence(make, model, software, dateOriginal, isAI, isEdited);
+                // 3. Render UI
+                renderVerdict(analysis);
+                renderTable(make, model, software, dateTime, iso, analysis);
             });
         }
 
-        function updateAIVerdict(isAI, tool, prompt) {
-            const box = document.getElementById('ai-verdict');
-            const text = document.getElementById('ai-text');
+        function classifyImage(software, userComment) {
+            let result = {
+                type: "UNKNOWN", // UNKNOWN, ORIGINAL, EDITED, AI
+                title: "No Signature Found",
+                desc: "Metadata is empty or generic. Could be a screenshot, social media download (WA/FB), or stripped file.",
+                cssClass: "vb-null",
+                icon: "📁",
+                prompt: null
+            };
+
+            const swLower = software.toLowerCase();
+            const commentStr = String.fromCharCode(...(userComment || []));
+
+            // -- CHECK 1: AI GENERATED --
+            const aiKeywords = ["stable diffusion", "midjourney", "dall-e", "novelai", "automatic1111", "comfyui"];
+            if (aiKeywords.some(k => swLower.includes(k)) || commentStr.includes("Steps:") || commentStr.includes("Seed:")) {
+                result.type = "AI";
+                result.title = "AI Generated Content";
+                result.desc = "Metadata contains signatures from AI Image Generators (Stable Diffusion/Midjourney).";
+                result.cssClass = "vb-ai";
+                result.icon = "🤖";
+                result.prompt = commentStr.replace(/[^\x20-\x7E]/g, ''); // Clean non-printable chars
+                return result;
+            }
+
+            // -- CHECK 2: POST-PROCESSING (EDITING) --
+            const editorKeywords = ["photoshop", "gimp", "lightroom", "canva", "paint", "picasa", "affinity"];
+            if (editorKeywords.some(k => swLower.includes(k))) {
+                result.type = "EDITED";
+                result.title = "Post-Processing Detected";
+                result.desc = `Software tag indicates use of <strong>${software}</strong>. This means the image was saved via an editor, but doesn't strictly prove manipulation (could be resize/color grade).`;
+                result.cssClass = "vb-warn";
+                result.icon = "🖌️";
+                return result;
+            }
+
+            // -- CHECK 3: CAMERA / OS (ORIGINAL) --
+            const camKeywords = ["android", "ios", "google", "apple", "samsung", "ver", "build", "miui"];
+            if (camKeywords.some(k => swLower.includes(k)) || (software !== "Unknown" && !swLower.includes("adobe"))) {
+                result.type = "ORIGINAL";
+                result.title = "Camera / OS Processed";
+                result.desc = `Signature <strong>${software}</strong> belongs to a Camera or Operating System. This is standard for photos taken directly from a phone (Computational Photography).`;
+                result.cssClass = "vb-safe";
+                result.icon = "📸";
+                return result;
+            }
+
+            // Fallback: Empty
+            if(software === "Unknown") {
+                // Keep default UNKNOWN
+            }
+
+            return result;
+        }
+
+        function renderVerdict(data) {
+            const container = document.getElementById('main-verdict');
+            container.innerHTML = `
+                <div class="verdict-box ${data.cssClass}">
+                    <div class="vb-icon">${data.icon}</div>
+                    <div class="vb-content">
+                        <h4>${data.title}</h4>
+                        <p>${data.desc}</p>
+                    </div>
+                </div>
+            `;
+
             const promptBox = document.getElementById('ai-prompt-box');
-            
-            box.style.display = 'flex';
-            if (isAI) {
-                box.className = "verdict-box vb-ai";
-                box.querySelector('.vb-icon').innerText = "🤖";
-                text.innerHTML = `<strong>POSITIVE:</strong> Image generated by <strong>${tool}</strong>.`;
-                if(prompt) {
-                    promptBox.style.display = 'block';
-                    document.getElementById('prompt-content').innerText = prompt;
-                }
+            if(data.type === "AI" && data.prompt) {
+                promptBox.style.display = 'block';
+                document.getElementById('prompt-content').innerText = data.prompt;
             } else {
-                box.className = "verdict-box vb-safe";
-                box.querySelector('.vb-icon').innerText = "human";
-                text.innerText = "No AI generation metadata signatures found.";
                 promptBox.style.display = 'none';
             }
         }
 
-        function updateEditVerdict(isEdited, software, flags) {
-            const box = document.getElementById('edit-verdict');
-            const text = document.getElementById('edit-text');
+        function renderTable(make, model, sw, date, iso, analysis) {
+            const table = document.getElementById('evidence-table');
+            
+            // Format Software Tag visual
+            let swDisplay = sw;
+            if (analysis.type === "EDITED") swDisplay = `<span class="tag-highlight th-red">${sw}</span>`;
+            if (analysis.type === "AI") swDisplay = `<span class="tag-highlight th-blue">${sw}</span>`;
 
-            if (isEdited) {
-                box.className = "verdict-box vb-danger";
-                box.querySelector('.vb-icon').innerText = "🚨";
-                text.innerHTML = `<strong>MODIFIED:</strong> Traces of editing found.<br><span style="font-size:0.7rem">${flags.join(', ')}</span>`;
-            } else if (software === "Unknown") {
-                 box.className = "verdict-box vb-warn";
-                 box.querySelector('.vb-icon').innerText = "⚠️";
-                 text.innerText = "No software signature. Could be a screenshot or metadata stripped.";
-            } else {
-                box.className = "verdict-box vb-safe";
-                box.querySelector('.vb-icon').innerText = "✅";
-                text.innerText = "Appears original / Unmodified by common editors.";
-            }
-        }
-
-        function renderEvidence(make, model, sw, date, isAI, isEdited) {
-            const list = document.getElementById('evidence-list');
-            let html = `
-                <li class="evidence-item"><span class="ev-label">Device Make</span> <span class="ev-val">${make}</span></li>
-                <li class="evidence-item"><span class="ev-label">Device Model</span> <span class="ev-val">${model}</span></li>
-                <li class="evidence-item"><span class="ev-label">Date Original</span> <span class="ev-val">${date || "N/A"}</span></li>
+            table.innerHTML = `
+                <tr><td>Device Make</td><td>${make}</td></tr>
+                <tr><td>Device Model</td><td>${model}</td></tr>
+                <tr><td>Software Tag</td><td>${swDisplay}</td></tr>
+                <tr><td>Date Original</td><td>${date}</td></tr>
+                <tr><td>ISO Speed</td><td>${iso}</td></tr>
             `;
-
-            // Highlight Software jika mencurigakan
-            let swStyle = isAI ? "color:#00e5ff" : (isEdited ? "color:#ff4081" : "color:#fff");
-            html += `<li class="evidence-item"><span class="ev-label">Software Tag</span> <span class="ev-val" style="${swStyle}">${sw}</span></li>`;
-
-            list.innerHTML = html;
         }
     </script>
 </body>
