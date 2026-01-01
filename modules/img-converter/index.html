@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Image Converter</title>
+    <meta name="theme-color" content="#1a1a1a">
+    
+    <link rel="stylesheet" href="../../css/style.css">
+
+    <style>
+        body { background: #111; color: #eee; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        /* Header */
+        .module-header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 20px; }
+        .back-btn { text-decoration: none; color: #888; font-size: 1.1rem; transition: 0.2s; }
+        .back-btn:hover { color: #fff; }
+        .module-title { font-size: 1.5rem; font-weight: 800; color: #ff9100; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Layout */
+        .converter-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+        @media (max-width: 800px) { .converter-grid { grid-template-columns: 1fr; } }
+
+        /* Drop Zone */
+        .drop-zone {
+            background: #1a1a1a; border: 2px dashed #444; border-radius: 15px;
+            padding: 40px; text-align: center; transition: 0.3s; cursor: pointer;
+            margin-bottom: 20px; position: relative; min-height: 250px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .drop-zone:hover { border-color: #ff9100; background: rgba(255, 145, 0, 0.05); }
+        .drop-zone.active { border-color: #00e5ff; }
+        
+        .preview-img { max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); display: none; }
+        .dz-content { pointer-events: none; }
+
+        /* Controls Panel */
+        .control-panel { background: #1a1a1a; border: 1px solid #333; padding: 20px; border-radius: 12px; }
+        .control-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        select, input[type=number] {
+            width: 100%; background: #222; border: 1px solid #444; color: #fff;
+            padding: 10px; border-radius: 6px; font-size: 1rem;
+        }
+        
+        /* Range Slider */
+        input[type=range] { width: 100%; accent-color: #ff9100; cursor: pointer; }
+        .range-val { text-align: right; font-size: 0.8rem; color: #ff9100; margin-top: 5px; }
+
+        /* Stats */
+        .stats-box {
+            background: #111; border: 1px solid #333; border-radius: 8px; padding: 15px;
+            margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.7rem; color: #666; }
+        .stat-val { font-size: 0.9rem; font-weight: bold; color: #eee; }
+        .sv-new { color: #00ff88; }
+
+        /* Action Buttons */
+        .btn-main {
+            background: linear-gradient(135deg, #ff9100, #ffea00); color: #000;
+            width: 100%; padding: 15px; border: none; border-radius: 8px;
+            font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255, 145, 0, 0.4); }
+        .btn-main:disabled { background: #333; color: #777; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="module-header">
+            <a href="../../index.html" class="back-btn">⬅ Dashboard</a>
+            <div class="module-title">Image Converter</div>
+        </div>
+
+        <div class="converter-grid">
+            
+            <div>
+                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="dz-content" id="dz-text">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">🖼️</div>
+                        <div style="font-size: 1.2rem; font-weight: bold; color: #ccc;">Click or Drop Image</div>
+                        <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">JPG, PNG, WEBP, BMP</div>
+                    </div>
+                    <img id="preview-img" class="preview-img" alt="Preview">
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                </div>
+                
+                <div style="text-align:center; font-size:0.8rem; color:#555;">
+                    🔒 Processed locally in your browser. No server upload.
+                </div>
+            </div>
+
+            <div class="control-panel">
+                
+                <div class="control-group">
+                    <label>Convert To Format</label>
+                    <select id="format-select" onchange="updateSettings()">
+                        <option value="image/jpeg">JPG (Standard)</option>
+                        <option value="image/png">PNG (Transparent)</option>
+                        <option value="image/webp" selected>WEBP (Modern Web)</option>
+                        <option value="image/bmp">BMP (Raw Bitmap)</option>
+                    </select>
+                </div>
+
+                <div class="control-group" id="quality-group">
+                    <label>Quality / Compression</label>
+                    <input type="range" id="quality" min="0.1" max="1.0" step="0.05" value="0.9" oninput="updateQualityVal()">
+                    <div class="range-val" id="quality-val">90%</div>
+                </div>
+
+                <div class="stats-box">
+                    <div class="stat-item">
+                        <div class="stat-label">Original Size</div>
+                        <div class="stat-val" id="size-original">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Estimated Output</div>
+                        <div class="stat-val sv-new" id="size-output">-</div>
+                    </div>
+                </div>
+
+                <button class="btn-main" id="btn-convert" onclick="convertAndDownload()" disabled>
+                    <span>⬇ Download</span>
+                </button>
+
+                <div id="status-msg" style="text-align:center; margin-top:10px; font-size:0.8rem; color:#00ff88; display:none;">
+                    Conversion Complete!
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <canvas id="hidden-canvas" style="display: none;"></canvas>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewImg = document.getElementById('preview-img');
+        const dzText = document.getElementById('dz-text');
+        const canvas = document.getElementById('hidden-canvas');
+        const ctx = canvas.getContext('2d');
+        const btnConvert = document.getElementById('btn-convert');
+        
+        let originalFile = null;
+
+        // Drag & Drop Logic
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+        dropZone.addEventListener('drop', (e) => { 
+            e.preventDefault(); 
+            dropZone.classList.remove('active'); 
+            handleFile(e.dataTransfer.files[0]); 
+        });
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) return alert("Please upload an image file.");
+            
+            originalFile = file;
+            document.getElementById('size-original').innerText = formatBytes(file.size);
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                dzText.style.display = 'none';
+                
+                // Load image to canvas for size estimation
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    // Draw initial preview calculation
+                    updateSettings(); 
+                    btnConvert.disabled = false;
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateSettings() {
+            if (!originalFile) return;
+
+            const format = document.getElementById('format-select').value;
+            const qualityGroup = document.getElementById('quality-group');
+            
+            // PNG & BMP tidak support quality lossy compression di canvas API standard
+            if (format === 'image/png' || format === 'image/bmp') {
+                qualityGroup.style.opacity = '0.5';
+                qualityGroup.style.pointerEvents = 'none';
+                document.getElementById('quality-val').innerText = "Lossless (100%)";
+            } else {
+                qualityGroup.style.opacity = '1';
+                qualityGroup.style.pointerEvents = 'auto';
+                updateQualityVal();
+            }
+
+            estimateSize();
+        }
+
+        function updateQualityVal() {
+            const val = document.getElementById('quality').value;
+            document.getElementById('quality-val').innerText = Math.round(val * 100) + '%';
+            estimateSize(); // Re-estimate when slider moves
+        }
+
+        function estimateSize() {
+            // Note: Canvas.toDataURL/toBlob is async or heavy. 
+            // For simple estimation, we simulate the conversion.
+            // This is a rough simulation to avoid freezing UI on slider drag.
+            
+            const format = document.getElementById('format-select').value;
+            const quality = parseFloat(document.getElementById('quality').value);
+            
+            // Process Image on Canvas
+            const img = previewImg; 
+            
+            // Smart Background Handling
+            // If converting PNG (transparent) to JPG, fill white first
+            if (format === 'image/jpeg') {
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Get Data
+            canvas.toBlob((blob) => {
+                if(blob) {
+                    document.getElementById('size-output').innerText = formatBytes(blob.size);
+                }
+            }, format, quality);
+        }
+
+        function convertAndDownload() {
+            if (!originalFile) return;
+            const btn = document.getElementById('btn-convert');
+            const format = document.getElementById('format-select').value;
+            const quality = parseFloat(document.getElementById('quality').value);
+            
+            btn.innerHTML = "⏳ Processing...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                // Ensure canvas is fresh (in case user changed something)
+                if (format === 'image/jpeg') {
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                ctx.drawImage(previewImg, 0, 0, canvas.width, canvas.height);
+
+                // Convert
+                const dataUrl = canvas.toDataURL(format, quality);
+                
+                // Create Filename
+                let ext = "jpg";
+                if (format === 'image/png') ext = "png";
+                if (format === 'image/webp') ext = "webp";
+                if (format === 'image/bmp') ext = "bmp";
+
+                const originalName = originalFile.name.substring(0, originalFile.name.lastIndexOf('.'));
+                const newName = `${originalName}-converted.${ext}`;
+
+                // Trigger Download
+                const link = document.createElement('a');
+                link.download = newName;
+                link.href = dataUrl;
+                link.click();
+
+                // Reset Button
+                btn.innerHTML = "⬇ Download Again";
+                btn.disabled = false;
+                
+                const msg = document.getElementById('status-msg');
+                msg.style.display = 'block';
+                setTimeout(() => msg.style.display = 'none', 3000);
+
+            }, 500); // Small delay to allow UI update
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
