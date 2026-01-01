@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Meta Forensics</title>
+    <title>GXDiag - Meta & Reverse Search</title>
     <meta name="theme-color" content="#1a1a1a">
     
     <link rel="stylesheet" href="../../css/style.css">
@@ -30,7 +30,8 @@
         .drop-zone:hover { border-color: #ff4081; background: rgba(255, 64, 129, 0.05); }
         
         .preview-wrapper { position: relative; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid #333; display: none; }
-        .preview-wrapper img { width: 100%; display: block; }
+        .preview-wrapper img { width: 100%; display: block; cursor: grab; }
+        .preview-wrapper img:active { cursor: grabbing; }
         .file-info { font-size: 0.75rem; color: #777; margin-top: 10px; text-align: center; }
 
         /* Right: Analysis Result */
@@ -39,12 +40,10 @@
 
         /* Verdict Cards */
         .verdict-box { margin-bottom: 15px; padding: 15px 20px; border-radius: 10px; border-left: 5px solid; background: #1f1f1f; display: flex; align-items: start; gap: 15px; }
-        
-        /* Status Colors */
-        .vb-safe { border-color: #00ff88; background: rgba(0, 255, 136, 0.05); } /* Original Camera */
-        .vb-warn { border-color: #ffb300; background: rgba(255, 179, 0, 0.05); } /* Edited / Photoshop */
-        .vb-ai { border-color: #00e5ff; background: rgba(0, 229, 255, 0.05); } /* AI Generated */
-        .vb-null { border-color: #777; background: #222; } /* No Data */
+        .vb-safe { border-color: #00ff88; background: rgba(0, 255, 136, 0.05); } 
+        .vb-warn { border-color: #ffb300; background: rgba(255, 179, 0, 0.05); } 
+        .vb-ai { border-color: #00e5ff; background: rgba(0, 229, 255, 0.05); } 
+        .vb-null { border-color: #777; background: #222; }
 
         .vb-icon { font-size: 1.8rem; line-height: 1; margin-top: 2px; }
         .vb-content h4 { margin: 0 0 5px 0; font-size: 1rem; color: #fff; font-weight: 700; }
@@ -60,12 +59,38 @@
         .th-red { background: rgba(255, 64, 129, 0.2); color: #ff4081; border: 1px solid #ff4081; }
         .th-blue { background: rgba(0, 229, 255, 0.2); color: #00e5ff; border: 1px solid #00e5ff; }
 
-        .ai-prompt-box {
-            background: #111; border: 1px solid #333; padding: 15px; border-radius: 8px;
-            font-family: monospace; font-size: 0.75rem; color: #00e5ff; margin-top: 15px;
-            max-height: 150px; overflow-y: auto; display: none; line-height: 1.5;
+        /* REVERSE SEARCH SECTION (NEW) */
+        .osint-section { margin-top: 20px; background: #151515; border: 1px solid #333; border-radius: 10px; padding: 15px; }
+        .osint-header { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .osint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .osint-btn {
+            text-decoration: none; padding: 10px; border-radius: 6px; font-size: 0.8rem;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-weight: bold; transition: 0.2s; border: 1px solid #333;
         }
-        .ai-label { font-size: 0.7rem; color: #555; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+        .osint-btn:hover { transform: translateY(-2px); }
+        
+        .ob-google { background: #303134; color: #fff; }
+        .ob-google:hover { background: #4285f4; border-color: #4285f4; }
+        
+        .ob-yandex { background: #303134; color: #fff; }
+        .ob-yandex:hover { background: #fc3f1d; border-color: #fc3f1d; } /* Yandex Red */
+        
+        .ob-bing { background: #303134; color: #fff; }
+        .ob-bing:hover { background: #00897b; border-color: #00897b; }
+
+        .ob-tineye { background: #303134; color: #fff; }
+        .ob-tineye:hover { background: #00a4e4; border-color: #00a4e4; }
+
+        .drag-hint { font-size: 0.7rem; color: #666; text-align: center; margin-top: 10px; font-style: italic; }
+
+        /* Prompt Box & Raw */
+        .ai-prompt-box { background: #111; border: 1px solid #333; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; color: #00e5ff; margin-top: 15px; max-height: 150px; overflow-y: auto; display: none; line-height: 1.5; }
+        .raw-section { margin-top: 20px; }
+        .raw-btn { background: #222; border: 1px solid #444; color: #aaa; width: 100%; padding: 10px; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; border-radius: 8px; transition: 0.3s; }
+        .raw-btn:hover { background: #333; color: #fff; border-color: #666; }
+        .raw-content { display: none; background: #000; border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 10px; font-family: monospace; font-size: 0.75rem; color: #0f0; max-height: 300px; overflow-y: auto; word-break: break-all; }
+        .raw-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding: 4px 0; }
     </style>
 </head>
 <body>
@@ -73,39 +98,56 @@
     <div class="container">
         <div class="module-header">
             <a href="../../index.html" class="back-btn">⬅ Dashboard</a>
-            <div class="module-title">Image Forensics</div>
+            <div class="module-title">Forensic & Reverse Search</div>
         </div>
 
         <div class="layout-grid">
             <div>
                 <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
                     <div style="font-size:2.5rem; margin-bottom:10px;">🔍</div>
-                    <div style="font-weight:bold; color:#ccc;">Select Image to Analyze</div>
-                    <div style="font-size:0.8rem; color:#666; margin-top:5px;">Supports JPG/TIFF Metadata</div>
+                    <div style="font-weight:bold; color:#ccc;">Select Image</div>
+                    <div style="font-size:0.8rem; color:#666; margin-top:5px;">Check Metadata & Similiars</div>
                     <input type="file" id="file-input" accept="image/jpeg, image/jpg, image/tiff" style="display:none;">
                 </div>
                 
                 <div class="preview-wrapper" id="preview-wrapper">
-                    <img id="preview-img" src="" alt="Preview">
-                </div>
+                    <img id="preview-img" src="" alt="Preview" draggable="true">
+                    </div>
                 <div class="file-info" id="file-info"></div>
+
+                <div class="osint-section" id="osint-panel" style="display:none;">
+                    <div class="osint-header">🌍 Reverse Image Search</div>
+                    <div class="osint-grid">
+                        <a href="https://lens.google.com/" target="_blank" class="osint-btn ob-google">Google Lens</a>
+                        <a href="https://yandex.com/images/" target="_blank" class="osint-btn ob-yandex">Yandex Img</a>
+                        <a href="https://www.bing.com/visualsearch" target="_blank" class="osint-btn ob-bing">Bing Visual</a>
+                        <a href="https://tineye.com/" target="_blank" class="osint-btn ob-tineye">TinEye</a>
+                    </div>
+                    <div class="drag-hint">
+                        💡 <strong>How to check:</strong> Click a button above, then <strong>Drag & Drop</strong> the image from the preview box into the search tab.
+                    </div>
+                </div>
+
             </div>
 
             <div class="result-panel" id="result-panel">
-                <h3 style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">Analysis Report</h3>
+                <h3 style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">Forensic Report</h3>
                 
-                <div id="main-verdict">
-                    </div>
+                <div id="main-verdict"></div>
 
                 <div style="background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #333;">
                     <h5 style="margin:0 0 15px 0; color:#aaa; text-transform:uppercase; letter-spacing:1px; font-size:0.75rem;">Metadata Extract</h5>
-                    <table class="evidence-table" id="evidence-table">
-                        </table>
+                    <table class="evidence-table" id="evidence-table"></table>
                 </div>
 
                 <div id="ai-prompt-box" class="ai-prompt-box">
                     <span class="ai-label">Detected Generation Parameters:</span>
                     <span id="prompt-content"></span>
+                </div>
+
+                <div class="raw-section">
+                    <button class="raw-btn" onclick="toggleRaw()">📂 View Full RAW Metadata</button>
+                    <div class="raw-content" id="raw-content"></div>
                 </div>
 
             </div>
@@ -115,8 +157,8 @@
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
+        let currentTags = {};
         
-        // Drag & Drop
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
@@ -124,8 +166,6 @@
 
         function handleFile(file) {
             if (!file) return;
-            
-            // Show file info size
             document.getElementById('file-info').innerText = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
             
             const reader = new FileReader();
@@ -135,6 +175,8 @@
                 document.getElementById('preview-wrapper').style.display = 'block';
                 dropZone.style.display = 'none';
                 document.getElementById('result-panel').style.display = 'block';
+                document.getElementById('osint-panel').style.display = 'block'; // Show OSINT buttons
+                document.getElementById('raw-content').style.display = 'none';
                 
                 setTimeout(() => analyzeImage(img), 200);
             };
@@ -143,7 +185,9 @@
 
         function analyzeImage(img) {
             EXIF.getData(img, function() {
-                // 1. Raw Data Extraction
+                currentTags = EXIF.getAllTags(this);
+                renderRawDump(currentTags);
+
                 const make = EXIF.getTag(this, "Make") || "-";
                 const model = EXIF.getTag(this, "Model") || "-";
                 const software = (EXIF.getTag(this, "Software") || "Unknown").toString();
@@ -151,106 +195,78 @@
                 const iso = EXIF.getTag(this, "ISOSpeedRatings") || "-";
                 const userComment = EXIF.getTag(this, "UserComment") || "";
 
-                // 2. Logic Classification
                 const analysis = classifyImage(software, userComment);
-                
-                // 3. Render UI
                 renderVerdict(analysis);
                 renderTable(make, model, software, dateTime, iso, analysis);
             });
         }
 
         function classifyImage(software, userComment) {
-            let result = {
-                type: "UNKNOWN", // UNKNOWN, ORIGINAL, EDITED, AI
-                title: "No Signature Found",
-                desc: "Metadata is empty or generic. Could be a screenshot, social media download (WA/FB), or stripped file.",
-                cssClass: "vb-null",
-                icon: "📁",
-                prompt: null
-            };
-
+            let result = { type: "UNKNOWN", title: "No Signature Found", desc: "Metadata is empty or generic.", cssClass: "vb-null", icon: "📁", prompt: null };
             const swLower = software.toLowerCase();
             const commentStr = String.fromCharCode(...(userComment || []));
 
-            // -- CHECK 1: AI GENERATED --
             const aiKeywords = ["stable diffusion", "midjourney", "dall-e", "novelai", "automatic1111", "comfyui"];
             if (aiKeywords.some(k => swLower.includes(k)) || commentStr.includes("Steps:") || commentStr.includes("Seed:")) {
-                result.type = "AI";
-                result.title = "AI Generated Content";
-                result.desc = "Metadata contains signatures from AI Image Generators (Stable Diffusion/Midjourney).";
-                result.cssClass = "vb-ai";
-                result.icon = "🤖";
-                result.prompt = commentStr.replace(/[^\x20-\x7E]/g, ''); // Clean non-printable chars
+                result = { type: "AI", title: "AI Generated Content", desc: "Metadata contains signatures from AI Generators.", cssClass: "vb-ai", icon: "🤖", prompt: commentStr.replace(/[^\x20-\x7E]/g, '') };
                 return result;
             }
 
-            // -- CHECK 2: POST-PROCESSING (EDITING) --
             const editorKeywords = ["photoshop", "gimp", "lightroom", "canva", "paint", "picasa", "affinity"];
             if (editorKeywords.some(k => swLower.includes(k))) {
-                result.type = "EDITED";
-                result.title = "Post-Processing Detected";
-                result.desc = `Software tag indicates use of <strong>${software}</strong>. This means the image was saved via an editor, but doesn't strictly prove manipulation (could be resize/color grade).`;
-                result.cssClass = "vb-warn";
-                result.icon = "🖌️";
+                result = { type: "EDITED", title: "Post-Processing Detected", desc: `Software tag: <strong>${software}</strong>. Image saved via editor.`, cssClass: "vb-warn", icon: "🖌️" };
                 return result;
             }
 
-            // -- CHECK 3: CAMERA / OS (ORIGINAL) --
             const camKeywords = ["android", "ios", "google", "apple", "samsung", "ver", "build", "miui"];
             if (camKeywords.some(k => swLower.includes(k)) || (software !== "Unknown" && !swLower.includes("adobe"))) {
-                result.type = "ORIGINAL";
-                result.title = "Camera / OS Processed";
-                result.desc = `Signature <strong>${software}</strong> belongs to a Camera or Operating System. This is standard for photos taken directly from a phone (Computational Photography).`;
-                result.cssClass = "vb-safe";
-                result.icon = "📸";
+                result = { type: "ORIGINAL", title: "Camera / OS Processed", desc: `Signature <strong>${software}</strong> indicates Camera OS processing.`, cssClass: "vb-safe", icon: "📸" };
                 return result;
             }
-
-            // Fallback: Empty
-            if(software === "Unknown") {
-                // Keep default UNKNOWN
-            }
-
             return result;
         }
 
         function renderVerdict(data) {
-            const container = document.getElementById('main-verdict');
-            container.innerHTML = `
+            document.getElementById('main-verdict').innerHTML = `
                 <div class="verdict-box ${data.cssClass}">
                     <div class="vb-icon">${data.icon}</div>
-                    <div class="vb-content">
-                        <h4>${data.title}</h4>
-                        <p>${data.desc}</p>
-                    </div>
-                </div>
-            `;
-
-            const promptBox = document.getElementById('ai-prompt-box');
-            if(data.type === "AI" && data.prompt) {
-                promptBox.style.display = 'block';
-                document.getElementById('prompt-content').innerText = data.prompt;
-            } else {
-                promptBox.style.display = 'none';
-            }
+                    <div class="vb-content"><h4>${data.title}</h4><p>${data.desc}</p></div>
+                </div>`;
+            const pBox = document.getElementById('ai-prompt-box');
+            if(data.type === "AI" && data.prompt) { pBox.style.display = 'block'; document.getElementById('prompt-content').innerText = data.prompt; }
+            else { pBox.style.display = 'none'; }
         }
 
         function renderTable(make, model, sw, date, iso, analysis) {
-            const table = document.getElementById('evidence-table');
-            
-            // Format Software Tag visual
             let swDisplay = sw;
             if (analysis.type === "EDITED") swDisplay = `<span class="tag-highlight th-red">${sw}</span>`;
             if (analysis.type === "AI") swDisplay = `<span class="tag-highlight th-blue">${sw}</span>`;
-
-            table.innerHTML = `
+            document.getElementById('evidence-table').innerHTML = `
                 <tr><td>Device Make</td><td>${make}</td></tr>
                 <tr><td>Device Model</td><td>${model}</td></tr>
                 <tr><td>Software Tag</td><td>${swDisplay}</td></tr>
                 <tr><td>Date Original</td><td>${date}</td></tr>
                 <tr><td>ISO Speed</td><td>${iso}</td></tr>
             `;
+        }
+
+        function renderRawDump(tags) {
+            const container = document.getElementById('raw-content');
+            let html = "";
+            for (let key in tags) {
+                if (tags.hasOwnProperty(key) && key !== "thumbnail") { 
+                    let val = tags[key];
+                    if (typeof val === 'object') val = JSON.stringify(val).substring(0, 50) + (JSON.stringify(val).length>50?"...":"");
+                    html += `<div class="raw-row"><span class="raw-key">${key}</span><span class="raw-val">${val}</span></div>`;
+                }
+            }
+            if(html === "") html = "<div style='color:#777; text-align:center;'>No EXIF data found.</div>";
+            container.innerHTML = html;
+        }
+
+        function toggleRaw() {
+            const el = document.getElementById('raw-content');
+            el.style.display = el.style.display === 'none' || el.style.display === '' ? 'block' : 'none';
         }
     </script>
 </body>
