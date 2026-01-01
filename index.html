@@ -239,10 +239,14 @@
         }
 
         const steamSales = [
-            { name: "Spring Sale", start: new Date("2025-03-14"), end: new Date("2025-03-21") },
-            { name: "Summer Sale", start: new Date("2025-06-27"), end: new Date("2025-07-11") },
-            { name: "Autumn Sale", start: new Date("2025-11-26"), end: new Date("2025-12-03") },
-            { name: "Winter Sale", start: new Date("2025-12-19"), end: new Date("2026-01-02") }
+            // Winter Sale 2025 (Sedang berlangsung saat tahun baru 2026)
+            { name: "Winter Sale", start: new Date("2025-12-19"), end: new Date("2026-01-02") },
+            
+            // Estimasi Jadwal Major Sale 2026
+            { name: "Spring Sale", start: new Date("2026-03-14"), end: new Date("2026-03-21") },
+            { name: "Summer Sale", start: new Date("2026-06-25"), end: new Date("2026-07-09") },
+            { name: "Autumn Sale", start: new Date("2026-11-25"), end: new Date("2026-12-02") },
+            { name: "Winter Sale", start: new Date("2026-12-19"), end: new Date("2027-01-02") }
         ];
         function renderSteamInfo() {
             const today = new Date();
