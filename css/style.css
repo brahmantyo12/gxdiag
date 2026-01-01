@@ -1,24 +1,46 @@
-/* css/style.css - REVISI NETRAL */
-* { box-sizing: border-box; }
+/* =========================================
+   1. GLOBAL RESET & BASIC STYLES
+   ========================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    /* Theme Colors */
+    --c-cyan: #00e5ff;   /* Input & Standard */
+    --c-purple: #d500f9; /* Audio & Voice */
+    --c-orange: #ff9100; /* Image Tools */
+    --c-green: #00e676;  /* Network & Connect */
+    --c-red: #ff1744;    /* System & Benchmark */
+    --c-pink: #f50057;   /* Forensic & Hoax */
+    --c-lime: #76ff03;   /* Retro */
+    --c-blue: #2979ff;   /* Tools */
+    --c-alert: #ffea00;  /* Emergency */
+    
+    /* Backgrounds */
+    --bg-dark: #121212;
+    --bg-card: linear-gradient(145deg, #1e1e1e, #252525);
+    --border-color: #333;
+}
 
 body {
-    background-color: #121212;
+    background-color: var(--bg-dark);
     color: #eee;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
-    margin: 0;
-    /* PENTING: Padding dikurangi agar tidak memakan tempat di layar kecil */
-    padding: 10px; 
-    overflow-x: hidden; /* Mencegah scrollbar horizontal default */
+    padding: 10px;
+    overflow-x: hidden;
 }
 
 a { text-decoration: none; color: inherit; }
 
 h2 { 
-    color: #00e5ff; 
+    color: var(--c-cyan); 
     text-transform: uppercase; 
     letter-spacing: 2px; 
     margin-bottom: 20px; 
@@ -26,16 +48,139 @@ h2 {
     text-align: center;
 }
 
-/* Tombol Back */
+/* Tombol Back Global */
 .back-btn {
     position: absolute; top: 15px; left: 15px;
     background: #1e1e1e; color: #aaa; 
     padding: 8px 15px; border-radius: 30px; font-size: 0.8rem; 
-    border: 1px solid #333; z-index: 1000; font-weight: bold;
+    border: 1px solid var(--border-color); z-index: 1000; font-weight: bold;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    transition: 0.3s;
 }
-.back-btn:hover { background: #00e5ff; color: #000; border-color: #00e5ff; }
+.back-btn:hover { background: var(--c-cyan); color: #000; border-color: var(--c-cyan); }
 
-/* Tombol Umum */
-button { cursor: pointer; transition: 0.2s; }
-button:active { transform: scale(0.98); }
+/* =========================================
+   2. DASHBOARD LAYOUT & WIDGETS
+   ========================================= */
+.top-dashboard {
+    width: 100%; max-width: 1280px; 
+    display: grid; 
+    grid-template-columns: 300px 1fr 300px; 
+    gap: 20px; margin-top: 20px; margin-bottom: 30px;
+    align-items: stretch;
+}
+
+/* Common Widget Style */
+.prayer-card, .dash-center, .steam-hero, .steam-roadmap {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color); 
+    border-radius: 15px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* --- LEFT COLUMN: Clock & Prayer --- */
+.dash-left { display: flex; flex-direction: column; }
+.clock-wrapper { text-align: center; margin-bottom: 15px; }
+.clock-big { font-size: 3.5rem; font-weight: 800; color: #fff; line-height: 1; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
+.clock-date { font-size: 0.9rem; color: #aaa; font-weight: 500; margin-top: 5px; }
+
+.prayer-card { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+.loc-header {
+    background: rgba(0,0,0,0.2); padding: 10px 15px; font-size: 0.8rem; color: #ccc;
+    border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px;
+}
+.prayer-list { padding: 10px 0; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+.prayer-item {
+    display: flex; justify-content: space-between; padding: 8px 20px;
+    font-size: 0.95rem; color: #888; border-left: 3px solid transparent; transition: 0.2s;
+}
+.prayer-item.active { background: rgba(0, 229, 255, 0.1); color: #fff; border-left-color: var(--c-cyan); font-weight: bold; }
+.prayer-item.passed { color: #555; text-decoration: line-through; }
+.prayer-time { font-family: monospace; }
+
+/* --- CENTER COLUMN: Calendar --- */
+.dash-center { padding: 20px; display: flex; flex-direction: column; }
+.cal-header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+.cal-nav-btn { background: #222; border: 1px solid #444; color: var(--c-cyan); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; user-select: none; }
+.cal-nav-btn:hover { background: var(--c-cyan); color: #000; }
+.cal-title { font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 2px; font-size: 1.1rem; }
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; width: 100%; margin-bottom: 20px; }
+.cal-day-name { font-size: 0.75rem; color: #666; text-align: center; font-weight: bold; padding-bottom: 5px;}
+.cal-date { height: 35px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #ccc; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; position: relative; }
+.cal-date:hover { background: #333; border-color: #555; }
+.cal-date.today { background: rgba(0, 229, 255, 0.1); color: var(--c-cyan); border: 1px solid var(--c-cyan); font-weight: bold; }
+.cal-date.selected { background: var(--c-cyan); color: #000; font-weight: bold; box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); transform: scale(1.1); z-index: 2;}
+.cal-date.holiday { color: var(--c-pink); font-weight: bold; } 
+.cal-date.has-event::after { content:''; position: absolute; bottom: 3px; width: 4px; height: 4px; background: var(--c-green); border-radius: 50%; }
+
+.event-sections { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: auto; }
+.event-col { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; font-size: 0.75rem; border-left: 3px solid #555; display: flex; flex-direction: column; }
+.ec-indo { border-color: var(--c-pink); } .ec-masehi { border-color: var(--c-cyan); } .ec-hijri { border-color: var(--c-green); position: relative;}
+.ec-title { font-size: 0.65rem; color: #aaa; text-transform: uppercase; margin-bottom: 4px; font-weight: bold; }
+.ec-content { color: #fff; font-weight: 500; line-height: 1.3; }
+.hijri-select { background: #111; color: var(--c-green); border: 1px solid var(--border-color); font-size: 0.65rem; border-radius: 4px; float: right;}
+
+/* --- RIGHT COLUMN: Steam Info --- */
+.dash-right { display: flex; flex-direction: column; gap: 15px; }
+.steam-hero { padding: 20px; text-align: center; background: linear-gradient(135deg, #1a2a3a, #0f1519); border-color: #334; }
+.steam-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.steam-title { font-size: 1.2rem; color: #66c0f4; font-weight: 800; margin-bottom: 5px; text-shadow: 0 0 10px rgba(102, 192, 244, 0.3); }
+.steam-timer { font-size: 1.8rem; color: #fff; font-family: monospace; font-weight: bold; }
+.sale-live { color: var(--c-green); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
+
+.steam-roadmap { flex-grow: 1; padding: 15px; display: flex; flex-direction: column; }
+.roadmap-title { font-size: 0.8rem; color: #aaa; text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 10px; font-weight: bold; }
+.roadmap-list { display: flex; flex-direction: column; gap: 8px; }
+.roadmap-item { display: flex; justify-content: space-between; font-size: 0.85rem; color: #777; padding: 5px 0; }
+.roadmap-item span:last-child { color: #66c0f4; font-weight: bold; }
+
+/* =========================================
+   3. MENU GRID & CARDS
+   ========================================= */
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; width: 100%; max-width: 1280px; margin-top: 10px; margin-bottom: 40px; }
+
+.card { 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    border-radius: 15px; padding: 25px 20px; text-align: center; 
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+    display: flex; flex-direction: column; align-items: center; 
+    cursor: pointer; text-decoration: none; color: #eee; 
+    position: relative; overflow: hidden;
+}
+
+/* Hover Effects */
+.card:hover { transform: translateY(-7px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-color: var(--theme-color); }
+.card:hover .icon { text-shadow: 0 0 15px var(--theme-color); transform: scale(1.1); filter: grayscale(0); color: #fff; }
+.card:hover .title { color: var(--theme-color); }
+.card:hover .desc { color: #999; }
+
+.icon { font-size: 2.2rem; margin-bottom: 10px; transition: 0.3s; color: var(--theme-color); filter: grayscale(0.6) opacity(0.8); }
+.title { font-size: 1rem; font-weight: 800; color: #ccc; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+.desc { font-size: 0.75rem; color: #666; line-height: 1.4; transition: 0.3s; }
+
+/* Theme Classes Definitions */
+.theme-input { --theme-color: var(--c-cyan); }
+.theme-audio { --theme-color: var(--c-purple); }
+.theme-media { --theme-color: var(--c-orange); }
+.theme-net   { --theme-color: var(--c-green); }
+.theme-sys   { --theme-color: var(--c-red); }
+.theme-tool  { --theme-color: var(--c-blue); }
+.theme-pink  { --theme-color: var(--c-pink); }
+.theme-alert { --theme-color: var(--c-alert); }
+.theme-retro { --theme-color: var(--c-lime); }
+
+/* Bottom Accent Line */
+.card::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+    background: var(--theme-color); opacity: 0.5; transition: 0.3s;
+}
+.card:hover::after { height: 5px; opacity: 1; box-shadow: 0 0 10px var(--theme-color); }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .top-dashboard { grid-template-columns: 1fr; gap: 15px;}
+    .event-sections { grid-template-columns: 1fr; }
+}
