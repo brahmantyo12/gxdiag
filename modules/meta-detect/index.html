@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Meta & AI Forensics</title>
+    <meta name="theme-color" content="#1a1a1a">
+    
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+
+    <style>
+        body { background: #111; color: #eee; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        .module-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .back-btn { text-decoration: none; color: #888; font-size: 1.1rem; }
+        .back-btn:hover { color: #fff; }
+        .module-title { font-size: 1.4rem; font-weight: 800; color: #ff4081; text-transform: uppercase; letter-spacing: 2px; }
+
+        .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .layout-grid { grid-template-columns: 1fr; } }
+
+        /* Left: Drop Zone & Preview */
+        .drop-zone {
+            background: #1a1a1a; border: 2px dashed #444; border-radius: 15px;
+            padding: 30px; text-align: center; transition: 0.3s; cursor: pointer;
+            margin-bottom: 20px; min-height: 200px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .drop-zone:hover { border-color: #ff4081; background: rgba(255, 64, 129, 0.05); }
+        .preview-box img { max-width: 100%; border-radius: 10px; border: 1px solid #333; display: none; }
+
+        /* Right: Analysis Result */
+        .result-panel { display: none; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Verdict Cards */
+        .verdict-box { margin-bottom: 15px; padding: 15px; border-radius: 10px; border-left: 5px solid; background: #1f1f1f; display: flex; align-items: center; gap: 15px; }
+        .vb-safe { border-color: #00ff88; }
+        .vb-warn { border-color: #ff9100; }
+        .vb-danger { border-color: #ff4081; }
+        .vb-ai { border-color: #00e5ff; background: rgba(0, 229, 255, 0.05); }
+
+        .vb-icon { font-size: 2rem; }
+        .vb-content h4 { margin: 0; font-size: 1rem; color: #fff; }
+        .vb-content p { margin: 3px 0 0 0; font-size: 0.8rem; color: #aaa; }
+
+        /* Detail List */
+        .evidence-list { list-style: none; padding: 0; margin: 0; }
+        .evidence-item { padding: 8px 0; border-bottom: 1px solid #333; font-size: 0.85rem; display: flex; justify-content: space-between; }
+        .ev-label { color: #888; }
+        .ev-val { font-weight: bold; color: #eee; text-align: right; max-width: 60%; word-break: break-word;}
+        .ev-flag { color: #ff4081; }
+
+        .ai-prompt-box {
+            background: #151515; border: 1px solid #333; padding: 10px; border-radius: 8px;
+            font-family: monospace; font-size: 0.75rem; color: #00e5ff; margin-top: 10px;
+            max-height: 100px; overflow-y: auto; display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="module-header">
+            <a href="../../index.html" class="back-btn">⬅ Back</a>
+            <div class="module-title">Forensic & AI Detector</div>
+        </div>
+
+        <div class="layout-grid">
+            <div>
+                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div style="font-size:2.5rem;">📁</div>
+                    <div style="margin:10px 0; font-weight:bold; color:#888;">Click or Drop Image Here</div>
+                    <div style="font-size:0.7rem; color:#555;">JPG/JPEG/TIFF supported</div>
+                    <input type="file" id="file-input" accept="image/jpeg, image/jpg, image/tiff" style="display:none;">
+                </div>
+                <div class="preview-box">
+                    <img id="preview-img" src="" alt="Preview">
+                </div>
+            </div>
+
+            <div class="result-panel" id="result-panel">
+                <h3 style="margin-top:0; color:#fff;">Analysis Report</h3>
+                
+                <div id="ai-verdict" class="verdict-box vb-safe" style="display:none;">
+                    <div class="vb-icon">🤖</div>
+                    <div class="vb-content">
+                        <h4>AI Generation Check</h4>
+                        <p id="ai-text">No obvious AI signatures found.</p>
+                    </div>
+                </div>
+
+                <div id="edit-verdict" class="verdict-box vb-safe">
+                    <div class="vb-icon">🖌️</div>
+                    <div class="vb-content">
+                        <h4>Software Modification</h4>
+                        <p id="edit-text">Analyzing...</p>
+                    </div>
+                </div>
+
+                <div style="background: #222; padding: 15px; border-radius: 10px; margin-top:20px;">
+                    <h5 style="margin:0 0 10px 0; color:#888; text-transform:uppercase;">Metadata Evidence</h5>
+                    <ul class="evidence-list" id="evidence-list">
+                        </ul>
+                </div>
+
+                <div id="ai-prompt-box" class="ai-prompt-box">
+                    <strong>📄 FOUND GENERATION PROMPT:</strong><br>
+                    <span id="prompt-content"></span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const resultPanel = document.getElementById('result-panel');
+        const previewImg = document.getElementById('preview-img');
+
+        // Drag & Drop Handlers
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'););
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                resultPanel.style.display = 'block';
+                dropZone.style.display = 'none'; // Sembunyikan dropzone biar rapi
+                
+                // Delay sedikit agar gambar render sebelum analisis
+                setTimeout(() => analyzeImage(previewImg), 200);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function analyzeImage(img) {
+            EXIF.getData(img, function() {
+                // 1. Ambil Data Mentah
+                const make = EXIF.getTag(this, "Make") || "Unknown";
+                const model = EXIF.getTag(this, "Model") || "Unknown";
+                const software = EXIF.getTag(this, "Software") || "Unknown";
+                const dateOriginal = EXIF.getTag(this, "DateTimeOriginal");
+                const dateDigitized = EXIF.getTag(this, "DateTimeDigitized");
+                const userComment = EXIF.getTag(this, "UserComment") || ""; // Tempat AI biasa sembunyiin prompt
+                const imageDesc = EXIF.getTag(this, "ImageDescription") || "";
+
+                // --- DETEKSI 1: AI GENERATOR ---
+                let isAI = false;
+                let aiTool = "";
+                let aiPrompt = "";
+
+                // Keywords umum di metadata AI
+                const aiKeywords = ["Stable Diffusion", "Midjourney", "DALL-E", "NovelAI", "ComfyUI", "Automatic1111"];
+                
+                // Cek Software Tag
+                if (aiKeywords.some(k => software.includes(k))) { isAI = true; aiTool = software; }
+                
+                // Cek UserComment (Biasanya berisi "Steps: 20, Sampler: Euler a, ...")
+                const commentStr = String.fromCharCode(...(userComment || [])); // Convert code array to string
+                if (commentStr.includes("Steps:") || commentStr.includes("Seed:") || commentStr.includes("CFG scale:")) {
+                    isAI = true; 
+                    aiTool = "Stable Diffusion / SDXL";
+                    aiPrompt = commentStr.replace(/[^\x20-\x7E]/g, ''); // Bersihkan karakter aneh
+                }
+
+                updateAIVerdict(isAI, aiTool, aiPrompt);
+
+                // --- DETEKSI 2: SOFTWARE EDITING ---
+                const editKeywords = ["Photoshop", "GIMP", "Canva", "Lightroom", "Paint", "Editor", "Picasa"];
+                let isEdited = false;
+                let flags = [];
+
+                if (editKeywords.some(k => software.toLowerCase().includes(k.toLowerCase()))) {
+                    isEdited = true;
+                    flags.push(`Software Signature detected: ${software}`);
+                }
+
+                // Cek ketidakcocokan tanggal (Tanda file dimodifikasi setelah dipotret)
+                if (dateOriginal && dateDigitized && dateOriginal !== dateDigitized) {
+                    // Note: Kadang beda dikit wajar, tapi kalau beda hari = edit
+                    flags.push("Timestamp Mismatch (Original vs Digitized)");
+                }
+
+                updateEditVerdict(isEdited, software, flags);
+                renderEvidence(make, model, software, dateOriginal, isAI, isEdited);
+            });
+        }
+
+        function updateAIVerdict(isAI, tool, prompt) {
+            const box = document.getElementById('ai-verdict');
+            const text = document.getElementById('ai-text');
+            const promptBox = document.getElementById('ai-prompt-box');
+            
+            box.style.display = 'flex';
+            if (isAI) {
+                box.className = "verdict-box vb-ai";
+                box.querySelector('.vb-icon').innerText = "🤖";
+                text.innerHTML = `<strong>POSITIVE:</strong> Image generated by <strong>${tool}</strong>.`;
+                if(prompt) {
+                    promptBox.style.display = 'block';
+                    document.getElementById('prompt-content').innerText = prompt;
+                }
+            } else {
+                box.className = "verdict-box vb-safe";
+                box.querySelector('.vb-icon').innerText = "human";
+                text.innerText = "No AI generation metadata signatures found.";
+                promptBox.style.display = 'none';
+            }
+        }
+
+        function updateEditVerdict(isEdited, software, flags) {
+            const box = document.getElementById('edit-verdict');
+            const text = document.getElementById('edit-text');
+
+            if (isEdited) {
+                box.className = "verdict-box vb-danger";
+                box.querySelector('.vb-icon').innerText = "🚨";
+                text.innerHTML = `<strong>MODIFIED:</strong> Traces of editing found.<br><span style="font-size:0.7rem">${flags.join(', ')}</span>`;
+            } else if (software === "Unknown") {
+                 box.className = "verdict-box vb-warn";
+                 box.querySelector('.vb-icon').innerText = "⚠️";
+                 text.innerText = "No software signature. Could be a screenshot or metadata stripped.";
+            } else {
+                box.className = "verdict-box vb-safe";
+                box.querySelector('.vb-icon').innerText = "✅";
+                text.innerText = "Appears original / Unmodified by common editors.";
+            }
+        }
+
+        function renderEvidence(make, model, sw, date, isAI, isEdited) {
+            const list = document.getElementById('evidence-list');
+            let html = `
+                <li class="evidence-item"><span class="ev-label">Device Make</span> <span class="ev-val">${make}</span></li>
+                <li class="evidence-item"><span class="ev-label">Device Model</span> <span class="ev-val">${model}</span></li>
+                <li class="evidence-item"><span class="ev-label">Date Original</span> <span class="ev-val">${date || "N/A"}</span></li>
+            `;
+
+            // Highlight Software jika mencurigakan
+            let swStyle = isAI ? "color:#00e5ff" : (isEdited ? "color:#ff4081" : "color:#fff");
+            html += `<li class="evidence-item"><span class="ev-label">Software Tag</span> <span class="ev-val" style="${swStyle}">${sw}</span></li>`;
+
+            list.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
