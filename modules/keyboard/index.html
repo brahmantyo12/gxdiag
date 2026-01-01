@@ -4,148 +4,166 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GXDiag - Pro Keyboard Tester</title>
+    <meta name="theme-color" content="#1a1a1a">
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        /* --- STYLE KHUSUS HALAMAN INI --- */
-        
-        /* HEADER & CONTROLS */
+        /* --- GXDIAG THEME OVERRIDES --- */
+        body {
+            background: radial-gradient(circle at top center, #1a2a3a 0%, #0d0d0d 100%);
+            color: #eee; font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh; margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* HEADER */
         .kb-header { 
             display: flex; justify-content: space-between; width: 100%; 
             max-width: 1260px; margin-bottom: 20px; align-items: center; 
-            flex-wrap: wrap; gap: 10px; margin-top: 40px; 
+            flex-wrap: wrap; gap: 15px; 
+        }
+        h2 { 
+            color: #00e5ff; text-transform: uppercase; letter-spacing: 2px; 
+            font-size: 1.8rem; text-shadow: 0 0 20px rgba(0, 229, 255, 0.4); margin: 0;
         }
         
-        .controls { display: flex; gap: 10px; }
+        .controls { display: flex; gap: 15px; }
         .ctrl-box { 
-            background: #1e1e1e; padding: 5px 15px; border-radius: 30px; 
-            border: 1px solid #333; display: flex; align-items: center; gap: 10px; 
+            background: rgba(30, 30, 30, 0.8); padding: 8px 20px; border-radius: 30px; 
+            border: 1px solid #444; display: flex; align-items: center; gap: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px);
         }
         
-        /* DASHBOARD */
+        /* DASHBOARD STATS */
         .dashboard {
             width: 100%; max-width: 1260px; display: grid; 
-            grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 30px;
+            grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 40px;
         }
         .dash-panel {
-            background: #1e1e1e; border: 1px solid #333; border-radius: 12px;
-            padding: 15px; height: 150px; display: flex; flex-direction: column; 
-            position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            background: linear-gradient(145deg, #1e1e1e, #181818); 
+            border: 1px solid #333; border-radius: 15px;
+            padding: 20px; height: 160px; display: flex; flex-direction: column; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .panel-head { 
-            display: flex; justify-content: space-between; font-size: 0.8rem; 
-            color: #00e5ff; font-weight: bold; margin-bottom: 5px; 
-            border-bottom: 1px solid #333; padding-bottom: 5px; 
+            display: flex; justify-content: space-between; font-size: 0.85rem; 
+            color: #aaa; font-weight: 700; margin-bottom: 10px; 
+            border-bottom: 1px solid #333; padding-bottom: 8px; letter-spacing: 1px;
         }
 
-        /* LOG & STATS */
-        #key-history { flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
-        .log-item { background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #333; font-family: monospace; color: #00e5ff; }
-        .log-item.err { color: #ff4081; border-color: #ff4081; }
-        .stats-col { display: flex; flex-direction: column; justify-content: center; gap: 10px; height: 100%; }
-        .stat-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #333; padding-bottom: 2px; }
-        .stat-val { font-size: 1.4rem; font-weight: bold; color: #fff; font-family: monospace; }
+        /* KEY HISTORY LOG */
+        #key-history { 
+            flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; 
+            gap: 6px; align-content: flex-start; scrollbar-width: thin;
+        }
+        .log-item { 
+            background: #252525; padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; 
+            border: 1px solid #444; font-family: 'Consolas', monospace; color: #00e5ff; 
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .log-item.err { color: #ff1744; border-color: #ff1744; background: rgba(255, 23, 68, 0.1); }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* STATS VALUES */
+        .stats-col { display: flex; flex-direction: column; justify-content: center; gap: 12px; height: 100%; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #333; padding-bottom: 4px; }
+        .stat-val { font-size: 1.6rem; font-weight: 800; color: #fff; font-family: monospace; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
         .stat-lbl { font-size: 0.75rem; color: #888; font-weight: bold; }
 
-        /* --- THE KEYBOARD LAYOUT FIX --- */
-        .wrapper { 
-            width: 100%; display: flex; justify-content: center; 
-            margin-bottom: 50px; /* Jarak bawah lebih lega */
-        }
+        /* --- KEYBOARD VISUAL --- */
+        .wrapper { width: 100%; display: flex; justify-content: center; margin-bottom: 50px; }
 
         .kb-container { 
-            position: relative; 
-            background: #181818; 
-            padding: 30px; 
-            border-radius: 15px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-            border-bottom: 10px solid #000; 
-            display: flex; 
-            gap: 20px; 
-            align-items: flex-start; /* Default align top, nanti kita margin manual */
-            
-            /* UKURAN FIX STANDARD FULLSIZE */
-            width: 1300px; 
-            min-width: 1300px; 
-            
-            transform-origin: top center; 
-            transition: transform 0.1s linear;
+            position: relative; background: #121212; padding: 35px; border-radius: 20px; 
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8), inset 0 0 0 2px #222; 
+            border-bottom: 15px solid #080808; display: flex; gap: 20px; 
+            align-items: flex-start; width: 1300px; min-width: 1300px; 
+            transform-origin: top center; transition: transform 0.1s linear;
         }
 
-        /* BLOK UTAMA (ALPHANUMERIC) */
+        /* TOMBOL KEYBOARD */
+        .key { 
+            height: 50px; width: 50px; background: #2a2a2a; color: #bbb; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; font-size: 14px; 
+            font-weight: 700; cursor: default; border-bottom: 4px solid #151515; border-top: 1px solid #444; 
+            transition: all 0.05s ease-out; position: relative; overflow: hidden;
+        }
+        
+        /* EFEK PENCET (GLOW) */
+        .key.active { 
+            background: #00e5ff; color: #000; border-bottom: 1px solid #00b8d4; border-top: 0; 
+            transform: translateY(3px); box-shadow: 0 0 25px #00e5ff; z-index: 10;
+        }
+        
+        /* EFEK SUDAH DIPENCET (HISTORY) */
+        .key.tested { 
+            background: #102a2a; color: #00ff88; border-color: #0a1a1a; 
+            box-shadow: inset 0 0 10px rgba(0, 255, 136, 0.1); 
+        }
+        .key.tested.active { background: #00ff88; color: #000; box-shadow: 0 0 25px #00ff88; }
+
+        /* LAYOUT HELPERS (Keep Original Logic) */
         .block-main { display: flex; flex-direction: column; gap: 6px; }
-        
-        /* PEMISAH F-KEYS (F1-F12) DENGAN ANGKA */
-        /* Baris pertama (F-Keys) dikasih margin bawah besar */
-        .block-main .row:first-child {
-            margin-bottom: 25px; /* Jarak F-Key ke Angka */
-        }
-
-        /* BLOK NAVIGASI (COMMANDS & ARROWS) */
-        .block-nav { 
-            display: flex; flex-direction: column; width: 162px; 
-            /* Turunkan Navigation Block agar sejajar dengan Backspace, BUKAN F-Keys */
-            padding-top: 80px; 
-        }
-        
-        /* Jarak antara Command Keys (Ins/Home) dengan Arrow Keys */
+        .block-main .row:first-child { margin-bottom: 25px; }
+        .block-nav, .block-num { display: flex; flex-direction: column; padding-top: 80px; }
         .nav-cmd { margin-bottom: 45px; } 
-
-        /* BLOK NUMPAD */
-        .block-num { 
-            display: grid; grid-template-columns: repeat(4, 50px); 
-            grid-template-rows: repeat(5, 50px); gap: 6px; width: 218px; 
-            /* Turunkan Numpad agar sejajar dengan Backspace */
-            padding-top: 80px; 
-        }
-
-        /* Row Helper */
+        .block-num { display: grid; grid-template-columns: repeat(4, 50px); grid-template-rows: repeat(5, 50px); gap: 6px; width: 218px; }
         .row { display: flex; gap: 6px; position: relative; }
-        .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; position: absolute; top: 30px; /* Sys Keys (PrtSc) naik ke atas sejajar F-Keys */ }
-        .nav-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-
-        /* DESAIN TOMBOL */
-        .key { height: 50px; width: 50px; background: #333; color: #ddd; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; cursor: default; border-bottom: 4px solid #1a1a1a; border-top: 1px solid #444; transition: 0.05s; }
-        .key.active { background: #f0faff; color: #111; border-bottom: 2px solid #ccc; transform: translateY(2px); box-shadow: 0 0 15px #00e5ff; z-index: 100; }
-        .key.tested { background: #004455; color: #00e5ff; border-color: #002233; }
+        .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; position: absolute; top: 30px; }
+        .nav-cmd, .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
         /* UKURAN KHUSUS */
-        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; } .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
+        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; } .w-2 { width: 106px; } 
+        .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
         .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; } 
-        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; } 
-        .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
+        .key[data-code="NumpadAdd"], .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
 
-        /* ISO FIX */
+        /* ISO MODE */
         .iso-key { display: none; } .kb-container.iso-mode .iso-key { display: flex; } .kb-container.iso-mode .ansi-key { display: none; }
         .kb-container.iso-mode .key[data-code="Enter"] { position: absolute; right: 0; top: -56px; height: 106px; width: 65px; z-index: 5; border-radius: 5px 5px 5px 15px; }
         .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 62px; }
 
-        /* Switches & Alert */
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        /* SWITCH TOGGLE */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #00e5ff; }
-        input:checked + .slider:before { transform: translateX(20px); }
-        .alert-box { background: #b71c1c; color: white; padding: 10px 20px; border-radius: 30px; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); display: none; z-index: 999; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 34px; border: 1px solid #555; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: #888; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #00e5ff; border-color: #00e5ff; }
+        input:checked + .slider:before { transform: translateX(20px); background-color: #fff; }
 
-        @media (max-width: 800px) { .dashboard { grid-template-columns: 1fr; } }
+        /* ALERT BOX */
+        .alert-box { 
+            background: linear-gradient(135deg, #d50000, #ff1744); color: white; 
+            padding: 15px 30px; border-radius: 50px; position: fixed; top: 100px; left: 50%; 
+            transform: translateX(-50%) scale(0.8); display: none; z-index: 999; 
+            font-weight: 800; box-shadow: 0 10px 40px rgba(255, 23, 68, 0.6); 
+            animation: alertPop 0.3s forwards;
+        }
+        @keyframes alertPop { to { transform: translateX(-50%) scale(1); } }
+
+        /* Back Button */
+        .back-btn { 
+            text-decoration: none; color: #888; font-weight: bold; border: 1px solid #444; 
+            padding: 8px 15px; border-radius: 8px; transition: 0.3s; position: absolute; top: 20px; left: 20px; 
+        }
+        .back-btn:hover { background: #333; color: #fff; border-color: #fff; }
+
+        @media (max-width: 800px) { .dashboard { grid-template-columns: 1fr; } .back-btn { position: static; margin-bottom: 20px; } }
     </style>
 </head>
 <body>
-    <a href="../../index.html" class="back-btn">← MENU</a>
+    <a href="../../index.html" class="back-btn">← DASHBOARD</a>
     <div id="chatter-alert" class="alert-box">⚠️ CHATTER DETECTED! <span id="chatter-key"></span></div>
 
     <div class="kb-header">
-        <h2 style="margin:0; font-size:1.5rem;">Keyboard Tester</h2>
+        <h2>Keyboard Diagnostic</h2>
         <div class="controls">
             <div class="ctrl-box">
-                <span class="ctrl-label">ANSI</span>
+                <span style="font-size:0.8rem; color:#888; font-weight:bold;">ANSI</span>
                 <label class="switch"><input type="checkbox" id="layout-toggle" onchange="toggleLayout()"><span class="slider"></span></label>
-                <span class="ctrl-label" style="color:#00e5ff;">ISO</span>
+                <span style="font-size:0.8rem; color:#00e5ff; font-weight:bold;">ISO</span>
             </div>
             <div class="ctrl-box">
-                <span class="ctrl-label">🔊 Sound</span>
+                <span style="font-size:0.8rem; font-weight:bold;">🔊 SFX</span>
                 <label class="switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></label>
             </div>
         </div>
@@ -153,15 +171,15 @@
 
     <div class="dashboard">
         <div class="dash-panel">
-            <div class="panel-head">INPUT HISTORY <span style="cursor:pointer; color:#ff4081" onclick="clearLog()">[CLEAR]</span></div>
+            <div class="panel-head">INPUT LOG <span style="cursor:pointer; color:#ff1744; font-size:0.7rem;" onclick="clearLog()">[CLEAR HISTORY]</span></div>
             <div id="key-history"></div>
         </div>
         <div class="dash-panel">
-            <div class="panel-head">STATISTICS</div>
+            <div class="panel-head">LIVE METRICS</div>
             <div class="stats-col">
-                <div class="stat-row"><span class="stat-lbl">PRESSED NOW</span><span class="stat-val" id="ghost-curr" style="color:#fff">0</span></div>
+                <div class="stat-row"><span class="stat-lbl">CURRENT PRESS</span><span class="stat-val" id="ghost-curr" style="color:#00ff88">0</span></div>
                 <div class="stat-row"><span class="stat-lbl">MAX GHOSTING</span><span class="stat-val" id="ghost-max" style="color:#00e5ff">0</span></div>
-                <div class="stat-row"><span class="stat-lbl">TYPING KPM</span><span class="stat-val" id="kpm">0</span></div>
+                <div class="stat-row"><span class="stat-lbl">SPEED (KPM)</span><span class="stat-val" id="kpm">0</span></div>
             </div>
         </div>
     </div>
