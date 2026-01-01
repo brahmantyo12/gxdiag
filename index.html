@@ -119,7 +119,14 @@
 
         <a href="modules/meta-detect/index.html" class="card theme-pink"><div class="icon">🕵️</div><div class="title">Meta/Hoax</div><div class="desc">EXIF & Edit Detector</div></a>
         <a href="modules/voice-studio/index.html" class="card theme-audio"><div class="icon">🎙️</div><div class="title">Voice Studio</div><div class="desc">TTS & Speech to Text</div></a>
+        
         <a href="modules/retro-asset/index.html" class="card theme-retro"><div class="icon">👾</div><div class="title">Retro Asset</div><div class="desc">Sprite & 8-Bit Audio Gen</div></a>
+
+        <a href="modules/metranslator/index.html" class="card" style="border-color: #ffd700; background: linear-gradient(145deg, #2b1d14, #000);">
+            <div class="icon" style="filter: grayscale(0); text-shadow: 0 0 10px #ffd700;">💍</div>
+            <div class="title" style="color: #ffd700; font-family: serif;">Middle Earth</div>
+            <div class="desc" style="color: #d4af37;">Elvish, Dwarvish & Mordor Translator</div>
+        </a>
     </div>
 
     <footer>
@@ -215,7 +222,7 @@
         }
         renderSteamInfo();
 
-        // --- 4. KALENDER ---
+        // --- 4. CALENDAR LOGIC ---
         async function fetchHolidays() {
             try {
                 const res = await fetch(`https://api-harilibur.vercel.app/api?year=${viewDate.getFullYear()}`);
@@ -281,7 +288,6 @@
         fetchHolidays(); renderCalendar(); updateInfoPanel(currentDate);
 
         // --- 5. FREE GAMES API (DUAL ENGINE FALLBACK) ---
-        // Mencoba CorsProxy.io (Cepat) -> Gagal -> Coba AllOrigins (Cadangan)
         async function fetchFreeGames() {
             const listContainer = document.getElementById('free-games-list');
             const targetUrl = 'https://www.gamerpower.com/api/giveaways?platform=pc&type=game&sort-by=value';
