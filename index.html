@@ -183,6 +183,36 @@
         <a href="modules/subnet/index.html" class="card"><div class="icon">🔢</div><div class="title">Subnet Calc</div><div class="desc">IP Planner & VLSM</div></a>
         <a href="modules/emergency/index.html" class="card"><div class="icon">🆘</div><div class="title">Emergency</div><div class="desc">SOS Flash & Morse Tool</div></a>
         <a href="modules/translator/index.html" class="card"><div class="icon">💬</div><div class="title">Translator</div><div class="desc">Morse, Binary & Hex</div></a>
+
+        <a href="modules/img-converter/index.html" class="card" style="border-color: #ff9100;">
+            <div class="icon" style="filter: grayscale(0);">🖼️</div>
+            <div class="title" style="color: #ff9100;">Img Convert</div>
+            <div class="desc">JPG, PNG, WEBP Tool</div>
+        </a>
+
+        <a href="modules/img-resizer/index.html" class="card" style="border-color: #ff9100;">
+            <div class="icon" style="filter: grayscale(0);">📏</div>
+            <div class="title" style="color: #ff9100;">Img Resizer</div>
+            <div class="desc">Scale & 2x Resolution</div>
+        </a>
+
+        <a href="modules/img-compress/index.html" class="card" style="border-color: #ff9100;">
+            <div class="icon" style="filter: grayscale(0);">🗜️</div>
+            <div class="title" style="color: #ff9100;">Compressor</div>
+            <div class="desc">Reduce File Size</div>
+        </a>
+
+        <a href="modules/meta-detect/index.html" class="card" style="border-color: #ff4081;">
+            <div class="icon" style="filter: grayscale(0);">🕵️</div>
+            <div class="title" style="color: #ff4081;">Meta/Hoax</div>
+            <div class="desc">EXIF & Edit Detector</div>
+        </a>
+
+        <a href="modules/voice-studio/index.html" class="card" style="border-color: #00e5ff;">
+            <div class="icon" style="filter: grayscale(0);">🎙️</div>
+            <div class="title" style="color: #00e5ff;">Voice Studio</div>
+            <div class="desc">TTS & Speech to Text</div>
+        </a>
     </div>
 
     <footer style="margin-bottom: 20px; color: #333; font-size: 0.7rem; text-align: center;">
@@ -195,6 +225,7 @@
         let currentDate = new Date();
         let viewDate = new Date();
         let selectedDate = new Date();
+        
         let hijriOffset = parseInt(localStorage.getItem('gx_hijri_offset')) || 0;
         document.getElementById('hijri-offset').value = hijriOffset;
 
@@ -241,13 +272,13 @@
         const steamSales = [
             // Winter Sale 2025 (Sedang berlangsung saat tahun baru 2026)
             { name: "Winter Sale", start: new Date("2025-12-19"), end: new Date("2026-01-02") },
-            
             // Estimasi Jadwal Major Sale 2026
             { name: "Spring Sale", start: new Date("2026-03-14"), end: new Date("2026-03-21") },
             { name: "Summer Sale", start: new Date("2026-06-25"), end: new Date("2026-07-09") },
             { name: "Autumn Sale", start: new Date("2026-11-25"), end: new Date("2026-12-02") },
             { name: "Winter Sale", start: new Date("2026-12-19"), end: new Date("2027-01-02") }
         ];
+
         function renderSteamInfo() {
             const today = new Date();
             let activeSale = null, nextSale = null, futureSales = [];
@@ -292,22 +323,31 @@
         function updateOffset() { hijriOffset = parseInt(document.getElementById('hijri-offset').value); localStorage.setItem('gx_hijri_offset', hijriOffset); updateInfoPanel(selectedDate); renderCalendar(); }
         function changeMonth(step) { viewDate.setMonth(viewDate.getMonth() + step); fetchHolidays(); renderCalendar(); }
         function getAdjustedDate(d) { const a = new Date(d); a.setDate(a.getDate() + hijriOffset); return a; }
+        
         function getIslamicEvents(d) {
-            const hFull = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {day:'numeric', month:'numeric'}).format(getAdjustedDate(d));
-            const [hM, hD] = hFull.split('/').map(Number);
-            const w = d.getDay();
-            let ev=[];
-            if(w===1)ev.push("Puasa Senin"); if(w===4)ev.push("Puasa Kamis");
-            if([13,14,15].includes(hD))ev.push("Ayyamul Bidh");
-            if(hM===9)ev.push("Ramadhan"); if(hM===10&&hD===1)ev.push("Idul Fitri");
-            if(hM===12&&hD===9)ev.push("Arafah"); if(hM===12&&hD===10)ev.push("Idul Adha");
-            return ev.length>0?ev.join(", "):null;
+            try {
+                const hFull = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {day:'numeric', month:'numeric'}).format(getAdjustedDate(d));
+                const [hM, hD] = hFull.split('/').map(Number);
+                const w = d.getDay();
+                let ev=[];
+                if(w===1)ev.push("Puasa Senin"); if(w===4)ev.push("Puasa Kamis");
+                if([13,14,15].includes(hD))ev.push("Ayyamul Bidh");
+                if(hM===9)ev.push("Ramadhan"); if(hM===10&&hD===1)ev.push("Idul Fitri");
+                if(hM===12&&hD===9)ev.push("Arafah"); if(hM===12&&hD===10)ev.push("Idul Adha");
+                return ev.length>0?ev.join(", "):null;
+            } catch (e) { return null; }
         }
+
         function updateInfoPanel(d) {
             const key = `${d.getMonth()+1}-${d.getDate()}`;
             document.getElementById('info-indo').innerHTML = (skbHolidays[key] || fixedHolidays[key]) ? `<span style="color:#ff4081; font-weight:bold;">${skbHolidays[key] || fixedHolidays[key]}</span>` : "<span style='color:#666'>-</span>";
             document.getElementById('info-masehi').innerHTML = d.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
-            const hDate = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {day:'numeric', month:'long', year:'numeric'}).format(getAdjustedDate(d));
+            
+            let hDate = "-";
+            try {
+                hDate = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {day:'numeric', month:'long', year:'numeric'}).format(getAdjustedDate(d));
+            } catch (e) { hDate = "N/A"; }
+            
             const hEv = getIslamicEvents(d);
             document.getElementById('info-hijri').innerHTML = `<div style="margin-bottom:2px; font-size:0.7rem; color:#aaa;">${hDate}</div>` + (hEv ? `<div class="ec-highlight">${hEv}</div>` : "");
         }
