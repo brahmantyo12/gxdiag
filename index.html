@@ -122,17 +122,17 @@
         <a href="modules/retro-asset/index.html" class="card theme-retro"><div class="icon">👾</div><div class="title">Retro Asset</div><div class="desc">Sprite & 8-Bit Audio Gen</div></a>
     </div>
 
-    <footer style="margin-bottom: 20px; color: #333; font-size: 0.7rem; text-align: center;">
+    <footer>
         &copy; 2025 Project GXDiag. All Systems Operational.
     </footer>
 
     <script>
-        // --- LOGIKA UTAMA ---
         const fixedHolidays = { "1-1":"Tahun Baru", "5-1":"Hari Buruh", "6-1":"Lahir Pancasila", "8-17":"HUT RI", "12-25":"Natal" };
         let skbHolidays = {}; 
         let currentDate = new Date();
         let viewDate = new Date();
         let selectedDate = new Date();
+        
         let hijriOffset = parseInt(localStorage.getItem('gx_hijri_offset')) || 0;
         document.getElementById('hijri-offset').value = hijriOffset;
 
@@ -143,7 +143,6 @@
         }
         setInterval(updateClock, 1000); updateClock();
 
-        // --- PRAYER TIMES ---
         function renderPrayerList(timings) {
             if(!timings) return;
             const prayers = [{n:"Subuh", t:timings.Fajr}, {n:"Dzuhur", t:timings.Dhuhr}, {n:"Ashar", t:timings.Asr}, {n:"Maghrib", t:timings.Maghrib}, {n:"Isya", t:timings.Isha}];
@@ -177,7 +176,6 @@
             }, () => { document.getElementById('loc-name').innerText = "Loc Denied"; });
         }
 
-        // --- STEAM SALES ---
         const steamSales = [
             { name: "Winter Sale", start: new Date("2025-12-19"), end: new Date("2026-01-02") },
             { name: "Spring Sale", start: new Date("2026-03-14"), end: new Date("2026-03-21") },
@@ -280,15 +278,23 @@
         }
         fetchHolidays(); renderCalendar(); updateInfoPanel(currentDate);
 
-        // --- FREE GAMES API LOGIC ---
+        // --- FREE GAMES API LOGIC (WITH PROXY FIX) ---
         async function fetchFreeGames() {
             const listContainer = document.getElementById('free-games-list');
-            const apiUrl = 'https://www.gamerpower.com/api/giveaways?platform=pc&type=game&sort-by=value';
+            
+            // Menggunakan Proxy 'allorigins.win' untuk mengatasi CORS di GitHub Pages
+            // URL Target: GamerPower API
+            const targetUrl = 'https://www.gamerpower.com/api/giveaways?platform=pc&type=game&sort-by=value';
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
 
             try {
-                const res = await fetch(apiUrl);
+                const res = await fetch(proxyUrl);
                 const data = await res.json();
-                const activeGames = data.filter(game => game.status === "Active").slice(0, 10); // Top 10
+                
+                // Cek apakah data valid array
+                if (!Array.isArray(data)) throw new Error("Invalid Data Format");
+
+                const activeGames = data.filter(game => game.status === "Active").slice(0, 10); 
 
                 if (activeGames.length === 0) {
                     listContainer.innerHTML = '<div class="fg-loading">No free games found at the moment.</div>';
@@ -298,14 +304,14 @@
                 let html = "";
                 activeGames.forEach(game => {
                     let storeClass = "";
-                    const platforms = game.platforms.toLowerCase();
+                    const platforms = (game.platforms || "").toLowerCase();
                     if (platforms.includes("steam")) storeClass = "store-steam";
                     else if (platforms.includes("epic")) storeClass = "store-epic";
                     else if (platforms.includes("gog")) storeClass = "store-gog";
                     else if (platforms.includes("ubisoft")) storeClass = "store-ubi";
 
-                    let platformName = game.platforms.split(',')[0].replace("PC", "").trim() || "PC";
-                    if(platformName === "") platformName = "DRM-FREE";
+                    let platformName = (game.platforms || "PC").split(',')[0].replace("PC", "").trim();
+                    if(!platformName) platformName = "DRM-FREE";
 
                     html += `
                     <a href="${game.open_giveaway_url}" target="_blank" class="fg-card">
@@ -326,7 +332,7 @@
                 listContainer.innerHTML = html;
             } catch (err) {
                 console.error("Failed to fetch games:", err);
-                listContainer.innerHTML = '<div class="fg-loading" style="color:#ff4081">Failed to load game data. Check connection.</div>';
+                listContainer.innerHTML = '<div class="fg-loading" style="color:#ff4081">Failed to load data (CORS/Network Error).</div>';
             }
         }
         fetchFreeGames();
