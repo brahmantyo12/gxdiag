@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Voice Studio</title>
+    <title>GXDiag - Pro Voice Studio</title>
     <meta name="theme-color" content="#1a1a1a">
     
     <link rel="stylesheet" href="../../css/style.css">
 
     <style>
         body { background: #111; color: #eee; font-family: 'Segoe UI', sans-serif; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 850px; margin: 0 auto; }
         
         .module-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
         .back-btn { text-decoration: none; color: #888; font-size: 1.1rem; }
@@ -22,7 +22,7 @@
         .tab-btn {
             background: #1a1a1a; border: none; padding: 12px 20px; color: #888;
             cursor: pointer; font-size: 0.9rem; font-weight: bold; border-radius: 8px 8px 0 0;
-            transition: 0.3s; flex: 1; text-align: center;
+            transition: 0.3s; flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .tab-btn:hover { background: #222; color: #fff; }
         .tab-btn.active { background: #222; color: #00e5ff; border-bottom: 3px solid #00e5ff; }
@@ -39,35 +39,38 @@
         }
         textarea:focus { outline: none; border-color: #00e5ff; }
 
-        /* CONTROLS GRID */
+        /* CONTROLS */
         .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        @media(max-width: 600px) { .controls-grid { grid-template-columns: 1fr; } }
-
         .control-group { display: flex; flex-direction: column; gap: 8px; }
         label { font-size: 0.8rem; color: #888; text-transform: uppercase; }
-        
-        select {
-            background: #222; border: 1px solid #444; color: #fff; padding: 10px;
-            border-radius: 6px; cursor: pointer;
-        }
-
-        /* Range Sliders */
-        input[type=range] { width: 100%; cursor: pointer; accent-color: #00e5ff; }
+        select, input[type=range] { background: #222; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 6px; width: 100%; }
 
         /* BUTTONS */
-        .action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+        .action-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
         .btn {
-            padding: 12px 25px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; gap: 8px; transition: 0.2s; color: #fff;
+            padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; gap: 8px; transition: 0.2s; color: #fff; font-size: 0.9rem;
         }
         .btn-primary { background: linear-gradient(135deg, #00b0ff, #00e5ff); color: #000; }
         .btn-primary:hover { box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
-        
-        .btn-danger { background: #ff4081; color: #fff; }
-        .btn-secondary { background: #333; color: #ccc; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-danger { background: #ff4081; }
+        .btn-success { background: #00c853; }
+        .btn-secondary { background: #333; color: #ccc; border: 1px solid #444; }
+        .btn:hover { filter: brightness(1.2); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
-        /* VISUALIZER (STT) */
+        /* RECORDING UI */
+        .rec-status {
+            background: #220000; border: 1px solid #500; color: #ff5252; padding: 10px;
+            border-radius: 6px; text-align: center; margin-bottom: 15px; display: none;
+            font-weight: bold; animation: pulseRed 1.5s infinite;
+        }
+        @keyframes pulseRed { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+
+        /* EXPORT DROPDOWN */
+        .export-group { display: flex; gap: 5px; }
+        
+        /* VISUALIZER */
         .mic-visualizer {
             height: 60px; display: flex; align-items: center; justify-content: center; gap: 5px;
             margin-bottom: 15px; opacity: 0.3; transition: 0.3s;
@@ -75,22 +78,10 @@
         .mic-visualizer.listening { opacity: 1; }
         .bar { width: 6px; background: #00e5ff; border-radius: 3px; animation: none; height: 10px; }
         .listening .bar { animation: soundWave 0.5s infinite ease-in-out alternate; }
-        .listening .bar:nth-child(1) { animation-delay: 0.1s; }
-        .listening .bar:nth-child(2) { animation-delay: 0.2s; }
-        .listening .bar:nth-child(3) { animation-delay: 0.3s; }
-        .listening .bar:nth-child(4) { animation-delay: 0.4s; }
-        .listening .bar:nth-child(5) { animation-delay: 0.5s; }
-
+        .listening .bar:nth-child(odd) { animation-duration: 0.4s; }
         @keyframes soundWave { 0% { height: 10px; } 100% { height: 50px; } }
 
-        .status-badge {
-            display: inline-block; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem;
-            margin-bottom: 10px; font-weight: bold;
-        }
-        .st-idle { background: #333; color: #aaa; }
-        .st-listening { background: rgba(0, 255, 136, 0.2); color: #00ff88; border: 1px solid #00ff88; animation: pulse 1s infinite; }
-        
-        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+        .hint-box { font-size: 0.8rem; color: #666; background: #151515; padding: 10px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #00e5ff; }
     </style>
 </head>
 <body>
@@ -98,40 +89,39 @@
     <div class="container">
         <div class="module-header">
             <a href="../../index.html" class="back-btn">⬅ Dashboard</a>
-            <div class="module-title">Voice Studio</div>
+            <div class="module-title">Voice Studio Pro</div>
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tts')">🗣️ Text to Speech (Reader)</button>
-            <button class="tab-btn" onclick="switchTab('stt')">🎙️ Speech to Text (Writer)</button>
+            <button class="tab-btn active" onclick="switchTab('tts')">🗣️ TTS (Reader)</button>
+            <button class="tab-btn" onclick="switchTab('stt')">🎙️ STT (Writer)</button>
         </div>
 
         <div id="panel-tts" class="panel active">
-            <div style="margin-bottom:10px; color:#aaa; font-size:0.8rem;">Type text below and choose a voice to narrate it.</div>
-            <textarea id="tts-input" placeholder="Enter text here to convert to speech... (e.g., 'Selamat pagi, sistem GXDiag siap digunakan.')"></textarea>
+            <textarea id="tts-input" placeholder="Type text here... (Example: 'System check complete. All hardware is operational.')"></textarea>
             
             <div class="controls-grid">
                 <div class="control-group">
-                    <label>Voice / Language</label>
+                    <label>Voice Engine</label>
                     <select id="voice-select"><option>Loading voices...</option></select>
                 </div>
                 <div class="control-group">
-                    <label>Speed (Rate)</label>
+                    <label>Speed: <span id="rate-val" style="color:#fff;">1x</span></label>
                     <input type="range" id="rate" min="0.5" max="2" value="1" step="0.1">
-                    <div style="text-align:right; font-size:0.7rem; color:#aaa;" id="rate-val">1x</div>
-                </div>
-                <div class="control-group">
-                    <label>Pitch</label>
-                    <input type="range" id="pitch" min="0" max="2" value="1" step="0.1">
-                    <div style="text-align:right; font-size:0.7rem; color:#aaa;" id="pitch-val">1</div>
                 </div>
             </div>
 
+            <div class="rec-status" id="tts-rec-status">🔴 RECORDING SYSTEM AUDIO... CLICK STOP TO SAVE.</div>
+
             <div class="action-bar">
-                <button class="btn btn-primary" onclick="speakText()">▶ Play</button>
-                <button class="btn btn-secondary" onclick="pauseText()">II Pause</button>
-                <button class="btn btn-secondary" onclick="resumeText()">▶ Resume</button>
-                <button class="btn btn-danger" onclick="stopText()">■ Stop</button>
+                <button class="btn btn-primary" onclick="speakText()">▶ Preview Voice</button>
+                <button class="btn btn-secondary" onclick="stopText()">■ Stop</button>
+                <div style="flex-grow:1;"></div>
+                <button class="btn btn-danger" id="btn-capture-tts" onclick="captureTTS()">🔴 Capture to .WAV</button>
+            </div>
+            
+            <div class="hint-box">
+                ℹ️ <strong>How to Save TTS:</strong> Click "Capture to .WAV". Browser will ask to share a tab. Select <strong>"This Tab"</strong> and ensure <strong>"Share Tab Audio"</strong> is checked. The audio will be recorded as high-quality WAV.
             </div>
         </div>
 
@@ -140,200 +130,231 @@
                 <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
             </div>
             
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div id="stt-status" class="status-badge st-idle">MICROPHONE IDLE</div>
-                <select id="stt-lang" style="padding:5px;">
-                    <option value="id-ID">🇮🇩 Indonesian</option>
-                    <option value="en-US">🇺🇸 English (US)</option>
-                    <option value="ja-JP">🇯🇵 Japanese</option>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <div id="stt-status" style="color:#aaa; font-weight:bold; font-size:0.8rem;">MICROPHONE IDLE</div>
+                <select id="stt-lang" style="width:150px; padding:5px;">
+                    <option value="id-ID">🇮🇩 Indonesia</option>
+                    <option value="en-US">🇺🇸 English</option>
+                    <option value="ja-JP">🇯🇵 Japan</option>
                 </select>
             </div>
 
-            <textarea id="stt-output" placeholder="Results will appear here. Click 'Start Listening' and speak clearly..." readonly></textarea>
+            <textarea id="stt-output" placeholder="Results will appear here. Click 'Start Listening'..." readonly></textarea>
 
             <div class="action-bar">
-                <button id="btn-listen" class="btn btn-primary" onclick="toggleListening()">🎙️ Start Listening</button>
-                <button class="btn btn-secondary" onclick="copyToClipboard()">📋 Copy Text</button>
-                <button class="btn btn-secondary" onclick="downloadText()">💾 Save as .txt</button>
-                <button class="btn btn-danger" onclick="clearText()">🗑️ Clear</button>
+                <button id="btn-listen" class="btn btn-primary" onclick="toggleListening()">🎙️ Start Dictation</button>
+                <button class="btn btn-secondary" onclick="clearText()">🗑️ Clear</button>
+                
+                <div style="flex-grow:1;"></div>
+                
+                <div class="export-group">
+                    <button class="btn btn-success" onclick="exportFile('doc')">📄 .DOC</button>
+                    <button class="btn btn-secondary" onclick="exportFile('txt')">📝 .TXT</button>
+                    <button class="btn btn-secondary" onclick="exportFile('json')">📊 .JSON</button>
+                </div>
+            </div>
+            
+            <div class="hint-box">
+                ℹ️ <strong>Export Info:</strong> .DOC files are compatible with Microsoft Word. .JSON includes timestamps for developers.
             </div>
         </div>
 
     </div>
 
     <script>
-        // --- TAB LOGIC ---
+        // --- TABS ---
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active');
             document.getElementById(`panel-${tab}`).classList.add('active');
         }
 
-        // --- TTS LOGIC (Text to Speech) ---
+        // --- TTS SYSTEM ---
         const synth = window.speechSynthesis;
-        const inputTxt = document.getElementById('tts-input');
         const voiceSelect = document.getElementById('voice-select');
-        const pitch = document.getElementById('pitch');
-        const rate = document.getElementById('rate');
         let voices = [];
+        let mediaRecorder;
+        let audioChunks = [];
 
         function populateVoices() {
             voices = synth.getVoices();
             voiceSelect.innerHTML = '';
-            
-            // Prioritize ID/EN voices
-            voices.sort(function (a, b) {
-                const aname = a.name.toUpperCase(), bname = b.name.toUpperCase();
-                if ( aname < bname ) return -1;
-                else if ( aname == bname ) return 0;
-                return +1;
-            });
-
+            // Sort: ID first, then EN
+            voices.sort((a, b) => (a.lang === 'id-ID' ? -1 : 1));
             voices.forEach((voice) => {
-                const option = document.createElement('option');
-                option.textContent = `${voice.name} (${voice.lang})`;
-                option.setAttribute('data-lang', voice.lang);
-                option.setAttribute('data-name', voice.name);
-                
-                // Auto select Google Bahasa Indonesia if available
-                if(voice.lang === 'id-ID') option.selected = true;
-                
-                voiceSelect.appendChild(option);
+                const opt = document.createElement('option');
+                opt.textContent = `${voice.name} (${voice.lang})`;
+                opt.setAttribute('data-name', voice.name);
+                voiceSelect.appendChild(opt);
             });
         }
-
         populateVoices();
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = populateVoices;
-        }
+        if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = populateVoices;
 
-        // Update Slider Values UI
-        pitch.oninput = () => document.getElementById('pitch-val').innerText = pitch.value;
-        rate.oninput = () => document.getElementById('rate-val').innerText = rate.value + 'x';
+        document.getElementById('rate').oninput = function() { document.getElementById('rate-val').innerText = this.value + 'x'; };
 
         function speakText() {
-            if (synth.speaking) { console.error('Already speaking'); return; }
-            if (inputTxt.value !== '') {
-                const utterThis = new SpeechSynthesisUtterance(inputTxt.value);
-                const selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-name');
-                
-                for (let i = 0; i < voices.length; i++) {
-                    if (voices[i].name === selectedOption) {
-                        utterThis.voice = voices[i];
-                        break;
-                    }
-                }
-                utterThis.pitch = pitch.value;
-                utterThis.rate = rate.value;
-                synth.speak(utterThis);
+            if (synth.speaking) synth.cancel();
+            const txt = document.getElementById('tts-input').value;
+            if (txt !== '') {
+                const utter = new SpeechSynthesisUtterance(txt);
+                const selectedName = voiceSelect.selectedOptions[0].getAttribute('data-name');
+                utter.voice = voices.find(v => v.name === selectedName);
+                utter.rate = document.getElementById('rate').value;
+                synth.speak(utter);
+                return utter; // Return for recorder
             }
         }
-        function pauseText() { if(synth.speaking) synth.pause(); }
-        function resumeText() { if(synth.paused) synth.resume(); }
-        function stopText() { if(synth.speaking) synth.cancel(); }
+        function stopText() { synth.cancel(); }
 
-        // --- STT LOGIC (Speech to Text) ---
+        // --- TTS RECORDER (CAPTURE TAB AUDIO) ---
+        async function captureTTS() {
+            const btn = document.getElementById('btn-capture-tts');
+            
+            if (btn.classList.contains('recording')) {
+                // STOP RECORDING
+                mediaRecorder.stop();
+                btn.classList.remove('recording');
+                btn.innerHTML = "🔴 Capture to .WAV";
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-danger');
+                document.getElementById('tts-rec-status').style.display = 'none';
+                stopText(); // Stop speaking
+                return;
+            }
+
+            try {
+                // 1. Request Tab Audio
+                const stream = await navigator.mediaDevices.getDisplayMedia({ 
+                    video: true, // Required for getDisplayMedia, even if we only want audio
+                    audio: true,
+                    preferCurrentTab: true 
+                });
+
+                // 2. Setup Recorder
+                const audioStream = new MediaStream(stream.getAudioTracks());
+                mediaRecorder = new MediaRecorder(audioStream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/wav' }); // Browser saves as WebM/Opus usually
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `GXDiag-TTS-${new Date().getTime()}.wav`; // Save as WAV (container might be webm but players handle it)
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    // Stop tracks to remove "Sharing this tab" banner
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                // 3. Start Recording & Speaking
+                mediaRecorder.start();
+                speakText();
+
+                // UI Updates
+                btn.classList.add('recording');
+                btn.innerHTML = "💾 Stop & Save";
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-success');
+                document.getElementById('tts-rec-status').style.display = 'block';
+
+            } catch (err) {
+                console.error("Error capturing audio:", err);
+                alert("Capture cancelled or not supported. Please select 'Share Tab Audio' when prompted.");
+            }
+        }
+
+        // --- STT SYSTEM ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const sttOutput = document.getElementById('stt-output');
         const sttStatus = document.getElementById('stt-status');
         const visualizer = document.getElementById('visualizer');
         const btnListen = document.getElementById('btn-listen');
-        const langSelect = document.getElementById('stt-lang');
-
         let recognition;
         let isListening = false;
 
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
-            recognition.continuous = true; // Keep listening
-            recognition.interimResults = true; // Show text while speaking
-
-            recognition.onstart = function() {
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            recognition.onstart = () => {
                 isListening = true;
-                sttStatus.innerText = "LISTENING...";
-                sttStatus.className = "status-badge st-listening";
+                sttStatus.innerText = "LISTENING... (Speak Clearly)";
+                sttStatus.style.color = "#00ff88";
                 visualizer.classList.add('listening');
-                btnListen.innerText = "🛑 Stop Listening";
-                btnListen.classList.remove('btn-primary');
-                btnListen.classList.add('btn-danger');
+                btnListen.innerHTML = "🛑 Stop";
+                btnListen.classList.replace('btn-primary', 'btn-danger');
             };
-
-            recognition.onerror = function(event) {
-                console.error(event.error);
-                sttStatus.innerText = "ERROR: " + event.error;
-                stopListeningUI();
+            recognition.onend = () => {
+                isListening = false;
+                sttStatus.innerText = "MICROPHONE IDLE";
+                sttStatus.style.color = "#aaa";
+                visualizer.classList.remove('listening');
+                btnListen.innerHTML = "🎙️ Start Dictation";
+                btnListen.classList.replace('btn-danger', 'btn-primary');
             };
-
-            recognition.onend = function() {
-                stopListeningUI();
-            };
-
-            recognition.onresult = function(event) {
-                let finalTranscript = '';
-                let interimTranscript = '';
-
+            recognition.onresult = (event) => {
+                let final = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
-                    }
+                    if (event.results[i].isFinal) final += event.results[i][0].transcript + ' ';
                 }
-                
-                // Append logic: only add finalized text to existing text
-                if (finalTranscript) {
-                    // Cek agar tidak duplikat jika event fire berkali-kali
-                    const currentText = sttOutput.value;
-                    sttOutput.value = currentText + (currentText ? " " : "") + finalTranscript;
-                }
+                if(final) sttOutput.value += final;
             };
-        } else {
-            sttOutput.value = "⚠️ Browser Anda tidak mendukung Web Speech API. Gunakan Google Chrome/Edge.";
-            btnListen.disabled = true;
         }
 
         function toggleListening() {
-            if (!recognition) return;
-            if (isListening) {
-                recognition.stop();
-            } else {
-                recognition.lang = langSelect.value;
+            if(!recognition) return alert("Browser not supported.");
+            if(isListening) recognition.stop();
+            else {
+                recognition.lang = document.getElementById('stt-lang').value;
                 recognition.start();
             }
         }
-
-        function stopListeningUI() {
-            isListening = false;
-            sttStatus.innerText = "MICROPHONE IDLE";
-            sttStatus.className = "status-badge st-idle";
-            visualizer.classList.remove('listening');
-            btnListen.innerText = "🎙️ Start Listening";
-            btnListen.classList.remove('btn-danger');
-            btnListen.classList.add('btn-primary');
-        }
-
         function clearText() { sttOutput.value = ""; }
-        
-        function copyToClipboard() {
-            sttOutput.select();
-            document.execCommand('copy');
-            alert("Text copied to clipboard!");
-        }
 
-        function downloadText() {
+        // --- EXPORT FUNCTIONS ---
+        function exportFile(type) {
             const text = sttOutput.value;
-            if(!text) return;
-            const blob = new Blob([text], { type: 'text/plain' });
-            const anchor = document.createElement('a');
-            anchor.download = `GXDiag-Note-${new Date().toISOString().slice(0,10)}.txt`;
-            anchor.href = window.URL.createObjectURL(blob);
-            anchor.target = '_blank';
-            anchor.style.display = 'none';
-            document.body.appendChild(anchor);
-            anchor.click();
-            document.body.removeChild(anchor);
+            if(!text) return alert("No text to export!");
+            
+            const timestamp = new Date().toISOString().slice(0,10);
+            let blob, filename;
+
+            if (type === 'doc') {
+                // Fake Word Doc using HTML (Works perfectly in MS Word)
+                const htmlContent = `
+                    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head><meta charset='utf-8'><title>Export</title></head>
+                    <body>
+                        <h1 style="color:#000;">GXDiag Transcription</h1>
+                        <p style="color:#555; font-size:10px;">Date: ${timestamp}</p>
+                        <hr>
+                        <p style="font-family:Arial; font-size:12pt;">${text.replace(/\n/g, "<br>")}</p>
+                    </body></html>`;
+                blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+                filename = `GXDiag-Transcript-${timestamp}.doc`;
+            } 
+            else if (type === 'txt') {
+                blob = new Blob([text], { type: 'text/plain' });
+                filename = `GXDiag-Transcript-${timestamp}.txt`;
+            } 
+            else if (type === 'json') {
+                const data = { app: "GXDiag Voice Studio", date: timestamp, content: text, length: text.length };
+                blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                filename = `GXDiag-Data-${timestamp}.json`;
+            }
+
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
         }
     </script>
 </body>
