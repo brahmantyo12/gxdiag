@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Creepster&family=Lato:ital,wght@0,400;0,700;1,400&family=MedievalSharp&family=Playfair+Display:ital,wght@0,400;1,400&family=Rye&display=swap" rel="stylesheet">
 
     <style>
-        /* --- CSS VARIABLES & THEMES --- */
+        /* --- CSS VARIABLES --- */
         :root {
             --primary: #d4af37;
             --secondary: #5c4033;
@@ -21,6 +21,7 @@
             --glow: 0 0 10px rgba(212, 175, 55, 0.3);
         }
 
+        /* THEMES */
         body.theme-sindarin { --primary: #FFD700; --secondary: #AA8800; --font-head: 'Cinzel', serif; --bg-grad: radial-gradient(circle, #1a2520, #000); }
         body.theme-quenya { --primary: #00BFFF; --secondary: #C0C0C0; --font-head: 'Cinzel', serif; --bg-grad: linear-gradient(to top, #001f3f, #000); }
         body.theme-khuzdul { --primary: #cd7f32; --secondary: #3e2723; --font-head: 'Rye', serif; --bg-grad: linear-gradient(to bottom, #2b1d14, #000); }
@@ -44,7 +45,7 @@
             padding: 20px;
         }
 
-        /* --- NAVIGATION BACK --- */
+        /* --- NAVIGATION & CONTROLS --- */
         .fantasy-back-btn {
             position: absolute; top: 15px; left: 15px;
             font-family: var(--font-head); color: var(--primary);
@@ -54,6 +55,27 @@
             display: flex; align-items: center; gap: 5px;
         }
         .fantasy-back-btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
+
+        /* MUSIC BUTTON STYLE */
+        .music-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--secondary);
+            color: var(--primary);
+            padding: 8px 15px; border-radius: 20px;
+            font-family: var(--font-body); font-size: 0.8rem;
+            cursor: pointer; z-index: 20;
+            display: flex; align-items: center; gap: 8px;
+            transition: 0.3s;
+        }
+        .music-btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 10px var(--primary); }
+        .music-active { animation: pulse-glow 2s infinite; border-color: var(--primary); background: rgba(212, 175, 55, 0.2); }
+        
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 5px var(--primary); }
+            50% { box-shadow: 0 0 15px var(--primary); }
+            100% { box-shadow: 0 0 5px var(--primary); }
+        }
 
         /* --- PARTICLES --- */
         #particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
@@ -65,7 +87,7 @@
         @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
         @keyframes floatUp { from { transform: translateY(110vh) translateX(-20px); opacity:0; } 20% { opacity: 1;} to { transform: translateY(-10vh) translateX(20px); opacity:0; } }
 
-        /* --- CONTAINER UTAMA --- */
+        /* --- CONTAINER --- */
         .container {
             position: relative; z-index: 10;
             background: var(--glass);
@@ -76,7 +98,7 @@
             text-align: center;
             box-shadow: 0 10px 50px rgba(0,0,0,0.8);
             backdrop-filter: blur(5px);
-            margin-top: 40px;
+            margin-top: 50px; /* Jarak agar tidak nabrak tombol back/music di HP */
         }
 
         h1 {
@@ -114,12 +136,12 @@
         }
         .swap-btn:hover { background: var(--primary); color: #000; transform: rotate(180deg); }
 
-        /* --- AREA INPUT & OUTPUT --- */
+        /* --- IO AREA --- */
         .io-area { display: flex; flex-direction: column; gap: 15px; }
         .input-wrapper { position: relative; width: 100%; display: flex; flex-direction: column; }
 
         textarea, .result-div {
-            width: 100%; min-height: 140px; /* Gunakan min-height agar fleksibel */
+            width: 100%; min-height: 140px;
             background: rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 8px; padding: 15px;
@@ -135,7 +157,6 @@
             position: relative; word-wrap: break-word;
         }
 
-        /* --- TOMBOL --- */
         .translate-btn {
             width: 100%; padding: 18px; margin-top: 20px;
             background: linear-gradient(135deg, var(--secondary), var(--primary));
@@ -151,16 +172,13 @@
             background: rgba(0,0,0,0.5); border-radius: 5px; padding: 5px;
             border: 1px solid #444; color: #ccc; cursor: pointer; font-size: 1.2rem; transition: 0.2s;
         }
-        .copy-btn:active { color: var(--primary); transform: scale(0.9); }
-
         .random-btn {
             position: absolute; top: 10px; right: 10px;
             background: rgba(0,0,0,0.5); border-radius: 5px; padding: 5px;
             border: 1px solid #444; font-size: 1.5rem; cursor: pointer; opacity: 0.8; transition: 0.3s; z-index: 5;
         }
-        .random-btn:active { transform: scale(0.9) rotate(20deg); opacity: 1; }
 
-        /* --- METADATA & TYPO LOG --- */
+        /* --- INFO BOXES --- */
         .quote-metadata {
             margin-top: 10px; padding: 12px;
             background: rgba(0, 0, 0, 0.6);
@@ -173,11 +191,10 @@
         .quote-metadata em { color: #bbb; font-size: 0.85rem; display: block; margin-top: 4px; font-style: italic; }
 
         #typoLog { font-size: 0.8rem; color: #aaa; margin-top: 5px; font-style: italic; min-height: 20px; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
         #status { font-size: 0.7rem; color: #777; margin-top: 15px; }
         .raw { font-family: sans-serif; font-size: 0.6em; opacity: 0.5; font-style: normal; vertical-align: super; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- RESPONSIVE DESKTOP --- */
         @media (min-width: 768px) { 
@@ -185,16 +202,20 @@
             .container { padding: 40px; margin-top: 0; }
             h1 { font-size: 2.5rem; margin-bottom: 10px; }
             .subtitle { font-size: 1rem; margin-bottom: 30px; }
-            
             .selector-box { flex-direction: row; gap: 15px; }
             .swap-btn { margin: 0; }
-            
-            .io-area { flex-direction: row; align-items: flex-start; } /* align-items: flex-start agar tinggi dinamis */
+            .io-area { flex-direction: row; align-items: flex-start; }
             .input-wrapper, .result-div { flex: 1; min-height: 200px; }
             textarea, .result-div { font-size: 1.3rem; height: 100%; }
             .result-div { font-size: 1.6rem; }
-            
             .fantasy-back-btn { top: 30px; left: 30px; font-size: 1rem; padding: 10px 20px; }
+            .music-btn { top: 30px; right: 30px; font-size: 0.9rem; padding: 10px 20px; }
+        }
+
+        /* --- RESPONSIVE MOBILE TWEAK --- */
+        @media (max-width: 767px) {
+            .music-btn { top: 15px; right: 15px; font-size: 0.75rem; padding: 6px 12px; }
+            .fantasy-back-btn { top: 15px; left: 15px; font-size: 0.75rem; padding: 6px 12px; }
         }
     </style>
 </head>
@@ -203,7 +224,10 @@
     <div id="particles"></div>
     <audio id="sfx" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
+    <audio id="bgMusic" loop></audio>
+
     <a href="../../index.html" class="fantasy-back-btn">⚔️ Back</a>
+    <button id="musicToggle" class="music-btn" onclick="toggleMusic()">🔇 Sound Off</button>
 
     <div class="container">
         <h1>Middle-earth Omni-Translator</h1>
@@ -235,7 +259,6 @@
             <div class="input-wrapper">
                 <textarea id="inputText" placeholder="Speak, friend, and enter..."></textarea>
                 <button class="random-btn" onclick="randomizeInput()" title="Roll for Lore Quote">🎲</button>
-                
                 <div id="quoteMetadata" class="quote-metadata" style="display: none;"></div>
             </div>
             
@@ -253,6 +276,5 @@
     </div>
 
     <script src="script.js"></script> 
-
 </body>
 </html>
