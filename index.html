@@ -9,53 +9,6 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
     <link rel="stylesheet" href="css/style.css">
-
-    <style>
-        /* --- SECRET CARD MECHANIC --- */
-        .card-secret {
-            border-color: #ffd700;
-            background: linear-gradient(145deg, #2b1d14, #000);
-            
-            /* State Awal: Sembunyi */
-            opacity: 0; 
-            transform: scale(0.9);
-            filter: blur(5px);
-            transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-        }
-
-        /* Saat Mouse Lewat (Desktop) */
-        .card-secret:hover {
-            opacity: 1;
-            transform: scale(1) translateY(-7px);
-            filter: blur(0);
-            box-shadow: 0 0 25px #ffd700; /* Glow Emas */
-        }
-
-        /* --- MODE MOBILE (SOLUSI LAYAR SENTUH) --- */
-        @media (max-width: 900px) {
-            .card-secret {
-                /* Di HP jangan hilang total, tapi samar-samar (Ghost Mode) */
-                opacity: 0.15; 
-                filter: grayscale(100%);
-                transform: scale(0.95);
-            }
-            
-            /* Agar user tahu ada sesuatu di sana */
-            .card-secret::before {
-                content: "?";
-                position: absolute; top: 50%; left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 3rem; color: #333; font-weight: bold;
-            }
-
-            /* Saat ditekan di HP, baru muncul jelas (Active State) */
-            .card-secret:active, .card-secret:focus {
-                opacity: 1;
-                filter: grayscale(0%);
-                transform: scale(1);
-            }
-        }
-    </style>
 </head>
 <body>
 
@@ -166,7 +119,6 @@
 
         <a href="modules/meta-detect/index.html" class="card theme-pink"><div class="icon">🕵️</div><div class="title">Meta/Hoax</div><div class="desc">EXIF & Edit Detector</div></a>
         <a href="modules/voice-studio/index.html" class="card theme-audio"><div class="icon">🎙️</div><div class="title">Voice Studio</div><div class="desc">TTS & Speech to Text</div></a>
-        
         <a href="modules/retro-asset/index.html" class="card theme-retro"><div class="icon">👾</div><div class="title">Retro Asset</div><div class="desc">Sprite & 8-Bit Audio Gen</div></a>
 
         <a href="modules/metranslator/index.html" class="card card-secret">
