@@ -3,7 +3,7 @@
 > **The Ultimate Web-Based Hardware Diagnostic Suite & Command Center.**
 > A lightweight, modular, and professional tool to test hardware peripherals, analyze networks, generate creative assets, and provide emergency utilities directly from your browser.
 
-![Project Banner](screenshots/gxdiag4.jpeg)
+![Project Banner](screenshots/gxdiag4.jpg)
 
 ## 🔗 Live Demo
 🚀 **[Click here to open GXDiag Live](https://gxdiag.brahmantyo12.my.id)**
