@@ -9,6 +9,54 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
     <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        /* --- SECRET CARD MECHANIC --- */
+        .card-secret {
+            border-color: #ffd700;
+            background: linear-gradient(145deg, #2b1d14, #000);
+            
+            /* State Awal: Sembunyi */
+            opacity: 0; 
+            transform: scale(0.9);
+            filter: blur(5px);
+            transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        /* Saat Mouse Lewat (Desktop) */
+        .card-secret:hover {
+            opacity: 1;
+            transform: scale(1) translateY(-7px);
+            filter: blur(0);
+            box-shadow: 0 0 25px #ffd700; /* Glow Emas */
+        }
+
+        /* --- MODE MOBILE (SOLUSI LAYAR SENTUH) --- */
+        @media (max-width: 900px) {
+            .card-secret {
+                /* Di HP jangan hilang total, tapi samar-samar (Ghost Mode) */
+                opacity: 0.15; 
+                filter: grayscale(100%);
+                transform: scale(0.95);
+            }
+            
+            /* Agar user tahu ada sesuatu di sana */
+            .card-secret::before {
+                content: "?";
+                position: absolute; top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 3rem; color: #333; font-weight: bold;
+            }
+
+            /* Saat ditekan di HP, baru muncul jelas (Active State) */
+            .card-secret:active, .card-secret:focus {
+                opacity: 1;
+                filter: grayscale(0%);
+                transform: scale(1);
+            }
+            .card-secret:active::before { content: none; }
+        }
+    </style>
 </head>
 <body>
 
@@ -116,6 +164,12 @@
         <a href="modules/img-converter/index.html" class="card theme-media"><div class="icon">🖼️</div><div class="title">Img Convert</div><div class="desc">JPG, PNG, WEBP Tool</div></a>
         <a href="modules/img-resizer/index.html" class="card theme-media"><div class="icon">📏</div><div class="title">Img Resizer</div><div class="desc">Scale & 2x Resolution</div></a>
         <a href="modules/img-compress/index.html" class="card theme-sys"><div class="icon">🗜️</div><div class="title">Compressor</div><div class="desc">Reduce File Size</div></a>
+        
+        <a href="modules/pricelist-generator/index.html" class="card theme-media">
+            <div class="icon">🏷️</div>
+            <div class="title">Pricelist Gen</div>
+            <div class="desc">Buat Voucher Topup Game</div>
+        </a>
 
         <a href="modules/meta-detect/index.html" class="card theme-pink"><div class="icon">🕵️</div><div class="title">Meta/Hoax</div><div class="desc">EXIF & Edit Detector</div></a>
         <a href="modules/voice-studio/index.html" class="card theme-audio"><div class="icon">🎙️</div><div class="title">Voice Studio</div><div class="desc">TTS & Speech to Text</div></a>
@@ -124,7 +178,7 @@
         <a href="modules/metranslator/index.html" class="card card-secret">
             <div class="icon" style="filter: grayscale(0); text-shadow: 0 0 10px #ffd700;">💍</div>
             <div class="title" style="color: #ffd700; font-family: serif;">Middle Earth</div>
-            <div class="desc" style="color: #d4af37;">one ring to rule them all</div>
+            <div class="desc" style="color: #d4af37;">Elvish, Dwarvish & Mordor Translator</div>
         </a>
     </div>
 
@@ -286,12 +340,13 @@
         }
         fetchHolidays(); renderCalendar(); updateInfoPanel(currentDate);
 
-        // --- 5. FREE GAMES API (DUAL ENGINE FALLBACK) ---
+        // --- 5. FREE GAMES API (DUAL ENGINE & SMART LABEL) ---
+        // Mencoba CorsProxy.io (Cepat) -> Gagal -> Coba AllOrigins (Cadangan)
         async function fetchFreeGames() {
             const listContainer = document.getElementById('free-games-list');
             const targetUrl = 'https://www.gamerpower.com/api/giveaways?platform=pc&type=game&sort-by=value';
             
-            // Opsi 1: Prioritas Utama (Lebih Cepat di Indo)
+            // Opsi 1: Prioritas Utama (Lebih Cepat di Indo via Cloudflare)
             const proxyPrimary = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
             // Opsi 2: Cadangan
             const proxyBackup = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
@@ -316,7 +371,7 @@
                     if (res.ok) data = await res.json();
                 }
 
-                if (!data || !Array.isArray(data)) throw new Error("Gagal mengambil data dari kedua proxy.");
+                if (!data || !Array.isArray(data)) throw new Error("Gagal mengambil data.");
 
                 // Tahap 3: Render Data
                 const activeGames = data.filter(game => game.status === "Active").slice(0, 10);
@@ -329,15 +384,24 @@
                 let html = "";
                 activeGames.forEach(game => {
                     let storeClass = "";
+                    let platformLabel = "PC";
                     const platforms = (game.platforms || "").toLowerCase();
                     
-                    if (platforms.includes("steam")) storeClass = "store-steam";
-                    else if (platforms.includes("epic")) storeClass = "store-epic";
-                    else if (platforms.includes("gog")) storeClass = "store-gog";
-                    else if (platforms.includes("ubisoft")) storeClass = "store-ubi";
-
-                    let platformName = (game.platforms || "PC").split(',')[0].replace("PC", "").trim();
-                    if(!platformName || platformName === "") platformName = "DRM-FREE";
+                    // Deteksi Platform Pintar (Smart Label)
+                    if (platforms.includes("steam")) { 
+                        storeClass = "store-steam"; platformLabel = "STEAM"; 
+                    } else if (platforms.includes("epic")) { 
+                        storeClass = "store-epic"; platformLabel = "EPIC GAMES"; 
+                    } else if (platforms.includes("gog")) { 
+                        storeClass = "store-gog"; platformLabel = "GOG.COM"; 
+                    } else if (platforms.includes("ubisoft") || platforms.includes("uplay")) { 
+                        storeClass = "store-ubi"; platformLabel = "UBISOFT"; 
+                    } else if (platforms.includes("itch")) {
+                        platformLabel = "ITCH.IO";
+                    } else {
+                        // Fallback jika tidak ada toko besar
+                        platformLabel = "DRM-FREE";
+                    }
 
                     // Fallback Image
                     const thumb = game.thumbnail || 'https://via.placeholder.com/260x140?text=No+Image';
@@ -348,7 +412,7 @@
                         <div class="fg-info">
                             <div class="fg-name">${game.title}</div>
                             <div class="fg-meta">
-                                <span class="fg-store-badge ${storeClass}">${platformName}</span>
+                                <span class="fg-store-badge ${storeClass}">${platformLabel}</span>
                                 <div>
                                     <span class="fg-original">${game.worth || "$?"}</span>
                                     <span class="fg-price">FREE</span>
