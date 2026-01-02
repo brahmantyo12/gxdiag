@@ -1,37 +1,44 @@
 // --- GLOBAL VARIABLES ---
 let db = {};
 let isLoaded = false;
+let typoCorrections = []; // Penampung log typo
 
-// --- DATABASE KUTIPAN LORE (Sama seperti sebelumnya) ---
+// --- DATABASE KUTIPAN LORE (Quotes & Trivia) ---
 const loreQuotes = {
     'sindarin': [
-        { text: "The stars shine upon the hour of our meeting", character: "Gildor Inglorion", source: "The Fellowship of the Ring", trivia: "Salam tradisional High Elves." },
-        { text: "Speak friend and enter", character: "Narvi", source: "LOTR: Fellowship", trivia: "Kata sandi Pintu Durin di Moria." },
-        { text: "I will go alone", character: "Frodo", source: "LOTR: Fellowship", trivia: "Keputusan Frodo di Amon Hen." }
+        { text: "The stars shine upon the hour of our meeting", character: "Gildor", source: "LOTR: Fellowship", trivia: "Salam tradisional High Elves." },
+        { text: "Speak friend and enter", character: "Narvi", source: "LOTR: Fellowship", trivia: "Kata sandi Pintu Durin." },
+        { text: "I will go alone", character: "Frodo", source: "LOTR: Fellowship", trivia: "Keputusan Frodo di Amon Hen." },
+        { text: "My heart tells me", character: "Legolas", source: "The Two Towers", trivia: "Firasat Elf." }
     ],
     'quenya': [
         { text: "Hail Earendil brightest of angels", character: "Frodo", source: "The Two Towers", trivia: "Doa menggunakan Phial of Galadriel." },
-        { text: "Now is the hour", character: "Théoden", source: "Return of the King", trivia: "Momen sebelum pertempuran." }
+        { text: "Now is the hour", character: "Théoden", source: "Return of the King", trivia: "Momen sebelum pertempuran." },
+        { text: "Behold the light", character: "Lore", source: "Silmarillion", trivia: "Cahaya Dua Pohon Valinor." }
     ],
     'khuzdul': [
         { text: "Axes of the Dwarves", character: "Gimli", source: "The Two Towers", trivia: "Teriakan perang di Helm's Deep." },
-        { text: "The Dwarves are upon you", character: "Dain", source: "The Hobbit", trivia: "Pasukan Iron Hills menyerang." }
+        { text: "The Dwarves are upon you", character: "Dain", source: "The Hobbit", trivia: "Pasukan Iron Hills menyerang." },
+        { text: "He is the king under the mountain", character: "Thorin", source: "The Hobbit", trivia: "Gelar Raja Erebor." }
     ],
     'blackspeech': [
         { text: "One Ring to rule them all", character: "Sauron", source: "The One Ring", trivia: "Puisi cincin baris pertama." },
-        { text: "Meat is back on the menu", character: "Uglúk", source: "The Two Towers", trivia: "Uruk-hai yang kelaparan." }
+        { text: "Meat is back on the menu", character: "Uglúk", source: "The Two Towers", trivia: "Uruk-hai yang kelaparan." },
+        { text: "The eye sees all", character: "Saruman", source: "Fellowship", trivia: "Kekuatan Barad-dûr." }
     ],
     'rohirric': [
         { text: "The king is here", character: "Éomer", source: "Return of the King", trivia: "Kedatangan harapan." },
-        { text: "Arise riders of Theoden", character: "Théoden", source: "Return of the King", trivia: "Pidato Pelennor Fields." }
+        { text: "Arise riders of Theoden", character: "Théoden", source: "Return of the King", trivia: "Pidato Pelennor Fields." },
+        { text: "I am no man", character: "Éowyn", source: "Return of the King", trivia: "Melawan Witch-king." }
     ],
     'en': [
         { text: "You shall not pass", character: "Gandalf", source: "Fellowship", trivia: "Menahan Balrog." },
-        { text: "My precious", character: "Gollum", source: "LOTR", trivia: "Obsesi terhadap Cincin." }
+        { text: "My precious", character: "Gollum", source: "LOTR", trivia: "Obsesi terhadap Cincin." },
+        { text: "Fly you fools", character: "Gandalf", source: "Fellowship", trivia: "Kata terakhir Gandalf di Moria." }
     ]
 };
 
-// --- 1. LOAD DATA DATABASE ---
+// --- 1. LOAD DATA ---
 fetch('data.json')
     .then(res => res.json())
     .then(data => {
@@ -45,7 +52,7 @@ fetch('data.json')
         document.getElementById('status').innerText = "Error loading data.json";
     });
 
-// --- 2. UI LOGIC (Theme, Particles, Swap) ---
+// --- 2. UI LOGIC ---
 function updateTheme() {
     const target = document.getElementById('targetLang').value;
     document.body.className = `theme-${target}`;
@@ -120,8 +127,7 @@ function randomizeInput() {
     runTranslate();
 }
 
-// --- 3. ALGORITMA LEVENSHTEIN (FUZZY MATCHING / ANTI-TYPO) ---
-// Menghitung jarak antara dua kata (misal: "freind" ke "friend" jaraknya 1)
+// --- 3. ALGORITMA PENDUKUNG (Levenshtein & Case) ---
 function levenshtein(a, b) {
     if (a.length === 0) return b.length;
     if (b.length === 0) return a.length;
@@ -133,98 +139,104 @@ function levenshtein(a, b) {
             if (b.charAt(i - 1) === a.charAt(j - 1)) {
                 matrix[i][j] = matrix[i - 1][j - 1];
             } else {
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1,
-                    Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
-                );
+                matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
             }
         }
     }
     return matrix[b.length][a.length];
 }
 
-// --- 4. ALGORITMA CASE PRESERVATION (HURUF KAPITAL) ---
-// Menyesuaikan huruf besar/kecil hasil terjemahan dengan input asli
 function matchCase(original, translated) {
     if (!original || !translated) return translated;
-    
-    // Jika semua kapital (KING -> ARAN)
     if (original === original.toUpperCase()) return translated.toUpperCase();
-    
-    // Jika huruf pertama kapital (King -> Aran)
-    if (original[0] === original[0].toUpperCase()) {
-        return translated.charAt(0).toUpperCase() + translated.slice(1);
-    }
-    
-    // Default huruf kecil (king -> aran)
+    if (original[0] === original[0].toUpperCase()) return translated.charAt(0).toUpperCase() + translated.slice(1);
     return translated.toLowerCase();
 }
 
-// --- 5. TRANSLATION LOGIC (MODERN & SMART) ---
+// --- 4. SUPER TRANSLATION LOGIC (Word Processing Center) ---
 function runTranslate() {
     if (!isLoaded) return;
 
     const srcLang = document.getElementById('sourceLang').value;
     const tgtLang = document.getElementById('targetLang').value;
-    const rawInput = document.getElementById('inputText').value; // Jangan toLowerCase dulu!
+    const rawInput = document.getElementById('inputText').value;
     const outputDiv = document.getElementById('outputText');
     const audio = document.getElementById('sfx');
+    const logDiv = document.getElementById('typoLog'); // Pastikan div ini ada di HTML
 
     audio.currentTime = 0; audio.play().catch(()=>{});
     if (!rawInput) return;
 
-    // Split pintar (memisahkan tanda baca)
+    // Reset log typo
+    typoCorrections = [];
+
+    // Split Pintar
     let spacedInput = rawInput.replace(/([.,!?;:(){}\[\]<>"\/\-])/g, ' $1 ');
     let words = spacedInput.split(/\s+/);
     let result = [];
 
-    // Rules Grammar
+    // Grammar Rules
     const copulaList = ['is', 'am', 'are', 'was', 'were'];
     const articleList = ['the', 'a', 'an'];
-    const zeroCopulaLangs = ['sindarin', 'quenya', 'khuzdul', 'blackspeech']; 
+    const zeroCopulaLangs = ['sindarin', 'quenya', 'khuzdul', 'blackspeech'];
     const zeroArticleLangs = ['khuzdul', 'blackspeech'];
 
-    // --- HELPER UTAMA ---
-    function getDict(lang) {
+    // --- HELPER UTAMA: PENCARI KATA PINTAR ---
+    // Mencari kata di kamus tertentu dengan urutan: Exact -> Morphology -> Fuzzy
+    function smartLookup(word, lang, isReverse) {
+        // 1. Siapkan Kamus (Merge Neo jika perlu)
         let dict = db[lang] || {};
-        // Merge Neo-Languages otomatis
         if (lang === 'khuzdul' && db['khuzdul_neo']) dict = {...dict, ...db['khuzdul_neo']};
         if (lang === 'blackspeech' && db['blackspeech_neo']) dict = {...dict, ...db['blackspeech_neo']};
-        return dict;
-    }
 
-    function searchWord(word, dict, isSourceSearch) {
-        word = word.toLowerCase();
-        
-        // 1. Exact Match
-        if (isSourceSearch) {
-            // Reverse Search (Inggris -> Key)
-            for (let k in dict) { if (dict[k] === word) return k; }
-        } else {
-            // Direct Search (Key -> Target)
-            if (dict[word]) return dict[word];
-        }
-
-        // 2. Plural Handling (Kings -> King)
-        if (word.endsWith('s')) {
-            let root = word.slice(0, -1);
-            if (isSourceSearch) {
-                for (let k in dict) { if (dict[k] === root) return k; }
+        // 2. Fungsi Cek Kamus Internal
+        const checkDict = (term) => {
+            if (isReverse) {
+                // Cari Key berdasarkan Value (Inggris -> Asing)
+                for (let k in dict) { if (dict[k] === term) return k; }
             } else {
-                if (dict[root]) return dict[root];
+                // Cari Value berdasarkan Key (Asing -> Inggris / Inggris -> Target)
+                if (dict[term]) return dict[term];
+            }
+            return null;
+        };
+
+        // STEP A: Exact Match
+        let found = checkDict(word);
+        if (found) return found;
+
+        // STEP B: Morphology (Copot Imbuhan)
+        const suffixes = ['est', 'ing', 'ed', 's', 'er', 'ies'];
+        for (let s of suffixes) {
+            if (word.endsWith(s)) {
+                let root = word;
+                if (s === 'ies') root = word.slice(0, -3) + 'y';
+                else root = word.slice(0, -s.length);
+                
+                let rootFound = checkDict(root);
+                if (rootFound) {
+                    // Logic khusus Quenya Superlative
+                    if (lang === 'quenya' && !isReverse && s === 'est') return 'an' + rootFound;
+                    return rootFound;
+                }
             }
         }
 
-        // 3. Fuzzy Matching (Anti-Typo) - Hanya jika kata > 3 huruf
-        // Batas toleransi typo: 1 huruf salah
+        // STEP C: Fuzzy Matching (Anti-Typo) - Hanya jika kata > 3 huruf
         if (word.length > 3) {
-            if (isSourceSearch) {
+            if (isReverse) {
                 for (let k in dict) {
-                    if (levenshtein(dict[k], word) <= 1) return k; 
+                    if (levenshtein(dict[k], word) <= 1) {
+                        typoCorrections.push(`"${word}"→"${dict[k]}"`);
+                        return k;
+                    }
                 }
             } else {
                 for (let k in dict) {
-                    if (levenshtein(k, word) <= 1) return dict[k];
+                    if (levenshtein(k, word) <= 1) {
+                        typoCorrections.push(`"${word}"→"${k}"`);
+                        return dict[k];
+                    }
                 }
             }
         }
@@ -232,54 +244,65 @@ function runTranslate() {
         return null;
     }
 
-    // --- PROSES TRANSLASI ---
+    // --- PROSES TRANSLASI PER KATA ---
     words.forEach(originalWord => {
         if (!originalWord) return;
-        
         let cleanWord = originalWord.toLowerCase();
 
-        // Pass Tanda Baca
+        // 1. Pass Tanda Baca
         if (/^[.,!?;:(){}\[\]<>"\/\-]+$/.test(originalWord)) {
             result.push(originalWord);
             return;
         }
 
-        // Grammar Filter (Skip is/the untuk bahasa tertentu)
+        // 2. Grammar Filter (Skip is/the)
         if (zeroCopulaLangs.includes(tgtLang) && copulaList.includes(cleanWord)) return;
         if (zeroArticleLangs.includes(tgtLang) && articleList.includes(cleanWord)) return;
 
-        // 1. Pivot ke Inggris (Jika input bukan Inggris)
+        // 3. Logic Penerjemahan
         let pivotWord = cleanWord;
+        
+        // JIKA Source bukan Inggris, cari dulu bahasa Inggrisnya (Pivot)
         if (srcLang !== 'en') {
-            let srcDict = getDict(srcLang);
-            let found = searchWord(cleanWord, srcDict, true); // true = Reverse Search
+            let found = smartLookup(cleanWord, srcLang, true); // true = Reverse search
             if (found) pivotWord = found;
-            else pivotWord = null; // Kata asing tak dikenal di kamus asal
+            else pivotWord = null;
         }
 
-        // 2. Dari Inggris (Pivot) ke Target
+        // DARI Inggris (Pivot) KE Target
         if (pivotWord) {
             if (tgtLang === 'en') {
-                // Jika target Inggris, kembalikan pivot (sudah dalam Inggris)
                 result.push(matchCase(originalWord, pivotWord));
             } else {
-                let tgtDict = getDict(tgtLang);
-                let finalWord = searchWord(pivotWord, tgtDict, false); // false = Direct Search
-
+                let finalWord = smartLookup(pivotWord, tgtLang, false); // false = Normal search
+                
                 if (finalWord) {
-                    // SUKSES: Sesuaikan kapitalisasi
                     result.push(matchCase(originalWord, finalWord));
                 } else {
-                    // Gagal di target, tampilkan pivot Inggrisnya
-                    result.push(`<span class="raw">(${pivotWord}?)</span>`);
+                    // Gagal: Cek apakah ini Nama Orang (Huruf Besar)?
+                    if (originalWord[0] === originalWord[0].toUpperCase()) {
+                        result.push(originalWord); 
+                    } else {
+                        result.push(`<span class="raw">(${pivotWord}?)</span>`);
+                    }
                 }
             }
         } else {
-            // Kata benar-benar tidak ditemukan (bahkan di bahasa asal)
-            result.push(`<span class="raw">(${originalWord})</span>`);
+            // Gagal Total (Kata asing tak dikenal)
+            if (originalWord[0] === originalWord[0].toUpperCase()) {
+                result.push(originalWord); // Anggap nama
+            } else {
+                result.push(`<span class="raw">(${originalWord})</span>`);
+            }
         }
     });
 
+    // Final Output
     let finalString = result.join(" ").replace(/\s+([.,!?;:])/g, '$1');
     outputDiv.innerHTML = finalString;
+
+    // Tampilkan Log Typo (Jika ada div-nya di HTML)
+    if (logDiv) {
+        logDiv.innerText = typoCorrections.length > 0 ? "Auto-corrected: " + typoCorrections.join(", ") : "";
+    }
 }
