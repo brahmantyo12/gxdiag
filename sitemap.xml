@@ -3,7 +3,7 @@
    
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/</loc>
-      <lastmod>2025-01-01</lastmod>
+      <lastmod>2026-01-02</lastmod>
       <priority>1.0</priority>
    </url>
 
@@ -33,11 +33,20 @@
       <priority>0.8</priority>
    </url>
    <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/voice-studio/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+
+   <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/sensors/index.html</loc>
       <priority>0.8</priority>
    </url>
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/specs/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/benchmark/index.html</loc>
       <priority>0.8</priority>
    </url>
 
@@ -59,10 +68,6 @@
    </url>
 
    <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/benchmark/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/reflex/index.html</loc>
       <priority>0.8</priority>
    </url>
@@ -70,7 +75,6 @@
       <loc>https://gxdiag.brahmantyo12.my.id/modules/gameid/index.html</loc>
       <priority>0.8</priority>
    </url>
-
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/emergency/index.html</loc>
       <priority>0.8</priority>
@@ -78,6 +82,36 @@
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/translator/index.html</loc>
       <priority>0.8</priority>
+   </url>
+
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/img-converter/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/img-resizer/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/img-compress/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/retro-asset/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/pricelist-generator/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/meta-detect/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/metranslator/index.html</loc>
+      <priority>0.7</priority>
    </url>
 
 </urlset>
