@@ -55,13 +55,13 @@
         .input-group { display: flex; flex-direction: column; gap: 5px; }
         label { font-size: 0.85rem; color: #aaa; font-weight: bold; }
         
-        input[type="text"], input[type="file"] {
+        input[type="text"], input[type="file"], select {
             background: #111; border: 1px solid #444; color: #fff;
-            padding: 10px; border-radius: 5px; outline: none; transition: 0.3s;
+            padding: 10px; border-radius: 5px; outline: none; transition: 0.3s; width: 100%;
         }
-        input[type="text"]:focus { border-color: var(--primary); }
+        input[type="text"]:focus, select:focus { border-color: var(--primary); }
 
-        /* Preset Buttons Style */
+        /* Preset Buttons */
         .preset-container { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
         .btn-preset {
             background: #333; border: 1px solid #555; color: #ccc;
@@ -94,17 +94,19 @@
 
         /* --- RIGHT: PREVIEW CANVAS --- */
         .preview-area {
-            display: flex; justify-content: center;
+            display: flex; justify-content: center; align-items: center;
             background: #000; padding: 20px; border-radius: 15px; border: 1px solid #333;
+            min-height: 600px;
+            overflow: hidden;
         }
 
         /* Voucher Card Styles */
         #voucher-card {
-            width: 360px; min-height: 640px;
             background-color: #1a1a1a;
             position: relative; overflow: hidden;
             display: flex; flex-direction: column;
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            transition: width 0.3s, height 0.3s;
         }
 
         #card-bg-img {
@@ -154,11 +156,20 @@
             border-top: 1px solid #333; padding-top: 10px;
         }
         .store-name { font-size: 0.85rem; color: #fff; font-weight: bold; }
-        .watermark { font-size: 0.6rem; color: #555; margin-top: 4px; }
+        
+        /* Watermark Baru dengan IG Icon */
+        .watermark { 
+            font-size: 0.65rem; color: #666; margin-top: 6px; 
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .ig-icon { width: 10px; height: 10px; stroke-width: 2.5; margin-bottom: 1px; }
+        .watermark span { font-weight: bold; color: #888; }
+
 
         @media (max-width: 850px) {
             .editor-container { grid-template-columns: 1fr; }
-            .preview-area { order: -1; }
+            .preview-area { order: -1; min-height: auto; padding: 10px; }
+            #voucher-card { transform: scale(0.9); transform-origin: top center; margin-bottom: -10%; }
         }
     </style>
 </head>
@@ -170,6 +181,17 @@
     <div class="editor-container">
         
         <div class="controls">
+            
+            <div class="input-group" style="margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 15px;">
+                <label>Format / Resolusi Gambar</label>
+                <select id="selectRes" onchange="changeResolution()">
+                    <option value="story" selected>IG Story (9:16) - 360x640px</option>
+                    <option value="square">IG Feed / Kotak (1:1) - 400x400px</option>
+                    <option value="portrait">IG Portrait (4:5) - 360x450px</option>
+                    <option value="landscape">Landscape (16:9) - 480x270px</option>
+                </select>
+            </div>
+
             <h3>1. Game Info</h3>
             <div class="input-group">
                 <label>Judul Game</label>
@@ -195,13 +217,13 @@
             <h3 style="margin-top:10px;">2. Price List</h3>
             <div class="price-list-editor" id="priceListContainer">
                 <div class="price-row">
-                    <input type="text" placeholder="Item (ex: 86 Diamond)" class="inp-denom" oninput="updatePreview()">
-                    <input type="text" placeholder="Harga (ex: Rp 20.000)" class="inp-price" oninput="updatePreview()">
+                    <input type="text" placeholder="Item" class="inp-denom" oninput="updatePreview()">
+                    <input type="text" placeholder="Harga" class="inp-price" oninput="updatePreview()">
                     <button class="btn-remove" onclick="removeRow(this)">×</button>
                 </div>
                 <div class="price-row">
-                    <input type="text" placeholder="Item (ex: 172 Diamond)" class="inp-denom" oninput="updatePreview()">
-                    <input type="text" placeholder="Harga (ex: Rp 40.000)" class="inp-price" oninput="updatePreview()">
+                    <input type="text" placeholder="Item" class="inp-denom" oninput="updatePreview()">
+                    <input type="text" placeholder="Harga" class="inp-price" oninput="updatePreview()">
                     <button class="btn-remove" onclick="removeRow(this)">×</button>
                 </div>
             </div>
@@ -231,7 +253,15 @@
 
                     <div class="card-footer">
                         <div class="store-name" id="prevFooter">@StoreName | Aman Terpercaya</div>
-                        <div class="watermark">Made by BTStore12 using GXDiag</div>
+                        <div class="watermark">
+                            Made by 
+                            <svg class="ig-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                            </svg>
+                            <span>@btstore12</span> using GXDiag
+                        </div>
                     </div>
                 </div>
             </div>
@@ -240,20 +270,33 @@
     </div>
 
     <script>
+        // --- RESOLUTION LOGIC ---
+        function changeResolution() {
+            const card = document.getElementById('voucher-card');
+            const res = document.getElementById('selectRes').value;
+
+            if(res === 'story') {
+                card.style.width = '360px'; card.style.height = '640px';
+            } else if(res === 'square') {
+                card.style.width = '400px'; card.style.height = '400px';
+            } else if(res === 'portrait') {
+                card.style.width = '360px'; card.style.height = '450px';
+            } else if(res === 'landscape') {
+                card.style.width = '480px'; card.style.height = '270px';
+            }
+        }
+
+        // --- PREVIEW LOGIC ---
         function updatePreview() {
-            // Judul
             const title = document.getElementById('inputTitle').value || "JUDUL GAME";
             document.getElementById('prevTitle').innerText = title;
 
-            // Subtitle Custom
-            const subtitle = document.getElementById('inputSubtitle').value || "FLASH SALE / FAST PROCESS";
+            const subtitle = document.getElementById('inputSubtitle').value || "FLASH SALE ⚡";
             document.getElementById('prevSubtitle').innerText = subtitle;
 
-            // Footer Toko
             const footer = document.getElementById('inputFooter').value || "@StoreName | Aman Terpercaya";
             document.getElementById('prevFooter').innerText = footer;
 
-            // Render Harga
             const container = document.getElementById('prevGrid');
             container.innerHTML = "";
 
@@ -274,7 +317,6 @@
             });
         }
 
-        // Helper untuk tombol preset subtitle
         function setSubtitle(text) {
             document.getElementById('inputSubtitle').value = text;
             updatePreview();
@@ -283,12 +325,9 @@
         function updateBg() {
             const input = document.getElementById('inputBg');
             const img = document.getElementById('card-bg-img');
-            
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    img.src = e.target.result;
-                }
+                reader.onload = function(e) { img.src = e.target.result; }
                 reader.readAsDataURL(input.files[0]);
             }
         }
@@ -313,27 +352,29 @@
         function downloadImage() {
             const element = document.getElementById('voucher-card');
             const btn = document.querySelector('.btn-download');
+            const resName = document.getElementById('selectRes').options[document.getElementById('selectRes').selectedIndex].text.split(' ')[0];
             
             btn.innerText = "Generating...";
             
             html2canvas(element, {
-                scale: 2, 
+                scale: 3, 
                 useCORS: true,
                 backgroundColor: null
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Pricelist-${document.getElementById('inputTitle').value || 'Game'}.png`;
+                link.download = `Pricelist-${resName}-${document.getElementById('inputTitle').value || 'Game'}.png`;
                 link.href = canvas.toDataURL("image/png");
                 link.click();
                 btn.innerText = "⬇ DOWNLOAD GAMBAR";
             }).catch(err => {
                 console.error(err);
-                alert("Gagal. Coba ganti gambar background.");
+                alert("Gagal membuat gambar. Coba ganti background.");
                 btn.innerText = "⬇ DOWNLOAD GAMBAR";
             });
         }
 
-        // Init pertama kali
+        // Init Styles
+        changeResolution();
         updatePreview();
     </script>
 
