@@ -6,7 +6,6 @@
     <title>GXDiag - Pricelist Generator</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
@@ -62,6 +61,14 @@
         }
         input[type="text"]:focus { border-color: var(--primary); }
 
+        /* Preset Buttons Style */
+        .preset-container { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+        .btn-preset {
+            background: #333; border: 1px solid #555; color: #ccc;
+            padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;
+        }
+        .btn-preset:hover { background: var(--primary); color: #000; border-color: var(--primary); }
+
         .price-list-editor {
             display: flex; flex-direction: column; gap: 10px;
             max-height: 300px; overflow-y: auto; padding-right: 5px;
@@ -91,7 +98,7 @@
             background: #000; padding: 20px; border-radius: 15px; border: 1px solid #333;
         }
 
-        /* Tampilan Kartu Hasil (Ukuran Story IG 9:16 scaled down) */
+        /* Voucher Card Styles */
         #voucher-card {
             width: 360px; min-height: 640px;
             background-color: #1a1a1a;
@@ -100,20 +107,17 @@
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
 
-        /* Background Image Layer */
         #card-bg-img {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: 0; opacity: 0.6;
         }
         
-        /* Gradient Overlay agar teks terbaca */
         .card-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 40%, #000 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.85) 40%, #000 100%);
             z-index: 1;
         }
 
-        /* Content Layer */
         .card-content {
             position: relative; z-index: 2; padding: 20px;
             display: flex; flex-direction: column; height: 100%;
@@ -126,7 +130,7 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.8);
             border-left: 5px solid var(--primary); padding-left: 10px;
         }
-        .card-subtitle { color: var(--primary); font-size: 0.9rem; font-weight: bold; margin-top: 5px; text-shadow: 0 2px 5px rgba(0,0,0,1); }
+        .card-subtitle { color: var(--primary); font-size: 0.9rem; font-weight: bold; margin-top: 5px; text-shadow: 0 2px 5px rgba(0,0,0,1); text-transform: uppercase; }
 
         .card-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -146,11 +150,12 @@
         .price { font-size: 1rem; color: var(--primary); font-weight: 800; font-family: 'Rajdhani', sans-serif; }
 
         .card-footer {
-            margin-top: 10px; text-align: center; font-size: 0.7rem; color: #888;
+            margin-top: 10px; text-align: center; 
             border-top: 1px solid #333; padding-top: 10px;
         }
+        .store-name { font-size: 0.85rem; color: #fff; font-weight: bold; }
+        .watermark { font-size: 0.6rem; color: #555; margin-top: 4px; }
 
-        /* Mobile Responsive */
         @media (max-width: 850px) {
             .editor-container { grid-template-columns: 1fr; }
             .preview-area { order: -1; }
@@ -170,6 +175,18 @@
                 <label>Judul Game</label>
                 <input type="text" id="inputTitle" placeholder="Contoh: Mobile Legends" oninput="updatePreview()">
             </div>
+            
+            <div class="input-group">
+                <label>Subtitle / Tagline</label>
+                <input type="text" id="inputSubtitle" placeholder="FLASH SALE / FAST PROCESS" oninput="updatePreview()">
+                <div class="preset-container">
+                    <button class="btn-preset" onclick="setSubtitle('FLASH SALE ⚡')">Flash Sale</button>
+                    <button class="btn-preset" onclick="setSubtitle('FAST PROCESS (1-5 Menit)')">Fast Process</button>
+                    <button class="btn-preset" onclick="setSubtitle('SLOW PROCESS (Murah Meriah)')">Slow Tapi Murah</button>
+                    <button class="btn-preset" onclick="setSubtitle('EVENT SPECIAL 🔥')">Event Special</button>
+                </div>
+            </div>
+
             <div class="input-group">
                 <label>Upload Background (Poster Game)</label>
                 <input type="file" id="inputBg" accept="image/*" onchange="updateBg()">
@@ -206,14 +223,15 @@
                 <div class="card-content">
                     <div class="card-header">
                         <div class="card-title" id="prevTitle">JUDUL GAME</div>
-                        <div class="card-subtitle">FLASH SALE / FAST PROCESS</div>
+                        <div class="card-subtitle" id="prevSubtitle">FLASH SALE ⚡</div>
                     </div>
 
                     <div class="card-grid" id="prevGrid">
                         </div>
 
-                    <div class="card-footer" id="prevFooter">
-                        @StoreName | Aman Terpercaya
+                    <div class="card-footer">
+                        <div class="store-name" id="prevFooter">@StoreName | Aman Terpercaya</div>
+                        <div class="watermark">Made by BTStore12 using GXDiag</div>
                     </div>
                 </div>
             </div>
@@ -223,12 +241,19 @@
 
     <script>
         function updatePreview() {
+            // Judul
             const title = document.getElementById('inputTitle').value || "JUDUL GAME";
             document.getElementById('prevTitle').innerText = title;
 
+            // Subtitle Custom
+            const subtitle = document.getElementById('inputSubtitle').value || "FLASH SALE / FAST PROCESS";
+            document.getElementById('prevSubtitle').innerText = subtitle;
+
+            // Footer Toko
             const footer = document.getElementById('inputFooter').value || "@StoreName | Aman Terpercaya";
             document.getElementById('prevFooter').innerText = footer;
 
+            // Render Harga
             const container = document.getElementById('prevGrid');
             container.innerHTML = "";
 
@@ -247,6 +272,12 @@
                     container.innerHTML += itemHtml;
                 }
             });
+        }
+
+        // Helper untuk tombol preset subtitle
+        function setSubtitle(text) {
+            document.getElementById('inputSubtitle').value = text;
+            updatePreview();
         }
 
         function updateBg() {
@@ -302,6 +333,7 @@
             });
         }
 
+        // Init pertama kali
         updatePreview();
     </script>
 
