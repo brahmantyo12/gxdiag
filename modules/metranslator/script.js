@@ -2,35 +2,79 @@
 let db = {};
 let isLoaded = false;
 let typoCorrections = []; 
-let isMusicPlaying = false; // Status Musik
+let isMusicPlaying = false; 
 
-// --- DATABASE KUTIPAN LORE ---
+// --- DATABASE KUTIPAN LORE (Quotes, Trivia, & CANON TRANSLATION) ---
+// Note: 'canon' adalah terjemahan manual yang akurat agar tidak error saat di-translate mesin.
 const loreQuotes = {
     'sindarin': [
-        { text: "The stars shine upon the hour of our meeting", character: "Gildor", source: "LOTR: Fellowship", trivia: "Salam tradisional High Elves." },
-        { text: "Speak friend and enter", character: "Narvi", source: "LOTR: Fellowship", trivia: "Kata sandi Pintu Durin." },
-        { text: "I will go alone", character: "Frodo", source: "LOTR: Fellowship", trivia: "Keputusan Frodo di Amon Hen." }
+        { 
+            text: "The stars shine upon the hour of our meeting", 
+            canon: "Elen síla lúmenn' omentielvo", // Kalimat Asli Quenya/Sindarin
+            character: "Gildor", source: "LOTR: Fellowship", trivia: "Salam tradisional High Elves." 
+        },
+        { 
+            text: "Speak friend and enter", 
+            canon: "Pedo mellon a minno", 
+            character: "Narvi", source: "LOTR: Fellowship", trivia: "Kata sandi Pintu Durin." 
+        },
+        { 
+            text: "I will go alone", 
+            canon: "Im govathon ani", // Rekonstruksi Neo-Sindarin
+            character: "Frodo", source: "LOTR: Fellowship", trivia: "Keputusan Frodo di Amon Hen." 
+        }
     ],
     'quenya': [
-        { text: "Hail Earendil brightest of angels", character: "Frodo", source: "The Two Towers", trivia: "Doa menggunakan Phial of Galadriel." },
-        { text: "Now is the hour", character: "Théoden", source: "Return of the King", trivia: "Momen sebelum pertempuran." },
-        { text: "Behold the light", character: "Lore", source: "Silmarillion", trivia: "Cahaya Dua Pohon Valinor." }
+        { 
+            text: "Hail Earendil brightest of angels", 
+            canon: "Aiya Eärendil elenion ancalima", 
+            character: "Frodo", source: "The Two Towers", trivia: "Doa menggunakan Phial of Galadriel." 
+        },
+        { 
+            text: "Now is the hour", 
+            canon: "Sí man i yûlna", // (Metaforis)
+            character: "Théoden", source: "Return of the King", trivia: "Momen sebelum pertempuran." 
+        }
     ],
     'khuzdul': [
-        { text: "Axes of the Dwarves", character: "Gimli", source: "The Two Towers", trivia: "Teriakan perang di Helm's Deep." },
-        { text: "The Dwarves are upon you", character: "Dain", source: "The Hobbit", trivia: "Pasukan Iron Hills menyerang." }
+        { 
+            text: "Axes of the Dwarves", 
+            canon: "Baruk Khazâd", 
+            character: "Gimli", source: "The Two Towers", trivia: "Teriakan perang di Helm's Deep." 
+        },
+        { 
+            text: "The Dwarves are upon you", 
+            canon: "Khazâd ai-mênu", 
+            character: "Dain", source: "The Hobbit", trivia: "Pasukan Iron Hills menyerang." 
+        }
     ],
     'blackspeech': [
-        { text: "One Ring to rule them all", character: "Sauron", source: "The One Ring", trivia: "Puisi cincin baris pertama." },
-        { text: "Meat is back on the menu", character: "Uglúk", source: "The Two Towers", trivia: "Uruk-hai yang kelaparan." }
+        { 
+            text: "One Ring to rule them all", 
+            canon: "Ash nazg durbatulûk", 
+            character: "Sauron", source: "The One Ring", trivia: "Puisi cincin baris pertama." 
+        },
+        { 
+            text: "And in the darkness bind them", 
+            canon: "Agh burzum-ishi krimpatul", 
+            character: "Sauron", source: "The One Ring", trivia: "Baris penutup mantra cincin." 
+        }
     ],
     'rohirric': [
-        { text: "The king is here", character: "Éomer", source: "Return of the King", trivia: "Kedatangan harapan." },
-        { text: "Arise riders of Theoden", character: "Théoden", source: "Return of the King", trivia: "Pidato Pelennor Fields." }
+        { 
+            text: "The king is here", 
+            canon: "Se cyning is her", // Old English (Rohirric)
+            character: "Éomer", source: "Return of the King", trivia: "Kedatangan harapan." 
+        },
+        { 
+            text: "I am no man", 
+            canon: "Ic ne eom wer", 
+            character: "Éowyn", source: "Return of the King", trivia: "Melawan Witch-king." 
+        }
     ],
     'en': [
-        { text: "You shall not pass", character: "Gandalf", source: "Fellowship", trivia: "Menahan Balrog." },
-        { text: "My precious", character: "Gollum", source: "LOTR", trivia: "Obsesi terhadap Cincin." }
+        { text: "You shall not pass", canon: "You shall not pass", character: "Gandalf", source: "Fellowship", trivia: "Menahan Balrog." },
+        { text: "My precious", canon: "My precious", character: "Gollum", source: "LOTR", trivia: "Obsesi terhadap Cincin." }
     ]
 };
 
@@ -48,12 +92,12 @@ fetch('data.json')
         document.getElementById('status').innerText = "Error loading data.json";
     });
 
-// --- 2. UI LOGIC (THEME & AUDIO TRIGGER) ---
+// --- 2. UI LOGIC ---
 function updateTheme() {
     const target = document.getElementById('targetLang').value;
     document.body.className = `theme-${target}`;
     initParticles(target);
-    updateAudio(target); // <--- Update Audio saat ganti bahasa
+    updateAudio(target); 
 }
 
 function initParticles(race) {
@@ -110,21 +154,30 @@ function copyResult() {
     navigator.clipboard.writeText(t);
 }
 
+// --- 3. RANDOMIZE INPUT (DICE) ---
 function randomizeInput() {
     const tgtLang = document.getElementById('targetLang').value;
     const inputArea = document.getElementById('inputText');
     const metaDiv = document.getElementById('quoteMetadata');
     const quoteList = loreQuotes[tgtLang] || loreQuotes['en'];
+    
+    // Acak Quote
     const randomIndex = Math.floor(Math.random() * quoteList.length);
     const selected = quoteList[randomIndex];
     
+    // Set Input
     inputArea.value = selected.text;
+    
+    // Tampilkan Metadata
     metaDiv.style.display = 'block';
     metaDiv.innerHTML = `<strong>🗣️ ${selected.character}</strong> <span style="opacity:0.7">(${selected.source})</span><br><em>💡 ${selected.trivia}</em>`;
-    runTranslate();
+    
+    // SPECIAL TRIGGER: Jika quote dipilih dari dadu, kita passing 'canon' translation-nya
+    // agar logic translator tidak perlu mikir, langsung tampilkan yang benar.
+    runTranslate(selected.canon); 
 }
 
-// --- 3. HELPER LOGIC (Levenshtein & Case) ---
+// --- 4. ALGORITMA PENDUKUNG (Levenshtein & Case) ---
 function levenshtein(a, b) {
     if (a.length === 0) return b.length;
     if (b.length === 0) return a.length;
@@ -150,8 +203,9 @@ function matchCase(original, translated) {
     return translated.toLowerCase();
 }
 
-// --- 4. TRANSLATION CORE LOGIC ---
-function runTranslate() {
+// --- 5. TRANSLATION CORE LOGIC (Smart Detector) ---
+// Parameter 'forcedOutput' opsional: Jika ada, langsung tampilkan (untuk fitur Quote)
+function runTranslate(forcedOutput = null) {
     if (!isLoaded) return;
 
     const srcLang = document.getElementById('sourceLang').value;
@@ -162,24 +216,30 @@ function runTranslate() {
     const logDiv = document.getElementById('typoLog');
 
     audio.currentTime = 0; audio.play().catch(()=>{});
-    if (!rawInput) return;
+    
+    // RULE 0: Jika ada Forced Output (dari Quote/Dadu), langsung pakai itu.
+    if (forcedOutput) {
+        outputDiv.innerHTML = forcedOutput;
+        if (logDiv) logDiv.innerText = "✨ Canonical translation used.";
+        return;
+    }
 
+    if (!rawInput) return;
     typoCorrections = [];
 
-    // Split Pintar
     let spacedInput = rawInput.replace(/([.,!?;:(){}\[\]<>"\/\-])/g, ' $1 ');
     let words = spacedInput.split(/\s+/);
     let result = [];
 
-    // Grammar Rules
     const copulaList = ['is', 'am', 'are', 'was', 'were'];
     const articleList = ['the', 'a', 'an'];
     const zeroCopulaLangs = ['sindarin', 'quenya', 'khuzdul', 'blackspeech'];
     const zeroArticleLangs = ['khuzdul', 'blackspeech'];
 
-    // Helper Lookup
+    // --- SMART LOOKUP ---
     function smartLookup(word, lang, isReverse) {
         let dict = db[lang] || {};
+        // Merge Neo
         if (lang === 'khuzdul' && db['khuzdul_neo']) dict = {...dict, ...db['khuzdul_neo']};
         if (lang === 'blackspeech' && db['blackspeech_neo']) dict = {...dict, ...db['blackspeech_neo']};
 
@@ -192,9 +252,11 @@ function runTranslate() {
             return null;
         };
 
+        // A. Exact Match
         let found = checkDict(word);
         if (found) return found;
 
+        // B. Morphology
         const suffixes = ['est', 'ing', 'ed', 's', 'er', 'ies'];
         for (let s of suffixes) {
             if (word.endsWith(s)) {
@@ -210,6 +272,7 @@ function runTranslate() {
             }
         }
 
+        // C. Fuzzy Matching
         if (word.length > 3) {
             if (isReverse) {
                 for (let k in dict) {
@@ -230,26 +293,46 @@ function runTranslate() {
         return null;
     }
 
+    // --- DETEKSI BAHASA ASING (MIXED LANGUAGE) ---
+    // Cek apakah kata ini ada di database bahasa lain (Khuzdul/BS/Sindarin)
+    // Walaupun Source = English.
+    function isAlienWord(word) {
+        const alienLangs = ['khuzdul', 'blackspeech', 'sindarin', 'quenya'];
+        for (let lang of alienLangs) {
+            let dict = db[lang] || {};
+            // Cek di Key (Bahasa Asing)
+            if (dict[word]) return true;
+            // Cek di Neo
+            if (lang === 'khuzdul' && db['khuzdul_neo'] && db['khuzdul_neo'][word]) return true;
+            if (lang === 'blackspeech' && db['blackspeech_neo'] && db['blackspeech_neo'][word]) return true;
+        }
+        return false;
+    }
+
     words.forEach(originalWord => {
         if (!originalWord) return;
         let cleanWord = originalWord.toLowerCase();
 
+        // Pass Punctuation
         if (/^[.,!?;:(){}\[\]<>"\/\-]+$/.test(originalWord)) {
             result.push(originalWord);
             return;
         }
 
+        // Grammar Filter
         if (zeroCopulaLangs.includes(tgtLang) && copulaList.includes(cleanWord)) return;
         if (zeroArticleLangs.includes(tgtLang) && articleList.includes(cleanWord)) return;
 
         let pivotWord = cleanWord;
         
+        // LOGIC 1: PIVOT (Source -> English)
         if (srcLang !== 'en') {
             let found = smartLookup(cleanWord, srcLang, true);
             if (found) pivotWord = found;
             else pivotWord = null;
         }
 
+        // LOGIC 2: English -> Target
         if (pivotWord) {
             if (tgtLang === 'en') {
                 result.push(matchCase(originalWord, pivotWord));
@@ -258,15 +341,29 @@ function runTranslate() {
                 if (finalWord) {
                     result.push(matchCase(originalWord, finalWord));
                 } else {
+                    // Gagal Translate. Cek Smart Fallback:
+                    
+                    // A. Apakah ini Nama Orang? (Huruf Besar)
                     if (originalWord[0] === originalWord[0].toUpperCase()) {
                         result.push(originalWord); 
-                    } else {
+                    } 
+                    // B. Apakah ini kata bahasa asing yang nyasar? (Mixed Language)
+                    // Contoh: User ketik "Uruk" (BS) tapi Source English.
+                    else if (isAlienWord(pivotWord)) {
+                        // Jika kata ini dikenali sebagai kata Middle-earth valid, biarkan saja.
+                        result.push(matchCase(originalWord, pivotWord));
+                    }
+                    else {
                         result.push(`<span class="raw">(${pivotWord}?)</span>`);
                     }
                 }
             }
         } else {
-            if (originalWord[0] === originalWord[0].toUpperCase()) {
+            // Gagal Total (Tidak ada di Source)
+            // Cek Mixed Language
+            if (isAlienWord(cleanWord)) {
+                 result.push(originalWord);
+            } else if (originalWord[0] === originalWord[0].toUpperCase()) {
                 result.push(originalWord);
             } else {
                 result.push(`<span class="raw">(${originalWord})</span>`);
@@ -282,7 +379,7 @@ function runTranslate() {
     }
 }
 
-// --- 5. AUDIO AMBIENCE LOGIC ---
+// --- 6. AUDIO LOGIC ---
 function toggleMusic() {
     const bgMusic = document.getElementById('bgMusic');
     const btn = document.getElementById('musicToggle');
@@ -307,8 +404,6 @@ function toggleMusic() {
 
 function updateAudio(lang) {
     const bgMusic = document.getElementById('bgMusic');
-    
-    // Mapping File Audio (Hanya Quenya/Sindarin yang aktif)
     let sourceFile = "";
     
     switch(lang) {
@@ -316,17 +411,18 @@ function updateAudio(lang) {
         case 'quenya':
             sourceFile = "assets/elf.mp3"; 
             break;
+        case 'blackspeech':
+            sourceFile = "assets/orc.mp3"; 
+            break;
+        // Tambahkan case lain jika file mp3-nya sudah ada
         default:
             sourceFile = ""; 
     }
 
     if (sourceFile) {
-        // Cek agar tidak restart lagu jika sudah sama
         if (!bgMusic.src.endsWith(sourceFile)) {
             bgMusic.src = sourceFile;
-            if (isMusicPlaying) {
-                bgMusic.play();
-            }
+            if (isMusicPlaying) bgMusic.play();
         }
     } else {
         bgMusic.pause();
