@@ -38,77 +38,84 @@
 
         h1 { margin-top: 40px; margin-bottom: 20px; color: var(--primary); font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* --- MAIN LAYOUT --- */
+        /* --- MAIN LAYOUT (DIPERBAIKI) --- */
         .editor-container {
-            display: grid; grid-template-columns: 400px 1fr; /* Kolom kiri fixed width */
-            gap: 40px; width: 100%; max-width: 1400px;
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* Kembali seimbang 50:50 */
+            gap: 40px; 
+            width: 100%; max-width: 1600px; /* Lebar maksimal diperbesar */
             align-items: start;
         }
 
         /* --- LEFT: CONTROLS --- */
         .controls {
-            background: var(--card-bg); padding: 25px; border-radius: 15px;
-            border: 1px solid #333; display: flex; flex-direction: column; gap: 15px;
+            background: var(--card-bg); padding: 30px; border-radius: 15px;
+            border: 1px solid #333; display: flex; flex-direction: column; gap: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-height: 90vh; overflow-y: auto; /* Agar bisa scroll jika layar kecil */
+            /* Tidak ada max-height agar bisa memanjang ke bawah */
         }
 
-        .input-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.85rem; color: #aaa; font-weight: bold; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-size: 0.9rem; color: #aaa; font-weight: bold; }
         
         input[type="text"], input[type="file"], select {
             background: #111; border: 1px solid #444; color: #fff;
-            padding: 10px; border-radius: 5px; outline: none; transition: 0.3s; width: 100%;
+            padding: 12px; border-radius: 6px; outline: none; transition: 0.3s; width: 100%;
+            font-size: 1rem;
         }
         input[type="text"]:focus, select:focus { border-color: var(--primary); }
 
-        .preset-container { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+        .preset-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
         .btn-preset {
             background: #333; border: 1px solid #555; color: #ccc;
-            padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;
+            padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; transition: 0.2s;
         }
         .btn-preset:hover { background: var(--primary); color: #000; border-color: var(--primary); }
 
+        /* LIST EDITOR LEBIH TINGGI */
         .price-list-editor {
             display: flex; flex-direction: column; gap: 10px;
-            max-height: 250px; overflow-y: auto; padding-right: 5px;
-            border: 1px dashed #444; padding: 10px; border-radius: 5px;
+            min-height: 200px;
+            max-height: 500px; /* Diperbesar dari 250px ke 500px */
+            overflow-y: auto; padding-right: 8px;
+            border: 1px dashed #444; padding: 15px; border-radius: 8px;
+            background: #151515;
         }
 
         .price-row { display: flex; gap: 10px; align-items: center; }
         .price-row input { flex: 1; }
-        .btn-remove { background: #ff1744; border: none; color: white; width: 30px; height: 30px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-remove { background: #ff1744; border: none; color: white; width: 36px; height: 36px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
 
         .btn-action {
-            padding: 12px; border: none; border-radius: 5px; font-weight: bold;
-            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
+            padding: 14px; border: none; border-radius: 6px; font-weight: bold;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; font-size: 0.9rem;
         }
         .btn-add { background: #333; color: var(--primary); border: 1px dashed var(--primary); }
         .btn-add:hover { background: rgba(0, 229, 255, 0.1); }
 
         .btn-download {
             background: linear-gradient(135deg, var(--secondary), var(--primary));
-            color: #000; font-size: 1.1rem; margin-top: 10px;
+            color: #000; font-size: 1.2rem; margin-top: 15px;
         }
-        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 0 15px var(--primary); }
+        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 0 20px var(--primary); }
 
-        /* --- RIGHT: PREVIEW CANVAS (AREA KERJA) --- */
+        /* --- RIGHT: PREVIEW CANVAS --- */
         .preview-area {
             display: flex; justify-content: center; align-items: flex-start;
             background: #080808; padding: 40px; border-radius: 15px; border: 1px solid #333;
-            min-height: 700px;
-            overflow: hidden; /* Penting untuk cropping */
-            position: relative;
+            min-height: 80vh; /* Tinggi menyesuaikan layar */
+            overflow: hidden; 
+            position: sticky; /* Agar tetap terlihat saat scroll kiri */
+            top: 20px;
         }
 
-        /* --- VOUCHER CARD (HIGH RESOLUTION BASE) --- */
-        /* Kita menggunakan Basis 1080px width untuk kualitas HD */
+        /* --- VOUCHER CARD (HD BASE 1080px) --- */
         #voucher-card {
             background-color: #1a1a1a;
             position: relative; overflow: hidden;
             display: flex; flex-direction: column;
             box-shadow: 0 0 100px rgba(0,0,0,0.8);
-            transform-origin: top center; /* Titik zoom dari atas tengah */
+            transform-origin: top center; 
             transition: width 0.3s, height 0.3s;
         }
 
@@ -124,16 +131,16 @@
         }
 
         .card-content {
-            position: relative; z-index: 2; padding: 60px; /* Padding besar untuk HD */
+            position: relative; z-index: 2; padding: 60px; 
             display: flex; flex-direction: column; height: 100%;
         }
 
-        /* TYPOGRAPHY UNTUK HD (UKURAN BESAR) */
+        /* TYPOGRAPHY HD */
         .card-header { margin-top: auto; margin-bottom: 50px; }
         
         .card-title {
             font-family: 'Rajdhani', sans-serif; 
-            font-size: 5rem; /* Font Raksasa */
+            font-size: 5rem; 
             font-weight: 800;
             color: #fff; text-transform: uppercase; line-height: 0.9;
             text-shadow: 0 5px 20px rgba(0,0,0,0.8);
@@ -169,7 +176,6 @@
         }
         .store-name { font-size: 1.8rem; color: #fff; font-weight: bold; letter-spacing: 1px; }
         
-        /* Watermark HD */
         .watermark { 
             font-size: 1.2rem; color: #666; margin-top: 15px; 
             display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -180,8 +186,9 @@
         /* --- RESPONSIVE --- */
         @media (max-width: 1100px) {
             .editor-container { grid-template-columns: 1fr; }
-            .preview-area { padding: 10px; min-height: auto; }
-            .controls { max-height: none; }
+            .preview-area { padding: 10px; min-height: auto; position: static; }
+            .controls { box-shadow: none; padding: 15px; }
+            .price-list-editor { max-height: 300px; }
         }
     </style>
 </head>
@@ -282,7 +289,7 @@
     </div>
 
     <script>
-        // --- 1. RESOLUTION & SCALING LOGIC (INTI PERUBAHAN) ---
+        // --- 1. RESOLUTION & SCALING LOGIC ---
         function changeResolution() {
             const card = document.getElementById('voucher-card');
             const res = document.getElementById('selectRes').value;
@@ -298,35 +305,26 @@
                 card.style.width = '1920px'; card.style.height = '1080px';
             }
             
-            // Panggil fungsi fit agar preview pas di layar
             setTimeout(fitPreview, 50); 
         }
 
-        // Fungsi Ajaib: Mengecilkan tampilan preview agar muat di div, tanpa merusak resolusi asli
+        // Auto-Fit Preview agar muat di layar
         function fitPreview() {
             const card = document.getElementById('voucher-card');
             const container = document.getElementById('previewContainer');
             
-            // Dapatkan ukuran asli elemen dan container
             const cardW = parseInt(card.style.width);
             const cardH = parseInt(card.style.height);
-            const contW = container.clientWidth - 40; // padding tolerance
+            const contW = container.clientWidth - 40; 
             
-            // Hitung skala (Scale Down)
             let scale = contW / cardW;
-            if (scale > 1) scale = 1; // Jangan perbesar jika container lebih besar
+            if (scale > 1) scale = 1; 
 
-            // Terapkan Transform
             card.style.transform = `scale(${scale})`;
-            
-            // Sesuaikan tinggi container agar tidak ada whitespace berlebih akibat scaling
-            // (Karena transform scale menyisakan ruang kosong di DOM flow)
             container.style.height = (cardH * scale) + 80 + "px";
         }
 
-        // Panggil fitPreview saat window di-resize
         window.addEventListener('resize', fitPreview);
-
 
         // --- 2. PREVIEW CONTENT LOGIC ---
         function updatePreview() {
@@ -357,7 +355,6 @@
                     container.innerHTML += itemHtml;
                 }
             });
-            // Update fit setelah konten berubah (jaga-jaga)
             setTimeout(fitPreview, 50);
         }
 
@@ -400,8 +397,6 @@
             
             btn.innerText = "Processing HD...";
             
-            // Scale 1 sudah cukup karena base width sudah 1080px/1920px
-            // Tapi kita pakai 1.5 biar makin tajam (setara 2K/3K)
             html2canvas(element, {
                 scale: 1.5, 
                 useCORS: true,
