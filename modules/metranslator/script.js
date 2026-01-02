@@ -1,15 +1,15 @@
 // --- GLOBAL VARIABLES ---
 let db = {};
 let isLoaded = false;
-let typoCorrections = []; // Penampung log typo
+let typoCorrections = []; 
+let isMusicPlaying = false; // Status Musik
 
-// --- DATABASE KUTIPAN LORE (Quotes & Trivia) ---
+// --- DATABASE KUTIPAN LORE ---
 const loreQuotes = {
     'sindarin': [
         { text: "The stars shine upon the hour of our meeting", character: "Gildor", source: "LOTR: Fellowship", trivia: "Salam tradisional High Elves." },
         { text: "Speak friend and enter", character: "Narvi", source: "LOTR: Fellowship", trivia: "Kata sandi Pintu Durin." },
-        { text: "I will go alone", character: "Frodo", source: "LOTR: Fellowship", trivia: "Keputusan Frodo di Amon Hen." },
-        { text: "My heart tells me", character: "Legolas", source: "The Two Towers", trivia: "Firasat Elf." }
+        { text: "I will go alone", character: "Frodo", source: "LOTR: Fellowship", trivia: "Keputusan Frodo di Amon Hen." }
     ],
     'quenya': [
         { text: "Hail Earendil brightest of angels", character: "Frodo", source: "The Two Towers", trivia: "Doa menggunakan Phial of Galadriel." },
@@ -18,23 +18,19 @@ const loreQuotes = {
     ],
     'khuzdul': [
         { text: "Axes of the Dwarves", character: "Gimli", source: "The Two Towers", trivia: "Teriakan perang di Helm's Deep." },
-        { text: "The Dwarves are upon you", character: "Dain", source: "The Hobbit", trivia: "Pasukan Iron Hills menyerang." },
-        { text: "He is the king under the mountain", character: "Thorin", source: "The Hobbit", trivia: "Gelar Raja Erebor." }
+        { text: "The Dwarves are upon you", character: "Dain", source: "The Hobbit", trivia: "Pasukan Iron Hills menyerang." }
     ],
     'blackspeech': [
         { text: "One Ring to rule them all", character: "Sauron", source: "The One Ring", trivia: "Puisi cincin baris pertama." },
-        { text: "Meat is back on the menu", character: "Uglúk", source: "The Two Towers", trivia: "Uruk-hai yang kelaparan." },
-        { text: "The eye sees all", character: "Saruman", source: "Fellowship", trivia: "Kekuatan Barad-dûr." }
+        { text: "Meat is back on the menu", character: "Uglúk", source: "The Two Towers", trivia: "Uruk-hai yang kelaparan." }
     ],
     'rohirric': [
         { text: "The king is here", character: "Éomer", source: "Return of the King", trivia: "Kedatangan harapan." },
-        { text: "Arise riders of Theoden", character: "Théoden", source: "Return of the King", trivia: "Pidato Pelennor Fields." },
-        { text: "I am no man", character: "Éowyn", source: "Return of the King", trivia: "Melawan Witch-king." }
+        { text: "Arise riders of Theoden", character: "Théoden", source: "Return of the King", trivia: "Pidato Pelennor Fields." }
     ],
     'en': [
         { text: "You shall not pass", character: "Gandalf", source: "Fellowship", trivia: "Menahan Balrog." },
-        { text: "My precious", character: "Gollum", source: "LOTR", trivia: "Obsesi terhadap Cincin." },
-        { text: "Fly you fools", character: "Gandalf", source: "Fellowship", trivia: "Kata terakhir Gandalf di Moria." }
+        { text: "My precious", character: "Gollum", source: "LOTR", trivia: "Obsesi terhadap Cincin." }
     ]
 };
 
@@ -45,18 +41,19 @@ fetch('data.json')
         db = data;
         isLoaded = true;
         document.getElementById('status').innerText = "Archives Loaded.";
-        updateTheme();
+        updateTheme(); 
     })
     .catch(err => {
         console.error(err);
         document.getElementById('status').innerText = "Error loading data.json";
     });
 
-// --- 2. UI LOGIC ---
+// --- 2. UI LOGIC (THEME & AUDIO TRIGGER) ---
 function updateTheme() {
     const target = document.getElementById('targetLang').value;
     document.body.className = `theme-${target}`;
     initParticles(target);
+    updateAudio(target); // <--- Update Audio saat ganti bahasa
 }
 
 function initParticles(race) {
@@ -127,7 +124,7 @@ function randomizeInput() {
     runTranslate();
 }
 
-// --- 3. ALGORITMA PENDUKUNG (Levenshtein & Case) ---
+// --- 3. HELPER LOGIC (Levenshtein & Case) ---
 function levenshtein(a, b) {
     if (a.length === 0) return b.length;
     if (b.length === 0) return a.length;
@@ -153,7 +150,7 @@ function matchCase(original, translated) {
     return translated.toLowerCase();
 }
 
-// --- 4. SUPER TRANSLATION LOGIC (Word Processing Center) ---
+// --- 4. TRANSLATION CORE LOGIC ---
 function runTranslate() {
     if (!isLoaded) return;
 
@@ -162,12 +159,11 @@ function runTranslate() {
     const rawInput = document.getElementById('inputText').value;
     const outputDiv = document.getElementById('outputText');
     const audio = document.getElementById('sfx');
-    const logDiv = document.getElementById('typoLog'); // Pastikan div ini ada di HTML
+    const logDiv = document.getElementById('typoLog');
 
     audio.currentTime = 0; audio.play().catch(()=>{});
     if (!rawInput) return;
 
-    // Reset log typo
     typoCorrections = [];
 
     // Split Pintar
@@ -181,31 +177,24 @@ function runTranslate() {
     const zeroCopulaLangs = ['sindarin', 'quenya', 'khuzdul', 'blackspeech'];
     const zeroArticleLangs = ['khuzdul', 'blackspeech'];
 
-    // --- HELPER UTAMA: PENCARI KATA PINTAR ---
-    // Mencari kata di kamus tertentu dengan urutan: Exact -> Morphology -> Fuzzy
+    // Helper Lookup
     function smartLookup(word, lang, isReverse) {
-        // 1. Siapkan Kamus (Merge Neo jika perlu)
         let dict = db[lang] || {};
         if (lang === 'khuzdul' && db['khuzdul_neo']) dict = {...dict, ...db['khuzdul_neo']};
         if (lang === 'blackspeech' && db['blackspeech_neo']) dict = {...dict, ...db['blackspeech_neo']};
 
-        // 2. Fungsi Cek Kamus Internal
         const checkDict = (term) => {
             if (isReverse) {
-                // Cari Key berdasarkan Value (Inggris -> Asing)
                 for (let k in dict) { if (dict[k] === term) return k; }
             } else {
-                // Cari Value berdasarkan Key (Asing -> Inggris / Inggris -> Target)
                 if (dict[term]) return dict[term];
             }
             return null;
         };
 
-        // STEP A: Exact Match
         let found = checkDict(word);
         if (found) return found;
 
-        // STEP B: Morphology (Copot Imbuhan)
         const suffixes = ['est', 'ing', 'ed', 's', 'er', 'ies'];
         for (let s of suffixes) {
             if (word.endsWith(s)) {
@@ -215,14 +204,12 @@ function runTranslate() {
                 
                 let rootFound = checkDict(root);
                 if (rootFound) {
-                    // Logic khusus Quenya Superlative
                     if (lang === 'quenya' && !isReverse && s === 'est') return 'an' + rootFound;
                     return rootFound;
                 }
             }
         }
 
-        // STEP C: Fuzzy Matching (Anti-Typo) - Hanya jika kata > 3 huruf
         if (word.length > 3) {
             if (isReverse) {
                 for (let k in dict) {
@@ -240,46 +227,37 @@ function runTranslate() {
                 }
             }
         }
-
         return null;
     }
 
-    // --- PROSES TRANSLASI PER KATA ---
     words.forEach(originalWord => {
         if (!originalWord) return;
         let cleanWord = originalWord.toLowerCase();
 
-        // 1. Pass Tanda Baca
         if (/^[.,!?;:(){}\[\]<>"\/\-]+$/.test(originalWord)) {
             result.push(originalWord);
             return;
         }
 
-        // 2. Grammar Filter (Skip is/the)
         if (zeroCopulaLangs.includes(tgtLang) && copulaList.includes(cleanWord)) return;
         if (zeroArticleLangs.includes(tgtLang) && articleList.includes(cleanWord)) return;
 
-        // 3. Logic Penerjemahan
         let pivotWord = cleanWord;
         
-        // JIKA Source bukan Inggris, cari dulu bahasa Inggrisnya (Pivot)
         if (srcLang !== 'en') {
-            let found = smartLookup(cleanWord, srcLang, true); // true = Reverse search
+            let found = smartLookup(cleanWord, srcLang, true);
             if (found) pivotWord = found;
             else pivotWord = null;
         }
 
-        // DARI Inggris (Pivot) KE Target
         if (pivotWord) {
             if (tgtLang === 'en') {
                 result.push(matchCase(originalWord, pivotWord));
             } else {
-                let finalWord = smartLookup(pivotWord, tgtLang, false); // false = Normal search
-                
+                let finalWord = smartLookup(pivotWord, tgtLang, false);
                 if (finalWord) {
                     result.push(matchCase(originalWord, finalWord));
                 } else {
-                    // Gagal: Cek apakah ini Nama Orang (Huruf Besar)?
                     if (originalWord[0] === originalWord[0].toUpperCase()) {
                         result.push(originalWord); 
                     } else {
@@ -288,21 +266,69 @@ function runTranslate() {
                 }
             }
         } else {
-            // Gagal Total (Kata asing tak dikenal)
             if (originalWord[0] === originalWord[0].toUpperCase()) {
-                result.push(originalWord); // Anggap nama
+                result.push(originalWord);
             } else {
                 result.push(`<span class="raw">(${originalWord})</span>`);
             }
         }
     });
 
-    // Final Output
     let finalString = result.join(" ").replace(/\s+([.,!?;:])/g, '$1');
     outputDiv.innerHTML = finalString;
 
-    // Tampilkan Log Typo (Jika ada div-nya di HTML)
     if (logDiv) {
         logDiv.innerText = typoCorrections.length > 0 ? "Auto-corrected: " + typoCorrections.join(", ") : "";
+    }
+}
+
+// --- 5. AUDIO AMBIENCE LOGIC ---
+function toggleMusic() {
+    const bgMusic = document.getElementById('bgMusic');
+    const btn = document.getElementById('musicToggle');
+    const target = document.getElementById('targetLang').value;
+
+    if (isMusicPlaying) {
+        bgMusic.pause();
+        isMusicPlaying = false;
+        btn.innerHTML = "🔇 Sound Off";
+        btn.classList.remove('music-active');
+    } else {
+        isMusicPlaying = true;
+        btn.innerHTML = "🔊 Sound On";
+        btn.classList.add('music-active');
+        updateAudio(target); 
+        bgMusic.play().catch(e => {
+            console.log("Audio autoplay blocked by browser:", e);
+            alert("Interaksi diperlukan agar musik bisa diputar!");
+        });
+    }
+}
+
+function updateAudio(lang) {
+    const bgMusic = document.getElementById('bgMusic');
+    
+    // Mapping File Audio (Hanya Quenya/Sindarin yang aktif)
+    let sourceFile = "";
+    
+    switch(lang) {
+        case 'sindarin':
+        case 'quenya':
+            sourceFile = "assets/elf.mp3"; 
+            break;
+        default:
+            sourceFile = ""; 
+    }
+
+    if (sourceFile) {
+        // Cek agar tidak restart lagu jika sudah sama
+        if (!bgMusic.src.endsWith(sourceFile)) {
+            bgMusic.src = sourceFile;
+            if (isMusicPlaying) {
+                bgMusic.play();
+            }
+        }
+    } else {
+        bgMusic.pause();
     }
 }
