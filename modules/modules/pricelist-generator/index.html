@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Voucher Price List Maker</title>
+    <title>GXDiag - Pricelist Generator</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     
@@ -153,14 +153,14 @@
         /* Mobile Responsive */
         @media (max-width: 850px) {
             .editor-container { grid-template-columns: 1fr; }
-            .preview-area { order: -1; } /* Preview di atas di mobile */
+            .preview-area { order: -1; }
         }
     </style>
 </head>
 <body>
 
     <a href="../../index.html" class="back-btn">← DASHBOARD</a>
-    <h1>Voucher Maker</h1>
+    <h1>Pricelist Generator</h1>
 
     <div class="editor-container">
         
@@ -200,12 +200,12 @@
 
         <div class="preview-area">
             <div id="voucher-card">
-                <img id="card-bg-img" src="https://wallpapers.com/images/hd/mobile-legends-background-4k-729-x-1296-3s0x34p7w7q5x9q6.jpg" alt="bg">
+                <img id="card-bg-img" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000&auto=format&fit=crop" alt="bg">
                 <div class="card-overlay"></div>
                 
                 <div class="card-content">
                     <div class="card-header">
-                        <div class="card-title" id="prevTitle">MOBILE LEGENDS</div>
+                        <div class="card-title" id="prevTitle">JUDUL GAME</div>
                         <div class="card-subtitle">FLASH SALE / FAST PROCESS</div>
                     </div>
 
@@ -213,7 +213,7 @@
                         </div>
 
                     <div class="card-footer" id="prevFooter">
-                        @GXDiag_Store | 100% Legal & Aman
+                        @StoreName | Aman Terpercaya
                     </div>
                 </div>
             </div>
@@ -222,19 +222,15 @@
     </div>
 
     <script>
-        // --- LOGIKA UPDATE PREVIEW ---
-        
         function updatePreview() {
-            // Update Text
             const title = document.getElementById('inputTitle').value || "JUDUL GAME";
             document.getElementById('prevTitle').innerText = title;
 
-            const footer = document.getElementById('inputFooter').value || "@GXDiag_Store | 100% Legal & Aman";
+            const footer = document.getElementById('inputFooter').value || "@StoreName | Aman Terpercaya";
             document.getElementById('prevFooter').innerText = footer;
 
-            // Update Grid Harga
             const container = document.getElementById('prevGrid');
-            container.innerHTML = ""; // Reset
+            container.innerHTML = "";
 
             const rows = document.querySelectorAll('.price-row');
             rows.forEach(row => {
@@ -253,7 +249,6 @@
             });
         }
 
-        // --- BACKGROUND IMAGE ---
         function updateBg() {
             const input = document.getElementById('inputBg');
             const img = document.getElementById('card-bg-img');
@@ -267,7 +262,6 @@
             }
         }
 
-        // --- TAMBAH / HAPUS BARIS ---
         function addRow() {
             const container = document.getElementById('priceListContainer');
             const div = document.createElement('div');
@@ -285,32 +279,29 @@
             updatePreview();
         }
 
-        // --- DOWNLOAD IMAGE ---
         function downloadImage() {
             const element = document.getElementById('voucher-card');
             const btn = document.querySelector('.btn-download');
             
             btn.innerText = "Generating...";
             
-            // Gunakan html2canvas
             html2canvas(element, {
-                scale: 2, // Resolusi tinggi (2x)
-                useCORS: true, // Izinkan gambar cross-origin
+                scale: 2, 
+                useCORS: true,
                 backgroundColor: null
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Pricelist-${document.getElementById('inputTitle').value}.png`;
+                link.download = `Pricelist-${document.getElementById('inputTitle').value || 'Game'}.png`;
                 link.href = canvas.toDataURL("image/png");
                 link.click();
                 btn.innerText = "⬇ DOWNLOAD GAMBAR";
             }).catch(err => {
                 console.error(err);
-                alert("Gagal membuat gambar. Pastikan gambar background tidak corrupt.");
+                alert("Gagal. Coba ganti gambar background.");
                 btn.innerText = "⬇ DOWNLOAD GAMBAR";
             });
         }
 
-        // Init pertama kali
         updatePreview();
     </script>
 
