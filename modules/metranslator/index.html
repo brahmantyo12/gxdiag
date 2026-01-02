@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Middle-earth Omni-Translator</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,18 +10,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Creepster&family=Lato:ital,wght@0,400;0,700;1,400&family=MedievalSharp&family=Playfair+Display:ital,wght@0,400;1,400&family=Rye&display=swap" rel="stylesheet">
 
     <style>
-        /* --- TEMA & VARIABEL --- */
+        /* --- CSS VARIABLES --- */
         :root {
             --primary: #d4af37;
             --secondary: #5c4033;
-            --glass: rgba(20, 15, 10, 0.9);
+            --glass: rgba(20, 15, 10, 0.85);
             --font-head: 'Cinzel', serif;
             --font-body: 'Lato', sans-serif;
             --bg-grad: radial-gradient(circle, #2b1d14, #000);
             --glow: 0 0 10px rgba(212, 175, 55, 0.3);
         }
 
-        /* LOGIKA GANTI TEMA BERDASARKAN BAHASA */
+        /* THEME CLASSES */
         body.theme-sindarin { --primary: #FFD700; --secondary: #AA8800; --font-head: 'Cinzel', serif; --bg-grad: radial-gradient(circle, #1a2520, #000); }
         body.theme-quenya { --primary: #00BFFF; --secondary: #C0C0C0; --font-head: 'Cinzel', serif; --bg-grad: linear-gradient(to top, #001f3f, #000); }
         body.theme-khuzdul { --primary: #cd7f32; --secondary: #3e2723; --font-head: 'Rye', serif; --bg-grad: linear-gradient(to bottom, #2b1d14, #000); }
@@ -37,30 +37,29 @@
             font-family: var(--font-body);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             transition: background 1s ease;
             overflow-x: hidden;
-            padding: 20px 0;
+            padding: 20px;
         }
 
-        /* --- TOMBOL KEMBALI KE DASHBOARD (Gaya RPG) --- */
+        /* --- NAVIGATION BACK (Mobile Friendly) --- */
         .fantasy-back-btn {
-            position: absolute; top: 20px; left: 20px;
+            position: absolute; top: 15px; left: 15px;
             font-family: var(--font-head); color: var(--primary);
             text-decoration: none; border: 1px solid var(--secondary);
-            padding: 10px 20px; border-radius: 4px;
+            padding: 8px 15px; border-radius: 4px; font-size: 0.9rem;
             background: rgba(0,0,0,0.6); transition: 0.3s; z-index: 20;
-            font-weight: bold; letter-spacing: 1px;
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 5px;
         }
         .fantasy-back-btn:hover { 
             background: var(--primary); color: #000; 
             box-shadow: 0 0 15px var(--primary); 
-            border-color: var(--primary);
         }
 
-        /* --- EFEK PARTIKEL --- */
+        /* --- PARTICLES --- */
         #particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; opacity: 0; }
         .dust { position: absolute; background: #cd7f32; border-radius: 50%; animation: floatUp 8s linear infinite; opacity: 0.3; }
@@ -76,58 +75,73 @@
             background: var(--glass);
             border: 1px solid var(--secondary);
             border-radius: 12px;
-            padding: 30px;
-            width: 95%; max-width: 900px;
+            padding: 20px;
+            width: 100%; max-width: 900px;
             text-align: center;
             box-shadow: 0 10px 50px rgba(0,0,0,0.8);
             backdrop-filter: blur(5px);
-            transition: 0.5s;
+            margin-top: 40px;
         }
 
         h1 {
             font-family: var(--font-head); color: var(--primary);
-            font-size: 2.2rem; margin-bottom: 20px;
+            font-size: 1.8rem;
+            margin-bottom: 5px; /* Jarak ke subtitle lebih dekat */
             text-shadow: var(--glow); letter-spacing: 1px;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+
+        /* Subtitle: One Ring... */
+        .subtitle {
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-style: italic;
+            opacity: 0.8;
+            letter-spacing: 1px;
         }
 
         /* --- SELECTORS --- */
         .selector-box {
-            display: flex; justify-content: space-between; align-items: center;
-            gap: 10px; margin-bottom: 20px;
-            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 10px; margin-bottom: 20px;
+            background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px;
         }
 
         select {
-            flex: 1; background: rgba(255,255,255,0.05);
+            width: 100%;
+            background: rgba(255,255,255,0.05);
             border: 1px solid var(--secondary); color: var(--primary);
-            padding: 10px; border-radius: 5px;
+            padding: 12px; border-radius: 5px;
             font-family: var(--font-head); cursor: pointer;
             text-align: center; outline: none;
-            font-size: 0.9rem; text-transform: uppercase;
+            font-size: 1rem; text-transform: uppercase;
+            -webkit-appearance: none;
         }
         select option { background: #111; color: #ccc; font-family: sans-serif; text-transform: none; }
 
         .swap-btn {
             background: none; border: 1px solid var(--primary);
-            color: var(--primary); width: 40px; height: 40px;
-            border-radius: 50%; cursor: pointer; font-size: 1.2rem;
-            transition: 0.3s; flex-shrink: 0;
+            color: var(--primary); width: 45px; height: 45px;
+            border-radius: 50%; cursor: pointer; font-size: 1.4rem;
+            transition: 0.3s; flex-shrink: 0; margin: 5px 0;
         }
         .swap-btn:hover { background: var(--primary); color: #000; transform: rotate(180deg); }
 
         /* --- AREA INPUT & OUTPUT --- */
         .io-area { display: flex; flex-direction: column; gap: 15px; }
 
-        .input-wrapper {
-            position: relative; width: 100%; display: flex; flex-direction: column;
-        }
+        .input-wrapper { position: relative; width: 100%; display: flex; flex-direction: column; }
 
         textarea, .result-div {
             width: 100%; height: 140px;
             background: rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 8px; padding: 15px;
-            font-family: var(--font-body); font-size: 1.2rem; color: #fff;
+            font-family: var(--font-body); font-size: 1.1rem; color: #fff;
             resize: none; outline: none;
         }
         textarea:focus { border-color: var(--primary); box-shadow: var(--glow); }
@@ -135,63 +149,71 @@
         .result-div {
             display: flex; align-items: center; justify-content: center;
             color: var(--primary); font-style: italic;
-            font-family: var(--font-head); font-size: 1.5rem;
+            font-family: var(--font-head); font-size: 1.3rem;
             position: relative; word-wrap: break-word;
+            min-height: 140px;
         }
 
         /* --- TOMBOL --- */
         .translate-btn {
-            width: 100%; padding: 15px; margin-top: 20px;
+            width: 100%; padding: 18px; margin-top: 20px;
             background: linear-gradient(135deg, var(--secondary), var(--primary));
             border: none; border-radius: 8px;
-            font-family: var(--font-head); font-weight: bold; font-size: 1.2rem;
+            font-family: var(--font-head); font-weight: bold; font-size: 1.1rem;
             color: #000; cursor: pointer; letter-spacing: 2px;
-            transition: 0.3s;
+            transition: 0.3s; touch-action: manipulation;
         }
-        .translate-btn:hover { filter: brightness(1.2); transform: translateY(-2px); box-shadow: var(--glow); }
+        .translate-btn:active { transform: scale(0.98); }
 
         .copy-btn {
             position: absolute; top: 10px; right: 10px;
-            background: none; border: none; color: #666; cursor: pointer;
+            background: rgba(0,0,0,0.5); border-radius: 5px; padding: 5px;
+            border: 1px solid #444; color: #ccc; cursor: pointer;
             font-size: 1.2rem; transition: 0.2s;
         }
-        .copy-btn:hover { color: var(--primary); transform: scale(1.1); }
+        .copy-btn:active { color: var(--primary); transform: scale(0.9); }
 
         .random-btn {
-            position: absolute; top: 10px; right: 15px;
-            background: none; border: none; font-size: 1.5rem;
-            cursor: pointer; opacity: 0.7; transition: 0.3s; z-index: 5;
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.5); border-radius: 5px; padding: 5px;
+            border: 1px solid #444; font-size: 1.5rem;
+            cursor: pointer; opacity: 0.8; transition: 0.3s; z-index: 5;
         }
-        .random-btn:hover { opacity: 1; transform: scale(1.2) rotate(20deg); }
+        .random-btn:active { transform: scale(0.9) rotate(20deg); opacity: 1; }
 
-        /* --- METADATA (TRIVIA BOX) --- */
+        /* --- METADATA --- */
         .quote-metadata {
-            margin-top: 8px; padding: 10px;
+            margin-top: 10px; padding: 12px;
             background: rgba(0, 0, 0, 0.6);
-            border-left: 3px solid var(--primary); border-radius: 4px;
+            border-left: 4px solid var(--primary); border-radius: 4px;
             text-align: left; font-size: 0.9rem; color: #ddd;
-            font-family: var(--font-body); line-height: 1.4;
+            font-family: var(--font-body); line-height: 1.5;
             animation: fadeIn 0.5s ease;
         }
-        
-        .quote-metadata strong {
-            color: var(--primary); font-family: var(--font-head);
-            font-size: 1rem; display: inline-block; margin-bottom: 2px;
-        }
-
-        .quote-metadata em {
-            color: #bbb; font-size: 0.85rem; display: block; margin-top: 2px;
-        }
+        .quote-metadata strong { color: var(--primary); font-family: var(--font-head); font-size: 1rem; display: inline-block; margin-bottom: 4px; }
+        .quote-metadata em { color: #bbb; font-size: 0.85rem; display: block; margin-top: 4px; font-style: italic; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
         #status { font-size: 0.7rem; color: #777; margin-top: 15px; }
-        .raw { font-family: sans-serif; font-size: 0.5em; opacity: 0.5; font-style: normal; }
+        .raw { font-family: sans-serif; font-size: 0.6em; opacity: 0.5; font-style: normal; vertical-align: super; }
 
-        /* Responsive Layout */
+        /* --- RESPONSIVE DESKTOP --- */
         @media (min-width: 768px) { 
-            .io-area { flex-direction: row; align-items: flex-start; }
-            .input-wrapper, .result-div { flex: 1; }
+            body { padding: 0; }
+            .container { padding: 40px; margin-top: 0; }
+            h1 { font-size: 2.5rem; margin-bottom: 10px; }
+            .subtitle { font-size: 1rem; margin-bottom: 30px; }
+            
+            .selector-box { flex-direction: row; gap: 15px; }
+            .swap-btn { margin: 0; }
+            
+            .io-area { flex-direction: row; align-items: stretch; }
+            .input-wrapper, .result-div { flex: 1; height: 200px; }
+            textarea, .result-div { font-size: 1.3rem; height: 100%; }
+            .result-div { font-size: 1.6rem; }
+            
+            .fantasy-back-btn { top: 30px; left: 30px; font-size: 1rem; padding: 10px 20px; }
         }
     </style>
 </head>
@@ -200,10 +222,11 @@
     <div id="particles"></div>
     <audio id="sfx" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
-    <a href="../../index.html" class="fantasy-back-btn">⚔️ Back to GXDiag</a>
+    <a href="../../index.html" class="fantasy-back-btn">⚔️ Back</a>
 
     <div class="container">
-        <h1>MIDDLE-EARTH OMNI</h1>
+        <h1>Middle-earth Omni-Translator</h1>
+        <p class="subtitle">One Ring to rule them all</p>
         
         <div class="selector-box">
             <select id="sourceLang">
