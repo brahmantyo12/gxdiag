@@ -20,7 +20,7 @@
         /* LAYOUT UTAMA */
         .net-container {
             flex-grow: 1; display: flex; flex-direction: column; 
-            align-items: center; gap: 25px; padding: 20px; overflow-y: auto;
+            align-items: center; gap: 20px; padding: 20px; overflow-y: auto;
         }
 
         /* --- 1. PING RADAR UI --- */
@@ -41,7 +41,6 @@
         .ping-val { font-size: 4.5rem; font-weight: 800; color: #fff; line-height: 0.9; }
         .ping-label { color: #888; text-transform: uppercase; font-size: 0.8rem; margin-top: 10px; letter-spacing: 1px; }
 
-        /* PULSE EFFECT */
         .pulse-ring {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             border-radius: 50%; border: 2px solid #00e5ff; opacity: 0; z-index: 1;
@@ -51,11 +50,10 @@
 
         /* GRAPH & METRICS BLOCK */
         .metrics-block {
-            width: 100%; max-width: 500px; background: #111; border: 1px solid #333; 
+            width: 100%; max-width: 600px; background: #111; border: 1px solid #333; 
             padding: 20px; border-radius: 15px; display: flex; flex-direction: column; gap: 15px;
         }
 
-        /* PING GRAPH */
         .ping-graph {
             display: flex; align-items: flex-end; gap: 2px; height: 50px; width: 100%; 
             background: rgba(0,0,0,0.3); border-bottom: 1px solid #333;
@@ -65,19 +63,15 @@
         .bar.med { background: #ffb300; }
         .bar.low { background: #00ff88; }
 
-        /* SPEED & JITTER BOX */
         .speed-box {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;
         }
         .sb-item { background: #1a1a1a; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #333; display: flex; flex-direction: column; justify-content: center; }
         .sb-val { font-size: 1.4rem; font-weight: bold; color: #fff; }
         .sb-lbl { font-size: 0.7rem; color: #666; letter-spacing: 1px; margin-top: 2px;}
-        
-        /* NEW: Byte Converter Style */
         .sb-sub-val { font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-top: 4px; font-family: monospace; }
 
-        /* BUTTONS */
-        .btn-group { display: flex; gap: 10px; width: 100%; max-width: 500px; }
+        .btn-group { display: flex; gap: 10px; width: 100%; max-width: 600px; }
         .action-btn {
             flex: 1; padding: 12px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold;
             background: #222; color: #ccc; border: 1px solid #444; transition: 0.3s; font-size: 0.9rem;
@@ -89,13 +83,30 @@
         .intel-section { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
 
         .isp-card {
-            background: #151515; padding: 15px; border-radius: 12px; border: 1px solid #333;
-            display: flex; align-items: center; justify-content: space-between;
+            background: #151515; padding: 20px; border-radius: 12px; border: 1px solid #333;
+            display: flex; align-items: center; gap: 20px;
         }
-        .isp-logo { font-size: 2rem; margin-right: 15px; }
+        .isp-logo { font-size: 2.5rem; }
         .isp-info { flex-grow: 1; }
-        .isp-name { font-size: 1.1rem; font-weight: bold; color: #fff; }
-        .isp-asn { font-size: 0.8rem; color: #666; }
+        .isp-name { font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .isp-asn { font-size: 0.85rem; color: #666; }
+
+        /* IP STACK GRID (NEW) */
+        .ip-stack-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .ip-card {
+            background: #111; border: 1px solid #333; border-radius: 8px; padding: 15px;
+            display: flex; flex-direction: column; gap: 5px; position: relative; overflow: hidden;
+        }
+        .ip-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+        }
+        .ip-card.v4::before { background: #00ff88; }
+        .ip-card.v6::before { background: #00e5ff; }
+        
+        .ip-label { font-size: 0.7rem; color: #888; font-weight: bold; display: flex; justify-content: space-between;}
+        .ip-addr { font-family: monospace; font-size: 1rem; color: #fff; word-break: break-all; }
+        .ip-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: #333; color: #aaa; }
+        .ip-badge.active { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
 
         .vpn-alert {
             padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem; display: none;
@@ -111,6 +122,9 @@
         .geo-title { font-size: 0.8rem; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 5px; }
         .geo-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #bbb; }
         .geo-val { color: #fff; font-weight: bold; text-align: right; }
+
+        /* DEVICE INFO */
+        .dev-info { font-size: 0.7rem; color: #555; text-align: center; margin-top: 10px; font-family: sans-serif; }
 
         @media (max-width: 600px) {
             .geo-grid { grid-template-columns: 1fr; }
@@ -161,9 +175,22 @@
                     <div class="isp-name" id="isp-name">Detecting ISP...</div>
                     <div class="isp-asn" id="isp-asn">ASN: -</div>
                 </div>
-                <div style="text-align:right;">
-                    <div style="font-size:0.8rem; color:#888;">IPv4</div>
-                    <div style="color:#00e5ff; font-family:monospace;" id="ip-addr">...</div>
+            </div>
+
+            <div class="ip-stack-grid">
+                <div class="ip-card v4">
+                    <div class="ip-label">
+                        <span>IPv4 ADDRESS</span>
+                        <span class="ip-badge active">Primary</span>
+                    </div>
+                    <div class="ip-addr" id="ip-v4">Scanning...</div>
+                </div>
+                <div class="ip-card v6">
+                    <div class="ip-label">
+                        <span>IPv6 ADDRESS</span>
+                        <span class="ip-badge" id="v6-badge">Checking...</span>
+                    </div>
+                    <div class="ip-addr" id="ip-v6" style="color:#666;">Not Detected / Unavailable</div>
                 </div>
             </div>
 
@@ -173,6 +200,7 @@
                 <div class="geo-card">
                     <div class="geo-title">🌍 LOGICAL LOCATION (IP)</div>
                     <div class="geo-row"><span>City</span> <span class="geo-val" id="ip-city">-</span></div>
+                    <div class="geo-row"><span>Region</span> <span class="geo-val" id="ip-region">-</span></div>
                     <div class="geo-row"><span>Country</span> <span class="geo-val" id="ip-country">-</span></div>
                     <div class="geo-row"><span>Coords</span> <span class="geo-val" id="ip-coords" style="font-size:0.7rem">-</span></div>
                 </div>
@@ -185,6 +213,8 @@
                     <button class="action-btn" style="width:100%; margin-top:10px; font-size:0.8rem; padding:8px;" onclick="getGPS()">📍 Get GPS Data</button>
                 </div>
             </div>
+
+            <div class="dev-info" id="dev-info">Device Fingerprint...</div>
         </div>
 
     </div>
@@ -268,7 +298,7 @@
             }
         }
 
-        // --- SPEED TEST (UPDATED with BITS & BYTES) ---
+        // --- SPEED TEST ---
         async function runSpeedTest() {
             const el = document.getElementById('dl-speed');
             const elByte = document.getElementById('dl-speed-byte');
@@ -280,7 +310,6 @@
             elByte.innerText = "";
             
             const start = performance.now();
-            // File statis 2.5MB dari Wikimedia (CORS Aman)
             const testFileUrl = 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg'; 
             
             try {
@@ -291,19 +320,17 @@
                 const end = performance.now();
                 
                 const sizeInBytes = blob.size; 
+                const sizeInBits = sizeInBytes * 8;
                 const durationInSeconds = (end - start) / 1000;
                 
-                // 1. Hitung Bit per second (Mbps)
-                const sizeInBits = sizeInBytes * 8;
                 const speedBps = sizeInBits / durationInSeconds;
                 const speedMbps = (speedBps / (1024 * 1024)).toFixed(2); 
 
-                // 2. Hitung Byte per second (MB/s) - untuk real download speed
                 const speedByteSec = sizeInBytes / durationInSeconds;
                 const speedMBps = (speedByteSec / (1024 * 1024)).toFixed(2);
                 
                 el.innerText = speedMbps + " Mbps";
-                elByte.innerText = `~ ${speedMBps} MB/s`; // Menampilkan hasil konversi
+                elByte.innerText = `~ ${speedMBps} MB/s`;
 
             } catch(e) {
                 console.error(e);
@@ -315,25 +342,26 @@
             }
         }
 
-        // --- INTELLIGENCE (IP & ISP) ---
-        let ipLat = 0, ipLon = 0;
-
-        async function getIPInfo() {
+        // --- DUAL STACK IP DETECTION ---
+        
+        // 1. Get ISP & Geo Data (via Main IP)
+        async function getMainIntel() {
             try {
                 const res = await fetch('https://ipapi.co/json/');
                 const data = await res.json();
                 
-                document.getElementById('ip-addr').innerText = data.ip;
                 document.getElementById('isp-name').innerText = data.org || "Unknown ISP";
                 document.getElementById('isp-asn').innerText = data.asn || "-";
-                
                 document.getElementById('ip-city').innerText = data.city;
+                document.getElementById('ip-region').innerText = data.region;
                 document.getElementById('ip-country').innerText = data.country_name;
                 document.getElementById('ip-coords').innerText = `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`;
                 
-                ipLat = data.latitude;
-                ipLon = data.longitude;
-                
+                // Store for VPN calc
+                window.ipLat = data.latitude;
+                window.ipLon = data.longitude;
+
+                // Coba cek ulang VPN jika GPS sudah ada
                 const gpsCoords = document.getElementById('gps-coords').innerText;
                 if(gpsCoords.includes(",")) {
                     const [gLat, gLon] = gpsCoords.split(',').map(Number);
@@ -341,8 +369,35 @@
                 }
 
             } catch(e) {
-                console.error("IP Fetch Error");
-                document.getElementById('isp-name').innerText = "Failed to fetch ISP data";
+                document.getElementById('isp-name').innerText = "ISP Info Failed";
+            }
+        }
+
+        // 2. Force IPv4 Check
+        async function getIPv4() {
+            try {
+                const res = await fetch('https://api4.ipify.org?format=json');
+                const data = await res.json();
+                document.getElementById('ip-v4').innerText = data.ip;
+            } catch(e) {
+                document.getElementById('ip-v4').innerText = "Not Available";
+            }
+        }
+
+        // 3. Force IPv6 Check
+        async function getIPv6() {
+            try {
+                const res = await fetch('https://api6.ipify.org?format=json');
+                const data = await res.json();
+                const el = document.getElementById('ip-v6');
+                el.innerText = data.ip;
+                el.style.color = "#00e5ff"; // Active color
+                
+                const badge = document.getElementById('v6-badge');
+                badge.innerText = "Active";
+                badge.classList.add('active');
+            } catch(e) {
+                // Keep default "Not Detected"
             }
         }
 
@@ -367,13 +422,13 @@
         }
 
         function analyzeVPN(gpsLat, gpsLon) {
-            if(ipLat === 0) return; 
+            if(!window.ipLat) return; 
 
             const R = 6371; 
-            const dLat = (gpsLat - ipLat) * Math.PI / 180;
-            const dLon = (gpsLon - ipLon) * Math.PI / 180;
+            const dLat = (gpsLat - window.ipLat) * Math.PI / 180;
+            const dLon = (gpsLon - window.ipLon) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(ipLat * Math.PI / 180) * Math.cos(gpsLat * Math.PI / 180) *
+                      Math.cos(window.ipLat * Math.PI / 180) * Math.cos(gpsLat * Math.PI / 180) *
                       Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             const dist = R * c;
@@ -390,7 +445,18 @@
             }
         }
 
-        getIPInfo();
+        // --- DEVICE FINGERPRINT ---
+        function showDeviceInfo() {
+            const ua = navigator.userAgent;
+            const screen = `${window.screen.width}x${window.screen.height}`;
+            document.getElementById('dev-info').innerText = `UA: ${ua} | Screen: ${screen}`;
+        }
+
+        // EXECUTE
+        getMainIntel();
+        getIPv4();
+        getIPv6();
+        showDeviceInfo();
         togglePing(); 
 
     </script>
