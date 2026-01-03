@@ -24,7 +24,7 @@
         }
 
         /* --- 1. PING RADAR UI (RESTORED) --- */
-        .ping-wrapper { position: relative; width: 220px; height: 220px; margin-bottom: 20px; }
+        .ping-wrapper { position: relative; width: 220px; height: 220px; margin-bottom: 10px; }
         .ping-circle {
             width: 100%; height: 100%; border-radius: 50%;
             background: radial-gradient(circle, #1a1a1a 40%, #000 100%);
@@ -37,7 +37,7 @@
         @keyframes spinBorder { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
         /* Agar angka tidak ikut berputar */
-        .ping-inner-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; }
+        .ping-inner-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; z-index: 3;}
 
         .ping-val { font-size: 4.5rem; font-weight: 800; color: #fff; line-height: 0.9; }
         .ping-label { color: #888; text-transform: uppercase; font-size: 0.8rem; margin-top: 10px; letter-spacing: 1px; }
@@ -84,7 +84,7 @@
         .action-btn.active { background: #00e5ff; color: #000; border-color: #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.3); }
 
         /* --- INTELLIGENCE SECTION --- */
-        .intel-section { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        .intel-section { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
 
         /* ISP INFO */
         .isp-card {
@@ -128,8 +128,7 @@
         
         <div class="ping-wrapper">
             <div class="pulse-ring" id="pulse"></div>
-            <div class="ping-circle" id="main-circle">
-                </div>
+            <div class="ping-circle" id="main-circle"></div>
             <div class="ping-inner-content">
                 <div class="ping-val" id="ping-text">--</div>
                 <div class="ping-label">MS LATENCY</div>
@@ -145,7 +144,7 @@
                 </div>
                 <div class="sb-item">
                     <div class="sb-val" id="dl-speed">-</div>
-                    <div class="sb-lbl">DOWNLOAD SPEED</div>
+                    <div class="sb-lbl">EST. SPEED</div>
                 </div>
             </div>
         </div>
@@ -163,7 +162,7 @@
                     <div class="isp-asn" id="isp-asn">ASN: -</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-size:0.8rem; color:#888;">IPv4 Address</div>
+                    <div style="font-size:0.8rem; color:#888;">IPv4</div>
                     <div style="color:#00e5ff; font-family:monospace;" id="ip-addr">...</div>
                 </div>
             </div>
@@ -172,7 +171,7 @@
 
             <div class="geo-grid">
                 <div class="geo-card">
-                    <div class="geo-title">🌍 LOGICAL LOCATION (IP)</div>
+                    <div class="geo-title">🌍 NETWORK LOCATION (IP)</div>
                     <div class="geo-row"><span>City</span> <span class="geo-val" id="ip-city">-</span></div>
                     <div class="geo-row"><span>Country</span> <span class="geo-val" id="ip-country">-</span></div>
                     <div class="geo-row"><span>Coords</span> <span class="geo-val" id="ip-coords" style="font-size:0.7rem">-</span></div>
@@ -209,7 +208,7 @@
             if(!isPing) return;
             const start = performance.now();
             try {
-                // Gunakan Cloudflare Trace sebagai target ping yang stabil
+                // Gunakan Cloudflare Trace (No Cache)
                 await fetch('https://1.1.1.1/cdn-cgi/trace', { mode: 'no-cors', cache: 'no-store' });
                 const ping = Math.round(performance.now() - start);
                 updatePingUI(ping);
@@ -274,7 +273,8 @@
             }
         }
 
-        // --- SPEED TEST (FIXED) ---
+        // --- SPEED TEST (CORS FIXED) ---
+        // Menggunakan Gambar dari Wikimedia Commons (Server Cepat & CORS Friendly)
         async function runSpeedTest() {
             const el = document.getElementById('dl-speed');
             const btn = document.getElementById('btn-speed');
@@ -284,26 +284,31 @@
             el.innerText = "Testing...";
             
             const start = performance.now();
-            // File statis 1MB dari server cepat (contoh menggunakan file dummy dari penyedia speedtest)
-            // Jika link ini mati, ganti dengan file 1MB lain yang reliable.
-            const testFileUrl = 'https://speed.hetzner.de/1MB.bin'; 
+            
+            // Link ke gambar HD di Wikimedia Commons (~2.5 MB)
+            // Ini jauh lebih stabil daripada Unsplash dan mendukung CORS
+            const testFileUrl = 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg'; 
             
             try {
-                // Cache: no-store penting agar selalu download baru
-                const res = await fetch(testFileUrl + '?' + Math.random(), { cache: 'no-store' });
+                // cache: no-store agar browser mendownload ulang, bukan ambil dari cache
+                const res = await fetch(testFileUrl + '?t=' + Math.random(), { cache: 'no-store' });
+                if(!res.ok) throw new Error("Network Error");
+                
                 const blob = await res.blob();
                 const end = performance.now();
                 
-                const sizeInBits = blob.size * 8; 
+                const sizeInBytes = blob.size; 
+                const sizeInBits = sizeInBytes * 8;
                 const durationInSeconds = (end - start) / 1000;
                 
+                // Hitung Mbps (Megabits per second)
                 const speedBps = sizeInBits / durationInSeconds;
-                const speedMbps = (speedBps / (1024 * 1024)).toFixed(2); // Megabits per second
+                const speedMbps = (speedBps / (1024 * 1024)).toFixed(2); 
                 
                 el.innerText = speedMbps + " Mbps";
             } catch(e) {
                 console.error(e);
-                el.innerText = "Error / Blocked";
+                el.innerText = "Blocked/Error";
             } finally {
                 btn.disabled = false;
                 btn.innerText = "⚡ Run Speed Test";
@@ -331,7 +336,7 @@
                 
                 // Coba analisis jika data GPS sudah ada sebelumnya
                 const gpsCoords = document.getElementById('gps-coords').innerText;
-                if(gpsCoords !== "Waiting Permission..." && gpsCoords !== "Denied / Error") {
+                if(gpsCoords.includes(",")) {
                     const [gLat, gLon] = gpsCoords.split(',').map(Number);
                     analyzeVPN(gLat, gLon);
                 }
