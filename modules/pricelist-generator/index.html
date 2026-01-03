@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Pricelist Generator (Responsive Fix)</title>
+    <title>GXDiag - Pricelist Generator (Fixed)</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -38,12 +38,13 @@
 
         h1 { margin-top: 40px; margin-bottom: 20px; color: var(--primary); font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 2px; text-align: center; }
 
-        /* --- MAIN LAYOUT (DESKTOP DEFAULT) --- */
+        /* --- MAIN LAYOUT --- */
         .editor-container {
             display: grid; 
-            grid-template-columns: 400px 1fr; /* Kiri Fixed, Kanan Flexible */
+            grid-template-columns: 400px 1fr;
             gap: 30px; 
             width: 100%; max-width: 1600px;
+            height: 85vh; /* Fixed height container agar layout stabil */
             align-items: start;
         }
 
@@ -52,10 +53,9 @@
             background: var(--card-bg); padding: 25px; border-radius: 15px;
             border: 1px solid #333; display: flex; flex-direction: column; gap: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            /* Scrollable di Desktop */
-            max-height: 85vh; overflow-y: auto; 
+            height: 100%; /* Full height container */
+            overflow-y: auto; /* Scroll di dalam box */
         }
-
         .controls::-webkit-scrollbar { width: 8px; }
         .controls::-webkit-scrollbar-track { background: #111; }
         .controls::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
@@ -65,32 +65,31 @@
         
         input[type="text"], input[type="file"], select {
             background: #111; border: 1px solid #444; color: #fff;
-            padding: 12px; border-radius: 6px; outline: none; transition: 0.3s; width: 100%;
-            font-size: 1rem; /* Font input lebih besar agar mudah disentuh */
+            padding: 10px; border-radius: 5px; outline: none; transition: 0.3s; width: 100%;
+            font-size: 0.95rem;
         }
         input[type="text"]:focus, select:focus { border-color: var(--primary); }
 
         .preset-container { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
         .btn-preset {
             background: #333; border: 1px solid #555; color: #ccc;
-            padding: 8px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; transition: 0.2s;
+            padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; transition: 0.2s;
         }
         .btn-preset:hover { background: var(--primary); color: #000; border-color: var(--primary); }
 
         .price-list-editor {
             display: flex; flex-direction: column; gap: 8px;
             min-height: 150px; 
-            /* Hapus max-height agar memanjang ke bawah */
             border: 1px dashed #444; padding: 10px; border-radius: 5px;
             background: #151515;
         }
 
         .price-row { display: flex; gap: 8px; align-items: center; }
         .price-row input { flex: 1; }
-        .btn-remove { background: #ff1744; border: none; color: white; width: 38px; height: 38px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.2rem; flex-shrink: 0;}
+        .btn-remove { background: #ff1744; border: none; color: white; width: 32px; height: 32px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
 
         .btn-action {
-            padding: 14px; border: none; border-radius: 6px; font-weight: bold;
+            padding: 12px; border: none; border-radius: 5px; font-weight: bold;
             cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; font-size: 0.9rem;
         }
         .btn-add { background: #333; color: var(--primary); border: 1px dashed var(--primary); }
@@ -102,23 +101,25 @@
         }
         .btn-download:hover { transform: translateY(-2px); box-shadow: 0 0 20px var(--primary); }
 
-        /* --- RIGHT: PREVIEW AREA --- */
+        /* --- RIGHT: PREVIEW AREA (VIEWPORT) --- */
         .preview-area {
             background: #050505; border-radius: 15px; border: 1px solid #333;
-            width: 100%; 
-            height: 85vh; 
-            display: flex; justify-content: center; align-items: flex-start;
-            padding: 40px; overflow: hidden; 
-            position: sticky; top: 20px;
+            width: 100%; height: 100%; /* Mengisi sisa tinggi container */
+            display: flex; 
+            justify-content: center; 
+            align-items: center; /* Center Vertikal & Horizontal */
+            padding: 20px;
+            overflow: hidden; 
+            position: relative;
         }
 
         #card-wrapper {
-            transform-origin: top center;
+            transform-origin: center center; /* Zoom dari tengah */
             transition: transform 0.3s ease;
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
         }
 
-        /* --- VOUCHER CARD (NATIVE HD CSS) --- */
+        /* --- VOUCHER CARD --- */
         #voucher-card {
             background-color: #1a1a1a;
             position: relative; overflow: hidden;
@@ -174,45 +175,39 @@
         .denom { font-size: 1.8rem; color: #ddd; font-weight: 500; margin-bottom: 5px; }
         .price { font-size: 2.4rem; color: var(--primary); font-weight: 800; font-family: 'Rajdhani', sans-serif; }
 
+        /* --- FOOTER --- */
         .card-footer {
             margin-top: 20px; text-align: center; 
             border-top: 3px solid #333; padding-top: 30px;
         }
         .store-name { font-size: 2rem; color: #fff; font-weight: bold; letter-spacing: 1px; }
         
-        .watermark { 
-            font-size: 1.3rem; color: #666; margin-top: 15px; 
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+        .watermark-container {
+            margin-top: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
         }
-        .ig-icon { width: 28px; height: 28px; stroke-width: 2.5; margin-bottom: 2px; }
-        .watermark span { font-weight: bold; color: #888; }
 
-        /* --- RESPONSIVE FIX (MOBILE/TABLET/HORIZONTAL HP) --- */
+        .watermark { 
+            font-size: 1.3rem; color: #777; 
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        
+        /* Ikon IG dibuat umum agar bisa dipakai 2 kali */
+        .ig-icon { width: 28px; height: 28px; stroke: #888; margin-bottom: 2px;}
+        
+        .watermark span { font-weight: bold; color: #999; }
+
+        .disclaimer {
+            font-size: 0.9rem; color: #444; font-style: italic; letter-spacing: 0.5px;
+            text-transform: uppercase; margin-top: 5px;
+        }
+
+        /* --- RESPONSIVE MOBILE --- */
         @media (max-width: 1100px) {
-            /* Ubah Grid jadi Flex Column (Atas Bawah) */
-            .editor-container { 
-                display: flex; 
-                flex-direction: column; 
-            }
-
-            /* Reset Kontrol Kiri */
-            .controls { 
-                width: 100%; 
-                max-height: none; /* PENTING: Hapus batas tinggi agar tidak scroll di dalam */
-                overflow: visible; /* Biarkan browser yang handle scroll halaman */
-                padding: 15px;
-            }
-
-            /* Preview di Bawahnya */
-            .preview-area { 
-                width: 100%; 
-                height: auto; /* Tinggi otomatis mengikuti konten */
-                min-height: 500px;
-                padding: 20px;
-                position: static; /* Matikan sticky agar tidak menutupi input */
-            }
-            
-            /* Penyesuaian Tombol Kembali */
+            body { padding: 10px; height: auto; }
+            .editor-container { display: flex; flex-direction: column; height: auto; }
+            .controls { width: 100%; max-height: none; overflow: visible; padding: 20px; }
+            .preview-area { width: 100%; height: 60vh; min-height: 400px; padding: 10px; margin-bottom: 20px; }
             .back-btn { position: relative; top: 0; left: 0; display: inline-block; margin-bottom: 10px; }
             h1 { margin-top: 10px; }
         }
@@ -221,19 +216,19 @@
 <body>
 
     <a href="../../index.html" class="back-btn">← DASHBOARD</a>
-    <h1>Pricelist Generator <span style="font-size:0.5em; color:#666; vertical-align:middle;">(HD Engine)</span></h1>
+    <h1>Pricelist Generator <span style="font-size:0.5em; color:#666; vertical-align:middle;">(Safe Mode)</span></h1>
 
     <div class="editor-container">
         
         <div class="controls">
             
             <div class="input-group" style="margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 15px;">
-                <label>Format / Resolusi Gambar (HD)</label>
+                <label>Format / Resolusi</label>
                 <select id="selectRes" onchange="changeResolution()">
-                    <option value="story" selected>IG Story (1080 x 1920 px)</option>
-                    <option value="square">IG Feed / Kotak (1080 x 1080 px)</option>
-                    <option value="portrait">IG Portrait (1080 x 1350 px)</option>
-                    <option value="landscape">Landscape / YouTube (1920 x 1080 px)</option>
+                    <option value="story" selected>IG Story (1080 x 1920)</option>
+                    <option value="square">IG Feed (1080 x 1080)</option>
+                    <option value="portrait">IG Portrait (1080 x 1350)</option>
+                    <option value="landscape">Landscape (1920 x 1080)</option>
                 </select>
             </div>
 
@@ -244,18 +239,17 @@
             </div>
             
             <div class="input-group">
-                <label>Subtitle / Tagline</label>
-                <input type="text" id="inputSubtitle" placeholder="FLASH SALE / FAST PROCESS" oninput="updatePreview()">
+                <label>Subtitle</label>
+                <input type="text" id="inputSubtitle" placeholder="FLASH SALE ⚡" oninput="updatePreview()">
                 <div class="preset-container">
                     <button class="btn-preset" onclick="setSubtitle('FLASH SALE ⚡')">Flash Sale</button>
                     <button class="btn-preset" onclick="setSubtitle('FAST PROCESS (1-5 Menit)')">Fast Process</button>
-                    <button class="btn-preset" onclick="setSubtitle('SLOW PROCESS (Murah Meriah)')">Slow Tapi Murah</button>
-                    <button class="btn-preset" onclick="setSubtitle('EVENT SPECIAL 🔥')">Event Special</button>
+                    <button class="btn-preset" onclick="setSubtitle('EVENT SPECIAL 🔥')">Event</button>
                 </div>
             </div>
 
             <div class="input-group">
-                <label>Upload Background (Poster Game)</label>
+                <label>Background</label>
                 <input type="file" id="inputBg" accept="image/*" onchange="updateBg()">
             </div>
 
@@ -276,14 +270,16 @@
 
             <h3 style="margin-top:10px;">3. Export</h3>
             <div class="input-group">
-                <label>Nama Toko / Footer</label>
-                <input type="text" id="inputFooter" placeholder="Contoh: @JuraganTopup | Fast & Legal" oninput="updatePreview()">
+                <label>Nama Toko (Reseller)</label>
+                <input type="text" id="inputFooter" placeholder="Nama Toko Anda" oninput="updatePreview()">
             </div>
             <button class="btn-action btn-download" onclick="downloadImage()">⬇ DOWNLOAD HD IMAGE</button>
         </div>
 
         <div class="preview-area" id="previewArea">
-            <div id="card-wrapper"> <div id="voucher-card"> <img id="card-bg-img" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000&auto=format&fit=crop" alt="bg">
+            <div id="card-wrapper">
+                <div id="voucher-card">
+                    <img id="card-bg-img" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1000&auto=format&fit=crop" alt="bg">
                     <div class="card-overlay"></div>
                     
                     <div class="card-content">
@@ -296,16 +292,26 @@
                             </div>
 
                         <div class="card-footer">
-                            <div class="store-name" id="prevFooter">@StoreName | Aman Terpercaya</div>
-                            <div class="watermark">
-                                Made by 
-                                <svg class="ig-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                                </svg>
-                                <span>@btstore12</span> using GXDiag
+                            <div class="store-name" id="prevFooter">Nama Toko Anda</div>
+                            
+                            <div class="watermark-container">
+                                <div class="watermark">
+                                    Generated via 
+                                    <span>GXDiag Tools</span> 
+                                    <span style="font-size:0.8em; margin:0 8px;">•</span>
+                                    Dev by
+                                    <svg class="ig-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                    </svg>
+                                    <span>@btstore12</span>
+                                </div>
+                                <div class="disclaimer">
+                                    GXDiag is a design tool only. We are not responsible for any transactions.
+                                </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -315,12 +321,12 @@
     </div>
 
     <script>
-        // --- 1. RESOLUTION & SCALING LOGIC ---
+        // --- 1. RESOLUTION & SCALING (FIXED LOGIC) ---
         function changeResolution() {
             const card = document.getElementById('voucher-card');
             const res = document.getElementById('selectRes').value;
 
-            // Set Actual High-Res Dimensions
+            // Dimensi Asli (Native HD)
             if(res === 'story') {
                 card.style.width = '1080px'; card.style.height = '1920px';
             } else if(res === 'square') {
@@ -334,29 +340,41 @@
             setTimeout(fitPreview, 10); 
         }
 
-        // --- 2. FIT PREVIEW (ZOOM) ---
+        // FUNGSI ZOOM AGAR MUAT DI LAYAR (SCALE TO FIT)
         function fitPreview() {
             const wrapper = document.getElementById('card-wrapper');
             const card = document.getElementById('voucher-card');
             const container = document.getElementById('previewArea');
             
             const cardW = parseInt(card.style.width);
-            const contW = container.clientWidth - 40; // padding tolerance
+            const cardH = parseInt(card.style.height);
             
-            let scale = contW / cardW;
-            if (scale > 1) scale = 1; 
+            // Hitung ruang yang tersedia di layar
+            const availW = container.clientWidth - 40; // padding
+            const availH = container.clientHeight - 40; 
+
+            // Hitung Rasio Zoom (Pilih yang paling kecil agar muat Width & Height)
+            const scaleX = availW / cardW;
+            const scaleY = availH / cardH;
+            let scale = Math.min(scaleX, scaleY); // KUNCI PERBAIKAN: Pilih skala terkecil
+
+            if (scale > 1) scale = 1; // Jangan perbesar
 
             wrapper.style.transform = `scale(${scale})`;
             
-            // Fix margin bottom container (Hack untuk menghilangkan ruang kosong transform)
-            const scaledHeight = parseInt(card.style.height) * scale;
-            wrapper.style.height = parseInt(card.style.height) + "px"; 
-            wrapper.style.marginBottom = `-${parseInt(card.style.height) - scaledHeight}px`; 
+            // Atur margin agar wrapper menempati ruang sesuai ukuran visualnya
+            // (Mencegah container jadi terlalu tinggi kosong karena ukuran asli)
+            wrapper.style.width = cardW + 'px';
+            wrapper.style.height = cardH + 'px';
+            
+            // Ini trik agar layout parent (flex center) bekerja dengan baik pada element yang di-scale
+            // Kita biarkan width/height wrapper sesuai aslinya, transform hanya visual.
+            // Flexbox 'center' akan menempatkan bounding box asli di tengah.
         }
 
         window.addEventListener('resize', fitPreview);
 
-        // --- 3. DOWNLOAD LOGIC (BYPASS ZOOM) ---
+        // --- 2. DOWNLOAD LOGIC ---
         function downloadImage() {
             const cardElement = document.getElementById('voucher-card');
             const wrapper = document.getElementById('card-wrapper');
@@ -365,13 +383,9 @@
             
             btn.innerText = "Rendering HD...";
             
-            // Simpan state sebelum capture
+            // Simpan state
             const currentTransform = wrapper.style.transform;
-            const currentMargin = wrapper.style.marginBottom;
-
-            // RESET TRANSFORM (PENTING AGAR FULL HD)
-            wrapper.style.transform = 'scale(1)'; 
-            wrapper.style.marginBottom = '0';
+            wrapper.style.transform = 'scale(1)'; // Reset zoom agar capture HD
 
             html2canvas(cardElement, {
                 scale: 1, 
@@ -388,23 +402,18 @@
                 link.href = canvas.toDataURL("image/png", 1.0);
                 link.click();
                 
-                // Kembalikan Tampilan Preview
+                // Kembalikan Zoom
                 wrapper.style.transform = currentTransform;
-                wrapper.style.marginBottom = currentMargin;
-                
                 btn.innerText = "⬇ DOWNLOAD HD IMAGE";
             }).catch(err => {
                 console.error(err);
-                // Kembalikan Tampilan jika error
                 wrapper.style.transform = currentTransform;
-                wrapper.style.marginBottom = currentMargin;
-                
                 alert("Gagal. Coba ganti gambar background.");
                 btn.innerText = "⬇ DOWNLOAD HD IMAGE";
             });
         }
 
-        // --- CONTENT LOGIC ---
+        // --- 3. CONTENT UPDATE ---
         function updatePreview() {
             const title = document.getElementById('inputTitle').value || "JUDUL GAME";
             document.getElementById('prevTitle').innerText = title;
@@ -412,7 +421,7 @@
             const subtitle = document.getElementById('inputSubtitle').value || "FLASH SALE ⚡";
             document.getElementById('prevSubtitle').innerText = subtitle;
 
-            const footer = document.getElementById('inputFooter').value || "@StoreName | Aman Terpercaya";
+            const footer = document.getElementById('inputFooter').value || "Nama Toko Anda";
             document.getElementById('prevFooter').innerText = footer;
 
             const container = document.getElementById('prevGrid');
@@ -468,7 +477,6 @@
             updatePreview();
         }
 
-        // Init Styles
         changeResolution();
         updatePreview();
     </script>
