@@ -2,268 +2,397 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Mobile Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GXDiag - Sensor Master</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { 
             display: flex; flex-direction: column; height: 100vh; 
-            background: #0a0a0a; overflow: hidden; touch-action: manipulation; margin: 0;
+            background: #0a0a0a; overflow: hidden; margin: 0;
+            font-family: 'Segoe UI', monospace; color: #eee;
         }
 
         /* HEADER */
         .mod-header {
             padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
-            background: #111; border-bottom: 1px solid #333; flex-shrink: 0;
+            background: #111; border-bottom: 1px solid #333; flex-shrink: 0; z-index: 10;
         }
         .back-btn { text-decoration: none; color: #fff; font-weight: bold; display: flex; align-items: center; gap: 8px; }
 
         /* TABS */
         .sensor-tabs {
-            display: flex; justify-content: center; gap: 10px; padding: 10px;
-            background: #151515; border-bottom: 1px solid #333; flex-shrink: 0; overflow-x: auto;
+            display: flex; gap: 8px; padding: 12px;
+            background: #151515; border-bottom: 1px solid #333; 
+            flex-shrink: 0; overflow-x: auto;
         }
         .tab-btn {
             background: #222; border: 1px solid #333; color: #888;
             padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap;
-            font-size: 0.8rem; font-weight: bold; transition: 0.3s;
-            display: flex; align-items: center; gap: 6px;
+            font-size: 0.85rem; font-weight: bold; transition: 0.3s; flex: 1; text-align: center;
         }
         .tab-btn.active {
             background: rgba(0, 229, 255, 0.15); color: #00e5ff; border-color: #00e5ff;
         }
 
-        /* CONTENT AREA */
+        /* CONTENT */
         .content-area {
-            flex-grow: 1; position: relative; overflow-y: auto; overflow-x: hidden;
-            width: 100%;
+            flex-grow: 1; position: relative; width: 100%; overflow: hidden;
         }
         .tab-content {
-            display: none; width: 100%; min-height: 100%;
-            flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px; animation: fadeIn 0.3s;
+            display: none; width: 100%; height: 100%;
+            flex-direction: column; align-items: center; padding: 20px; 
+            overflow-y: auto; animation: fadeIn 0.3s;
         }
         .tab-content.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- MOTION (RESPONSIVE SIZE) --- */
-        .bubble-level {
-            /* Gunakan vmin agar responsif terhadap lebar/tinggi layar */
-            width: 65vmin; height: 65vmin; max-width: 280px; max-height: 280px;
-            border-radius: 50%; background: radial-gradient(circle, #222 0%, #111 100%);
-            border: 4px solid #333; position: relative;
-            box-shadow: inset 0 0 20px #000; margin-bottom: 20px;
+        /* --- 1. ACCELEROMETER (BARS) --- */
+        .accel-container { width: 100%; max-width: 400px; margin-top: 20px; }
+        .accel-row { margin-bottom: 20px; }
+        .accel-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; margin-bottom: 5px; }
+        .bar-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; position: relative; overflow: hidden; }
+        .bar-fill { 
+            height: 100%; width: 50%; background: #00e5ff; 
+            position: absolute; left: 25%; /* Start from centerish if we mapped 0 to 50% */
+            transition: width 0.1s linear, left 0.1s linear; border-radius: 5px;
         }
-        .bubble-center {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 20%; height: 20%; border: 2px solid #555; border-radius: 50%; z-index: 1;
-        }
-        .bubble {
-            width: 15%; height: 15%; background: #00e5ff; border-radius: 50%;
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            box-shadow: 0 0 15px #00e5ff; transition: transform 0.1s linear;
-        }
-        
-        .axis-info {
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 350px;
-        }
-        .axis-box { background: #1a1a1a; padding: 10px 5px; border-radius: 8px; border: 1px solid #333; text-align: center; }
-        .axis-label { color: #888; font-size: 0.65rem; margin-bottom: 5px; }
-        .axis-val { color: #fff; font-family: monospace; font-size: 1rem; }
+        .g-force-val { font-size: 2.5rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
+        .g-label { font-size: 0.9rem; color: #555; }
 
-        /* --- BATTERY (RESPONSIVE SIZE) --- */
-        .batt-circle {
-            width: 55vmin; height: 55vmin; max-width: 220px; max-height: 220px;
-            border-radius: 50%; background: conic-gradient(#00e5ff 0% 0%, #222 0% 100%);
-            position: relative; margin-bottom: 25px;
-            box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
-            transition: background 1s;
+        /* --- 2. GYRO CUBE (3D) --- */
+        .scene {
+            width: 150px; height: 150px; perspective: 600px; margin: 40px 0;
         }
-        .batt-inner {
-            position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
-            background: #0a0a0a; border-radius: 50%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        .cube {
+            width: 100%; height: 100%; position: relative;
+            transform-style: preserve-3d; transform: translateZ(-75px);
+            transition: transform 0.1s linear;
         }
-        .batt-percent { font-size: 2.5rem; font-weight: bold; color: #fff; }
-        .batt-status { font-size: 0.8rem; color: #888; margin-top: 5px; text-transform: uppercase; }
-        
-        .batt-details { display: flex; gap: 10px; width: 100%; max-width: 300px; justify-content: center; }
-        .bd-item { flex: 1; background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; text-align: center; }
-        
-        /* --- VIBRATION --- */
-        .vib-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 350px;
+        .cube__face {
+            position: absolute; width: 150px; height: 150px;
+            border: 2px solid #00e5ff; line-height: 150px;
+            font-size: 2rem; font-weight: bold; color: #fff; text-align: center;
+            background: rgba(0, 229, 255, 0.1); backface-visibility: hidden; /* Transparan */
         }
-        .vib-btn {
-            background: #1a1a1a; border: 1px solid #333; color: #fff;
-            padding: 15px; border-radius: 12px; font-size: 0.9rem; font-weight: bold;
-            cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;
-            -webkit-tap-highlight-color: transparent;
+        .cube__face--front  { transform: rotateY(  0deg) translateZ(75px); }
+        .cube__face--right  { transform: rotateY( 90deg) translateZ(75px); background: rgba(255, 64, 129, 0.1); border-color: #ff4081;}
+        .cube__face--back   { transform: rotateY(180deg) translateZ(75px); }
+        .cube__face--left   { transform: rotateY(-90deg) translateZ(75px); background: rgba(255, 64, 129, 0.1); border-color: #ff4081;}
+        .cube__face--top    { transform: rotateX( 90deg) translateZ(75px); background: rgba(0, 255, 136, 0.1); border-color: #00ff88;}
+        .cube__face--bottom { transform: rotateX(-90deg) translateZ(75px); background: rgba(0, 255, 136, 0.1); border-color: #00ff88;}
+
+        /* --- SENSOR AUDIT LIST --- */
+        .audit-box {
+            width: 100%; max-width: 400px; background: #111; 
+            border: 1px solid #333; border-radius: 8px; padding: 15px; margin-top: auto;
         }
-        .vib-btn span { font-size: 1.5rem; }
-        .vib-btn:active, .vib-btn.active { background: #00e5ff; color: #000; transform: scale(0.98); }
-        .vib-btn.stop { background: #ff4081; grid-column: span 2; }
-        
-        /* HELPER */
-        .perm-btn { margin-top: 15px; padding: 8px 20px; background: #00e5ff; border: none; border-radius: 5px; cursor: pointer; display: none; }
+        .audit-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; }
+        .audit-row:last-child { margin-bottom: 0; }
+        .stat-ok { color: #00ff88; font-weight: bold; }
+        .stat-fail { color: #555; }
+
+        /* --- TOUCH --- */
+        #touch-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; touch-action: none; }
+        .touch-overlay {
+            position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; 
+            pointer-events: none;
+        }
+        .touch-count { font-size: 4rem; color: #333; font-weight: bold; }
+
+        /* --- BATTERY --- */
+        .batt-visual {
+            width: 120px; height: 200px; border: 4px solid #444; border-radius: 10px;
+            position: relative; padding: 5px; margin: 30px 0;
+        }
+        .batt-visual::before {
+            content:''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            width: 40px; height: 8px; background: #444; border-radius: 3px 3px 0 0;
+        }
+        .batt-level-bar {
+            width: 100%; height: 0%; background: #00e5ff; 
+            position: absolute; bottom: 5px; left: 0; right: 0; margin: 0 5px;
+            border-radius: 4px; transition: height 0.5s;
+            box-shadow: 0 0 15px #00e5ff;
+        }
+        .batt-charging .batt-level-bar { background: #00ff88; box-shadow: 0 0 15px #00ff88; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%{opacity:0.8} 50%{opacity:1} 100%{opacity:0.8} }
+
+        .btn-perm { background: #00e5ff; border: none; color: #000; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; display: none;}
     </style>
 </head>
 <body>
 
     <div class="mod-header">
         <a href="../../index.html" class="back-btn"><span>←</span> DASHBOARD</a>
-        <div style="font-size:0.9rem; color:#888;">MOBILE HUB</div>
+        <div style="font-size:0.8rem; color:#888;">MOBILE SENSORS</div>
     </div>
 
     <div class="sensor-tabs">
-        <button class="tab-btn active" onclick="switchTab('motion')">🧭 Motion</button>
-        <button class="tab-btn" onclick="switchTab('battery')">🔋 Battery</button>
-        <button class="tab-btn" onclick="switchTab('vibro')">📳 Vibro</button>
+        <button class="tab-btn active" onclick="switchTab('accel')">📈 G-Force</button>
+        <button class="tab-btn" onclick="switchTab('gyro')">🧭 Gyro</button>
+        <button class="tab-btn" onclick="switchTab('touch')">👆 Touch</button>
+        <button class="tab-btn" onclick="switchTab('battery')">🔋 Power</button>
     </div>
 
     <div class="content-area">
         
-        <div id="motion" class="tab-content active">
-            <div class="bubble-level">
-                <div class="bubble-center"></div>
-                <div class="bubble" id="bubble"></div>
+        <div id="accel" class="tab-content active">
+            <div style="text-align:center; margin-bottom:20px;">
+                <div class="g-force-val" id="total-g">0.00</div>
+                <div class="g-label">TOTAL G-FORCE</div>
             </div>
-            <div class="axis-info">
-                <div class="axis-box"><div class="axis-label">X-AXIS</div><div class="axis-val" id="val-x">0</div></div>
-                <div class="axis-box"><div class="axis-label">Y-AXIS</div><div class="axis-val" id="val-y">0</div></div>
-                <div class="axis-box"><div class="axis-label">Z-AXIS</div><div class="axis-val" id="val-z">0</div></div>
+
+            <div class="accel-container">
+                <div class="accel-row">
+                    <div class="accel-label"><span>X-AXIS (Left/Right)</span> <span id="val-x">0</span></div>
+                    <div class="bar-bg"><div class="bar-fill" id="bar-x"></div></div>
+                </div>
+                <div class="accel-row">
+                    <div class="accel-label"><span>Y-AXIS (Up/Down)</span> <span id="val-y">0</span></div>
+                    <div class="bar-bg"><div class="bar-fill" id="bar-y"></div></div>
+                </div>
+                <div class="accel-row">
+                    <div class="accel-label"><span>Z-AXIS (Front/Back)</span> <span id="val-z">0</span></div>
+                    <div class="bar-bg"><div class="bar-fill" id="bar-z"></div></div>
+                </div>
             </div>
-            <button class="perm-btn" id="ios-perm-btn" onclick="requestIOSPerm()">Enable Sensors (iOS)</button>
+
+            <button class="btn-perm" id="ios-perm" onclick="requestIOS()">Enable Sensors (iOS 13+)</button>
+
+            <div class="audit-box">
+                <div class="audit-row" style="border-bottom:1px solid #333; margin-bottom:10px; padding-bottom:5px; color:#fff;">HARDWARE AUDIT</div>
+                <div class="audit-row"><span>Accelerometer</span> <span id="stat-accel" class="stat-fail">Waiting...</span></div>
+                <div class="audit-row"><span>Gyroscope (Rotation)</span> <span id="stat-gyro" class="stat-fail">Checking...</span></div>
+                <div class="audit-row"><span>Interval</span> <span id="stat-int" style="color:#00e5ff">- ms</span></div>
+            </div>
+        </div>
+
+        <div id="gyro" class="tab-content">
+            <div style="color:#888; font-size:0.8rem; margin-bottom:20px;">PHYSICAL ORIENTATION</div>
+            
+            <div class="scene">
+                <div class="cube" id="cube">
+                    <div class="cube__face cube__face--front">front</div>
+                    <div class="cube__face cube__face--back">back</div>
+                    <div class="cube__face cube__face--right">right</div>
+                    <div class="cube__face cube__face--left">left</div>
+                    <div class="cube__face cube__face--top">top</div>
+                    <div class="cube__face cube__face--bottom">bot</div>
+                </div>
+            </div>
+
+            <div class="accel-container" style="margin-top:20px;">
+                <div class="accel-row">
+                    <div class="accel-label"><span>ALPHA (Compass)</span> <span id="gyro-a" style="color:#00e5ff">0°</span></div>
+                </div>
+                <div class="accel-row">
+                    <div class="accel-label"><span>BETA (Front/Back Tilt)</span> <span id="gyro-b" style="color:#ff4081">0°</span></div>
+                </div>
+                <div class="accel-row">
+                    <div class="accel-label"><span>GAMMA (Left/Right Tilt)</span> <span id="gyro-g" style="color:#00ff88">0°</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="touch" class="tab-content" style="padding:0; background:#000;">
+            <canvas id="touch-canvas"></canvas>
+            <div class="touch-overlay">
+                <div style="font-size:0.8rem; color:#555;">TOUCHES DETECTED</div>
+                <div class="touch-count" id="touch-num">0</div>
+            </div>
         </div>
 
         <div id="battery" class="tab-content">
-            <div class="batt-circle" id="batt-ring">
-                <div class="batt-inner">
-                    <div class="batt-percent" id="batt-level">--%</div>
-                    <div class="batt-status" id="batt-state">Checking...</div>
+            <div class="batt-visual" id="batt-vis">
+                <div class="batt-level-bar" id="batt-bar"></div>
+            </div>
+            <div style="font-size:3rem; font-weight:bold; color:#fff;" id="batt-pct">--%</div>
+            <div style="color:#888; margin-top:5px; text-transform:uppercase;" id="batt-stat">Checking...</div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:300px; margin-top:30px;">
+                <div style="background:#1a1a1a; padding:10px; border-radius:8px; text-align:center;">
+                    <div style="font-size:0.7rem; color:#888;">TIME TO FULL</div>
+                    <div id="time-full" style="font-weight:bold;">-</div>
                 </div>
-            </div>
-            <div class="batt-details">
-                <div class="bd-item"><div style="font-size:0.65rem; color:#888;">TO FULL</div><div id="time-full" style="font-weight:bold;">-</div></div>
-                <div class="bd-item"><div style="font-size:0.65rem; color:#888;">TIME LEFT</div><div id="time-left" style="font-weight:bold;">-</div></div>
-            </div>
-        </div>
-
-        <div id="vibro" class="tab-content">
-            <div style="margin-bottom:20px; text-align:center;">
-                <div style="font-size:2.5rem;" id="vib-icon">📳</div>
-                <div style="color:#888; font-size:0.8rem;" id="vib-status">Select Pattern</div>
-            </div>
-            <div class="vib-grid">
-                <button class="vib-btn" onclick="doVibrate(200)"><span>⚡</span>Short</button>
-                <button class="vib-btn" onclick="doVibrate(1000)"><span>🌊</span>Long</button>
-                <button class="vib-btn" onclick="doVibrate([200,100,200,100])"><span>💓</span>Pulse</button>
-                <button class="vib-btn" onclick="doVibrate([100,30,100,30,100,300,300,30,300,30,300,300,100,30,100,30,100])"><span>🆘</span>SOS</button>
-                <button class="vib-btn" id="inf-btn" onclick="toggleLoop()"><span>🔄</span>Loop</button>
-                <button class="vib-btn stop" onclick="stopVibrate()"><span>🛑</span>STOP</button>
+                <div style="background:#1a1a1a; padding:10px; border-radius:8px; text-align:center;">
+                    <div style="font-size:0.7rem; color:#888;">TIME LEFT</div>
+                    <div id="time-left" style="font-weight:bold;">-</div>
+                </div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // TABS
+        // --- TABS ---
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.currentTarget.classList.add('active');
+            if(id === 'touch') resizeCanvas();
         }
 
-        // MOTION
-        const bubble = document.getElementById('bubble');
-        const valX = document.getElementById('val-x');
-        const valY = document.getElementById('val-y');
-        const valZ = document.getElementById('val-z');
+        // --- 1. ACCELEROMETER & HARDWARE DETECTION ---
+        const gForceEl = document.getElementById('total-g');
+        const statAccel = document.getElementById('stat-accel');
+        const statGyro = document.getElementById('stat-gyro');
+        const statInt = document.getElementById('stat-int');
 
         function handleMotion(e) {
+            // Hardware Detection Logic
+            if(e.accelerationIncludingGravity.x !== null) {
+                statAccel.innerText = "DETECTED ✅";
+                statAccel.className = "stat-ok";
+            }
+            
+            // Check Rotation Rate (True Gyro Check)
+            if(e.rotationRate && e.rotationRate.alpha !== null) {
+                statGyro.innerText = "HARDWARE GYRO ✅";
+                statGyro.className = "stat-ok";
+            } else {
+                statGyro.innerText = "SOFTWARE / NONE ⚠️";
+                statGyro.className = "stat-fail";
+            }
+            
+            statInt.innerText = e.interval.toFixed(1) + " ms";
+
+            // Process Data
             let x = e.accelerationIncludingGravity.x || 0;
             let y = e.accelerationIncludingGravity.y || 0;
             let z = e.accelerationIncludingGravity.z || 0;
 
-            valX.innerText = x.toFixed(1); valY.innerText = y.toFixed(1); valZ.innerText = z.toFixed(1);
+            // Total G (Pythagoras) / 9.8 (gravity)
+            let totalG = Math.sqrt(x*x + y*y + z*z) / 9.8;
+            gForceEl.innerText = totalG.toFixed(2) + " G";
 
-            // Bubble math: Scale movement relative to bubble container size
-            // Using clamp to ensure bubble stays inside
-            let moveX = x * 3; 
-            let moveY = y * -3; 
-            moveX = Math.max(-40, Math.min(40, moveX)); // Percentage limit
-            moveY = Math.max(-40, Math.min(40, moveY));
+            // Visual Bars (Map -10 to +10 range to 0-100%)
+            updateBar('val-x', 'bar-x', x);
+            updateBar('val-y', 'bar-y', y);
+            updateBar('val-z', 'bar-z', z);
+        }
+
+        function updateBar(txtId, barId, val) {
+            document.getElementById(txtId).innerText = val.toFixed(1);
+            // Range +/- 10m/s. Center is 50%.
+            // Limit to +/- 20 for CSS safety
+            let pct = (val / 20) * 100; 
+            let width = Math.abs(pct);
+            let left = 50;
+            if (val < 0) left = 50 - width;
             
-            bubble.style.transform = `translate(calc(-50% + ${moveX}%), calc(-50% + ${moveY}%))`;
+            const bar = document.getElementById(barId);
+            bar.style.width = width + "%";
+            bar.style.left = left + "%";
         }
 
         if (window.DeviceMotionEvent) window.addEventListener('devicemotion', handleMotion);
-        
-        function requestIOSPerm() {
+
+        // --- 2. GYROSCOPE CUBE ---
+        function handleOrientation(e) {
+            const a = e.alpha || 0;
+            const b = e.beta || 0;
+            const g = e.gamma || 0;
+
+            document.getElementById('gyro-a').innerText = Math.round(a) + "°";
+            document.getElementById('gyro-b').innerText = Math.round(b) + "°";
+            document.getElementById('gyro-g').innerText = Math.round(g) + "°";
+
+            // Rotate Cube
+            // CSS Rotation order is tricky.
+            const cube = document.getElementById('cube');
+            cube.style.transform = `translateZ(-75px) rotateX(${-b}deg) rotateY(${g}deg) rotateZ(${-a}deg)`;
+        }
+
+        if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', handleOrientation);
+
+        // IOS PERMISSION
+        function requestIOS() {
             if (typeof DeviceMotionEvent.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission().then(r => {
-                    if (r == 'granted') window.addEventListener('devicemotion', handleMotion);
+                    if (r == 'granted') {
+                        window.addEventListener('devicemotion', handleMotion);
+                        window.addEventListener('deviceorientation', handleOrientation);
+                        document.getElementById('ios-perm').style.display = 'none';
+                    }
                 });
             }
         }
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            document.getElementById('ios-perm-btn').style.display = 'block';
+            document.getElementById('ios-perm').style.display = 'block';
         }
 
-        // BATTERY
-        const battLevel = document.getElementById('batt-level');
-        const battState = document.getElementById('batt-state');
-        const battRing = document.getElementById('batt-ring');
-        
-        function updateBattery(b) {
-            const pct = Math.round(b.level * 100);
-            battLevel.innerText = pct + "%";
-            let color = b.charging ? "#00ff88" : (pct > 20 ? "#00e5ff" : "#ff4081");
-            battState.innerText = b.charging ? "⚡ CHARGING" : "DISCHARGING";
-            battState.style.color = color;
-            battRing.style.background = `conic-gradient(${color} 0% ${pct}%, #222 ${pct}% 100%)`;
-            battRing.style.boxShadow = `0 0 20px ${color}40`;
-            
-            document.getElementById('time-full').innerText = b.chargingTime === Infinity ? "-" : (b.chargingTime/60).toFixed(0)+"m";
-            document.getElementById('time-left').innerText = b.dischargingTime === Infinity ? "-" : (b.dischargingTime/60).toFixed(0)+"m";
-        }
+        // --- 3. TOUCH ---
+        const canvas = document.getElementById('touch-canvas');
+        const ctx = canvas.getContext('2d');
+        const touchNum = document.getElementById('touch-num');
+        const colors = ['#00e5ff', '#ff4081', '#00ff88', '#ffff00', '#ff9100'];
 
-        if ('getBattery' in navigator) navigator.getBattery().then(b => {
-            updateBattery(b);
-            b.addEventListener('levelchange', () => updateBattery(b));
-            b.addEventListener('chargingchange', () => updateBattery(b));
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawTouches(e) {
+            e.preventDefault();
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            const touches = e.touches;
+            touchNum.innerText = touches.length;
+
+            for(let i=0; i<touches.length; i++) {
+                const t = touches[i];
+                ctx.beginPath();
+                ctx.arc(t.clientX, t.clientY, 50, 0, 2 * Math.PI);
+                ctx.strokeStyle = colors[i % colors.length];
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                
+                ctx.fillStyle = colors[i % colors.length] + "40";
+                ctx.fill();
+                
+                ctx.fillStyle = "#fff";
+                ctx.font = "14px monospace";
+                ctx.fillText(`X:${parseInt(t.clientX)} Y:${parseInt(t.clientY)}`, t.clientX-40, t.clientY-60);
+            }
+        }
+        canvas.addEventListener('touchstart', drawTouches);
+        canvas.addEventListener('touchmove', drawTouches);
+        canvas.addEventListener('touchend', (e) => {
+            drawTouches(e);
+            if(e.touches.length === 0) ctx.clearRect(0,0,canvas.width,canvas.height);
         });
 
-        // VIBRATION
-        let loopId = null;
-        const vibIcon = document.getElementById('vib-icon');
-        const vibStat = document.getElementById('vib-status');
+        // --- 4. BATTERY ---
+        function updateBattery(b) {
+            const level = b.level * 100;
+            document.getElementById('batt-pct').innerText = Math.round(level) + "%";
+            document.getElementById('batt-bar').style.height = level + "%";
+            
+            const vis = document.getElementById('batt-vis');
+            const stat = document.getElementById('batt-stat');
 
-        function doVibrate(pat) {
-            stopVibrate();
-            if(!navigator.vibrate) return;
-            navigator.vibrate(pat);
-            vibIcon.style.transform = "scale(1.2)";
-            vibStat.innerText = "Vibrating...";
-            vibStat.style.color = "#00e5ff";
-            let dur = typeof pat === 'number' ? pat : pat.reduce((a,b)=>a+b,0);
-            setTimeout(() => { if(!loopId) stopVibrate(); }, dur);
+            if(b.charging) {
+                vis.classList.add('batt-charging');
+                stat.innerText = "⚡ CHARGING";
+                stat.style.color = "#00ff88";
+            } else {
+                vis.classList.remove('batt-charging');
+                stat.innerText = "DISCHARGING";
+                stat.style.color = "#ff4081";
+            }
+
+            document.getElementById('time-full').innerText = b.chargingTime === Infinity ? "-" : (b.chargingTime/60).toFixed(0)+" m";
+            document.getElementById('time-left').innerText = b.dischargingTime === Infinity ? "-" : (b.dischargingTime/3600).toFixed(1)+" h";
         }
-        function toggleLoop() {
-            if(loopId) { stopVibrate(); return; }
-            document.getElementById('inf-btn').classList.add('active');
-            vibStat.innerText = "Loop Active"; vibStat.style.color = "#ff4081";
-            navigator.vibrate(200);
-            loopId = setInterval(() => navigator.vibrate(200), 250);
-        }
-        function stopVibrate() {
-            if(navigator.vibrate) navigator.vibrate(0);
-            if(loopId) { clearInterval(loopId); loopId = null; }
-            document.getElementById('inf-btn').classList.remove('active');
-            vibIcon.style.transform = "scale(1)";
-            vibStat.innerText = "Idle"; vibStat.style.color = "#888";
+
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(b => {
+                updateBattery(b);
+                b.addEventListener('levelchange', () => updateBattery(b));
+                b.addEventListener('chargingchange', () => updateBattery(b));
+            });
         }
     </script>
 </body>
