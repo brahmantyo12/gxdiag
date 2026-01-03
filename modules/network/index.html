@@ -23,7 +23,7 @@
             align-items: center; gap: 25px; padding: 20px; overflow-y: auto;
         }
 
-        /* --- 1. PING RADAR UI (RESTORED) --- */
+        /* --- 1. PING RADAR UI --- */
         .ping-wrapper { position: relative; width: 220px; height: 220px; margin-bottom: 10px; }
         .ping-circle {
             width: 100%; height: 100%; border-radius: 50%;
@@ -36,7 +36,6 @@
         .ping-circle.live { animation: spinBorder 2s linear infinite; }
         @keyframes spinBorder { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
-        /* Agar angka tidak ikut berputar */
         .ping-inner-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; z-index: 3;}
 
         .ping-val { font-size: 4.5rem; font-weight: 800; color: #fff; line-height: 0.9; }
@@ -70,9 +69,12 @@
         .speed-box {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;
         }
-        .sb-item { background: #1a1a1a; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #333; }
+        .sb-item { background: #1a1a1a; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #333; display: flex; flex-direction: column; justify-content: center; }
         .sb-val { font-size: 1.4rem; font-weight: bold; color: #fff; }
-        .sb-lbl { font-size: 0.7rem; color: #666; letter-spacing: 1px; }
+        .sb-lbl { font-size: 0.7rem; color: #666; letter-spacing: 1px; margin-top: 2px;}
+        
+        /* NEW: Byte Converter Style */
+        .sb-sub-val { font-size: 0.8rem; color: #00e5ff; font-weight: bold; margin-top: 4px; font-family: monospace; }
 
         /* BUTTONS */
         .btn-group { display: flex; gap: 10px; width: 100%; max-width: 500px; }
@@ -86,7 +88,6 @@
         /* --- INTELLIGENCE SECTION --- */
         .intel-section { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
 
-        /* ISP INFO */
         .isp-card {
             background: #151515; padding: 15px; border-radius: 12px; border: 1px solid #333;
             display: flex; align-items: center; justify-content: space-between;
@@ -96,14 +97,12 @@
         .isp-name { font-size: 1.1rem; font-weight: bold; color: #fff; }
         .isp-asn { font-size: 0.8rem; color: #666; }
 
-        /* VPN ALERT */
         .vpn-alert {
             padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem; display: none;
         }
         .vpn-safe { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid #00ff88; }
         .vpn-warn { background: rgba(255, 64, 129, 0.1); color: #ff4081; border: 1px solid #ff4081; }
 
-        /* GEO GRID */
         .geo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .geo-card {
             background: #151515; border: 1px solid #333; border-radius: 12px; padding: 15px;
@@ -144,7 +143,8 @@
                 </div>
                 <div class="sb-item">
                     <div class="sb-val" id="dl-speed">-</div>
-                    <div class="sb-lbl">EST. SPEED</div>
+                    <div class="sb-lbl">SPEED (Megabit/s)</div>
+                    <div class="sb-sub-val" id="dl-speed-byte"></div>
                 </div>
             </div>
         </div>
@@ -171,7 +171,7 @@
 
             <div class="geo-grid">
                 <div class="geo-card">
-                    <div class="geo-title">🌍 NETWORK LOCATION (IP)</div>
+                    <div class="geo-title">🌍 LOGICAL LOCATION (IP)</div>
                     <div class="geo-row"><span>City</span> <span class="geo-val" id="ip-city">-</span></div>
                     <div class="geo-row"><span>Country</span> <span class="geo-val" id="ip-country">-</span></div>
                     <div class="geo-row"><span>Coords</span> <span class="geo-val" id="ip-coords" style="font-size:0.7rem">-</span></div>
@@ -200,7 +200,7 @@
             bars.push(b);
         }
 
-        // --- PING LOGIC (RADAR UI) ---
+        // --- PING LOGIC ---
         let isPing = false;
         let lastPing = 0;
         
@@ -208,7 +208,6 @@
             if(!isPing) return;
             const start = performance.now();
             try {
-                // Gunakan Cloudflare Trace (No Cache)
                 await fetch('https://1.1.1.1/cdn-cgi/trace', { mode: 'no-cors', cache: 'no-store' });
                 const ping = Math.round(performance.now() - start);
                 updatePingUI(ping);
@@ -225,29 +224,25 @@
             
             txt.innerText = ping;
             
-            // Jitter Calc
             if(lastPing > 0) {
                 const jitter = Math.abs(ping - lastPing);
                 document.getElementById('jitter-val').innerText = `±${jitter} ms`;
             }
             lastPing = ping;
 
-            // Color Coding
-            let color = "#00ff88"; // Good
-            if(ping > 100) color = "#ffb300"; // Med
-            if(ping > 200) color = "#ff4081"; // Bad
+            let color = "#00ff88"; 
+            if(ping > 100) color = "#ffb300"; 
+            if(ping > 200) color = "#ff4081"; 
 
             txt.style.color = color;
             circle.style.borderTopColor = color;
             pulse.style.borderColor = color;
 
-            // Graph Shift
             for(let i=0; i<29; i++) {
                 bars[i].style.height = bars[i+1].style.height;
                 bars[i].className = bars[i+1].className;
             }
             const last = bars[29];
-            // Height logic: max height 100% at 300ms
             const h = Math.min(100, Math.max(10, (ping / 300) * 100)); 
             last.style.height = h + "%";
             last.className = 'bar ' + (ping < 100 ? 'low' : (ping < 200 ? 'med' : 'high'));
@@ -262,8 +257,8 @@
             if(isPing) {
                 btn.innerText = "⏹ Stop Ping";
                 btn.classList.add('active');
-                circle.classList.add('live'); // Spin border
-                pulse.classList.add('pulsing'); // Pulse effect
+                circle.classList.add('live'); 
+                pulse.classList.add('pulsing');
                 doPing();
             } else {
                 btn.innerText = "▶ Start Live Ping";
@@ -273,24 +268,22 @@
             }
         }
 
-        // --- SPEED TEST (CORS FIXED) ---
-        // Menggunakan Gambar dari Wikimedia Commons (Server Cepat & CORS Friendly)
+        // --- SPEED TEST (UPDATED with BITS & BYTES) ---
         async function runSpeedTest() {
             const el = document.getElementById('dl-speed');
+            const elByte = document.getElementById('dl-speed-byte');
             const btn = document.getElementById('btn-speed');
             
             btn.disabled = true;
             btn.innerText = "⏳ Testing...";
-            el.innerText = "Testing...";
+            el.innerText = "...";
+            elByte.innerText = "";
             
             const start = performance.now();
-            
-            // Link ke gambar HD di Wikimedia Commons (~2.5 MB)
-            // Ini jauh lebih stabil daripada Unsplash dan mendukung CORS
+            // File statis 2.5MB dari Wikimedia (CORS Aman)
             const testFileUrl = 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg'; 
             
             try {
-                // cache: no-store agar browser mendownload ulang, bukan ambil dari cache
                 const res = await fetch(testFileUrl + '?t=' + Math.random(), { cache: 'no-store' });
                 if(!res.ok) throw new Error("Network Error");
                 
@@ -298,17 +291,24 @@
                 const end = performance.now();
                 
                 const sizeInBytes = blob.size; 
-                const sizeInBits = sizeInBytes * 8;
                 const durationInSeconds = (end - start) / 1000;
                 
-                // Hitung Mbps (Megabits per second)
+                // 1. Hitung Bit per second (Mbps)
+                const sizeInBits = sizeInBytes * 8;
                 const speedBps = sizeInBits / durationInSeconds;
                 const speedMbps = (speedBps / (1024 * 1024)).toFixed(2); 
+
+                // 2. Hitung Byte per second (MB/s) - untuk real download speed
+                const speedByteSec = sizeInBytes / durationInSeconds;
+                const speedMBps = (speedByteSec / (1024 * 1024)).toFixed(2);
                 
                 el.innerText = speedMbps + " Mbps";
+                elByte.innerText = `~ ${speedMBps} MB/s`; // Menampilkan hasil konversi
+
             } catch(e) {
                 console.error(e);
-                el.innerText = "Blocked/Error";
+                el.innerText = "Error";
+                elByte.innerText = "Check Connection";
             } finally {
                 btn.disabled = false;
                 btn.innerText = "⚡ Run Speed Test";
@@ -334,7 +334,6 @@
                 ipLat = data.latitude;
                 ipLon = data.longitude;
                 
-                // Coba analisis jika data GPS sudah ada sebelumnya
                 const gpsCoords = document.getElementById('gps-coords').innerText;
                 if(gpsCoords.includes(",")) {
                     const [gLat, gLon] = gpsCoords.split(',').map(Number);
@@ -359,7 +358,6 @@
                     document.getElementById('gps-acc').innerText = `±${pos.coords.accuracy.toFixed(0)}m`;
                     document.getElementById('gps-spd').innerText = pos.coords.speed ? `${(pos.coords.speed*3.6).toFixed(1)} km/h` : "0";
 
-                    // ANALISIS VPN
                     analyzeVPN(lat, lon);
 
                 }, err => {
@@ -369,10 +367,9 @@
         }
 
         function analyzeVPN(gpsLat, gpsLon) {
-            if(ipLat === 0) return; // Belum ada data IP
+            if(ipLat === 0) return; 
 
-            // Haversine Formula
-            const R = 6371; // km
+            const R = 6371; 
             const dLat = (gpsLat - ipLat) * Math.PI / 180;
             const dLon = (gpsLon - ipLon) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -384,7 +381,6 @@
             const alertBox = document.getElementById('vpn-status');
             alertBox.style.display = 'block';
 
-            // Ambang batas 100km
             if(dist > 100) {
                 alertBox.className = 'vpn-alert vpn-warn';
                 alertBox.innerHTML = `⚠️ DISTANCE ANOMALY: ~${dist.toFixed(0)}km Difference<br>Potential VPN / Proxy Detected`;
@@ -394,9 +390,8 @@
             }
         }
 
-        // Auto Run
         getIPInfo();
-        togglePing(); // Auto start ping
+        togglePing(); 
 
     </script>
 </body>
