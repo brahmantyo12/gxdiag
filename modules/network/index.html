@@ -20,49 +20,75 @@
         /* LAYOUT UTAMA */
         .net-container {
             flex-grow: 1; display: flex; flex-direction: column; 
-            align-items: center; gap: 20px; padding: 20px; overflow-y: auto;
+            align-items: center; gap: 25px; padding: 20px; overflow-y: auto;
         }
 
-        /* 1. PING SECTION */
-        .ping-section {
-            width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center;
-            background: #111; border: 1px solid #333; padding: 20px; border-radius: 15px;
+        /* --- 1. PING RADAR UI (RESTORED) --- */
+        .ping-wrapper { position: relative; width: 220px; height: 220px; margin-bottom: 20px; }
+        .ping-circle {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: radial-gradient(circle, #1a1a1a 40%, #000 100%);
+            border: 4px solid #333; border-top-color: #00e5ff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); transition: border-color 0.2s;
+            position: relative; z-index: 2;
         }
-        .ping-val-large { font-size: 3.5rem; font-weight: 800; color: #fff; line-height: 1; }
-        .ping-label { color: #888; font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 15px; }
+        .ping-circle.live { animation: spinBorder 2s linear infinite; }
+        @keyframes spinBorder { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
+        /* Agar angka tidak ikut berputar */
+        .ping-inner-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; }
+
+        .ping-val { font-size: 4.5rem; font-weight: 800; color: #fff; line-height: 0.9; }
+        .ping-label { color: #888; text-transform: uppercase; font-size: 0.8rem; margin-top: 10px; letter-spacing: 1px; }
+
+        /* PULSE EFFECT */
+        .pulse-ring {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%; border: 2px solid #00e5ff; opacity: 0; z-index: 1;
+        }
+        .pulsing { animation: ripple 1.5s infinite; }
+        @keyframes ripple { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
+
+        /* GRAPH & METRICS BLOCK */
+        .metrics-block {
+            width: 100%; max-width: 500px; background: #111; border: 1px solid #333; 
+            padding: 20px; border-radius: 15px; display: flex; flex-direction: column; gap: 15px;
+        }
+
+        /* PING GRAPH */
         .ping-graph {
             display: flex; align-items: flex-end; gap: 2px; height: 50px; width: 100%; 
-            background: rgba(0,0,0,0.3); border-bottom: 1px solid #333; margin-bottom: 15px;
+            background: rgba(0,0,0,0.3); border-bottom: 1px solid #333;
         }
         .bar { flex: 1; background: #333; transition: height 0.2s; opacity: 0.7; }
         .bar.high { background: #ff4081; }
         .bar.med { background: #ffb300; }
         .bar.low { background: #00ff88; }
 
-        /* 2. SPEED TEST (Mini) */
+        /* SPEED & JITTER BOX */
         .speed-box {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 10px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;
         }
-        .sb-item { background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; }
-        .sb-val { font-size: 1.2rem; font-weight: bold; color: #fff; }
-        .sb-lbl { font-size: 0.7rem; color: #666; }
+        .sb-item { background: #1a1a1a; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #333; }
+        .sb-val { font-size: 1.4rem; font-weight: bold; color: #fff; }
+        .sb-lbl { font-size: 0.7rem; color: #666; letter-spacing: 1px; }
 
-        /* 3. GEO INTELLIGENCE (IP vs GPS) */
-        .geo-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 600px;
+        /* BUTTONS */
+        .btn-group { display: flex; gap: 10px; width: 100%; max-width: 500px; }
+        .action-btn {
+            flex: 1; padding: 12px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold;
+            background: #222; color: #ccc; border: 1px solid #444; transition: 0.3s; font-size: 0.9rem;
         }
-        .geo-card {
-            background: #151515; border: 1px solid #333; border-radius: 12px; padding: 15px;
-            display: flex; flex-direction: column; gap: 5px;
-        }
-        .geo-title { font-size: 0.8rem; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 5px; }
-        .geo-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #bbb; }
-        .geo-val { color: #fff; font-weight: bold; text-align: right; }
-        
+        .action-btn:hover { background: #333; color: #fff; }
+        .action-btn.active { background: #00e5ff; color: #000; border-color: #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.3); }
+
+        /* --- INTELLIGENCE SECTION --- */
+        .intel-section { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+
         /* ISP INFO */
         .isp-card {
-            width: 100%; max-width: 600px; background: #111; padding: 15px; border-radius: 12px; border: 1px solid #333;
+            background: #151515; padding: 15px; border-radius: 12px; border: 1px solid #333;
             display: flex; align-items: center; justify-content: space-between;
         }
         .isp-logo { font-size: 2rem; margin-right: 15px; }
@@ -72,20 +98,20 @@
 
         /* VPN ALERT */
         .vpn-alert {
-            width: 100%; max-width: 600px; padding: 10px; border-radius: 8px; 
-            text-align: center; font-weight: bold; font-size: 0.9rem; display: none;
+            padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem; display: none;
         }
         .vpn-safe { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid #00ff88; }
         .vpn-warn { background: rgba(255, 64, 129, 0.1); color: #ff4081; border: 1px solid #ff4081; }
 
-        /* BUTTONS */
-        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        .action-btn {
-            padding: 10px 20px; border-radius: 20px; border: none; cursor: pointer; font-weight: bold;
-            background: #222; color: #ccc; border: 1px solid #444; transition: 0.3s;
+        /* GEO GRID */
+        .geo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .geo-card {
+            background: #151515; border: 1px solid #333; border-radius: 12px; padding: 15px;
+            display: flex; flex-direction: column; gap: 5px;
         }
-        .action-btn:hover { background: #333; color: #fff; }
-        .action-btn.active { background: #00e5ff; color: #000; border-color: #00e5ff; }
+        .geo-title { font-size: 0.8rem; color: #00e5ff; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 5px; }
+        .geo-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #bbb; }
+        .geo-val { color: #fff; font-weight: bold; text-align: right; }
 
         @media (max-width: 600px) {
             .geo-grid { grid-template-columns: 1fr; }
@@ -95,17 +121,23 @@
 <body>
     <div class="mod-header">
         <a href="../../index.html" class="back-btn">← DASHBOARD</a>
-        <div style="font-size:0.8rem; color:#666;">NETWORK INTEL</div>
+        <div style="font-size:0.8rem; color:#666;">NETWORK INTELLIGENCE</div>
     </div>
 
     <div class="net-container">
         
-        <div class="ping-section">
-            <div class="ping-val-large" id="ping-text">--</div>
-            <div class="ping-label">MS LATENCY (CLOUDFLARE)</div>
-            
+        <div class="ping-wrapper">
+            <div class="pulse-ring" id="pulse"></div>
+            <div class="ping-circle" id="main-circle">
+                </div>
+            <div class="ping-inner-content">
+                <div class="ping-val" id="ping-text">--</div>
+                <div class="ping-label">MS LATENCY</div>
+            </div>
+        </div>
+
+        <div class="metrics-block">
             <div class="ping-graph" id="graph"></div>
-            
             <div class="speed-box">
                 <div class="sb-item">
                     <div class="sb-val" id="jitter-val">0 ms</div>
@@ -113,46 +145,46 @@
                 </div>
                 <div class="sb-item">
                     <div class="sb-val" id="dl-speed">-</div>
-                    <div class="sb-lbl">EST. SPEED (MB/s)</div>
+                    <div class="sb-lbl">DOWNLOAD SPEED</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="action-btn" id="btn-ping" onclick="togglePing()">▶ Start Live Ping</button>
+            <button class="action-btn" id="btn-speed" onclick="runSpeedTest()">⚡ Run Speed Test</button>
+        </div>
+
+        <div class="intel-section">
+            <div class="isp-card">
+                <div class="isp-logo">🌐</div>
+                <div class="isp-info">
+                    <div class="isp-name" id="isp-name">Detecting ISP...</div>
+                    <div class="isp-asn" id="isp-asn">ASN: -</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.8rem; color:#888;">IPv4 Address</div>
+                    <div style="color:#00e5ff; font-family:monospace;" id="ip-addr">...</div>
                 </div>
             </div>
 
-            <div class="btn-group">
-                <button class="action-btn" id="btn-ping" onclick="togglePing()">▶ Start Ping</button>
-                <button class="action-btn" onclick="runSpeedTest()">⚡ Test Speed</button>
-            </div>
-        </div>
+            <div class="vpn-alert" id="vpn-status">Thinking...</div>
 
-        <div class="isp-card">
-            <div class="isp-logo">🌐</div>
-            <div class="isp-info">
-                <div class="isp-name" id="isp-name">Detecting ISP...</div>
-                <div class="isp-asn" id="isp-asn">ASN: -</div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:0.8rem; color:#888;">IPv4</div>
-                <div style="color:#00e5ff; font-family:monospace;" id="ip-addr">...</div>
-            </div>
-        </div>
+            <div class="geo-grid">
+                <div class="geo-card">
+                    <div class="geo-title">🌍 LOGICAL LOCATION (IP)</div>
+                    <div class="geo-row"><span>City</span> <span class="geo-val" id="ip-city">-</span></div>
+                    <div class="geo-row"><span>Country</span> <span class="geo-val" id="ip-country">-</span></div>
+                    <div class="geo-row"><span>Coords</span> <span class="geo-val" id="ip-coords" style="font-size:0.7rem">-</span></div>
+                </div>
 
-        <div class="vpn-alert" id="vpn-status">Thinking...</div>
-
-        <div class="geo-grid">
-            <div class="geo-card">
-                <div class="geo-title">🌍 NETWORK LOCATION (IP)</div>
-                <div class="geo-row"><span>City</span> <span class="geo-val" id="ip-city">-</span></div>
-                <div class="geo-row"><span>Region</span> <span class="geo-val" id="ip-region">-</span></div>
-                <div class="geo-row"><span>Country</span> <span class="geo-val" id="ip-country">-</span></div>
-                <div class="geo-row"><span>Coords</span> <span class="geo-val" id="ip-coords" style="font-size:0.7rem">-</span></div>
-            </div>
-
-            <div class="geo-card">
-                <div class="geo-title">🛰️ PHYSICAL LOCATION (GPS)</div>
-                <div class="geo-row"><span>Accuracy</span> <span class="geo-val" id="gps-acc">-</span></div>
-                <div class="geo-row"><span>Altitude</span> <span class="geo-val" id="gps-alt">-</span></div>
-                <div class="geo-row"><span>Speed</span> <span class="geo-val" id="gps-spd">-</span></div>
-                <div class="geo-row"><span>Coords</span> <span class="geo-val" id="gps-coords" style="font-size:0.7rem; color:#ff4081;">Waiting Permission...</span></div>
-                <button class="action-btn" style="width:100%; margin-top:10px; font-size:0.8rem;" onclick="getGPS()">📍 Get GPS</button>
+                <div class="geo-card">
+                    <div class="geo-title">🛰️ PHYSICAL LOCATION (GPS)</div>
+                    <div class="geo-row"><span>Accuracy</span> <span class="geo-val" id="gps-acc">-</span></div>
+                    <div class="geo-row"><span>Speed</span> <span class="geo-val" id="gps-spd">-</span></div>
+                    <div class="geo-row"><span>Coords</span> <span class="geo-val" id="gps-coords" style="font-size:0.7rem; color:#ff4081;">Waiting Permission...</span></div>
+                    <button class="action-btn" style="width:100%; margin-top:10px; font-size:0.8rem; padding:8px;" onclick="getGPS()">📍 Get GPS Data</button>
+                </div>
             </div>
         </div>
 
@@ -169,7 +201,7 @@
             bars.push(b);
         }
 
-        // --- PING LOGIC ---
+        // --- PING LOGIC (RADAR UI) ---
         let isPing = false;
         let lastPing = 0;
         
@@ -177,6 +209,7 @@
             if(!isPing) return;
             const start = performance.now();
             try {
+                // Gunakan Cloudflare Trace sebagai target ping yang stabil
                 await fetch('https://1.1.1.1/cdn-cgi/trace', { mode: 'no-cors', cache: 'no-store' });
                 const ping = Math.round(performance.now() - start);
                 updatePingUI(ping);
@@ -187,20 +220,27 @@
         }
 
         function updatePingUI(ping) {
-            document.getElementById('ping-text').innerText = ping;
+            const txt = document.getElementById('ping-text');
+            const circle = document.getElementById('main-circle');
+            const pulse = document.getElementById('pulse');
             
-            // Jitter
+            txt.innerText = ping;
+            
+            // Jitter Calc
             if(lastPing > 0) {
                 const jitter = Math.abs(ping - lastPing);
                 document.getElementById('jitter-val').innerText = `±${jitter} ms`;
             }
             lastPing = ping;
 
-            // Color
-            const txt = document.getElementById('ping-text');
-            if(ping < 50) txt.style.color = "#00ff88";
-            else if(ping < 150) txt.style.color = "#ffb300";
-            else txt.style.color = "#ff4081";
+            // Color Coding
+            let color = "#00ff88"; // Good
+            if(ping > 100) color = "#ffb300"; // Med
+            if(ping > 200) color = "#ff4081"; // Bad
+
+            txt.style.color = color;
+            circle.style.borderTopColor = color;
+            pulse.style.borderColor = color;
 
             // Graph Shift
             for(let i=0; i<29; i++) {
@@ -208,43 +248,65 @@
                 bars[i].className = bars[i+1].className;
             }
             const last = bars[29];
-            const h = Math.min(100, Math.max(10, (ping/200)*100));
+            // Height logic: max height 100% at 300ms
+            const h = Math.min(100, Math.max(10, (ping / 300) * 100)); 
             last.style.height = h + "%";
-            last.className = 'bar ' + (ping < 50 ? 'low' : (ping < 150 ? 'med' : 'high'));
+            last.className = 'bar ' + (ping < 100 ? 'low' : (ping < 200 ? 'med' : 'high'));
         }
 
         function togglePing() {
             isPing = !isPing;
             const btn = document.getElementById('btn-ping');
+            const circle = document.getElementById('main-circle');
+            const pulse = document.getElementById('pulse');
+
             if(isPing) {
-                btn.innerText = "⏹ Stop";
+                btn.innerText = "⏹ Stop Ping";
                 btn.classList.add('active');
+                circle.classList.add('live'); // Spin border
+                pulse.classList.add('pulsing'); // Pulse effect
                 doPing();
             } else {
-                btn.innerText = "▶ Start Ping";
+                btn.innerText = "▶ Start Live Ping";
                 btn.classList.remove('active');
+                circle.classList.remove('live');
+                pulse.classList.remove('pulsing');
             }
         }
 
-        // --- SPEED TEST (Download 500KB Image) ---
+        // --- SPEED TEST (FIXED) ---
         async function runSpeedTest() {
             const el = document.getElementById('dl-speed');
+            const btn = document.getElementById('btn-speed');
+            
+            btn.disabled = true;
+            btn.innerText = "⏳ Testing...";
             el.innerText = "Testing...";
+            
             const start = performance.now();
-            // Fetch random image from Unsplash (approx 200-500KB)
+            // File statis 1MB dari server cepat (contoh menggunakan file dummy dari penyedia speedtest)
+            // Jika link ini mati, ganti dengan file 1MB lain yang reliable.
+            const testFileUrl = 'https://speed.hetzner.de/1MB.bin'; 
+            
             try {
-                const res = await fetch('https://source.unsplash.com/random/800x600?' + Math.random());
+                // Cache: no-store penting agar selalu download baru
+                const res = await fetch(testFileUrl + '?' + Math.random(), { cache: 'no-store' });
                 const blob = await res.blob();
                 const end = performance.now();
                 
-                const size = blob.size; // bytes
-                const duration = (end - start) / 1000; // seconds
-                const speedBps = size / duration;
-                const speedMBps = (speedBps / (1024*1024)).toFixed(2);
+                const sizeInBits = blob.size * 8; 
+                const durationInSeconds = (end - start) / 1000;
                 
-                el.innerText = speedMBps + " MB/s";
+                const speedBps = sizeInBits / durationInSeconds;
+                const speedMbps = (speedBps / (1024 * 1024)).toFixed(2); // Megabits per second
+                
+                el.innerText = speedMbps + " Mbps";
             } catch(e) {
-                el.innerText = "Error";
+                console.error(e);
+                el.innerText = "Error / Blocked";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "⚡ Run Speed Test";
             }
         }
 
@@ -253,7 +315,6 @@
 
         async function getIPInfo() {
             try {
-                // Using ipapi.co (Free Tier, No Key needed for low usage)
                 const res = await fetch('https://ipapi.co/json/');
                 const data = await res.json();
                 
@@ -262,16 +323,22 @@
                 document.getElementById('isp-asn').innerText = data.asn || "-";
                 
                 document.getElementById('ip-city').innerText = data.city;
-                document.getElementById('ip-region').innerText = data.region;
                 document.getElementById('ip-country').innerText = data.country_name;
-                document.getElementById('ip-coords').innerText = `${data.latitude}, ${data.longitude}`;
+                document.getElementById('ip-coords').innerText = `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`;
                 
                 ipLat = data.latitude;
                 ipLon = data.longitude;
+                
+                // Coba analisis jika data GPS sudah ada sebelumnya
+                const gpsCoords = document.getElementById('gps-coords').innerText;
+                if(gpsCoords !== "Waiting Permission..." && gpsCoords !== "Denied / Error") {
+                    const [gLat, gLon] = gpsCoords.split(',').map(Number);
+                    analyzeVPN(gLat, gLon);
+                }
 
             } catch(e) {
                 console.error("IP Fetch Error");
-                document.getElementById('isp-name').innerText = "Failed to fetch ISP";
+                document.getElementById('isp-name').innerText = "Failed to fetch ISP data";
             }
         }
 
@@ -283,9 +350,8 @@
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
                     
-                    document.getElementById('gps-coords').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-                    document.getElementById('gps-acc').innerText = `±${pos.coords.accuracy}m`;
-                    document.getElementById('gps-alt').innerText = pos.coords.altitude ? `${pos.coords.altitude}m` : "N/A";
+                    document.getElementById('gps-coords').innerText = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                    document.getElementById('gps-acc').innerText = `±${pos.coords.accuracy.toFixed(0)}m`;
                     document.getElementById('gps-spd').innerText = pos.coords.speed ? `${(pos.coords.speed*3.6).toFixed(1)} km/h` : "0";
 
                     // ANALISIS VPN
@@ -300,7 +366,7 @@
         function analyzeVPN(gpsLat, gpsLon) {
             if(ipLat === 0) return; // Belum ada data IP
 
-            // Hitung jarak (Haversine Formula Simple)
+            // Haversine Formula
             const R = 6371; // km
             const dLat = (gpsLat - ipLat) * Math.PI / 180;
             const dLon = (gpsLon - ipLon) * Math.PI / 180;
@@ -308,23 +374,22 @@
                       Math.cos(ipLat * Math.PI / 180) * Math.cos(gpsLat * Math.PI / 180) *
                       Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const dist = R * c; // Jarak dalam KM
+            const dist = R * c;
 
             const alertBox = document.getElementById('vpn-status');
             alertBox.style.display = 'block';
 
+            // Ambang batas 100km
             if(dist > 100) {
-                // Jarak IP dan GPS lebih dari 100km -> Kemungkinan VPN/Proxy
                 alertBox.className = 'vpn-alert vpn-warn';
-                alertBox.innerHTML = `⚠️ DISTANCE ANOMALY: ${dist.toFixed(0)}km Difference<br>Potential VPN / Proxy Detected`;
+                alertBox.innerHTML = `⚠️ DISTANCE ANOMALY: ~${dist.toFixed(0)}km Difference<br>Potential VPN / Proxy Detected`;
             } else {
-                // Jarak dekat -> Direct Connection
                 alertBox.className = 'vpn-alert vpn-safe';
                 alertBox.innerHTML = `✅ LOCATION MATCH: < ${dist.toFixed(0)}km Difference<br>Direct Connection Likely`;
             }
         }
 
-        // Auto Run IP Check
+        // Auto Run
         getIPInfo();
         togglePing(); // Auto start ping
 
