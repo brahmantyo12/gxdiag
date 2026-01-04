@@ -46,6 +46,7 @@
         select {
             background: #000; color: #00e5ff; border: 1px solid #333; padding: 5px 10px;
             border-radius: 5px; font-weight: bold; font-family: monospace; outline: none; cursor: pointer;
+            max-width: 150px; /* Agar tidak terlalu lebar di HP */
         }
 
         /* TEXTAREA */
@@ -78,12 +79,23 @@
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* RESPONSIVE */
+        /* --- RESPONSIVE & TOUCH OPTIMIZATION --- */
         @media (max-width: 768px) {
-            .trans-engine { grid-template-columns: 1fr; grid-template-rows: 1fr 50px 1fr; }
+            /* Ubah layout jadi Atas-Bawah */
+            .trans-engine { grid-template-columns: 1fr; grid-template-rows: 1fr 60px 1fr; }
+            
+            /* Kontrol tengah jadi horizontal */
             .mid-ctrl { flex-direction: row; }
-            .swap-btn { transform: rotate(90deg); }
+            
+            /* Tombol Swap diputar agar panahnya benar (Atas-Bawah) */
+            .swap-btn { transform: rotate(90deg); width: 50px; height: 50px; font-size: 1.5rem; }
             .swap-btn:hover { transform: rotate(270deg); }
+            
+            /* Perbesar tombol aksi agar mudah disentuh jempol */
+            .act-btn { padding: 10px 15px; font-size: 0.85rem; }
+            
+            /* Perbesar dropdown */
+            select { padding: 8px; font-size: 0.9rem; max-width: 120px; }
         }
     </style>
 </head>
@@ -91,7 +103,7 @@
 
     <div class="mod-header">
         <a href="../../index.html" class="back-btn">← DASHBOARD</a>
-        <div class="header-title">CIPHER OPS PRO</div>
+        <div class="header-title">CIPHER OPS</div>
     </div>
 
     <div class="container">
@@ -107,7 +119,7 @@
                         </optgroup>
                         <optgroup label="Codes & Ciphers">
                             <option value="morse">📡 MORSE CODE</option>
-                            <option value="binary">🤖 BINARY (0101)</option>
+                            <option value="binary">🤖 BINARY</option>
                             <option value="hex">🧬 HEXADECIMAL</option>
                             <option value="base64">📦 BASE64</option>
                             <option value="rot13">🔄 ROT13</option>
@@ -135,7 +147,7 @@
                         </optgroup>
                         <optgroup label="Codes & Ciphers">
                             <option value="morse" selected>📡 MORSE CODE</option>
-                            <option value="binary">🤖 BINARY (0101)</option>
+                            <option value="binary">🤖 BINARY</option>
                             <option value="hex">🧬 HEXADECIMAL</option>
                             <option value="base64">📦 BASE64</option>
                             <option value="rot13">🔄 ROT13</option>
@@ -263,8 +275,6 @@
             const tempVal = txtIn.value;
             const tempMode = selIn.value;
             
-            // Swap Values? No, usually we want to translate back.
-            // Let's swap the content of OUT to IN to continue conversation/decoding
             if(txtOut.value) txtIn.value = txtOut.value;
             
             selIn.value = selOut.value;
