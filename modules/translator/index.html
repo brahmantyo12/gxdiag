@@ -3,64 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Translator</title>
+    <title>GXDiag - Cipher Ops</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
         body { 
             background: #0b0b0b; display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
-            font-family: sans-serif;
+            font-family: 'Segoe UI', monospace; color: #eee;
         }
         
-        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        /* HEADER */
+        .mod-header { 
+            padding: 15px 20px; background: #111; border-bottom: 1px solid #333; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
         .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+        .header-title { font-size: 0.9rem; color: #00e5ff; letter-spacing: 2px; font-weight: bold; text-shadow: 0 0 10px rgba(0,229,255,0.3); }
 
         .container {
             flex-grow: 1; display: flex; flex-direction: column; align-items: center; 
-            padding: 20px; gap: 20px; max-width: 800px; margin: 0 auto; width: 100%;
+            padding: 20px; gap: 15px; max-width: 900px; margin: 0 auto; width: 100%; overflow-y: auto;
         }
 
-        /* TABS */
+        /* MODE TABS */
         .tabs {
             display: flex; background: #151515; border-radius: 12px; padding: 5px; 
-            border: 1px solid #333; width: 100%; max-width: 500px;
+            border: 1px solid #333; width: 100%; overflow-x: auto;
         }
         .tab-btn {
             flex: 1; background: transparent; border: none; color: #888; 
-            padding: 10px; cursor: pointer; font-weight: bold; border-radius: 8px; transition: 0.2s;
-            font-size: 0.85rem;
+            padding: 10px 15px; cursor: pointer; font-weight: bold; border-radius: 8px; transition: 0.2s;
+            font-size: 0.85rem; white-space: nowrap; font-family: monospace;
         }
         .tab-btn.active { background: #222; color: #00e5ff; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
 
         /* TRANSLATION BOXES */
         .trans-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; flex-grow: 1;
+            display: grid; grid-template-rows: 1fr 1fr; gap: 15px; width: 100%; flex-grow: 1;
         }
         .box-wrapper {
-            display: flex; flex-direction: column; gap: 10px; height: 100%;
+            display: flex; flex-direction: column; gap: 8px; height: 100%; background: #111;
+            padding: 15px; border-radius: 12px; border: 1px solid #333;
         }
         
-        .box-label { font-size: 0.8rem; color: #00e5ff; font-weight: bold; text-transform: uppercase; }
+        .box-header { display: flex; justify-content: space-between; align-items: center; }
+        .box-label { font-size: 0.8rem; color: #666; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         
         textarea {
-            flex-grow: 1; background: #1a1a1a; border: 1px solid #333; color: #fff;
-            padding: 15px; border-radius: 10px; resize: none; font-family: monospace;
-            font-size: 1rem; line-height: 1.5; outline: none;
+            flex-grow: 1; background: #050505; border: 1px solid #333; color: #00ff88;
+            padding: 15px; border-radius: 10px; resize: none; font-family: 'Consolas', monospace;
+            font-size: 1.1rem; line-height: 1.5; outline: none; transition: 0.2s;
         }
-        textarea:focus { border-color: #00e5ff; background: #222; }
+        textarea:focus { border-color: #00e5ff; background: #080808; }
+        /* Input text specific color */
+        #box-text { color: #fff; }
 
         /* ACTION BAR */
-        .actions {
-            display: flex; gap: 10px; justify-content: flex-end;
-        }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
         .act-btn {
-            background: #222; border: 1px solid #444; color: #fff; padding: 8px 15px;
-            border-radius: 5px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;
+            background: #222; border: 1px solid #444; color: #ccc; padding: 8px 12px;
+            border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;
+            transition: 0.2s; font-weight: bold; font-family: sans-serif;
         }
-        .act-btn:hover { border-color: #00e5ff; color: #00e5ff; }
-        .play-btn { background: #00e5ff; color: #000; border: none; font-weight: bold; }
+        .act-btn:hover { border-color: #00e5ff; color: #fff; }
+        .act-btn.primary { background: rgba(0, 229, 255, 0.1); border-color: #00e5ff; color: #00e5ff; }
+        .act-btn.active { background: #ff4081; border-color: #ff4081; color: #fff; animation: pulse 1s infinite; }
 
-        @media (max-width: 700px) {
-            .trans-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+        /* MORSE TAPPER */
+        #morse-pad {
+            width: 100%; height: 60px; background: #1a1a1a; border: 2px dashed #444; border-radius: 10px;
+            display: none; align-items: center; justify-content: center; cursor: pointer; user-select: none;
+            font-weight: bold; color: #555; letter-spacing: 1px; transition: 0.1s;
+        }
+        #morse-pad:active { background: #00e5ff; color: #000; border-style: solid; box-shadow: 0 0 15px #00e5ff; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        @media (min-width: 768px) {
+            .trans-grid { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -68,7 +87,7 @@
 
     <div class="mod-header">
         <a href="../../index.html" class="back-btn">← DASHBOARD</a>
-        <div style="font-size:0.8rem; color:#888;">CIPHER TOOLS</div>
+        <div class="header-title">CIPHER OPS</div>
     </div>
 
     <div class="container">
@@ -78,24 +97,41 @@
             <button class="tab-btn" onclick="setMode('binary')">BINARY</button>
             <button class="tab-btn" onclick="setMode('hex')">HEX</button>
             <button class="tab-btn" onclick="setMode('base64')">BASE64</button>
+            <button class="tab-btn" onclick="setMode('rot13')">ROT13</button>
         </div>
 
         <div class="trans-grid">
             <div class="box-wrapper">
-                <div class="box-label">Input (Text)</div>
-                <textarea id="input-text" placeholder="Type here to encode..." oninput="encode()"></textarea>
+                <div class="box-header">
+                    <div class="box-label">SOURCE (TEXT)</div>
+                    <div class="actions">
+                        <button class="act-btn" id="mic-btn" onclick="toggleSpeech()" title="Speak to Input">🎤 Speak</button>
+                        <button class="act-btn" onclick="clearAll()">✕</button>
+                    </div>
+                </div>
+                <textarea id="box-text" placeholder="Enter message to encrypt..." oninput="translateFrom('text')"></textarea>
                 <div class="actions">
-                    <button class="act-btn" onclick="clearAll()">Clear</button>
-                    <button class="act-btn" onclick="pasteToInput()">Paste</button>
+                    <button class="act-btn" onclick="copyToClip('box-text')">📋 Copy</button>
+                    <button class="act-btn" onclick="pasteTo('box-text')">📋 Paste</button>
                 </div>
             </div>
 
             <div class="box-wrapper">
-                <div class="box-label" id="out-label">Output (Morse)</div>
-                <textarea id="output-text" placeholder="Result..." oninput="decode()"></textarea>
+                <div class="box-header">
+                    <div class="box-label" id="code-label">TARGET (MORSE)</div>
+                    <div class="actions">
+                        <button class="act-btn primary" id="play-btn" onclick="playAudio()">▶ Transmit</button>
+                    </div>
+                </div>
+                <textarea id="box-code" placeholder="... --- ..." oninput="translateFrom('code')"></textarea>
+                
+                <div id="morse-pad" onmousedown="tapDown()" onmouseup="tapUp()" ontouchstart="tapDown()" ontouchend="tapUp()">
+                    TAP TO SIGNAL
+                </div>
+
                 <div class="actions">
-                    <button class="act-btn play-btn" id="btn-play" onclick="playMorse()" style="display:flex;">▶ Play</button>
-                    <button class="act-btn" onclick="copyOutput()">Copy</button>
+                    <button class="act-btn" onclick="copyToClip('box-code')">📋 Copy</button>
+                    <button class="act-btn" onclick="pasteTo('box-code')">📋 Paste</button>
                 </div>
             </div>
         </div>
@@ -103,13 +139,14 @@
     </div>
 
     <script>
-        let currentMode = 'morse';
-        const inp = document.getElementById('input-text');
-        const out = document.getElementById('output-text');
-        const lbl = document.getElementById('out-label');
-        const btnPlay = document.getElementById('btn-play');
+        let mode = 'morse';
+        const txtBox = document.getElementById('box-text');
+        const codeBox = document.getElementById('box-code');
+        const lbl = document.getElementById('code-label');
+        const playBtn = document.getElementById('play-btn');
+        const morsePad = document.getElementById('morse-pad');
 
-        // --- DICTIONARIES ---
+        // --- 1. DICTIONARIES & LOGIC ---
         const MORSE = {
             'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
             'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
@@ -117,118 +154,169 @@
             'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
             'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--',
             '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..',
-            '9': '----.', '0': '-----', ' ': '/', '.':'.-.-.-', ',':'--..--'
+            '9': '----.', '0': '-----', ' ': '/', '.':'.-.-.-', ',':'--..--', '?':'..--..', '!':'-.-.--'
         };
-        // Reverse Morse for decoding
-        const REVERSE_MORSE = Object.fromEntries(Object.entries(MORSE).map(([k, v]) => [v, k]));
+        const REV_MORSE = Object.fromEntries(Object.entries(MORSE).map(([k, v]) => [v, k]));
 
-        function setMode(mode) {
-            currentMode = mode;
+        function setMode(m) {
+            mode = m;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             
-            lbl.innerText = `OUTPUT (${mode.toUpperCase()})`;
+            lbl.innerText = "TARGET (" + m.toUpperCase() + ")";
             
-            // Show/Hide Play Button (Only for Morse)
-            btnPlay.style.display = mode === 'morse' ? 'flex' : 'none';
+            // Show/Hide specific controls
+            playBtn.style.display = (m === 'morse') ? 'flex' : 'none';
+            morsePad.style.display = (m === 'morse') ? 'flex' : 'none';
+            codeBox.style.height = (m === 'morse') ? 'calc(100% - 70px)' : '100%'; 
 
-            // Re-trigger translation
-            if(inp.value) encode();
+            if(txtBox.value) translateFrom('text'); 
         }
 
-        // --- ENCODER LOGIC (Text -> Code) ---
-        function encode() {
-            const val = inp.value;
+        function translateFrom(source) {
+            let val = (source === 'text') ? txtBox.value : codeBox.value;
             let res = "";
 
             try {
-                if (currentMode === 'morse') {
-                    res = val.toUpperCase().split('').map(c => MORSE[c] || c).join(' ');
-                } 
-                else if (currentMode === 'binary') {
-                    res = val.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+                // TEXT -> CODE
+                if(source === 'text') {
+                    if(mode === 'morse') {
+                        res = val.toUpperCase().split('').map(c => MORSE[c] || c).join(' ');
+                    } else if(mode === 'binary') {
+                        res = val.split('').map(c => c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');
+                    } else if(mode === 'hex') {
+                        res = val.split('').map(c => c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')).join(' ');
+                    } else if(mode === 'base64') {
+                        res = btoa(val);
+                    } else if(mode === 'rot13') {
+                        res = val.replace(/[a-zA-Z]/g, c => String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+13)?c:c-26));
+                    }
+                    codeBox.value = res;
                 }
-                else if (currentMode === 'hex') {
-                    res = val.split('').map(c => c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')).join(' ');
+                // CODE -> TEXT
+                else {
+                    if(mode === 'morse') {
+                        res = val.split(' ').map(c => REV_MORSE[c] || '').join('');
+                    } else if(mode === 'binary') {
+                        res = val.split(' ').map(b => String.fromCharCode(parseInt(b,2))).join('');
+                    } else if(mode === 'hex') {
+                        res = val.split(' ').map(h => String.fromCharCode(parseInt(h,16))).join('');
+                    } else if(mode === 'base64') {
+                        res = atob(val);
+                    } else if(mode === 'rot13') { 
+                        res = val.replace(/[a-zA-Z]/g, c => String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+13)?c:c-26));
+                    }
+                    txtBox.value = res;
                 }
-                else if (currentMode === 'base64') {
-                    res = btoa(val);
-                }
-                out.value = res;
-            } catch (e) {
-                out.value = "Error Encoding";
+            } catch(e) {
+                // Silent catch
             }
         }
 
-        // --- DECODER LOGIC (Code -> Text) ---
-        function decode() {
-            const val = out.value;
-            let res = "";
+        // --- 2. SPEECH RECOGNITION ---
+        let recognition;
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US'; 
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                txtBox.value += (txtBox.value ? " " : "") + transcript;
+                translateFrom('text');
+                toggleSpeech(false); 
+            };
+            recognition.onend = function() { toggleSpeech(false); };
+        }
 
-            try {
-                if (currentMode === 'morse') {
-                    res = val.split(' ').map(c => REVERSE_MORSE[c] || '').join('');
-                }
-                else if (currentMode === 'binary') {
-                    res = val.split(' ').map(b => String.fromCharCode(parseInt(b, 2))).join('');
-                }
-                else if (currentMode === 'hex') {
-                    res = val.split(' ').map(h => String.fromCharCode(parseInt(h, 16))).join('');
-                }
-                else if (currentMode === 'base64') {
-                    res = atob(val);
-                }
-                inp.value = res;
-            } catch (e) {
-                // Silent error or simple placeholder
+        let isListening = false;
+        function toggleSpeech(forceState) {
+            if(!recognition) { alert("Browser not supported for Speech"); return; }
+            const btn = document.getElementById('mic-btn');
+            
+            if(forceState === false || isListening) {
+                recognition.stop();
+                isListening = false;
+                btn.classList.remove('active');
+                btn.innerText = "🎤 Speak";
+            } else {
+                recognition.start();
+                isListening = true;
+                btn.classList.add('active');
+                btn.innerText = "Listening...";
             }
         }
 
-        // --- UTILS ---
-        function clearAll() { inp.value = ""; out.value = ""; }
-        function copyOutput() { navigator.clipboard.writeText(out.value); alert("Copied!"); }
-        async function pasteToInput() { inp.value = await navigator.clipboard.readText(); encode(); }
-
-        // --- AUDIO MORSE PLAYER ---
+        // --- 3. MORSE AUDIO PLAYER ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        async function playMorse() {
+        async function playAudio() {
+            if(mode !== 'morse') return;
             if(audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const code = out.value;
-            const UNIT = 100; // ms per dot
+
+            const code = codeBox.value;
+            const DOT = 80; 
 
             for (const char of code) {
-                if (char === ' ') {
-                    await new Promise(r => setTimeout(r, UNIT * 3));
-                    continue;
-                }
+                if (char === ' ') { await wait(DOT * 3); continue; }
+                if (char === '/') { await wait(DOT * 7); continue; }
 
-                // Play Tone
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'sine';
-                osc.frequency.value = 700;
-                
+                osc.frequency.value = 600; // Pitch
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
+
+                const dur = (char === '.') ? DOT : (char === '-') ? DOT * 3 : 0;
                 
-                osc.start();
-                
-                // Duration: Dot = 1 unit, Dash = 3 units
-                const duration = (char === '.') ? UNIT : (UNIT * 3);
-                
-                // Fade out to prevent popping
-                gain.gain.setValueAtTime(1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration/1000));
-                
-                await new Promise(r => setTimeout(r, duration));
-                osc.stop();
-                
-                // Pause between parts of same letter
-                await new Promise(r => setTimeout(r, UNIT));
+                if(dur > 0) {
+                    osc.start();
+                    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (dur/1000));
+                    await wait(dur);
+                    osc.stop();
+                    await wait(DOT); 
+                }
             }
         }
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        // --- 4. MORSE TAPPER ---
+        let tapStart = 0;
+        
+        function tapDown(e) {
+            if(e) e.preventDefault();
+            tapStart = Date.now();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            osc.frequency.value = 600;
+            osc.connect(audioCtx.destination);
+            osc.start();
+            window.currentOsc = osc; 
+        }
+
+        function tapUp(e) {
+            if(e) e.preventDefault();
+            if(window.currentOsc) { window.currentOsc.stop(); window.currentOsc = null; }
+            
+            const duration = Date.now() - tapStart;
+            const symbol = duration < 150 ? "." : "-";
+            
+            codeBox.value += symbol;
+            translateFrom('code');
+        }
+
+        // Utils
+        function clearAll() { txtBox.value = ""; codeBox.value = ""; }
+        function copyToClip(id) { navigator.clipboard.writeText(document.getElementById(id).value); }
+        async function pasteTo(id) {
+            try {
+                document.getElementById(id).value = await navigator.clipboard.readText();
+                translateFrom(id === 'box-text' ? 'text' : 'code');
+            } catch(e) { alert("Paste permission needed"); }
+        }
+
     </script>
 </body>
 </html>
