@@ -2,109 +2,243 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Specs & GPU</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GXDiag - Ultimate Specs</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        .spec-grid { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-width: 800px; }
+        body { 
+            background: #0b0b0b; display: flex; flex-direction: column; 
+            min-height: 100vh; overflow-x: hidden; font-family: 'Segoe UI', monospace; color: #eee;
+        }
         
-        .info-card {
-            background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #333;
+        .mod-header {
+            padding: 15px 20px; background: #111; border-bottom: 1px solid #333; 
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+
+        .container {
+            padding: 20px; max-width: 900px; margin: 0 auto; width: 100%;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* CARD STYLE */
+        .spec-card {
+            background: #151515; border: 1px solid #333; border-radius: 12px; padding: 20px;
             position: relative; overflow: hidden;
         }
-        .info-card::before {
-            content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:#00e5ff;
+        .spec-card.highlight { border-color: #00e5ff; box-shadow: 0 0 15px rgba(0, 229, 255, 0.1); }
+        
+        .card-header {
+            font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 15px; font-weight: bold; display: flex; align-items: center; gap: 8px;
         }
         
-        .section-title { color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold; }
+        .data-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px dashed #333; font-size: 0.95rem;
+        }
+        .data-row:last-child { border-bottom: none; }
         
-        .spec-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding: 8px 0; font-family: monospace; font-size: 0.95rem; }
-        .spec-row:last-child { border-bottom: none; }
-        
+        .lbl { color: #aaa; }
         .val { color: #fff; font-weight: bold; text-align: right; }
-        .warning { color: #ff4081; }
-        
-        /* GPU Box Highlight */
-        .gpu-box { background: #222; border: 2px solid #00e5ff; box-shadow: 0 0 15px rgba(0,229,255,0.1); }
-        .gpu-val { font-size: 1.1rem; color: #00e5ff; margin-top: 5px; display: block; word-break: break-word;}
+        .val.highlight { color: #00e5ff; }
+        .val.warn { color: #ff4081; }
 
-        .detect-note { font-size: 0.8rem; color: #666; margin-top: 20px; text-align: center; font-style: italic;}
+        /* GPU RENDERER BIG TEXT */
+        .gpu-main {
+            font-size: 1.2rem; color: #00e5ff; font-weight: bold; margin-bottom: 5px; word-break: break-word;
+        }
+        
+        /* FAKE DEVICE ALERT BOX */
+        .alert-box {
+            background: rgba(255, 64, 129, 0.1); border: 1px solid #ff4081; color: #ff80ab;
+            padding: 15px; border-radius: 8px; font-size: 0.85rem; line-height: 1.5;
+            display: none; /* Hidden by default */
+        }
+
+        /* PROGRESS BAR FOR MEMORY */
+        .mem-bar-bg { width: 100%; height: 6px; background: #333; border-radius: 3px; margin-top: 5px; }
+        .mem-bar-fill { height: 100%; background: #00e5ff; width: 0%; border-radius: 3px; }
+
+        /* SCREEN INFO GRID */
+        .screen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .screen-item { background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #333; }
+        .si-val { font-size: 1.1rem; font-weight: bold; color: #fff; }
+        .si-lbl { font-size: 0.7rem; color: #666; }
+
     </style>
 </head>
 <body>
-    <a href="../../index.html" class="back-btn">← MENU</a>
-    <h2>Device & GPU Inspector</h2>
 
-    <div class="spec-grid">
-        
-        <div class="info-card gpu-box">
-            <div class="section-title">GRAPHICS PROCESSING UNIT (GPU)</div>
-            <p style="font-size:0.8rem; color:#aaa; margin:0;">Nama GPU ini diambil langsung dari driver WebGL. Sulit dipalsukan oleh HDC murah.</p>
-            <div style="margin-top:15px;">
-                <span style="color:#888;">Vendor:</span> <span id="gpu-vendor" class="val">Detecting...</span><br>
-                <span style="color:#888;">Renderer:</span> <span id="gpu-renderer" class="gpu-val">Detecting...</span>
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-size:0.8rem; color:#666;">SPECS INSPECTOR</div>
+    </div>
+
+    <div class="container">
+
+        <div class="alert-box" id="fake-alert">
+            ⚠️ <b>SUSPICIOUS DEVICE DETECTED!</b><br>
+            Device Anda teridentifikasi sebagai "iPhone" tetapi menggunakan GPU "Android" (Adreno/Mali). Ini indikasi kuat HP Replika/HDC.
+        </div>
+
+        <div class="spec-card highlight">
+            <div class="card-header">🎮 GRAPHICS UNIT (GPU)</div>
+            <div class="gpu-main" id="gpu-renderer">Detecting...</div>
+            <div style="font-size:0.8rem; color:#888; margin-bottom:15px;" id="gpu-vendor">-</div>
+            
+            <div class="data-row">
+                <span class="lbl">API Support</span>
+                <span class="val" id="webgl-ver">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">Texture Size (Max)</span>
+                <span class="val" id="tex-size">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">Anisotropy Filter</span>
+                <span class="val" id="aniso">-</span>
+            </div>
+            <p style="font-size:0.7rem; color:#555; margin-top:10px;">
+                *Max Texture Size sering menentukan kelas GPU. (4096=Low/Old, 8192=Mid/High, 16384=Flagship/PC).
+            </p>
+        </div>
+
+        <div class="spec-card">
+            <div class="card-header">🧠 CPU & SYSTEM</div>
+            <div class="data-row">
+                <span class="lbl">Platform (OS)</span>
+                <span class="val" id="os-plat">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">CPU Logical Cores</span>
+                <span class="val" id="cpu-cores">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">RAM Estimasi</span>
+                <span class="val" id="ram-gb">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">User Agent</span>
+                <span class="val" style="font-size:0.7rem; max-width:60%; text-align:right;" id="ua-string">-</span>
             </div>
         </div>
 
-        <div class="info-card">
-            <div class="section-title">SYSTEM HARDWARE</div>
-            <div class="spec-row"><span>CPU Cores (Threads)</span> <span id="cpu" class="val">-</span></div>
-            <div class="spec-row"><span>RAM (Estimasi)</span> <span id="ram" class="val">-</span></div>
-            <div class="spec-row"><span>Platform/OS</span> <span id="platform" class="val">-</span></div>
-            <div class="spec-row"><span>Touch Points</span> <span id="touch" class="val">-</span></div>
+        <div class="spec-card">
+            <div class="card-header">📱 DISPLAY & PANEL</div>
+            
+            <div class="screen-grid">
+                <div class="screen-item">
+                    <div class="si-val" id="res-screen">-</div>
+                    <div class="si-lbl">PHYSICAL RES</div>
+                </div>
+                <div class="screen-item">
+                    <div class="si-val" id="res-view">-</div>
+                    <div class="si-lbl">VIEWPORT RES</div>
+                </div>
+            </div>
+
+            <div class="data-row" style="margin-top:15px;">
+                <span class="lbl">Pixel Density (DPR)</span>
+                <span class="val" id="dpr-val">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">Color Depth</span>
+                <span class="val" id="color-depth">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">Color Gamut (P3)</span>
+                <span class="val" id="color-gamut">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">HDR Capable</span>
+                <span class="val" id="hdr-support">-</span>
+            </div>
+            <div class="data-row">
+                <span class="lbl">Orientation</span>
+                <span class="val" id="orient">-</span>
+            </div>
+            <p style="font-size:0.7rem; color:#555; margin-top:10px;">
+                *Browser tidak mengizinkan akses ke Merk Panel (misal: Samsung/BOE). Kami mendeteksi kualitas panel melalui Color Gamut & HDR support.
+            </p>
         </div>
 
-        <div class="info-card">
-            <div class="section-title">DISPLAY REALITY</div>
-            <div class="spec-row"><span>Resolution (Viewport)</span> <span id="res-view" class="val">-</span></div>
-            <div class="spec-row"><span>Resolution (Screen)</span> <span id="res-screen" class="val">-</span></div>
-            <div class="spec-row"><span>Color Depth</span> <span id="color-depth" class="val">-</span></div>
-            <div class="spec-row"><span>Pixel Ratio (DPI)</span> <span id="dpr" class="val">-</span></div>
-        </div>
-
-    </div>
-
-    <div class="detect-note">
-        *Tips: Jika HP mengaku "iPhone" tapi GPU Renderer tertulis "Mali", "Adreno", atau "PowerVR" (seri rendah), kemungkinan besar itu HDC/Android Replika. iPhone asli menggunakan "Apple GPU".
     </div>
 
     <script>
-        // 1. GPU DETECTION (WebGL)
-        try {
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        // 1. GPU DETECTION (ADVANCED)
+        function getGPU() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!gl) return { renderer: "Not Supported", vendor: "-" };
 
-            if (gl && debugInfo) {
-                const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-                const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Unknown";
+                const vendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : "Unknown";
                 
-                document.getElementById('gpu-vendor').innerText = vendor;
-                document.getElementById('gpu-renderer').innerText = renderer;
-            } else {
-                document.getElementById('gpu-renderer').innerText = "WebGL Blocked/Not Supported";
+                // Capabilities
+                const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+                const anisoExt = gl.getExtension('EXT_texture_filter_anisotropic');
+                const maxAniso = anisoExt ? gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 0;
+
+                return { renderer, vendor, maxTex, maxAniso, gl };
+            } catch (e) {
+                return { renderer: "Error", vendor: "-" };
             }
-        } catch(e) {
-            document.getElementById('gpu-renderer').innerText = "Error Detecting GPU";
         }
 
-        // 2. HARDWARE INFO
-        document.getElementById('cpu').innerText = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Cores` : "Hidden";
-        document.getElementById('ram').innerText = navigator.deviceMemory ? `~${navigator.deviceMemory} GB` : "Hidden (Browser Limit)";
+        const gpu = getGPU();
+        document.getElementById('gpu-renderer').innerText = gpu.renderer;
+        document.getElementById('gpu-vendor').innerText = gpu.vendor;
+        document.getElementById('webgl-ver').innerText = gpu.gl ? "WebGL 1.0 (Enabled)" : "Disabled";
+        document.getElementById('tex-size').innerText = gpu.maxTex ? gpu.maxTex + " px" : "-";
+        document.getElementById('aniso').innerText = gpu.maxAniso ? gpu.maxAniso + "x" : "Not Supported";
+
+        // 2. HDC / FAKE IPHONE DETECTOR
+        const ua = navigator.userAgent;
+        const isIOS = /iPhone|iPad|iPod/.test(ua);
+        const gpuLower = gpu.renderer.toLowerCase();
         
-        // Cek Platform (HDC iPhone sering bocor disini tertulis 'Linux armv' atau 'Android')
-        // Note: iOS 13+ di iPad sering ngaku 'MacIntel', tapi iPhone biasanya 'iPhone'.
-        let osInfo = navigator.platform;
-        if(navigator.userAgent.includes("Android")) osInfo += " (Android Detected)";
-        document.getElementById('platform').innerText = osInfo;
+        // Logika: Jika User Agent bilang iPhone, tapi GPU-nya Adreno/Mali (Punya Android), maka FAKE.
+        if (isIOS && (gpuLower.includes('adreno') || gpuLower.includes('mali'))) {
+            document.getElementById('fake-alert').style.display = 'block';
+        }
 
-        document.getElementById('touch').innerText = navigator.maxTouchPoints > 0 ? `${navigator.maxTouchPoints} Points` : "No Touch";
+        // 3. SYSTEM INFO
+        document.getElementById('os-plat').innerText = navigator.platform;
+        document.getElementById('cpu-cores').innerText = navigator.hardwareConcurrency || "?";
+        document.getElementById('ram-gb').innerText = navigator.deviceMemory ? `~${navigator.deviceMemory} GB` : "Hidden by Browser";
+        document.getElementById('ua-string').innerText = ua;
 
-        // 3. SCREEN INFO
-        document.getElementById('res-view').innerText = `${window.innerWidth} x ${window.innerHeight}`;
+        // 4. SCREEN INFO
         document.getElementById('res-screen').innerText = `${window.screen.width} x ${window.screen.height}`;
-        document.getElementById('color-depth').innerText = `${window.screen.colorDepth}-bit`;
-        document.getElementById('dpr').innerText = window.devicePixelRatio.toFixed(2) + "x Density";
+        document.getElementById('res-view').innerText = `${window.innerWidth} x ${window.innerHeight}`;
+        
+        const dpr = window.devicePixelRatio || 1;
+        document.getElementById('dpr-val').innerText = dpr.toFixed(2) + "x";
+        document.getElementById('color-depth').innerText = window.screen.colorDepth + "-bit";
+        
+        // Gamut Check (P3 Support)
+        if (window.matchMedia("(color-gamut: p3)").matches) {
+            document.getElementById('color-gamut').innerText = "Wide Color (P3) ✅";
+            document.getElementById('color-gamut').classList.add('highlight');
+        } else {
+            document.getElementById('color-gamut').innerText = "Standard (sRGB)";
+        }
+
+        // HDR Check
+        if (window.matchMedia("(dynamic-range: high)").matches) {
+            document.getElementById('hdr-support').innerText = "Supported ✅";
+            document.getElementById('hdr-support').classList.add('highlight');
+        } else {
+            document.getElementById('hdr-support').innerText = "SDR Only";
+        }
+
+        // Orientation
+        const type = screen.orientation ? screen.orientation.type : "Unknown";
+        document.getElementById('orient').innerText = type.replace("-", " ").toUpperCase();
 
     </script>
 </body>
