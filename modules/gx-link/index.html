@@ -99,6 +99,7 @@
         .call-avatar.muted { border-color: var(--danger); opacity: 0.7; }
         .call-name { margin-top: 8px; font-size: 0.8rem; color: #ccc; }
         
+        /* Remote Mute Button (On Avatar) */
         .remote-mute-btn {
             position: absolute; top: 0; right: 0; background: #333; color: #fff;
             border: 1px solid #555; border-radius: 50%; width: 24px; height: 24px;
@@ -106,6 +107,7 @@
         }
         .remote-mute-btn.active { background: var(--danger); border-color: var(--danger); }
 
+        /* VOIP Control Bar */
         .call-controls {
             display: flex; gap: 20px; align-items: center; background: #111; 
             padding: 15px 30px; border-radius: 30px; border: 1px solid #333;
@@ -120,6 +122,7 @@
         .call-btn.join { background: var(--secondary); color: #000; width: 140px; border-radius: 10px; font-weight: bold; gap: 10px;}
         .call-btn.leave { background: var(--danger); color: #fff; }
         .call-btn.mute { background: #ffb300; color: #000; }
+        .call-btn.active { background: #444; color: #888; } /* For muted state style */
 
         /* Modals */
         #settings-modal, #edit-modal, #tutorial-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
@@ -191,7 +194,8 @@
                 <button class="vn-btn-act" onclick="cancelVN()" style="color: #888;">🗑️</button>
                 <div class="vn-timer" id="vn-timer">0:00</div>
                 <div class="vn-waves">
-                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                    <div class="wave-bar"></div><div class="wave-bar"></div>
                 </div>
                 <button class="vn-btn-act vn-btn-send" onclick="stopAndSendVN()">➤</button>
             </div>
@@ -277,7 +281,7 @@
         let activeTab='host';
         
         // HEARTBEAT & STATS
-        let lastHeartbeat = {}; // Map of timestamp when peer was last seen
+        let lastHeartbeat = {}; 
         let totalSent=0, totalRecv=0, startTime=Date.now();
 
         // VOIP
@@ -304,13 +308,10 @@
                 // 2. Check Dead Peers (Timeout > 5s)
                 Object.keys(lastHeartbeat).forEach(id => {
                     if(now - lastHeartbeat[id] > 5000) {
-                        console.log("Peer Timeout:", id);
                         closeConnection(id);
                     }
                 });
-                // 3. Ping Loop
                 pingLoop();
-                // 4. Update Stats UI
                 updateStatsUI();
             }, 2000);
 
@@ -347,7 +348,11 @@
                     else { alert(e.type); location.reload(); }
                 });
                 peer.on('connection', handleConn);
-                peer.on('call', handleIncomingCall);
+                // Strict Call Handling
+                peer.on('call', (call) => {
+                    if(!isInVoice) { call.close(); return; } // Reject if not in voice mode
+                    handleIncomingCall(call);
+                });
             } catch(e) { alert("Config Error: " + e); }
         }
 
@@ -368,13 +373,13 @@
             conn.on('open', () => {
                 if(!amICreator) enterRoom();
                 connections[conn.peer] = conn;
-                lastHeartbeat[conn.peer] = Date.now(); // Init heartbeat
+                lastHeartbeat[conn.peer] = Date.now(); 
                 conn.send({ type:'HELLO', name:myName, list:Object.keys(members) });
                 if(isInVoice) conn.send({ type:'VOICE_STATUS', id:peer.id, status:'joined', muted:isSelfMuted });
             });
 
             conn.on('data', (d) => {
-                totalRecv += (JSON.stringify(d).length); // Approx size
+                totalRecv += (JSON.stringify(d).length); 
                 
                 if(d.type === 'HEARTBEAT') {
                     lastHeartbeat[conn.peer] = Date.now();
@@ -405,14 +410,14 @@
             updateUI();
         }
 
-        // --- BROADCAST WRAPPER (TRACK STATS) ---
+        // --- BROADCAST ---
         function broadcast(data) {
             const str = JSON.stringify(data);
             totalSent += str.length * Object.keys(connections).length;
             Object.values(connections).forEach(c => { if(c.open) c.send(data); });
         }
 
-        // --- VOIP ---
+        // --- VOIP (STRICT TELEPHONE LOGIC) ---
         function joinVoice() {
             navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
                 localStream = stream;
@@ -426,9 +431,12 @@
                 broadcast({ type: 'VOICE_STATUS', id: peer.id, status: 'joined', muted: false });
                 updateUI();
 
-                Object.keys(connections).forEach(id => {
-                    const call = peer.call(id, localStream);
-                    handleCallEvent(call);
+                // Check existing voice peers and call them
+                Object.keys(voicePeers).forEach(id => {
+                    if(id !== peer.id && connections[id]) {
+                        const call = peer.call(id, localStream);
+                        handleCallEvent(call);
+                    }
                 });
             }).catch(e => alert("Mic Denied"));
         }
@@ -457,7 +465,10 @@
         }
 
         function handleIncomingCall(call) {
-            if(isInVoice) call.answer(localStream); else call.answer(); 
+            // Strict check: Only answer if I am in voice mode
+            if(!isInVoice) { call.close(); return; }
+            
+            call.answer(localStream);
             handleCallEvent(call);
         }
 
@@ -480,9 +491,12 @@
         function updateVoiceStatus(id, status, isMuted) {
             if(status === 'joined' || status === 'update') {
                 voicePeers[id] = { muted: isMuted };
+                // Call initiator optimization is handled in joinVoice, but if someone joins after me:
                 if(status === 'joined' && isInVoice && !voiceCalls[id]) {
-                    const call = peer.call(id, localStream);
-                    handleCallEvent(call);
+                    // I will wait for them to call me, OR I call them. 
+                    // To prevent double calling, usually we can let the 'joiner' call.
+                    // But in mesh, redundancy is okay or check ID sort.
+                    // Here we let the new joiner initiate calls to existing peers.
                 }
             } else if (status === 'left') {
                 delete voicePeers[id];
@@ -536,7 +550,6 @@
             document.getElementById('online-count').innerText = (Object.keys(members).length + 1) + " ON";
             document.getElementById('voice-count').innerText = Object.keys(voicePeers).length + " IN";
             
-            // Call Grid
             const grid = document.getElementById('call-grid');
             grid.innerHTML = "";
             
@@ -622,7 +635,6 @@
             document.querySelectorAll('.view-panel').forEach(e=>e.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
             document.getElementById(t==='chat'?'chat-view':t==='call'?'call-view':'info-view').classList.add('active');
-            // Simplified active class toggle for 3 items
             const idx = t==='chat'?0:t==='call'?1:2;
             document.querySelectorAll('.nav-item')[idx].classList.add('active');
         }
