@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<html lang="id"><!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -133,20 +132,20 @@
             <input type="text" id="my-name" placeholder="Your Nickname" maxlength="12" autocomplete="off" onchange="saveNickname()">
             
             <div class="tabs">
-                <button class="tab-btn active" onclick="setMode('host')">CREATE</button>
-                <button class="tab-btn" onclick="setMode('join')">JOIN</button>
+                <button class="tab-btn active" id="tab-host" onclick="setMode('host')">CREATE</button>
+                <button class="tab-btn" id="tab-join" onclick="setMode('join')">JOIN</button>
             </div>
 
             <div id="create-panel">
                 <input type="text" id="create-room" placeholder="Room Name (e.g. MABAR)" autocomplete="off">
                 <br><br>
-                <button class="btn-main" onclick="createRoom()">👑 CREATE PARTY</button>
+                <button class="btn-main" onclick="startSession()">👑 CREATE PARTY</button>
             </div>
 
             <div id="join-panel" style="display:none;">
                 <input type="text" id="join-room" placeholder="Enter Room Name" autocomplete="off">
                 <br><br>
-                <button class="btn-main btn-join" id="btn-join-action" onclick="joinRoom()">🚀 JOIN SQUAD</button>
+                <button class="btn-main btn-join" id="btn-join-action" onclick="startSession()">🚀 JOIN SQUAD</button>
             </div>
             
             <div style="font-size:0.75rem; color:#555; margin-top:10px;">End-to-End Encrypted • No Logs</div>
@@ -201,7 +200,7 @@
             </div>
             <div class="chat-input-bar">
                 <button class="icon-btn" onclick="document.getElementById('file-input').click()">📎</button>
-                <input type="file" id="file-input" style="display:none" onchange="shareFile(this)">
+                <input type="file" id="file-input" style="display:none" onchange="processUpload(this.files[0])">
                 
                 <button class="icon-btn" id="btn-record" onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()">🎤</button>
                 
@@ -214,24 +213,33 @@
     <div id="audio-container" style="display:none;"></div>
 
     <script>
+        // CORE VARIABLES
         const MAX_PEERS = 8;
         let peerConfig = { debug: 1 };
-        
         let peer = null, myName = "User", roomId = "", amICreator = false, localStream = null;
         let connections = {}, calls = {}, members = {};     
+        let activeTab = 'host'; // Track which tab is active to grab correct input
 
         // --- INIT ---
         window.onload = () => { 
             loadSettings(); 
             loadNickname(); 
+            
+            // Auto Join Logic
             const urlParams = new URLSearchParams(window.location.search);
             if(urlParams.has('room')) {
                 setMode('join');
                 const rName = urlParams.get('room');
                 document.getElementById('join-room').value = rName;
+                
                 setTimeout(() => {
-                    if(document.getElementById('my-name').value) joinRoom();
-                    else { document.getElementById('my-name').focus(); alert("Enter nickname to join " + rName); }
+                    // Only auto-join if nickname exists, else prompt
+                    if(document.getElementById('my-name').value) {
+                        startSession();
+                    } else { 
+                        document.getElementById('my-name').focus(); 
+                        alert("Enter nickname to join " + rName); 
+                    }
                 }, 800);
             }
         };
@@ -256,7 +264,6 @@
             document.getElementById('local-config').style.display = type==='local'?'block':'none';
         }
 
-        // AUTO DETECT IP (REGEX FIX)
         function detectLocalIP() {
             window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
             const pc = new RTCPeerConnection({iceServers:[]}), noop = function(){};      
@@ -291,14 +298,14 @@
             const conf = JSON.parse(localStorage.getItem('gx_server_conf') || '{"type":"cloud"}');
             const ind = document.getElementById('server-indicator');
             if(conf.type === 'local') {
-                // FORCE HTTP (secure: false) for Local IP to fix connection error
+                // FIXED: Set secure: false for local IP to prevent Mixed Content Error
                 peerConfig = { 
                     host: conf.host, 
                     port: parseInt(conf.port), 
                     path: '/peerjs',
                     secure: false 
                 };
-                ind.innerText = `🏠 LOCAL (${conf.host})`;
+                ind.innerText = `🏠 LOCAL LAN (${conf.host})`;
                 ind.className = 'server-tag local';
                 toggleServerType('local');
                 document.getElementById('srv-host').value = conf.host;
@@ -312,43 +319,59 @@
 
         // --- ROOM LOGIC ---
         function setMode(m) {
+            activeTab = m;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            // Manually set active class based on ID
+            if(m === 'host') document.getElementById('tab-host').classList.add('active');
+            else document.getElementById('tab-join').classList.add('active');
+
             document.getElementById('create-panel').style.display = m === 'host' ? 'block' : 'none';
             document.getElementById('join-panel').style.display = m === 'join' ? 'block' : 'none';
         }
 
-        function createRoom() { startSession(document.getElementById('create-room').value, true); }
-        function joinRoom() { startSession(document.getElementById('join-room').value, false); }
-
-        function startSession(rName, isCreator) {
+        function startSession() {
             saveNickname();
-            roomId = rName.toUpperCase().trim();
-            if(!roomId) return alert("Room Name Required");
-            amICreator = isCreator;
+            // FIXED: Grab input based on Active Tab
+            let rInput;
+            if(activeTab === 'host') {
+                rInput = document.getElementById('create-room').value;
+                amICreator = true;
+            } else {
+                rInput = document.getElementById('join-room').value;
+                amICreator = false;
+            }
 
-            if(!isCreator) {
+            roomId = rInput.toUpperCase().trim();
+            if(!roomId) return alert("Room Name Required");
+
+            if(!amICreator) {
                 const btn = document.getElementById('btn-join-action');
                 btn.innerText = "CONNECTING...";
                 btn.disabled = true;
             }
 
             const cleanRoom = roomId.replace(/[^a-zA-Z0-9]/g, '-');
-            const myPeerId = isCreator ? `GX-${cleanRoom}-HOST` : `GX-${cleanRoom}-${Math.floor(Math.random()*100000)}`;
+            const myPeerId = amICreator ? `GX-${cleanRoom}-HOST` : `GX-${cleanRoom}-${Math.floor(Math.random()*100000)}`;
 
             try { peer = new Peer(myPeerId, peerConfig); } 
-            catch(e) { alert("Peer Error"); return; }
+            catch(e) { alert("Peer Config Error. Reset Settings."); return; }
 
             peer.on('open', (id) => {
-                members[id] = { name: myName, isCreator: isCreator };
-                if(isCreator) initUI(); 
+                members[id] = { name: myName, isCreator: amICreator };
+                if(amICreator) initUI(); 
                 else connectToCreator(); 
             });
 
             peer.on('error', (err) => {
-                if(err.type === 'unavailable-id') alert("Room Taken.");
-                else if(err.type === 'peer-unavailable') { alert("Room Not Found! Check name."); location.reload(); }
-                else { alert("Conn Error. Check Settings."); location.reload(); }
+                console.error(err);
+                if(err.type === 'unavailable-id') {
+                    alert("Room Taken. Try another.");
+                } else if(err.type === 'peer-unavailable') {
+                    alert("Room Not Found! Check name or ensure Host is online.");
+                } else {
+                    alert("Connection Error. Check Network/Settings.");
+                }
+                location.reload(); 
             });
 
             peer.on('connection', handleConnection);
@@ -366,19 +389,28 @@
         function connectToCreator() {
             const creatorId = `GX-${roomId.replace(/[^a-zA-Z0-9]/g, '-')}-HOST`;
             const conn = peer.connect(creatorId);
-            setTimeout(() => {
+            
+            // Timeout Watchdog
+            const timeout = setTimeout(() => {
                 if(!conn.open && !document.getElementById('party-screen').style.display === 'flex') {
-                    alert("Host Unresponsive."); location.reload();
+                    alert("Host Unresponsive. Room might be closed.");
+                    location.reload();
                 }
             }, 8000);
+
+            conn.on('open', () => clearTimeout(timeout));
             handleConnection(conn);
         }
 
         function handleConnection(conn) {
             conn.on('open', () => {
-                if(!amICreator && document.getElementById('setup-screen').style.display !== 'none') initUI();
+                if(!amICreator && document.getElementById('setup-screen').style.display !== 'none') {
+                    initUI(); // Joiner Success Enter
+                }
+
                 connections[conn.peer] = conn;
                 conn.send({ type: 'HELLO', name: myName, isCreator: amICreator });
+                
                 if(amICreator) {
                     const list = Object.keys(members).filter(id => id !== peer.id);
                     conn.send({ type: 'PEER_LIST', list: list });
@@ -406,7 +438,10 @@
             });
 
             conn.on('close', () => {
-                if(members[conn.peer]) { sysMsg(`${members[conn.peer].name} left.`); delete members[conn.peer]; }
+                if(members[conn.peer]) {
+                    sysMsg(`${members[conn.peer].name} left.`);
+                    delete members[conn.peer];
+                }
                 delete connections[conn.peer];
                 updateMemberList();
                 const a = document.getElementById(`aud-${conn.peer}`);
@@ -427,19 +462,16 @@
         const CHUNK_SIZE = 16 * 1024;
         let incomingFiles = {};
 
-        function shareFile(input) {
-            const file = input.files[0];
+        function processUpload(file) {
             if(!file) return;
             if(file.size > 10 * 1024 * 1024) return alert("File Max 10MB");
-            processUpload(file);
-        }
 
-        function processUpload(file) {
             const fileId = Date.now().toString();
             const meta = { type:'FILE_META', id:fileId, name:file.name, size:file.size, mime:file.type };
             Object.values(connections).forEach(c => { if(c.open) c.send(meta); });
 
-            const uiId = addFileBubble(file.name, file.size, 'me', file.type.startsWith('audio/'));
+            const isAudio = file.type.startsWith('audio/');
+            const uiId = addFileBubble(file.name, file.size, 'me', isAudio);
             let offset = 0;
             const reader = new FileReader();
 
@@ -460,7 +492,8 @@
         }
 
         function receiveFileStart(d) {
-            incomingFiles[d.id] = { meta:d, chunks:[], receivedSize:0, uiId:addFileBubble(d.name, d.size, 'them', d.mime.startsWith('audio/')) };
+            const isAudio = d.mime.startsWith('audio/');
+            incomingFiles[d.id] = { meta:d, chunks:[], receivedSize:0, uiId:addFileBubble(d.name, d.size, 'them', isAudio) };
         }
 
         function receiveFileChunk(d) {
@@ -620,564 +653,6 @@
         }
         function updateAudioPlayer(id, url) {
             document.getElementById('meta-'+id).innerHTML = `<audio controls src="${url}"></audio>`;
-        }
-    </script>
-</body>
-</html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GX-Link</title>
-    <link rel="stylesheet" href="../../css/style.css">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <style>
-        /* --- CORE STYLES --- */
-        :root { --primary: #00e5ff; --secondary: #00ff88; --bg-dark: #050505; --bg-card: #111; }
-        body { background: var(--bg-dark); display: flex; flex-direction: column; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #eee; margin: 0; }
-        * { box-sizing: border-box; tap-highlight-color: transparent; }
-        
-        /* Animations */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Header */
-        .mod-header { padding: 15px 20px; background: rgba(10,10,10,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; z-index: 50; }
-        .back-btn { text-decoration: none; color: #fff; font-weight: bold; font-size: 0.9rem; }
-
-        /* Setup Screen */
-        #setup-screen { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; gap: 20px; overflow-y: auto; background: var(--bg-dark); z-index: 20; position: absolute; top: 0; left: 0; width: 100%; height: 100%; animation: fadeIn 0.5s ease-out; }
-        
-        .party-logo h1 { font-size: 2.5rem; margin: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
-        .server-tag { font-size: 0.7rem; background: #1a1a1a; color: #888; padding: 5px 12px; border-radius: 20px; border: 1px solid #333; cursor: pointer; display: inline-block; margin-top: 10px; font-weight: bold; }
-        .server-tag.local { color: #000; background: #ffb300; border-color: #ffb300; }
-
-        .card-box { background: #151515; border: 1px solid #333; padding: 30px; border-radius: 25px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; animation: slideUp 0.6s ease; }
-        .settings-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #555; transition: 0.3s; }
-        .settings-btn:hover { color: #fff; transform: rotate(90deg); }
-
-        input { background: #222; border: 2px solid transparent; color: #fff; padding: 15px; border-radius: 12px; outline: none; text-align: center; font-size: 1.1rem; font-weight: bold; width: 100%; transition: 0.3s; }
-        input:focus { border-color: var(--primary); background: #1a1a1a; }
-        
-        .tabs { display: flex; background: #0a0a0a; padding: 5px; border-radius: 15px; border: 1px solid #333; }
-        .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: #666; font-weight: bold; cursor: pointer; border-radius: 10px; transition: 0.3s; }
-        .tab-btn.active { background: #222; color: #fff; }
-
-        .btn-main { background: var(--primary); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: 0.2s; width: 100%; }
-        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-join { background: var(--secondary); }
-
-        /* Party Screen */
-        #party-screen { display: none; width: 100%; height: 100%; flex-direction: column; background: #080808; animation: fadeIn 0.5s ease; }
-        .room-header { padding: 15px 20px; background: var(--bg-card); border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .sidebar-panel { background: #111; border-bottom: 1px solid #333; padding: 10px 15px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex-shrink: 0; }
-        
-        .chat-area { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; background-image: radial-gradient(circle at center, #111 0%, #000 100%); }
-        #msg-container { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        
-        .msg { max-width: 80%; padding: 12px 18px; border-radius: 18px; font-size: 0.95rem; word-break: break-word; cursor: pointer; line-height: 1.5; position: relative; animation: slideUp 0.3s ease; }
-        .msg.me { align-self: flex-end; background: linear-gradient(135deg, #006064, #00838f); color: #fff; border-bottom-right-radius: 4px; }
-        .msg.them { align-self: flex-start; background: #222; color: #eee; border-bottom-left-radius: 4px; border: 1px solid #333; }
-        .sender-name { font-size: 0.7rem; font-weight: bold; color: var(--primary); margin-bottom: 4px; display: block; opacity: 0.8; }
-        .sys-msg { align-self: center; font-size: 0.75rem; color: #666; background: rgba(20,20,20,0.5); padding: 6px 15px; border-radius: 20px; text-align: center; margin: 10px 0; border: 1px solid #222; }
-
-        .chat-input-bar { padding: 15px 20px; background: #111; border-top: 1px solid #333; display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
-        .icon-btn { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #666; padding: 5px; border-radius: 50%; }
-        .text-in { flex-grow: 1; background: #050505; border: 1px solid #333; padding: 14px 20px; border-radius: 30px; color: #fff; outline: none; font-size: 1rem; }
-
-        /* Settings Modal */
-        #settings-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .detect-btn { background: #222; border: 1px solid #444; color: var(--secondary); font-size: 0.7rem; padding: 5px 10px; border-radius: 5px; cursor: pointer; float: right; font-weight: bold; }
-        
-        .controls { display: flex; gap: 10px; align-items: center; }
-        .mic-btn { width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; background: #222; color: #888; border: 1px solid #444; transition: 0.3s; }
-        .mic-btn.active { background: var(--secondary); color: #000; box-shadow: 0 0 15px var(--secondary); border-color: transparent; }
-        
-        /* Member List */
-        .member-list { display: flex; gap: 10px; padding: 5px 0; overflow-x: auto; }
-        .member-card { background: #1a1a1a; padding: 6px 12px; border-radius: 8px; border: 1px solid #333; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .mem-dot { width: 8px; height: 8px; background: #555; border-radius: 50%; }
-        .mem-dot.speaking { background: var(--secondary); box-shadow: 0 0 5px var(--secondary); }
-        .mem-name { font-size: 0.8rem; font-weight: bold; color: #ccc; }
-
-        /* Desktop Layout */
-        @media (min-width: 800px) {
-            #party-screen { flex-direction: row; }
-            .sidebar-panel { width: 300px; height: 100%; flex-direction: column; justify-content: flex-start; align-items: stretch; border-right: 1px solid #333; padding: 25px; gap: 20px; }
-            .member-list { flex-direction: column; background: transparent; padding: 0; gap: 10px; flex-grow: 1; }
-            .member-card { padding: 12px 15px; width: 100%; justify-content: flex-start; }
-            .controls { flex-direction: row; justify-content: center; padding-top: 20px; border-top: 1px solid #222; gap: 15px; }
-            .chat-area { background: #080808; }
-            #msg-container { padding: 40px; }
-            .msg { max-width: 60%; }
-        }
-    </style>
-</head>
-<body>
-
-    <div id="setup-screen">
-        <a href="../../index.html" class="back-btn" style="position:absolute; top:20px; left:20px;">
-            <span>←</span> DASHBOARD
-        </a>
-        
-        <div class="party-logo">
-            <h1>GX-LINK</h1>
-            <span class="server-tag" id="server-indicator" onclick="openSettings()">☁️ CLOUD MODE</span>
-        </div>
-
-        <div class="card-box">
-            <button class="settings-btn" onclick="openSettings()">⚙️</button>
-            <input type="text" id="my-name" placeholder="Your Nickname" maxlength="12" autocomplete="off">
-            
-            <div class="tabs">
-                <button class="tab-btn active" onclick="setMode('host')">CREATE</button>
-                <button class="tab-btn" onclick="setMode('join')">JOIN</button>
-            </div>
-
-            <div id="create-panel">
-                <input type="text" id="create-room" placeholder="Room Name (e.g. MABAR)" autocomplete="off">
-                <br><br>
-                <button class="btn-main" onclick="createRoom()">👑 CREATE PARTY</button>
-            </div>
-
-            <div id="join-panel" style="display:none;">
-                <input type="text" id="join-room" placeholder="Enter Room Name" autocomplete="off">
-                <br><br>
-                <button class="btn-main btn-join" id="btn-join-action" onclick="joinRoom()">🚀 JOIN SQUAD</button>
-            </div>
-            
-            <div style="font-size:0.75rem; color:#555; margin-top:10px;">End-to-End Encrypted • No Logs</div>
-        </div>
-    </div>
-
-    <div id="settings-modal">
-        <div class="card-box">
-            <h3 style="color:#fff; margin:0 0 20px 0;">NETWORK SETTINGS</h3>
-            <div style="width:100%; text-align:left; margin-bottom:15px;">
-                <span style="color:#888; font-size:0.75rem; font-weight:bold;">CONNECTION MODE</span>
-                <div class="tabs" style="margin-top:5px;">
-                    <button class="tab-btn active" id="btn-cloud" onclick="toggleServerType('cloud')">CLOUD</button>
-                    <button class="tab-btn" id="btn-local" onclick="toggleServerType('local')">LOCAL (LAN)</button>
-                </div>
-            </div>
-            <div id="local-config" style="display:none; width:100%;">
-                <div style="margin-bottom:15px; text-align:left;">
-                    <span style="color:#888; font-size:0.75rem; font-weight:bold;">HOST IP <button class="detect-btn" onclick="detectLocalIP()">🔍 AUTO DETECT</button></span>
-                    <input type="text" id="srv-host" placeholder="192.168.1.x" style="margin-top:5px;">
-                </div>
-                <div style="margin-bottom:15px; text-align:left;">
-                    <span style="color:#888; font-size:0.75rem; font-weight:bold;">PORT NUMBER</span>
-                    <input type="number" id="srv-port" placeholder="9000" value="9000" style="margin-top:5px;">
-                </div>
-                <p style="font-size:0.7rem; color:#ffb300; text-align:left;">*Run PeerJS Server on Host PC first.</p>
-            </div>
-            <button class="btn-main" onclick="saveSettings()">APPLY & RELOAD</button>
-            <button style="background:transparent; color:#fff; border:1px solid #555; padding:12px; border-radius:12px; width:100%; margin-top:10px; cursor:pointer;" onclick="closeSettings()">CANCEL</button>
-        </div>
-    </div>
-
-    <div id="party-screen">
-        <div class="sidebar-panel">
-            <div style="display:flex; flex-direction:column;">
-                <h3 style="margin:0; font-size:1.1rem; color:#fff;" id="room-title">ROOM</h3>
-                <span style="font-size:0.7rem; color:#00ff88;">ONLINE</span>
-            </div>
-            <div class="member-list" id="member-list"></div>
-            <div class="controls">
-                <button class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Mic">🎙️</button>
-                <button class="icon-btn" onclick="shareLink()" title="Copy Invite">🔗</button>
-                <button class="icon-btn" onclick="clearChat()" title="Clear">🗑️</button>
-                <button class="icon-btn" style="color:#ff1744;" onclick="location.reload()" title="Exit">🚪</button>
-            </div>
-        </div>
-
-        <div class="chat-area">
-            <div id="msg-container">
-                <div class="sys-msg">🔒 Mesh Network Established</div>
-            </div>
-            <div class="chat-input-bar">
-                <button class="icon-btn" onclick="document.getElementById('file-input').click()">📎</button>
-                <input type="file" id="file-input" style="display:none" onchange="shareFile(this)">
-                <input type="text" class="text-in" id="msg-in" placeholder="Type message..." autocomplete="off" onkeypress="if(event.key==='Enter') sendChat()">
-                <button class="icon-btn" style="color:var(--primary);" onclick="sendChat()">➤</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="audio-container" style="display:none;"></div>
-
-    <script>
-        const MAX_PEERS = 8;
-        let peerConfig = { debug: 1 };
-        
-        let peer = null, myName = "User", roomId = "", amICreator = false, localStream = null;
-        let connections = {}, calls = {}, members = {};     
-
-        // --- INIT ---
-        window.onload = () => { 
-            loadSettings(); 
-            const urlParams = new URLSearchParams(window.location.search);
-            if(urlParams.has('room')) {
-                setMode('join');
-                document.getElementById('join-room').value = urlParams.get('room');
-            }
-        };
-
-        // --- SETTINGS LOGIC ---
-        function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
-        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
-
-        function toggleServerType(type) {
-            document.getElementById('btn-cloud').className = type==='cloud'?'tab-btn active':'tab-btn';
-            document.getElementById('btn-local').className = type==='local'?'tab-btn active':'tab-btn';
-            document.getElementById('local-config').style.display = type==='local'?'block':'none';
-        }
-
-        // STRICT LAN IP DETECTION
-        function detectLocalIP() {
-            window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-            const pc = new RTCPeerConnection({iceServers:[]}), noop = function(){};      
-            pc.createDataChannel('');
-            pc.createOffer(pc.setLocalDescription.bind(pc), noop);
-            pc.onicecandidate = function(ice) {
-                if (ice && ice.candidate && ice.candidate.candidate) {
-                    // Regex for Private IPs only (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
-                    const ipRegex = /(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)/;
-                    const match = ipRegex.exec(ice.candidate.candidate);
-                    if(match) {
-                        document.getElementById('srv-host').value = match[1];
-                        alert("Local IP Found: " + match[1]);
-                        pc.onicecandidate = noop;
-                    }
-                }
-            };
-            setTimeout(() => { 
-                if(!document.getElementById('srv-host').value) alert("Auto-detect blocked by browser/network. Please enter IP manually."); 
-            }, 3000);
-        }
-
-        function saveSettings() {
-            const isLocal = document.getElementById('btn-local').classList.contains('active');
-            const conf = {
-                type: isLocal ? 'local' : 'cloud',
-                host: document.getElementById('srv-host').value,
-                port: document.getElementById('srv-port').value
-            };
-            localStorage.setItem('gx_server_conf', JSON.stringify(conf));
-            location.reload();
-        }
-
-        function loadSettings() {
-            const conf = JSON.parse(localStorage.getItem('gx_server_conf') || '{"type":"cloud"}');
-            const ind = document.getElementById('server-indicator');
-            if(conf.type === 'local') {
-                peerConfig = { host: conf.host, port: parseInt(conf.port), path: '/peerjs' };
-                ind.innerText = `🏠 LOCAL LAN (${conf.host})`;
-                ind.className = 'server-tag local';
-                toggleServerType('local');
-                document.getElementById('srv-host').value = conf.host;
-            } else {
-                peerConfig = { debug: 1 }; 
-                ind.innerText = `☁️ CLOUD MODE`;
-                ind.className = 'server-tag';
-                toggleServerType('cloud');
-            }
-        }
-
-        // --- ROOM LOGIC ---
-        function setMode(m) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('create-panel').style.display = m === 'host' ? 'block' : 'none';
-            document.getElementById('join-panel').style.display = m === 'join' ? 'block' : 'none';
-        }
-
-        // START SESSION
-        function createRoom() { startSession(document.getElementById('create-room').value, true); }
-        function joinRoom() { startSession(document.getElementById('join-room').value, false); }
-
-        function startSession(rName, isCreator) {
-            myName = document.getElementById('my-name').value || "Anon";
-            roomId = rName.toUpperCase().trim();
-            if(!roomId) return alert("Room Name Required");
-            amICreator = isCreator;
-
-            // Loading State for Joiner
-            if(!isCreator) {
-                const btn = document.getElementById('btn-join-action');
-                btn.innerText = "CONNECTING...";
-                btn.disabled = true;
-            }
-
-            const cleanRoom = roomId.replace(/[^a-zA-Z0-9]/g, '-');
-            const myPeerId = isCreator ? `GX-${cleanRoom}-HOST` : `GX-${cleanRoom}-${Math.floor(Math.random()*100000)}`;
-
-            peer = new Peer(myPeerId, peerConfig);
-
-            peer.on('open', (id) => {
-                members[id] = { name: myName, isCreator: isCreator };
-                if(isCreator) {
-                    initUI(); // Host enters immediately
-                } else {
-                    connectToCreator(); // Joiner waits for handshake
-                }
-            });
-
-            peer.on('error', (err) => {
-                if(err.type === 'unavailable-id') alert("Room Taken. Try another.");
-                else if(err.type === 'peer-unavailable') {
-                    alert("Room Not Found! Check name or ensure Host is online.");
-                    location.reload(); // Bounce back
-                } else {
-                    alert("Connection Error. Check Network/Server Settings.");
-                    location.reload();
-                }
-            });
-
-            peer.on('connection', handleConnection);
-            peer.on('call', handleCall);
-        }
-
-        function initUI() {
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('party-screen').style.display = 'flex';
-            document.getElementById('room-title').innerText = roomId;
-            updateMemberList();
-        }
-
-        // --- MESH NETWORKING ---
-        function connectToCreator() {
-            const creatorId = `GX-${roomId.replace(/[^a-zA-Z0-9]/g, '-')}-HOST`;
-            const conn = peer.connect(creatorId);
-            
-            // Safety timeout
-            setTimeout(() => {
-                if(!conn.open && !document.getElementById('party-screen').style.display) {
-                    alert("Room Timeout. Host unresponsive.");
-                    location.reload();
-                }
-            }, 5000);
-
-            handleConnection(conn);
-        }
-
-        function handleConnection(conn) {
-            conn.on('open', () => {
-                // If I am joiner and this is my first connection to Host -> Enter Room
-                if(!amICreator && !document.getElementById('party-screen').style.display === 'flex') {
-                    initUI();
-                }
-
-                connections[conn.peer] = conn;
-                conn.send({ type: 'HELLO', name: myName, isCreator: amICreator });
-                
-                if(amICreator) {
-                    // Send list of existing peers to new joiner
-                    const list = Object.keys(members).filter(id => id !== peer.id);
-                    conn.send({ type: 'PEER_LIST', list: list });
-                }
-            });
-
-            conn.on('data', (data) => {
-                if(data.type === 'HELLO') {
-                    members[conn.peer] = { name: data.name, isCreator: data.isCreator };
-                    updateMemberList();
-                    sysMsg(`${data.name} joined.`);
-                    if(localStream) callPeer(conn.peer);
-                }
-                else if(data.type === 'PEER_LIST') {
-                    // Connect to others in the mesh
-                    data.list.forEach(id => {
-                        if(!connections[id] && id !== peer.id) {
-                            const c = peer.connect(id);
-                            handleConnection(c);
-                        }
-                    });
-                }
-                else if(data.type === 'CHAT') addChat(data.name, data.text, 'them');
-                else if(data.type === 'FILE_META') receiveFileStart(data);
-                else if(data.type === 'FILE_CHUNK') receiveFileChunk(data);
-            });
-
-            conn.on('close', () => {
-                if(members[conn.peer]) {
-                    sysMsg(`${members[conn.peer].name} left.`);
-                    delete members[conn.peer];
-                }
-                delete connections[conn.peer];
-                updateMemberList();
-                const a = document.getElementById(`aud-${conn.peer}`);
-                if(a) a.remove();
-            });
-        }
-
-        // --- CHAT & FILE ---
-        function sendChat() {
-            const input = document.getElementById('msg-in');
-            const text = input.value.trim();
-            if(!text) return;
-            addChat("Me", text, 'me');
-            Object.values(connections).forEach(c => { if(c.open) c.send({type:'CHAT', name:myName, text:text}); });
-            input.value = "";
-        }
-
-        const CHUNK_SIZE = 16 * 1024;
-        let incomingFiles = {};
-
-        function shareFile(input) {
-            const file = input.files[0];
-            if(!file) return;
-            if(file.size > 10 * 1024 * 1024) return alert("File Max 10MB");
-
-            const fileId = Date.now().toString();
-            const meta = { type:'FILE_META', id:fileId, name:file.name, size:file.size, mime:file.type };
-            Object.values(connections).forEach(c => { if(c.open) c.send(meta); });
-
-            const uiId = addFileBubble(file.name, file.size, 'me');
-            let offset = 0;
-            const reader = new FileReader();
-
-            function sendLoop() {
-                const chunk = file.slice(offset, offset + CHUNK_SIZE);
-                reader.onload = (e) => {
-                    const data = { type:'FILE_CHUNK', id:fileId, data:e.target.result };
-                    Object.values(connections).forEach(c => { if(c.open) c.send(data); });
-                    offset += CHUNK_SIZE;
-                    const pct = Math.min(100, (offset/file.size)*100);
-                    updateFileProgress(uiId, pct);
-                    if(offset < file.size) setTimeout(sendLoop, 10);
-                    else updateFileComplete(uiId, "SENT");
-                };
-                reader.readAsArrayBuffer(chunk);
-            }
-            sendLoop();
-        }
-
-        function receiveFileStart(d) {
-            incomingFiles[d.id] = { meta:d, chunks:[], receivedSize:0, uiId:addFileBubble(d.name, d.size, 'them') };
-        }
-
-        function receiveFileChunk(d) {
-            const f = incomingFiles[d.id];
-            if(!f) return;
-            f.chunks.push(d.data);
-            f.receivedSize += d.data.byteLength;
-            const pct = Math.min(100, (f.receivedSize/f.meta.size)*100);
-            if(Math.random()>0.7) updateFileProgress(f.uiId, pct); // Throttle UI updates
-
-            if(f.receivedSize >= f.meta.size) {
-                const blob = new Blob(f.chunks, {type:f.meta.mime});
-                const url = URL.createObjectURL(blob);
-                updateFileDownload(f.uiId, url, f.meta.name);
-                delete incomingFiles[d.id];
-            }
-        }
-
-        // --- AUDIO ---
-        async function toggleMic() {
-            const btn = document.getElementById('mic-btn');
-            if(localStream) {
-                localStream.getTracks().forEach(t => t.stop());
-                localStream = null;
-                btn.classList.remove('active');
-            } else {
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({audio:true});
-                    btn.classList.add('active');
-                    Object.keys(connections).forEach(pid => callPeer(pid));
-                } catch(e) { alert("Mic Access Denied"); }
-            }
-        }
-
-        function callPeer(pid) {
-            if(calls[pid]) return;
-            const call = peer.call(pid, localStream);
-            handleCall(call);
-        }
-
-        function handleCall(call) {
-            calls[call.peer] = call;
-            if(localStream) call.answer(localStream); else call.answer();
-            call.on('stream', (rem) => {
-                if(!document.getElementById(`aud-${call.peer}`)) {
-                    const a = document.createElement('audio');
-                    a.id = `aud-${call.peer}`; a.autoplay = true; a.srcObject = rem;
-                    document.getElementById('audio-container').appendChild(a);
-                    const dot = document.getElementById(`dot-${call.peer}`);
-                    if(dot) dot.classList.add('speaking');
-                }
-            });
-            call.on('close', () => {
-                delete calls[call.peer];
-                const dot = document.getElementById(`dot-${call.peer}`);
-                if(dot) dot.classList.remove('speaking');
-            });
-        }
-
-        // --- UI HELPERS ---
-        function shareLink() {
-            const url = window.location.href.split('?')[0] + "?room=" + roomId;
-            navigator.clipboard.writeText(url);
-            alert("Invite Link Copied!");
-        }
-
-        function clearChat() {
-            if(confirm("Clear history?")) {
-                document.querySelectorAll('.msg, .sys-msg').forEach(e => e.remove());
-                sysMsg("Chat Cleared");
-            }
-        }
-
-        function updateMemberList() {
-            const list = document.getElementById('member-list');
-            list.innerHTML = "";
-            Object.keys(members).forEach(id => {
-                const m = members[id];
-                const d = document.createElement('div');
-                d.className = "member-card";
-                const crown = m.isCreator ? '<span style="color:#ffb300">👑</span>' : '';
-                d.innerHTML = `<div class="mem-dot" id="dot-${id}"></div> ${crown} <div class="mem-name">${m.name}</div>`;
-                list.appendChild(d);
-            });
-        }
-
-        function addChat(name, text, type) {
-            const d = document.createElement('div');
-            d.className = `msg ${type}`;
-            d.setAttribute('ondblclick', 'this.remove()');
-            const n = type==='them' ? `<span class="sender-name">${name}</span>` : '';
-            d.innerHTML = `${n}${text}`;
-            document.getElementById('msg-container').appendChild(d);
-            d.scrollIntoView({behavior:'smooth'});
-        }
-
-        function sysMsg(txt) {
-            const d = document.createElement('div'); d.className='sys-msg'; d.innerText=txt;
-            document.getElementById('msg-container').appendChild(d);
-            d.scrollIntoView({behavior:'smooth'});
-        }
-
-        let fc=0;
-        function addFileBubble(name, size, who) {
-            fc++;
-            const d = document.createElement('div'); d.className = `msg ${who}`;
-            d.setAttribute('ondblclick', 'this.remove()');
-            const mb = (size/1024/1024).toFixed(2);
-            d.innerHTML = `<div class="file-card"><div class="file-info">📄 ${name} (${mb}MB)</div><div class="progress-track"><div class="progress-fill" id="fill-${fc}"></div></div><div class="file-meta" id="meta-${fc}">0%</div></div>`;
-            document.getElementById('msg-container').appendChild(d);
-            d.scrollIntoView({behavior:'smooth'});
-            return fc;
-        }
-
-        function updateFileProgress(id, pct) {
-            const f = document.getElementById('fill-'+id);
-            const m = document.getElementById('meta-'+id);
-            if(f) f.style.width = pct+"%";
-            if(m) m.innerText = pct.toFixed(0)+"%";
-        }
-
-        function updateFileComplete(id, txt) { document.getElementById('meta-'+id).innerText = txt; }
-        function updateFileDownload(id, url, name) {
-            document.getElementById('meta-'+id).innerHTML = `<a href="${url}" download="${name}" style="color:var(--secondary); font-weight:bold; text-decoration:none;">⬇ DOWNLOAD</a>`;
         }
     </script>
 </body>
