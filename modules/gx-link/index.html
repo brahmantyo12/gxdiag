@@ -39,13 +39,17 @@
         
         /* Party Screen */
         #party-screen { display: none; width: 100%; height: 100%; flex-direction: column; background: var(--bg); }
-        .room-nav { display: flex; background: #111; border-bottom: 1px solid #333; padding: 0 20px; justify-content: center; gap: 20px; }
-        .nav-item { padding: 15px 10px; color: #666; cursor: pointer; font-weight: bold; font-size: 0.9rem; border-bottom: 3px solid transparent; }
+        .room-nav { display: flex; background: #111; border-bottom: 1px solid #333; padding: 0 20px; justify-content: center; gap: 15px; }
+        .nav-item { padding: 15px 10px; color: #666; cursor: pointer; font-weight: bold; font-size: 0.9rem; border-bottom: 3px solid transparent; transition: 0.3s; position: relative; }
         .nav-item.active { color: #fff; border-color: var(--primary); }
         
-        /* PING METER */
-        .ping-box { position: absolute; top: 15px; right: 60px; font-size: 0.7rem; font-weight: bold; background: #000; padding: 4px 8px; border-radius: 5px; border: 1px solid #333; display: flex; gap: 5px; align-items: center; opacity: 0.7;}
-        .ping-dot { width: 8px; height: 8px; border-radius: 50%; background: #666; }
+        /* PING METER UI */
+        .ping-box { 
+            display: flex; align-items: center; gap: 6px; background: #000; 
+            padding: 5px 10px; border-radius: 12px; border: 1px solid #333; 
+            font-size: 0.7rem; color: #888; font-weight: bold; margin-left: auto;
+        }
+        .ping-dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
         .ping-dot.good { background: var(--secondary); box-shadow: 0 0 5px var(--secondary); }
         .ping-dot.med { background: #ffb300; }
         .ping-dot.bad { background: var(--danger); }
@@ -54,6 +58,7 @@
         .view-panel.active { display: flex; }
 
         /* CHAT VIEW */
+        #chat-view { background: radial-gradient(circle at center, #111 0%, #050505 100%); }
         #msg-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth; }
         
         .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.95rem; position: relative; word-break: break-word; animation: slideUp 0.2s; group; }
@@ -68,7 +73,7 @@
             color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; 
             font-size: 12px; cursor: pointer; display: none; align-items: center; justify-content: center;
         }
-        .msg.me:hover .msg-opt-btn { display: flex; } /* Only show on hover for own messages */
+        .msg.me:hover .msg-opt-btn { display: flex; }
 
         /* CONTEXT MENU */
         #ctx-menu { 
@@ -106,9 +111,9 @@
         /* CALL VIEW */
         #call-view { align-items: center; justify-content: center; padding: 20px; text-align: center; }
         .avatar-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; max-width: 600px; }
-        .call-avatar { width: 70px; height: 70px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 2px solid #444; position: relative; }
+        .call-avatar { width: 70px; height: 70px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 2px solid #444; position: relative; transition: 0.3s; }
         .call-avatar.speaking { border-color: var(--secondary); box-shadow: 0 0 15px rgba(0,255,136,0.3); transform: scale(1.1); transition: 0.2s; }
-        .mic-btn { width: 70px; height: 70px; border-radius: 50%; background: #222; border: 2px solid #444; color: #888; font-size: 2rem; cursor: pointer; margin-top: 50px; display: flex; align-items: center; justify-content: center; }
+        .mic-btn { width: 70px; height: 70px; border-radius: 50%; background: #222; border: 2px solid #444; color: #888; font-size: 2rem; cursor: pointer; margin-top: 50px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         .mic-btn.active { background: var(--secondary); color: #000; box-shadow: 0 0 30px var(--secondary); border: none; }
 
         /* Modals */
@@ -122,13 +127,12 @@
             .room-nav { flex-direction: column; width: 280px; height: 100%; border-right: 1px solid #333; padding: 25px; justify-content: flex-start; background: #111; position: relative; border-bottom: none; }
             .nav-item { border-bottom: none; border-left: 3px solid transparent; padding: 15px; text-align: left; width: 100%; }
             .nav-item.active { border-color: var(--primary); background: #1a1a1a; }
+            .ping-box { margin-left: 0; margin-top: auto; margin-bottom: 10px; width: fit-content; } /* Ping location on desktop */
             #chat-view { background: #0b0b0b; }
             #msg-container { padding: 40px; }
             .msg { max-width: 60%; }
             /* Desktop Title */
-            #desk-title { display: block !important; margin-bottom: 30px; font-size: 1.5rem; color: #fff; letter-spacing: 2px; }
-            /* Move ping to bottom on desktop */
-            .ping-box { top: auto; bottom: 20px; right: auto; left: 25px; width: fit-content; }
+            #desk-title { display: block !important; margin-bottom: 20px; font-size: 1.5rem; color: #fff; letter-spacing: 2px; }
         }
     </style>
 </head>
@@ -159,13 +163,16 @@
             <div class="nav-item active" onclick="switchTab('chat')">
                 💬 CHAT <span id="online-count" style="font-size:0.7rem; color:var(--primary); float:right;">1 ON</span>
             </div>
-            <div class="nav-item" onclick="switchTab('call')">📞 CALL</div>
+            <div class="nav-item" onclick="switchTab('call')">
+                📞 CALL <div class="nav-badge" id="call-badge"></div>
+            </div>
             
             <div class="ping-box">
-                <div class="ping-dot" id="ping-dot"></div> <span id="ping-text">-- ms</span>
+                <div class="ping-dot" id="ping-dot"></div>
+                <span id="ping-text">-- ms</span>
             </div>
 
-            <div style="margin-top:auto; display:flex; gap:10px; width:100%; padding: 10px 0;">
+            <div style="display:flex; gap:10px; width:100%; padding: 10px 0;">
                 <button class="icon-btn" onclick="shareLink()" title="Invite" style="flex:1; border:1px solid #333; border-radius:8px;">🔗</button>
                 <button class="icon-btn" style="color:var(--danger); flex:1; border:1px solid #333; border-radius:8px;" onclick="location.reload()">🚪</button>
             </div>
@@ -192,7 +199,7 @@
                 
                 <button class="icon-btn" onclick="startVN()" style="color:var(--secondary)">🎤</button>
                 
-                <input type="text" class="text-in" id="msg-in" placeholder="Message..." onkeypress="if(event.key==='Enter') sendChat()">
+                <input type="text" class="text-in" id="msg-in" placeholder="Message..." autocomplete="off" onkeypress="if(event.key==='Enter') sendChat()">
                 <button class="icon-btn" onclick="sendChat()" style="color:var(--primary)">➤</button>
             </div>
             
@@ -252,7 +259,7 @@
             if(window.innerWidth > 800) document.getElementById('desk-title').style.display = 'block';
             
             setInterval(cleanGhosts, 3000); 
-            setInterval(pingLoop, 2000); 
+            setInterval(pingLoop, 2000); // START PING LOOP
 
             const url = new URLSearchParams(window.location.search);
             if(url.has('room')) {
@@ -318,7 +325,7 @@
                 else if(d.type === 'EDIT') updateMsgUI(d.id, d.text);
                 else if(d.type === 'FILE') renderFile(d.id, d.name, d.blob, 'them', d.isAudio);
                 
-                // 3. PING
+                // 3. PING PONG (NEW)
                 else if(d.type === 'PING') conn.send({ type:'PONG', time:d.time });
                 else if(d.type === 'PONG') updatePing(Date.now() - d.time);
             });
@@ -329,11 +336,16 @@
             });
         }
 
-        // --- PING SYSTEM ---
+        // --- PING SYSTEM (NEW) ---
         function pingLoop() {
             if(!peer || !peer.id) return;
             const keys = Object.keys(connections);
-            if(keys.length === 0) return;
+            if(keys.length === 0) {
+                document.getElementById('ping-text').innerText = "-- ms";
+                document.getElementById('ping-dot').className = "ping-dot";
+                return;
+            }
+            // Ping random connected peer to measure latency
             const target = keys[Math.floor(Math.random() * keys.length)];
             if(connections[target].open) connections[target].send({ type:'PING', time:Date.now() });
         }
@@ -342,8 +354,9 @@
             const elText = document.getElementById('ping-text');
             const elDot = document.getElementById('ping-dot');
             elText.innerText = ms + " ms";
+            
             elDot.className = "ping-dot";
-            if(ms < 50) elDot.classList.add("good");
+            if(ms < 60) elDot.classList.add("good");
             else if(ms < 200) elDot.classList.add("med");
             else elDot.classList.add("bad");
         }
@@ -376,10 +389,9 @@
             d.id = `msg-${id}`;
             d.dataset.rawText = txt;
             
-            // Layout content
             let html = (type==='them' ? `<span class="sender-name">${name}</span>` : '') + `<span class="content">${txt}</span>`;
             
-            // ADDED: Three Dots Button for Desktop/Mobile (instead of long press only)
+            // TITIK TIGA (MENU)
             if(type === 'me') {
                 html += `<button class="msg-opt-btn" onclick="openMenuAt(event, '${id}')">⋮</button>`;
             }
@@ -389,21 +401,17 @@
             c.appendChild(d); c.scrollTop = c.scrollHeight;
         }
 
-        // --- CONTEXT MENU LOGIC (HYBRID: BUTTON OR CLICK) ---
+        // --- CONTEXT MENU LOGIC ---
         function openMenuAt(e, id) {
-            e.stopPropagation(); // Prevent bubble click
+            e.stopPropagation();
             ctxTargetId = id;
             const menu = document.getElementById('ctx-menu');
             
-            // Show only relevant items (Self message)
-            const items = menu.querySelectorAll('.ctx-item');
-            items.forEach(i => i.style.display = 'flex');
-
-            // Posisi Smart
+            // Position
             const rect = e.target.getBoundingClientRect();
             menu.style.display = 'block';
             menu.style.top = (rect.bottom + 5) + 'px';
-            menu.style.left = (rect.left - 100) + 'px'; // Shift left slightly
+            menu.style.left = (rect.left - 100) + 'px';
         }
 
         function closeCtx() { document.getElementById('ctx-menu').style.display = 'none'; }
@@ -434,7 +442,7 @@
             }
         }
 
-        // --- VOICE NOTE (VN) ---
+        // --- VN ---
         let mediaRec, chunks = [], timerInt, sec = 0;
 
         async function startVN() {
@@ -459,7 +467,6 @@
             if(mediaRec && mediaRec.state !== 'inactive') {
                 mediaRec.onstop = () => {
                     const blob = new Blob(chunks, { type: 'audio/webm' });
-                    // Send as file with isAudio flag
                     const file = new File([blob], `VN_${Date.now()}.webm`, { type: 'audio/webm' });
                     processUpload(file, true);
                     resetVNUI();
@@ -505,7 +512,6 @@
                 d.innerHTML = `<a href="${url}" download="${name}" style="color:var(--secondary)">📄 ${name}</a>`;
             }
             
-            // Add menu button for file msg too (for delete/unsend)
             if(who === 'me') {
                 d.innerHTML += `<button class="msg-opt-btn" onclick="openMenuAt(event, '${id}')">⋮</button>`;
             }
