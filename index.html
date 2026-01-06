@@ -15,46 +15,36 @@
         .card-secret {
             border-color: #ffd700;
             background: linear-gradient(145deg, #2b1d14, #000);
-            
-            /* State Awal: Sembunyi */
             opacity: 0; 
             transform: scale(0.9);
             filter: blur(5px);
             transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
         }
-
-        /* Saat Mouse Lewat (Desktop) */
         .card-secret:hover {
             opacity: 1;
             transform: scale(1) translateY(-7px);
             filter: blur(0);
-            box-shadow: 0 0 25px #ffd700; /* Glow Emas */
+            box-shadow: 0 0 25px #ffd700;
+        }
+        @media (max-width: 900px) {
+            .card-secret { opacity: 0.15; filter: grayscale(100%); transform: scale(0.95); }
+            .card-secret::before { content: "?"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: #333; font-weight: bold; }
+            .card-secret:active, .card-secret:focus { opacity: 1; filter: grayscale(0%); transform: scale(1); }
+            .card-secret:active::before { content: none; }
         }
 
-        /* --- MODE MOBILE (SOLUSI LAYAR SENTUH) --- */
-        @media (max-width: 900px) {
-            .card-secret {
-                /* Di HP jangan hilang total, tapi samar-samar (Ghost Mode) */
-                opacity: 0.15; 
-                filter: grayscale(100%);
-                transform: scale(0.95);
-            }
-            
-            /* Agar user tahu ada sesuatu di sana */
-            .card-secret::before {
-                content: "?";
-                position: absolute; top: 50%; left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 3rem; color: #333; font-weight: bold;
-            }
-
-            /* Saat ditekan di HP, baru muncul jelas (Active State) */
-            .card-secret:active, .card-secret:focus {
-                opacity: 1;
-                filter: grayscale(0%);
-                transform: scale(1);
-            }
-            .card-secret:active::before { content: none; }
+        /* --- FEATURED CARD STYLE --- */
+        .card-featured {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-featured:hover {
+            transform: translateY(-5px);
+        }
+        /* Animasi kedip halus untuk border */
+        @keyframes borderPulse {
+            0% { border-color: rgba(255, 255, 255, 0.2); }
+            50% { border-color: currentColor; }
+            100% { border-color: rgba(255, 255, 255, 0.2); }
         }
     </style>
 </head>
@@ -139,14 +129,19 @@
     </div>
 
     <div class="menu-grid">
-        <a href="modules/gx-link/index.html" class="card theme-net" style="border-color: #00e5ff; box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);">
-            <div class="icon">📡</div>
-            <div class="title">GX-Link</div>
+        
+        <a href="modules/gx-link/index.html" class="card theme-net card-featured" style="border: 1px solid #00e5ff; box-shadow: 0 0 25px rgba(0, 229, 255, 0.2);">
+            <div class="icon">💬</div>
+            <div class="title" style="color: #00e5ff; text-shadow: 0 0 10px rgba(0,229,255,0.3);">GX-Link</div>
             <div class="desc">P2P Chat, Call & Transfer</div>
-            <div style="position:absolute; top:10px; right:10px; background:#00e5ff; color:#000; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold;">NEW</div>
         </a>
 
-        <a href="modules/keyboard/index.html" class="card theme-input"><div class="icon">⌨️</div><div class="title">Keyboard</div><div class="desc">Ghosting & Chatter</div></a>
+        <a href="modules/keyboard/index.html" class="card theme-input card-featured" style="border: 1px solid #ffb300; box-shadow: 0 0 25px rgba(255, 179, 0, 0.2);">
+            <div class="icon">⌨️</div>
+            <div class="title" style="color: #ffb300; text-shadow: 0 0 10px rgba(255, 179, 0, 0.3);">Keyboard</div>
+            <div class="desc">Ghosting & Chatter</div>
+        </a>
+
         <a href="modules/typing/index.html" class="card theme-input"><div class="icon">⚡</div><div class="title">Typing</div><div class="desc">Speed & Accuracy</div></a>
         <a href="modules/mouse/index.html" class="card theme-input"><div class="icon">🖱️</div><div class="title">Mouse</div><div class="desc">Polling Rate & Buttons</div></a>
         <a href="modules/gamepad/index.html" class="card theme-input"><div class="icon">🎮</div><div class="title">Controller</div><div class="desc">Deadzone & WebHID</div></a>
