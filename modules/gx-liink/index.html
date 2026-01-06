@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GX-Link Pro</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { 
+            background: #050505; display: flex; flex-direction: column; 
+            height: 100vh; overflow: hidden; font-family: 'Segoe UI', monospace; color: #eee;
+        }
+        
+        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+
+        /* --- LOGIN / ROOM SETUP --- */
+        #setup-screen {
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 20px; overflow-y: auto;
+        }
+
+        .mode-tabs { display: flex; gap: 10px; background: #111; padding: 5px; border-radius: 30px; border: 1px solid #333; }
+        .m-btn {
+            padding: 10px 20px; border-radius: 20px; border: none; background: transparent; color: #888; cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        .m-btn.active { background: #00e5ff; color: #000; }
+
+        .card-box {
+            background: #151515; border: 1px solid #333; padding: 25px; border-radius: 15px;
+            width: 100%; max-width: 450px; text-align: center; display: flex; flex-direction: column; gap: 15px;
+        }
+        
+        input {
+            background: #222; border: 1px solid #444; color: #fff; padding: 12px;
+            border-radius: 8px; outline: none; text-align: center; width: 100%; font-family: monospace;
+        }
+        .btn-main {
+            background: #00e5ff; color: #000; border: none; padding: 12px; border-radius: 8px;
+            font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem;
+        }
+        .btn-join { background: #00ff88; }
+
+        /* --- CHAT SCREEN --- */
+        #chat-screen {
+            flex-grow: 1; display: none; flex-direction: column; background: #080808;
+        }
+        .chat-top {
+            padding: 10px 20px; background: #151515; border-bottom: 1px solid #333;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .status-badge { font-size: 0.8rem; background: #222; padding: 5px 10px; border-radius: 10px; border: 1px solid #444; color: #00ff88; }
+
+        #msg-container {
+            flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px;
+        }
+
+        /* BUBBLES */
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 12px; font-size: 0.9rem; word-break: break-word; position: relative; }
+        .msg.me { align-self: flex-end; background: #005662; color: #fff; border-bottom-right-radius: 2px; }
+        .msg.them { align-self: flex-start; background: #222; color: #ddd; border-bottom-left-radius: 2px; }
+        .sys-msg { align-self: center; font-size: 0.75rem; color: #666; background: #111; padding: 5px 10px; border-radius: 20px; }
+
+        /* FILE TRANSFER UI */
+        .file-card {
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px; border-radius: 8px; margin-top: 5px; width: 250px;
+        }
+        .file-info { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-weight: bold; font-size: 0.85rem;}
+        .progress-track { width: 100%; height: 6px; background: #000; border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: #00e5ff; transition: width 0.2s; }
+        .file-meta { display: flex; justify-content: space-between; font-size: 0.7rem; color: #aaa; margin-top: 5px; }
+        
+        /* INPUT AREA */
+        .chat-input {
+            padding: 15px; background: #111; border-top: 1px solid #333; display: flex; gap: 10px; align-items: center;
+        }
+        .btn-icon { 
+            background: #222; border: none; color: #888; width: 45px; height: 45px; border-radius: 50%; 
+            font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center;
+        }
+
+        /* MODAL PASSWORD */
+        #auth-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9);
+            z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-size:0.8rem; color:#666;">GX-LINK PRO</div>
+    </div>
+
+    <div id="setup-screen">
+        <div style="text-align:center;">
+            <h2 style="color:#fff; margin:0;">SELECT MODE</h2>
+            <p style="color:#666; font-size:0.8rem;">P2P Encrypted Connection</p>
+        </div>
+
+        <div class="mode-tabs">
+            <button class="m-btn active" onclick="setMode('host')">CREATE ROOM</button>
+            <button class="m-btn" onclick="setMode('join')">JOIN ROOM</button>
+        </div>
+
+        <div class="card-box" id="card-host">
+            <div style="font-size:0.8rem; color:#00e5ff; text-transform:uppercase;">Host Settings</div>
+            <input type="text" id="host-room" placeholder="Room Name (e.g. GX123)">
+            <input type="password" id="host-pass" placeholder="Set Password (Optional)">
+            <button class="btn-main" onclick="createRoom()">🚀 OPEN ROOM</button>
+            <div style="font-size:0.7rem; color:#555;">*ID will be created based on Room Name</div>
+        </div>
+
+        <div class="card-box" id="card-join" style="display:none;">
+            <div style="font-size:0.8rem; color:#00ff88; text-transform:uppercase;">Target Settings</div>
+            <input type="text" id="join-room" placeholder="Enter Room Name">
+            <button class="btn-main btn-join" onclick="joinRoom()">🔗 CONNECT</button>
+        </div>
+    </div>
+
+    <div id="auth-modal">
+        <div class="card-box">
+            <h3 style="margin:0;">🔒 LOCKED ROOM</h3>
+            <p style="color:#888; font-size:0.8rem;">Host requires a password.</p>
+            <input type="password" id="auth-pass" placeholder="Enter Password">
+            <button class="btn-main" onclick="submitAuth()">UNLOCK</button>
+        </div>
+    </div>
+
+    <div id="chat-screen">
+        <div class="chat-top">
+            <div class="status-badge" id="conn-status">Waiting...</div>
+            <button onclick="location.reload()" style="background:#ff1744; border:none; color:#fff; padding:5px 10px; border-radius:5px; cursor:pointer;">EXIT</button>
+        </div>
+
+        <div id="msg-container">
+            <div class="sys-msg">🔒 End-to-End Encrypted via WebRTC</div>
+        </div>
+
+        <div class="chat-input">
+            <button class="btn-icon" onclick="document.getElementById('file-input').click()">📎</button>
+            <input type="file" id="file-input" style="display:none" onchange="startUpload(this)">
+            <input type="text" id="msg-input" style="flex-grow:1; background:#000; border:1px solid #333; border-radius:20px; padding:10px 15px; color:#fff;" placeholder="Type message..." onkeypress="handleEnter(event)">
+            <button class="btn-icon" style="background:#00e5ff; color:#000;" onclick="sendText()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL VARS ---
+        const peerConfig = { debug: 1 };
+        let peer = null;
+        let conn = null;
+        let myPassword = "";
+        
+        // --- CHUNKING CONFIG ---
+        const CHUNK_SIZE = 16 * 1024; // 16KB per chunk (Safe for WebRTC)
+
+        // --- 1. UI LOGIC ---
+        function setMode(mode) {
+            document.querySelectorAll('.m-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('card-host').style.display = mode === 'host' ? 'flex' : 'none';
+            document.getElementById('card-join').style.display = mode === 'join' ? 'flex' : 'none';
+        }
+
+        // --- 2. HOST LOGIC ---
+        function createRoom() {
+            const roomName = document.getElementById('host-room').value.trim();
+            myPassword = document.getElementById('host-pass').value;
+            
+            if(!roomName) return alert("Room Name Required!");
+
+            // Create Peer with Custom ID
+            const peerId = "GX-" + roomName.replace(/[^a-zA-Z0-9]/g, '-').toUpperCase();
+            
+            peer = new Peer(peerId, peerConfig);
+
+            peer.on('open', (id) => {
+                switchToChat(`Hosting: ${id}`);
+                addSystemMsg(`Room Opened. ID: ${id}`);
+                if(myPassword) addSystemMsg(`Password protected.`);
+            });
+
+            peer.on('error', (err) => {
+                alert("Room Name Unavailable (Already taken?). Try another.");
+                location.reload();
+            });
+
+            peer.on('connection', (c) => {
+                // Someone connects
+                handleConnection(c, true); // True = I am Host
+            });
+        }
+
+        // --- 3. JOIN LOGIC ---
+        function joinRoom() {
+            const roomName = document.getElementById('join-room').value.trim();
+            if(!roomName) return alert("Enter Room Name!");
+
+            const targetId = "GX-" + roomName.replace(/[^a-zA-Z0-9]/g, '-').toUpperCase();
+            
+            // Random ID for Joiner
+            const myTempId = "GUEST-" + Math.floor(Math.random()*10000);
+            peer = new Peer(myTempId, peerConfig);
+
+            peer.on('open', () => {
+                const c = peer.connect(targetId);
+                handleConnection(c, false); // False = I am Guest
+            });
+
+            peer.on('error', () => {
+                alert("Room Not Found / Offline");
+            });
+        }
+
+        // --- 4. CONNECTION HANDLER & AUTH ---
+        function handleConnection(c, amIHost) {
+            conn = c;
+
+            conn.on('open', () => {
+                if(amIHost) {
+                    // If Host, wait for Auth or Approve
+                    if(myPassword) {
+                        conn.send({ type: 'AUTH_REQ' });
+                    } else {
+                        finalizeConnection();
+                    }
+                }
+            });
+
+            conn.on('data', (data) => {
+                handleData(data, amIHost);
+            });
+
+            conn.on('close', () => alert("Disconnected"));
+        }
+
+        function handleData(data, amIHost) {
+            // AUTH PROTOCOL
+            if(data.type === 'AUTH_REQ') {
+                document.getElementById('auth-modal').style.display = 'flex';
+            }
+            else if(data.type === 'AUTH_ANS') {
+                if(data.pass === myPassword) {
+                    conn.send({ type: 'AUTH_OK' });
+                    finalizeConnection();
+                } else {
+                    conn.send({ type: 'AUTH_FAIL' });
+                    setTimeout(() => conn.close(), 500);
+                }
+            }
+            else if(data.type === 'AUTH_OK') {
+                document.getElementById('auth-modal').style.display = 'none';
+                finalizeConnection();
+            }
+            else if(data.type === 'AUTH_FAIL') {
+                alert("Wrong Password!");
+                location.reload();
+            }
+            // CHAT & FILE
+            else if(data.type === 'TEXT') {
+                addBubble(data.content, 'them');
+            }
+            else if(data.type === 'FILE_META') {
+                receiveFileStart(data);
+            }
+            else if(data.type === 'FILE_CHUNK') {
+                receiveFileChunk(data);
+            }
+        }
+
+        function submitAuth() {
+            const p = document.getElementById('auth-pass').value;
+            conn.send({ type: 'AUTH_ANS', pass: p });
+            document.getElementById('auth-modal').style.display = 'none';
+            switchToChat("Verifying...");
+        }
+
+        function finalizeConnection() {
+            switchToChat("Connected!");
+            addSystemMsg("Peer Connected. You can now chat.");
+        }
+
+        function switchToChat(status) {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'flex';
+            document.getElementById('conn-status').innerText = status;
+        }
+
+        // --- 5. FILE TRANSFER LOGIC (CHUNKING) ---
+        let incomingFiles = {}; // Map to store chunks
+
+        async function startUpload(input) {
+            const file = input.files[0];
+            if(!file || !conn) return;
+
+            // 1. Send Metadata
+            const fileId = Date.now().toString();
+            conn.send({
+                type: 'FILE_META',
+                id: fileId,
+                name: file.name,
+                size: file.size,
+                mime: file.type
+            });
+
+            // 2. Create UI Bubble
+            const uiId = addFileBubble(file.name, file.size, 'me');
+            const fill = document.getElementById('fill-' + uiId);
+            const meta = document.getElementById('meta-' + uiId);
+            
+            // 3. Start Chunking
+            let offset = 0;
+            const startTime = Date.now();
+            let lastUpdate = startTime;
+            let lastOffset = 0;
+
+            function sendLoop() {
+                // Pause if connection buffer is full (Backpressure handling)
+                /* Note: PeerJS data channel doesn't expose bufferedAmount nicely in wrapper, 
+                   so we use a small timeout to prevent flooding */
+                
+                const chunk = file.slice(offset, offset + CHUNK_SIZE);
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    if(!conn.open) return;
+                    
+                    conn.send({
+                        type: 'FILE_CHUNK',
+                        id: fileId,
+                        data: e.target.result
+                    });
+
+                    offset += CHUNK_SIZE;
+
+                    // Update UI every 500ms
+                    const now = Date.now();
+                    if(now - lastUpdate > 500 || offset >= file.size) {
+                        const pct = Math.min(100, (offset / file.size) * 100);
+                        const speed = ((offset - lastOffset) / ((now - lastUpdate)/1000)) / 1024; // KB/s
+                        
+                        fill.style.width = pct + "%";
+                        meta.innerText = `${pct.toFixed(0)}% | ${(offset/1024/1024).toFixed(1)}MB | ${speed.toFixed(0)} KB/s`;
+                        
+                        lastUpdate = now;
+                        lastOffset = offset;
+                    }
+
+                    if(offset < file.size) {
+                        // Small delay to prevent crashing receiver
+                        setTimeout(sendLoop, 5); 
+                    } else {
+                        meta.innerText = "UPLOAD COMPLETE";
+                    }
+                };
+                reader.readAsArrayBuffer(chunk);
+            }
+            sendLoop();
+        }
+
+        function receiveFileStart(data) {
+            incomingFiles[data.id] = {
+                meta: data,
+                chunks: [],
+                receivedSize: 0,
+                startTime: Date.now(),
+                lastUpdate: Date.now(),
+                lastSize: 0,
+                uiId: addFileBubble(data.name, data.size, 'them')
+            };
+        }
+
+        function receiveFileChunk(data) {
+            const f = incomingFiles[data.id];
+            if(!f) return;
+
+            f.chunks.push(data.data);
+            f.receivedSize += data.data.byteLength;
+
+            // UI Update
+            const now = Date.now();
+            if(now - f.lastUpdate > 500 || f.receivedSize >= f.meta.size) {
+                const fill = document.getElementById('fill-' + f.uiId);
+                const meta = document.getElementById('meta-' + f.uiId);
+                
+                const pct = Math.min(100, (f.receivedSize / f.meta.size) * 100);
+                const speed = ((f.receivedSize - f.lastSize) / ((now - f.lastUpdate)/1000)) / 1024;
+                
+                fill.style.width = pct + "%";
+                meta.innerText = `${pct.toFixed(0)}% | ${speed.toFixed(0)} KB/s`;
+                
+                f.lastUpdate = now;
+                f.lastSize = f.receivedSize;
+            }
+
+            // Complete?
+            if(f.receivedSize >= f.meta.size) {
+                const blob = new Blob(f.chunks, { type: f.meta.mime });
+                const url = URL.createObjectURL(blob);
+                
+                const meta = document.getElementById('meta-' + f.uiId);
+                meta.innerHTML = `<a href="${url}" download="${f.meta.name}" style="color:#00ff88; font-weight:bold;">DOWNLOAD NOW</a>`;
+                
+                delete incomingFiles[data.id]; // Cleanup RAM
+            }
+        }
+
+        // --- 6. CHAT UI ---
+        function handleEnter(e) { if(e.key==='Enter') sendText(); }
+        
+        function sendText() {
+            const el = document.getElementById('msg-input');
+            const txt = el.value.trim();
+            if(!txt) return;
+            conn.send({ type: 'TEXT', content: txt });
+            addBubble(txt, 'me');
+            el.value = "";
+        }
+
+        function addBubble(txt, who) {
+            const div = document.createElement('div');
+            div.className = `msg ${who}`;
+            div.innerText = txt;
+            document.getElementById('msg-container').appendChild(div);
+            div.scrollIntoView();
+        }
+
+        function addSystemMsg(txt) {
+            const div = document.createElement('div');
+            div.className = `sys-msg`;
+            div.innerText = txt;
+            document.getElementById('msg-container').appendChild(div);
+        }
+
+        let fileCounter = 0;
+        function addFileBubble(name, size, who) {
+            fileCounter++;
+            const div = document.createElement('div');
+            div.className = `msg ${who}`;
+            const sizeMB = (size / 1024 / 1024).toFixed(2);
+            
+            div.innerHTML = `
+                <div class="file-card">
+                    <div class="file-info">📄 ${name} <span style="font-weight:normal; font-size:0.7rem;">(${sizeMB} MB)</span></div>
+                    <div class="progress-track"><div class="progress-fill" id="fill-${fileCounter}"></div></div>
+                    <div class="file-meta" id="meta-${fileCounter}">Waiting...</div>
+                </div>
+            `;
+            document.getElementById('msg-container').appendChild(div);
+            div.scrollIntoView();
+            return fileCounter;
+        }
+
+    </script>
+</body>
+</html>
