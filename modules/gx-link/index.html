@@ -15,14 +15,15 @@
         /* Animations */
         @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes wave { 0%, 100% { height: 5px; } 50% { height: 20px; } }
         @keyframes pulseGlow { 0% { box-shadow: 0 0 0 rgba(0, 255, 136, 0); } 50% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.5); } 100% { box-shadow: 0 0 0 rgba(0, 255, 136, 0); } }
+        @keyframes wave { 0%, 100% { height: 5px; } 50% { height: 20px; } }
 
         /* --- UI ELEMENTS --- */
         .mod-header { padding: 15px 20px; background: rgba(10,10,10,0.95); border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; z-index: 50; }
         .back-btn { text-decoration: none; color: #fff; font-weight: bold; font-size: 0.9rem; }
         
-        #setup-screen { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; overflow-y: auto; z-index: 20; background: var(--bg); position: absolute; width: 100%; height: 100%; }
+        /* Setup Screen */
+        #setup-screen { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; gap: 20px; overflow-y: auto; z-index: 20; background: var(--bg); position: absolute; width: 100%; height: 100%; }
         .party-logo h1 { font-size: 2.5rem; margin: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
         
         .card-box { background: #151515; border: 1px solid #333; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
@@ -42,7 +43,7 @@
         
         .room-nav { display: flex; background: #111; border-bottom: 1px solid #333; padding: 15px 20px; flex-direction: column; gap: 15px; }
         .nav-switch { display: flex; background: #000; border-radius: 12px; padding: 4px; border: 1px solid #333; position: relative; overflow: hidden; }
-        .nav-item { flex: 1; text-align: center; padding: 10px; font-size: 0.9rem; font-weight: bold; color: #666; cursor: pointer; border-radius: 8px; transition: 0.2s; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .nav-item { flex: 1; text-align: center; padding: 10px; font-size: 0.8rem; font-weight: bold; color: #666; cursor: pointer; border-radius: 8px; transition: 0.2s; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .nav-item.active { background: #222; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
         
         /* PING METER */
@@ -68,6 +69,18 @@
         .icon-btn { background: none; border: none; font-size: 1.4rem; color: #888; padding: 5px; cursor: pointer; transition: 0.2s; }
         .text-in { flex: 1; background: #000; border: 1px solid #333; padding: 12px 18px; border-radius: 25px; color: #fff; outline: none; }
 
+        /* INFO VIEW */
+        #info-view { padding: 20px; overflow-y: auto; }
+        .info-card { background: #151515; border: 1px solid #333; border-radius: 15px; padding: 20px; margin-bottom: 15px; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 10px; font-size: 0.9rem; }
+        .info-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .info-label { color: #888; }
+        .info-val { color: #fff; font-weight: bold; font-family: monospace; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .stat-box { background: #222; padding: 10px; border-radius: 10px; text-align: center; }
+        .stat-num { font-size: 1.2rem; color: var(--primary); font-weight: bold; }
+        .stat-lbl { font-size: 0.7rem; color: #888; }
+
         /* VN & AUDIO */
         #vn-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; background: #1a1a1a; display: none; align-items: center; justify-content: space-between; padding: 0 20px; border-top: 1px solid #333; z-index: 100; animation: slideUp 0.2s; }
         .vn-timer { font-family: monospace; color: var(--danger); font-size: 1rem; font-weight: bold; }
@@ -86,7 +99,6 @@
         .call-avatar.muted { border-color: var(--danger); opacity: 0.7; }
         .call-name { margin-top: 8px; font-size: 0.8rem; color: #ccc; }
         
-        /* Remote Mute Button (On Avatar) */
         .remote-mute-btn {
             position: absolute; top: 0; right: 0; background: #333; color: #fff;
             border: 1px solid #555; border-radius: 50%; width: 24px; height: 24px;
@@ -94,7 +106,6 @@
         }
         .remote-mute-btn.active { background: var(--danger); border-color: var(--danger); }
 
-        /* VOIP Control Bar */
         .call-controls {
             display: flex; gap: 20px; align-items: center; background: #111; 
             padding: 15px 30px; border-radius: 30px; border: 1px solid #333;
@@ -109,12 +120,13 @@
         .call-btn.join { background: var(--secondary); color: #000; width: 140px; border-radius: 10px; font-weight: bold; gap: 10px;}
         .call-btn.leave { background: var(--danger); color: #fff; }
         .call-btn.mute { background: #ffb300; color: #000; }
-        .call-btn.active { background: #444; color: #888; } /* For muted state style */
 
         /* Modals */
-        #settings-modal, #edit-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        #settings-modal, #edit-modal, #tutorial-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .server-tag { font-size: 0.7rem; background: #222; padding: 5px 12px; border-radius: 20px; margin-top: 10px; display: inline-block; cursor: pointer; color: #888; }
         .server-tag.local { color: #000; background: #ffb300; }
+        .code-block { background: #000; padding: 10px; border-radius: 5px; font-family: monospace; color: var(--secondary); margin: 5px 0; border: 1px solid #333; }
+        .tutorial-content { text-align: left; font-size: 0.85rem; line-height: 1.6; color: #ccc; }
 
         @media (min-width: 800px) {
             #party-screen { flex-direction: row; }
@@ -122,7 +134,7 @@
             .nav-switch { flex-direction: column; background: transparent; border: none; gap: 10px; padding: 0; }
             .nav-item { text-align: left; padding: 15px; border: 1px solid transparent; background: #1a1a1a; justify-content: flex-start;}
             .nav-item.active { border-color: var(--primary); background: #222; }
-            #chat-view { background: #0b0b0b; }
+            #chat-view, #info-view { background: #0b0b0b; }
             #msg-container { padding: 40px; }
             .msg { max-width: 60%; }
             #desk-title { display: block !important; margin-bottom: 20px; font-size: 1.5rem; color: #fff; letter-spacing: 2px; text-align: center;}
@@ -140,7 +152,7 @@
         </div>
         <div class="card-box" style="margin-top:20px;">
             <button class="settings-btn" onclick="openSettings()">⚙️</button>
-            <input type="text" id="my-name" placeholder="Nickname" maxlength="12" onchange="saveName()">
+            <input type="text" id="my-name" placeholder="Nickname (Auto if empty)" maxlength="12" onchange="saveName()">
             <div class="tabs">
                 <button class="tab-btn active" id="tab-host" onclick="setMode('host')">CREATE</button>
                 <button class="tab-btn" id="tab-join" onclick="setMode('join')">JOIN</button>
@@ -155,10 +167,13 @@
             <div id="desk-title" style="display:none;">GX-LINK</div>
             <div class="nav-switch">
                 <div class="nav-item active" onclick="switchTab('chat')">
-                    <span>💬 CHAT</span> <span id="online-count" style="font-size:0.7rem; color:var(--primary); margin-left:auto;">1 ON</span>
+                    <span>💬 CHAT</span> <span id="online-count" style="font-size:0.7rem; color:var(--primary); margin-left:auto;">1</span>
                 </div>
                 <div class="nav-item" onclick="switchTab('call')">
-                    <span>📞 CALL</span> <span id="voice-count" style="font-size:0.7rem; color:var(--secondary); margin-left:auto;">0 IN</span>
+                    <span>📞 CALL</span> <span id="voice-count" style="font-size:0.7rem; color:var(--secondary); margin-left:auto;">0</span>
+                </div>
+                <div class="nav-item" onclick="switchTab('info')">
+                    <span>ℹ️ INFO</span>
                 </div>
             </div>
             <div class="ping-box"><div class="ping-dot" id="ping-dot"></div> <span id="ping-text">-- ms</span></div>
@@ -176,8 +191,7 @@
                 <button class="vn-btn-act" onclick="cancelVN()" style="color: #888;">🗑️</button>
                 <div class="vn-timer" id="vn-timer">0:00</div>
                 <div class="vn-waves">
-                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                    <div class="wave-bar"></div><div class="wave-bar"></div>
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
                 </div>
                 <button class="vn-btn-act vn-btn-send" onclick="stopAndSendVN()">➤</button>
             </div>
@@ -193,13 +207,30 @@
         <div id="call-view" class="view-panel">
             <div style="margin-bottom:30px; color:#888;" id="call-status">You are not in voice channel</div>
             <div class="avatar-grid" id="call-grid"></div>
-            
             <div class="call-controls" id="controls-idle">
                 <button class="call-btn join" onclick="joinVoice()">📞 JOIN VOICE</button>
             </div>
             <div class="call-controls" id="controls-active" style="display:none;">
                 <button class="call-btn mute" id="btn-mute-self" onclick="toggleSelfMute()">🎤</button>
                 <button class="call-btn leave" onclick="leaveVoice()">📴</button>
+            </div>
+        </div>
+
+        <div id="info-view" class="view-panel">
+            <div class="info-card">
+                <h3 style="margin-top:0; color:var(--primary);">Room Details</h3>
+                <div class="info-row"><span class="info-label">Room ID</span><span class="info-val" id="info-rid">-</span></div>
+                <div class="info-row"><span class="info-label">My Name</span><span class="info-val" id="info-name">-</span></div>
+                <div class="info-row"><span class="info-label">My ID</span><span class="info-val" id="info-pid" style="font-size:0.7rem;">-</span></div>
+                <div class="info-row"><span class="info-label">Host Status</span><span class="info-val" id="info-role">-</span></div>
+            </div>
+            <div class="info-card">
+                <h3 style="margin-top:0; color:var(--secondary);">Session Stats</h3>
+                <div class="stat-grid">
+                    <div class="stat-box"><div class="stat-num" id="stat-sent">0 MB</div><div class="stat-lbl">Sent</div></div>
+                    <div class="stat-box"><div class="stat-num" id="stat-recv">0 MB</div><div class="stat-lbl">Received</div></div>
+                </div>
+                <div class="info-row" style="margin-top:10px;"><span class="info-label">Duration</span><span class="info-val" id="stat-dur">00:00</span></div>
             </div>
         </div>
     </div>
@@ -220,29 +251,68 @@
         </div>
     </div>
 
+    <div id="tutorial-modal">
+        <div class="card-box">
+            <h3 style="color:var(--primary); margin:0;">SETUP LAN SERVER</h3>
+            <div class="tutorial-content">
+                <p>Mode LAN membutuhkan 1 komputer sebagai Server.</p>
+                1. Install NodeJS di PC.<br>
+                2. Buka Terminal/CMD, ketik:
+                <div class="code-block">npm install -g peer</div>
+                3. Jalankan server:
+                <div class="code-block">peerjs --port 9000 --key peerjs --path /peerjs</div>
+                4. Masukkan IP PC tersebut di sini.
+            </div>
+            <button class="btn-main" onclick="document.getElementById('tutorial-modal').style.display='none'">OK, PAHAM</button>
+        </div>
+    </div>
+
     <div id="audio-container" style="display:none;"></div>
 
     <script>
-        const MAX_PEERS = 8;
+        // CONFIG & STATE
         let peerConfig = { debug: 1 };
         let peer, myName="User", roomId="", amICreator=false;
         let connections={}, members={};
         let activeTab='host';
         
-        // VOIP VARS
-        let localStream = null;
-        let voiceCalls = {}; // P2P Media calls
-        let isInVoice = false;
-        let isSelfMuted = false;
-        let voicePeers = {}; // Track who is in voice
+        // HEARTBEAT & STATS
+        let lastHeartbeat = {}; // Map of timestamp when peer was last seen
+        let totalSent=0, totalRecv=0, startTime=Date.now();
 
-        // --- INIT ---
+        // VOIP
+        let localStream = null, voiceCalls = {}, isInVoice = false, isSelfMuted = false, voicePeers = {};
+
+        // RANDOM NAME GEN
+        const ADJ = ["Cyber","Neon","Turbo","Hyper","Mega","Swift","Solid","Liquid","Rogue","Prime"];
+        const NOUN = ["Wolf","Eagle","Tiger","Fox","Pilot","Ghost","Ninja","Titan","Viper","Shark"];
+        function generateNick() {
+            return ADJ[Math.floor(Math.random()*ADJ.length)] + NOUN[Math.floor(Math.random()*NOUN.length)];
+        }
+
         window.onload = () => {
             loadSettings(); loadName();
             if(window.innerWidth > 800) document.getElementById('desk-title').style.display = 'block';
             
-            setInterval(cleanGhosts, 3000); 
-            setInterval(pingLoop, 2000); 
+            // HEARTBEAT LOOP (Ghost Buster)
+            setInterval(() => {
+                const now = Date.now();
+                // 1. Send Heartbeat
+                Object.values(connections).forEach(c => {
+                    if(c.open) c.send({ type:'HEARTBEAT' });
+                });
+                // 2. Check Dead Peers (Timeout > 5s)
+                Object.keys(lastHeartbeat).forEach(id => {
+                    if(now - lastHeartbeat[id] > 5000) {
+                        console.log("Peer Timeout:", id);
+                        closeConnection(id);
+                    }
+                });
+                // 3. Ping Loop
+                pingLoop();
+                // 4. Update Stats UI
+                updateStatsUI();
+            }, 2000);
 
             const url = new URLSearchParams(window.location.search);
             if(url.has('room')) {
@@ -251,9 +321,13 @@
             }
         };
 
-        // --- CORE SESSION ---
         function startSession() {
-            saveName();
+            if(!document.getElementById('my-name').value) {
+                myName = generateNick();
+                document.getElementById('my-name').value = myName;
+                saveName();
+            } else { saveName(); }
+
             const inputId = activeTab === 'host' ? 'create-room' : 'join-room';
             roomId = document.getElementById(inputId).value.toUpperCase().trim();
             if(!roomId) return alert("Enter Room Name!");
@@ -265,9 +339,13 @@
                 peer = new Peer(pid, peerConfig);
                 peer.on('open', (id) => {
                     members[id] = { name: myName };
+                    startTime = Date.now();
                     if(amICreator) enterRoom(); else connectHost();
                 });
-                peer.on('error', (e) => { alert(e.type); location.reload(); });
+                peer.on('error', (e) => { 
+                    if(e.type === 'unavailable-id') alert(`Room ${roomId} sudah aktif! Silakan Join saja.`);
+                    else { alert(e.type); location.reload(); }
+                });
                 peer.on('connection', handleConn);
                 peer.on('call', handleIncomingCall);
             } catch(e) { alert("Config Error: " + e); }
@@ -276,27 +354,32 @@
         function enterRoom() {
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('party-screen').style.display = 'flex';
-            updateUI();
+            updateUI(); updateInfoView();
         }
 
         function connectHost() {
             const hostId = `GX-${roomId}-HOST`;
             const conn = peer.connect(hostId);
             handleConn(conn);
-            setTimeout(() => { if(!conn.open) { alert("Host Offline"); location.reload(); } }, 5000);
+            setTimeout(() => { if(!conn.open) { alert("Host Offline / Room not found"); location.reload(); } }, 5000);
         }
 
         function handleConn(conn) {
             conn.on('open', () => {
                 if(!amICreator) enterRoom();
                 connections[conn.peer] = conn;
+                lastHeartbeat[conn.peer] = Date.now(); // Init heartbeat
                 conn.send({ type:'HELLO', name:myName, list:Object.keys(members) });
-                // If I'm already in voice, tell new user
                 if(isInVoice) conn.send({ type:'VOICE_STATUS', id:peer.id, status:'joined', muted:isSelfMuted });
             });
 
             conn.on('data', (d) => {
-                if(d.type === 'HELLO') {
+                totalRecv += (JSON.stringify(d).length); // Approx size
+                
+                if(d.type === 'HEARTBEAT') {
+                    lastHeartbeat[conn.peer] = Date.now();
+                }
+                else if(d.type === 'HELLO') {
                     members[conn.peer] = { name: d.name };
                     updateUI();
                     if(d.list) d.list.forEach(id => {
@@ -311,56 +394,54 @@
                 else if(d.type === 'VOICE_STATUS') updateVoiceStatus(d.id, d.status, d.muted);
             });
 
-            conn.on('close', () => {
-                delete members[conn.peer]; delete connections[conn.peer];
-                if(voicePeers[conn.peer]) delete voicePeers[conn.peer];
-                updateUI();
-            });
+            conn.on('close', () => closeConnection(conn.peer));
         }
 
-        // --- VOIP SYSTEM ---
+        function closeConnection(id) {
+            delete members[id];
+            delete connections[id];
+            delete lastHeartbeat[id];
+            if(voicePeers[id]) delete voicePeers[id];
+            updateUI();
+        }
+
+        // --- BROADCAST WRAPPER (TRACK STATS) ---
+        function broadcast(data) {
+            const str = JSON.stringify(data);
+            totalSent += str.length * Object.keys(connections).length;
+            Object.values(connections).forEach(c => { if(c.open) c.send(data); });
+        }
+
+        // --- VOIP ---
         function joinVoice() {
             navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
                 localStream = stream;
-                isInVoice = true;
-                isSelfMuted = false;
+                isInVoice = true; isSelfMuted = false;
                 
-                // UI Update
                 document.getElementById('controls-idle').style.display = 'none';
                 document.getElementById('controls-active').style.display = 'flex';
-                document.getElementById('call-status').innerText = "Connected to Voice";
+                document.getElementById('call-status').innerText = "Connected";
                 
-                // Add self to voice list
                 voicePeers[peer.id] = { muted: false };
                 broadcast({ type: 'VOICE_STATUS', id: peer.id, status: 'joined', muted: false });
                 updateUI();
 
-                // Call everyone currently connected
                 Object.keys(connections).forEach(id => {
                     const call = peer.call(id, localStream);
                     handleCallEvent(call);
                 });
-
-            }).catch(e => alert("Mic Access Denied"));
+            }).catch(e => alert("Mic Denied"));
         }
 
         function leaveVoice() {
-            if(localStream) {
-                localStream.getTracks().forEach(t => t.stop());
-                localStream = null;
-            }
+            if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
             isInVoice = false;
-            
-            // UI Update
             document.getElementById('controls-idle').style.display = 'flex';
             document.getElementById('controls-active').style.display = 'none';
-            document.getElementById('call-status').innerText = "You left the voice channel";
+            document.getElementById('call-status').innerText = "You left voice";
             
-            // Close all active calls
             Object.values(voiceCalls).forEach(call => call.close());
-            voiceCalls = {};
-            delete voicePeers[peer.id];
-
+            voiceCalls = {}; delete voicePeers[peer.id];
             broadcast({ type: 'VOICE_STATUS', id: peer.id, status: 'left' });
             updateUI();
         }
@@ -369,31 +450,23 @@
             if(!localStream) return;
             isSelfMuted = !isSelfMuted;
             localStream.getAudioTracks()[0].enabled = !isSelfMuted;
-            
-            const btn = document.getElementById('btn-mute-self');
-            btn.style.opacity = isSelfMuted ? '0.5' : '1';
-            btn.innerText = isSelfMuted ? '🔇' : '🎤';
-            
+            document.getElementById('btn-mute-self').style.opacity = isSelfMuted ? '0.5' : '1';
             voicePeers[peer.id].muted = isSelfMuted;
             broadcast({ type: 'VOICE_STATUS', id: peer.id, status: 'update', muted: isSelfMuted });
             updateUI();
         }
 
         function handleIncomingCall(call) {
-            // Only answer if I am in voice too, otherwise ignore or answer empty?
-            // Better: Answer to receive audio, but only send back if I am in voice
-            if(isInVoice) call.answer(localStream);
-            else call.answer(); // Listen only mode (optional) or don't answer
-            
+            if(isInVoice) call.answer(localStream); else call.answer(); 
             handleCallEvent(call);
         }
 
         function handleCallEvent(call) {
             voiceCalls[call.peer] = call;
-            call.on('stream', remoteStream => {
+            call.on('stream', rs => {
                 if(!document.getElementById(`aud-${call.peer}`)) {
                     const a = document.createElement('audio');
-                    a.id = `aud-${call.peer}`; a.srcObject = remoteStream; a.autoplay = true;
+                    a.id = `aud-${call.peer}`; a.srcObject = rs; a.autoplay = true;
                     document.getElementById('audio-container').appendChild(a);
                 }
             });
@@ -407,7 +480,6 @@
         function updateVoiceStatus(id, status, isMuted) {
             if(status === 'joined' || status === 'update') {
                 voicePeers[id] = { muted: isMuted };
-                // Also trigger call if we are in voice and they just joined
                 if(status === 'joined' && isInVoice && !voiceCalls[id]) {
                     const call = peer.call(id, localStream);
                     handleCallEvent(call);
@@ -422,36 +494,22 @@
 
         function toggleRemoteMute(id) {
             const el = document.getElementById(`aud-${id}`);
-            if(el) {
-                el.muted = !el.muted;
-                updateUI();
-            }
+            if(el) { el.muted = !el.muted; updateUI(); }
         }
 
-        // --- CHAT & FILE FIX ---
-        function sendChat() {
-            const el = document.getElementById('msg-in');
-            const txt = el.value.trim();
-            if(!txt) return;
-            addChat("Me", txt, 'me');
-            broadcast({ type:'CHAT', name:myName, text:txt });
-            el.value = "";
-        }
-
+        // --- FILE TRANSFER ---
         function processUpload(file, isAudio = false) {
             if(file.size > 10*1024*1024) return alert("File max 10MB");
             const fid = Date.now().toString();
             
-            // 1. Send Metadata FIRST
-            const meta = { type:'FILE_META', id:fid, name:file.name, size:file.size, mime:file.type };
-            broadcast(meta);
+            // 1. Meta
+            broadcast({ type:'FILE_META', id:fid, name:file.name, size:file.size, mime:file.type });
             
             // 2. Render Local
             const url = URL.createObjectURL(file);
-            if(isAudio) addAudioBubble(url, 'me');
-            else addFileBubble(file.name, url, 'me');
+            if(isAudio) addAudioBubble(url, 'me'); else addFileBubble(file.name, url, 'me');
 
-            // 3. Send Data Chunk
+            // 3. Data Chunk
             const reader = new FileReader();
             reader.onload = (e) => {
                 broadcast({ type:'FILE_CHUNK', id:fid, data:e.target.result });
@@ -460,9 +518,7 @@
         }
 
         let incomingFiles = {};
-        function receiveFile(d) {
-            incomingFiles[d.id] = { meta:d, data:[] };
-        }
+        function receiveFile(d) { incomingFiles[d.id] = { meta:d, data:[] }; }
         function receiveChunk(d) {
             const f = incomingFiles[d.id];
             if(f) {
@@ -470,32 +526,23 @@
                 const blob = new Blob(f.data, { type: f.meta.mime });
                 const url = URL.createObjectURL(blob);
                 const isAudio = f.meta.mime.startsWith('audio/');
-                
-                if(isAudio) addAudioBubble(url, 'them');
-                else addFileBubble(f.meta.name, url, 'them');
-                
+                if(isAudio) addAudioBubble(url, 'them'); else addFileBubble(f.meta.name, url, 'them');
                 delete incomingFiles[d.id];
             }
         }
 
-        // --- UI UPDATERS ---
+        // --- UI ---
         function updateUI() {
-            // Update counts
-            const all = Object.keys(members).length;
-            const vCount = Object.keys(voicePeers).length;
-            document.getElementById('online-count').innerText = (all + 1) + " ON";
-            document.getElementById('voice-count').innerText = vCount + " IN";
-
-            // Render Voice Grid
+            document.getElementById('online-count').innerText = (Object.keys(members).length + 1) + " ON";
+            document.getElementById('voice-count').innerText = Object.keys(voicePeers).length + " IN";
+            
+            // Call Grid
             const grid = document.getElementById('call-grid');
             grid.innerHTML = "";
             
-            // Helper to render one avatar
             const makeAv = (id, name, isMuted, isLocal) => {
-                // Check remote mute status (my speaker mute for them)
                 const audEl = document.getElementById(`aud-${id}`);
                 const isRemoteMuted = audEl ? audEl.muted : false;
-                
                 return `
                 <div class="call-card">
                     <div class="call-avatar ${isMuted?'muted':''}" style="${isMuted?'border-color:#ff1744':''}">
@@ -506,17 +553,25 @@
                 </div>`;
             };
 
-            // Render Self
-            if(isInVoice) {
-                grid.innerHTML += makeAv(peer.id, myName, isSelfMuted, true);
-            }
-
-            // Render Others in Voice
+            if(isInVoice) grid.innerHTML += makeAv(peer.id, myName, isSelfMuted, true);
             Object.keys(voicePeers).forEach(id => {
-                if(id !== peer.id && members[id]) {
-                    grid.innerHTML += makeAv(id, members[id].name, voicePeers[id].muted, false);
-                }
+                if(id !== peer.id && members[id]) grid.innerHTML += makeAv(id, members[id].name, voicePeers[id].muted, false);
             });
+        }
+
+        function updateInfoView() {
+            document.getElementById('info-rid').innerText = roomId;
+            document.getElementById('info-name').innerText = myName;
+            document.getElementById('info-pid').innerText = peer.id;
+            document.getElementById('info-role').innerText = amICreator ? "Host" : "Guest";
+        }
+
+        function updateStatsUI() {
+            const dur = Math.floor((Date.now() - startTime)/1000);
+            const m = Math.floor(dur/60); const s = dur%60;
+            document.getElementById('stat-dur').innerText = `${m}:${s<10?'0'+s:s}`;
+            document.getElementById('stat-sent').innerText = (totalSent/1024/1024).toFixed(2) + " MB";
+            document.getElementById('stat-recv').innerText = (totalRecv/1024/1024).toFixed(2) + " MB";
         }
 
         function addChat(name, txt, type) {
@@ -535,34 +590,7 @@
             document.getElementById('msg-container').appendChild(d);
         }
 
-        // --- UTILS ---
-        function broadcast(d) { Object.values(connections).forEach(c => { if(c.open) c.send(d); }); }
-        function cleanGhosts() {
-            if(!peer || !peer.id) return;
-            const now = Object.keys(connections);
-            const valid = {}; valid[peer.id] = members[peer.id] || {name:myName};
-            now.forEach(id => { if(connections[id].open) valid[id] = members[id]; });
-            members = valid; updateUI();
-        }
-        function pingLoop() {
-            const keys = Object.keys(connections);
-            if(keys.length===0) return;
-            const t = keys[Math.floor(Math.random()*keys.length)];
-            if(connections[t].open) connections[t].send({type:'PING', time:Date.now()});
-        }
-        function updatePing(ms) {
-            const d = document.getElementById('ping-dot');
-            document.getElementById('ping-text').innerText = ms+" ms";
-            d.className="ping-dot "+(ms<60?'good':ms<200?'med':'bad');
-        }
-        function switchTab(t) {
-            document.querySelectorAll('.view-panel').forEach(e=>e.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
-            document.getElementById(t==='chat'?'chat-view':'call-view').classList.add('active');
-            document.querySelectorAll('.nav-item')[t==='chat'?0:1].classList.add('active');
-        }
-
-        // --- VN RECORDER ---
+        // --- VN ---
         let mediaRec, chunks=[], timerInt, sec=0;
         async function startVN() {
             try {
@@ -589,12 +617,34 @@
             if(mediaRec) mediaRec.stream.getTracks().forEach(t=>t.stop());
         }
 
-        // --- SETTINGS ---
+        // --- COMMON UTILS ---
+        function switchTab(t) {
+            document.querySelectorAll('.view-panel').forEach(e=>e.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+            document.getElementById(t==='chat'?'chat-view':t==='call'?'call-view':'info-view').classList.add('active');
+            // Simplified active class toggle for 3 items
+            const idx = t==='chat'?0:t==='call'?1:2;
+            document.querySelectorAll('.nav-item')[idx].classList.add('active');
+        }
+        function sendChat() {
+            const el = document.getElementById('msg-in'); const txt = el.value.trim();
+            if(!txt) return; addChat("Me", txt, 'me'); broadcast({ type:'CHAT', name:myName, text:txt }); el.value = "";
+        }
+        function pingLoop() {
+            const keys = Object.keys(connections); if(keys.length===0) return;
+            const t = keys[Math.floor(Math.random()*keys.length)];
+            if(connections[t].open) connections[t].send({type:'PING', time:Date.now()});
+        }
+        function updatePing(ms) {
+            const d = document.getElementById('ping-dot'); document.getElementById('ping-text').innerText = ms+" ms";
+            d.className="ping-dot "+(ms<60?'good':ms<200?'med':'bad');
+        }
         function loadSettings() {
             const c = JSON.parse(localStorage.getItem('gx_conf')||'{"type":"cloud"}');
             if(c.type==='local') {
                 peerConfig = {host:c.host, port:parseInt(c.port), path:'/peerjs', secure:false};
                 document.getElementById('server-indicator').innerText='🏠 LOCAL';
+                document.getElementById('server-indicator').className = 'server-tag local';
                 document.getElementById('srv-host').value=c.host;
             }
         }
@@ -605,6 +655,7 @@
         }
         function openSettings() { document.getElementById('settings-modal').style.display='flex'; }
         function closeSettings() { document.getElementById('settings-modal').style.display='none'; }
+        function openTutorial() { document.getElementById('tutorial-modal').style.display='flex'; }
         function toggleServerType(t) {
             document.getElementById('btn-cloud').className = t==='cloud'?'tab-btn active':'tab-btn';
             document.getElementById('btn-local').className = t==='local'?'tab-btn active':'tab-btn';
