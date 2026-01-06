@@ -24,6 +24,9 @@
         
         /* Setup Screen */
         #setup-screen { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; gap: 20px; overflow-y: auto; z-index: 20; background: var(--bg); position: absolute; width: 100%; height: 100%; }
+        
+        /* LOGO FIX CENTER */
+        .party-logo { margin-top: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; }
         .party-logo h1 { font-size: 2.5rem; margin: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
         
         .card-box { background: #151515; border: 1px solid #333; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
@@ -76,10 +79,17 @@
         .info-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
         .info-label { color: #888; }
         .info-val { color: #fff; font-weight: bold; font-family: monospace; }
+        
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .stat-box { background: #222; padding: 10px; border-radius: 10px; text-align: center; }
         .stat-num { font-size: 1.2rem; color: var(--primary); font-weight: bold; }
         .stat-lbl { font-size: 0.7rem; color: #888; }
+
+        .member-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; }
+        .member-item:last-child { border-bottom: none; }
+        .mem-av { width: 30px; height: 30px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; color: #fff; }
+        .mem-tag { font-size: 0.7rem; background: #222; padding: 2px 6px; border-radius: 4px; color: #aaa; }
+        .mem-tag.host { background: rgba(255, 179, 0, 0.2); color: #ffb300; }
 
         /* VN & AUDIO */
         #vn-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; background: #1a1a1a; display: none; align-items: center; justify-content: space-between; padding: 0 20px; border-top: 1px solid #333; z-index: 100; animation: slideUp 0.2s; }
@@ -99,7 +109,6 @@
         .call-avatar.muted { border-color: var(--danger); opacity: 0.7; }
         .call-name { margin-top: 8px; font-size: 0.8rem; color: #ccc; }
         
-        /* Remote Mute Button (On Avatar) */
         .remote-mute-btn {
             position: absolute; top: 0; right: 0; background: #333; color: #fff;
             border: 1px solid #555; border-radius: 50%; width: 24px; height: 24px;
@@ -107,7 +116,6 @@
         }
         .remote-mute-btn.active { background: var(--danger); border-color: var(--danger); }
 
-        /* VOIP Control Bar */
         .call-controls {
             display: flex; gap: 20px; align-items: center; background: #111; 
             padding: 15px 30px; border-radius: 30px; border: 1px solid #333;
@@ -122,7 +130,6 @@
         .call-btn.join { background: var(--secondary); color: #000; width: 140px; border-radius: 10px; font-weight: bold; gap: 10px;}
         .call-btn.leave { background: var(--danger); color: #fff; }
         .call-btn.mute { background: #ffb300; color: #000; }
-        .call-btn.active { background: #444; color: #888; } /* For muted state style */
 
         /* Modals */
         #settings-modal, #edit-modal, #tutorial-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
@@ -149,13 +156,13 @@
 
     <div id="setup-screen">
         <a href="../../index.html" class="back-btn" style="position:absolute; top:20px; left:20px;">← DASHBOARD</a>
-        <div class="party-logo" style="margin-top: 40px;">
+        <div class="party-logo">
             <h1>GX-LINK</h1>
             <span class="server-tag" id="server-indicator" onclick="openSettings()">☁️ CLOUD</span>
         </div>
         <div class="card-box" style="margin-top:20px;">
             <button class="settings-btn" onclick="openSettings()">⚙️</button>
-            <input type="text" id="my-name" placeholder="Nickname (Auto if empty)" maxlength="12" onchange="saveName()">
+            <input type="text" id="my-name" placeholder="Nickname (Auto Generated)" maxlength="12" onchange="saveName()">
             <div class="tabs">
                 <button class="tab-btn active" id="tab-host" onclick="setMode('host')">CREATE</button>
                 <button class="tab-btn" id="tab-join" onclick="setMode('join')">JOIN</button>
@@ -235,6 +242,10 @@
                     <div class="stat-box"><div class="stat-num" id="stat-recv">0 MB</div><div class="stat-lbl">Received</div></div>
                 </div>
                 <div class="info-row" style="margin-top:10px;"><span class="info-label">Duration</span><span class="info-val" id="stat-dur">00:00</span></div>
+            </div>
+            <div class="info-card">
+                <h3 style="margin-top:0; color:#fff;">👥 Active Members</h3>
+                <div id="info-members"></div>
             </div>
         </div>
     </div>
@@ -339,6 +350,7 @@
             try {
                 peer = new Peer(pid, peerConfig);
                 peer.on('open', (id) => {
+                    // FIXED: Add self to members immediately
                     members[id] = { name: myName };
                     startTime = Date.now();
                     if(amICreator) enterRoom(); else connectHost();
@@ -348,11 +360,7 @@
                     else { alert(e.type); location.reload(); }
                 });
                 peer.on('connection', handleConn);
-                // Strict Call Handling
-                peer.on('call', (call) => {
-                    if(!isInVoice) { call.close(); return; } // Reject if not in voice mode
-                    handleIncomingCall(call);
-                });
+                peer.on('call', handleIncomingCall);
             } catch(e) { alert("Config Error: " + e); }
         }
 
@@ -431,12 +439,9 @@
                 broadcast({ type: 'VOICE_STATUS', id: peer.id, status: 'joined', muted: false });
                 updateUI();
 
-                // Check existing voice peers and call them
-                Object.keys(voicePeers).forEach(id => {
-                    if(id !== peer.id && connections[id]) {
-                        const call = peer.call(id, localStream);
-                        handleCallEvent(call);
-                    }
+                Object.keys(connections).forEach(id => {
+                    const call = peer.call(id, localStream);
+                    handleCallEvent(call);
                 });
             }).catch(e => alert("Mic Denied"));
         }
@@ -465,9 +470,7 @@
         }
 
         function handleIncomingCall(call) {
-            // Strict check: Only answer if I am in voice mode
             if(!isInVoice) { call.close(); return; }
-            
             call.answer(localStream);
             handleCallEvent(call);
         }
@@ -491,12 +494,9 @@
         function updateVoiceStatus(id, status, isMuted) {
             if(status === 'joined' || status === 'update') {
                 voicePeers[id] = { muted: isMuted };
-                // Call initiator optimization is handled in joinVoice, but if someone joins after me:
                 if(status === 'joined' && isInVoice && !voiceCalls[id]) {
-                    // I will wait for them to call me, OR I call them. 
-                    // To prevent double calling, usually we can let the 'joiner' call.
-                    // But in mesh, redundancy is okay or check ID sort.
-                    // Here we let the new joiner initiate calls to existing peers.
+                    const call = peer.call(id, localStream);
+                    handleCallEvent(call);
                 }
             } else if (status === 'left') {
                 delete voicePeers[id];
@@ -547,9 +547,12 @@
 
         // --- UI ---
         function updateUI() {
-            document.getElementById('online-count').innerText = (Object.keys(members).length + 1) + " ON";
+            // FIXED: Simply count keys in members (self is included)
+            const count = Object.keys(members).length;
+            document.getElementById('online-count').innerText = count + " ON";
             document.getElementById('voice-count').innerText = Object.keys(voicePeers).length + " IN";
             
+            // Call Grid
             const grid = document.getElementById('call-grid');
             grid.innerHTML = "";
             
@@ -569,6 +572,22 @@
             if(isInVoice) grid.innerHTML += makeAv(peer.id, myName, isSelfMuted, true);
             Object.keys(voicePeers).forEach(id => {
                 if(id !== peer.id && members[id]) grid.innerHTML += makeAv(id, members[id].name, voicePeers[id].muted, false);
+            });
+
+            // Update Member List in Info Tab
+            const mList = document.getElementById('info-members');
+            mList.innerHTML = "";
+            Object.keys(members).forEach(id => {
+                const m = members[id];
+                const isHost = id.includes("HOST");
+                mList.innerHTML += `
+                <div class="member-item">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="mem-av">${m.name[0]}</div>
+                        <div>${m.name} ${id===peer.id ? '(You)':''}</div>
+                    </div>
+                    ${isHost ? '<span class="mem-tag host">HOST</span>' : '<span class="mem-tag">GUEST</span>'}
+                </div>`;
             });
         }
 
@@ -635,6 +654,7 @@
             document.querySelectorAll('.view-panel').forEach(e=>e.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
             document.getElementById(t==='chat'?'chat-view':t==='call'?'call-view':'info-view').classList.add('active');
+            // Simplified active class toggle for 3 items
             const idx = t==='chat'?0:t==='call'?1:2;
             document.querySelectorAll('.nav-item')[idx].classList.add('active');
         }
@@ -673,7 +693,12 @@
             document.getElementById('btn-local').className = t==='local'?'tab-btn active':'tab-btn';
             document.getElementById('local-config').style.display = t==='local'?'block':'none';
         }
-        function loadName() { document.getElementById('my-name').value = localStorage.getItem('gx_name')||""; myName=document.getElementById('my-name').value; }
+        function loadName() { 
+            let n = localStorage.getItem('gx_name');
+            if(!n) { n = generateNick(); localStorage.setItem('gx_name', n); }
+            document.getElementById('my-name').value = n; 
+            myName = n;
+        }
         function saveName() { myName=document.getElementById('my-name').value; localStorage.setItem('gx_name', myName); }
         function setMode(m) { activeTab=m; document.getElementById('create-panel').style.display=m==='host'?'block':'none'; document.getElementById('join-panel').style.display=m==='join'?'block':'none'; document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(m==='host'?'tab-host':'tab-join').classList.add('active'); }
         function shareLink() { navigator.clipboard.writeText(window.location.href.split('?')[0]+"?room="+roomId); alert("Link Copied!"); }
