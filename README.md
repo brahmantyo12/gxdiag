@@ -69,6 +69,7 @@ The suite includes specialized modules divided into 6 categories:
 ### 🌐 Network & Connectivity
 | Module | Icon | Description |
 | :--- | :---: | :--- |
+| **GX-Link** | 📡 | **(NEW)** Ultimate P2P Suite: Secure Mesh Chat, File Transfer, Voice Notes, & Conference Call. Supports LAN/Cloud. |
 | **Network Pro** | 🌐 | Real-time Latency (Ping) to Cloudflare, Jitter analysis, Public IP, and Connection Type detection. |
 | **Subnet Calc** | 🔢 | **Network Planner:** Calculate Subnet Mask, Broadcast IP, and Host Capacity based on CIDR or User count. |
 | **NFC Tool** | 📡 | Reads NFC Tags serial numbers (UID) and records (Android/Chrome only). |
