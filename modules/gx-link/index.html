@@ -39,17 +39,36 @@
         
         /* Party Screen */
         #party-screen { display: none; width: 100%; height: 100%; flex-direction: column; background: var(--bg); }
-        .room-nav { display: flex; background: #111; border-bottom: 1px solid #333; padding: 0 20px; justify-content: center; gap: 15px; }
-        .nav-item { padding: 15px 10px; color: #666; cursor: pointer; font-weight: bold; font-size: 0.9rem; border-bottom: 3px solid transparent; transition: 0.3s; position: relative; }
-        .nav-item.active { color: #fff; border-color: var(--primary); }
         
-        /* PING METER UI */
-        .ping-box { 
-            display: flex; align-items: center; gap: 6px; background: #000; 
-            padding: 5px 10px; border-radius: 12px; border: 1px solid #333; 
-            font-size: 0.7rem; color: #888; font-weight: bold; margin-left: auto;
+        /* NEW TAB DESIGN (SEGMENTED SWITCH) */
+        .room-nav { 
+            display: flex; background: #111; border-bottom: 1px solid #333; padding: 15px 20px; 
+            flex-direction: column; gap: 15px;
         }
-        .ping-dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
+        
+        .nav-switch {
+            display: flex; background: #000; border-radius: 12px; padding: 4px; border: 1px solid #333;
+            position: relative; overflow: hidden;
+        }
+        .nav-item { 
+            flex: 1; text-align: center; padding: 10px; font-size: 0.9rem; font-weight: bold; 
+            color: #666; cursor: pointer; border-radius: 8px; transition: 0.2s; z-index: 2;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .nav-item.active { background: #222; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        .nav-item:hover:not(.active) { color: #aaa; }
+        
+        .nav-badge { 
+            background: var(--danger); color: #fff; font-size: 0.6rem; padding: 2px 6px; 
+            border-radius: 10px; display: none; 
+        }
+
+        /* PING METER */
+        .ping-box { 
+            display: flex; align-items: center; justify-content: center; gap: 6px; 
+            font-size: 0.7rem; color: #666; font-weight: bold; margin-top: 5px;
+        }
+        .ping-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; }
         .ping-dot.good { background: var(--secondary); box-shadow: 0 0 5px var(--secondary); }
         .ping-dot.med { background: #ffb300; }
         .ping-dot.bad { background: var(--danger); }
@@ -67,7 +86,7 @@
         .sender-name { font-size: 0.7rem; color: var(--primary); font-weight: bold; display: block; margin-bottom: 3px; }
         .edited-tag { font-size: 0.6rem; opacity: 0.6; margin-left: 5px; font-style: italic; }
         
-        /* Message Menu Button (Three Dots) */
+        /* Message Menu Button */
         .msg-opt-btn {
             position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.3); 
             color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; 
@@ -106,7 +125,7 @@
         .vn-btn-send { color: var(--primary); transform: rotate(-45deg); padding-bottom: 5px; }
 
         /* AUDIO PLAYER */
-        audio { height: 30px; width: 200px; filter: invert(1); opacity: 0.8; outline: none; }
+        audio { height: 35px; width: 200px; filter: invert(1); opacity: 0.9; outline: none; margin-top: 5px; border-radius: 20px;}
 
         /* CALL VIEW */
         #call-view { align-items: center; justify-content: center; padding: 20px; text-align: center; }
@@ -124,15 +143,16 @@
         /* Desktop Optimization */
         @media (min-width: 800px) {
             #party-screen { flex-direction: row; }
-            .room-nav { flex-direction: column; width: 280px; height: 100%; border-right: 1px solid #333; padding: 25px; justify-content: flex-start; background: #111; position: relative; border-bottom: none; }
-            .nav-item { border-bottom: none; border-left: 3px solid transparent; padding: 15px; text-align: left; width: 100%; }
-            .nav-item.active { border-color: var(--primary); background: #1a1a1a; }
-            .ping-box { margin-left: 0; margin-top: auto; margin-bottom: 10px; width: fit-content; } /* Ping location on desktop */
+            .room-nav { width: 280px; height: 100%; border-right: 1px solid #333; padding: 25px; border-bottom: none; }
+            .nav-switch { flex-direction: column; background: transparent; border: none; gap: 10px; padding: 0; }
+            .nav-item { text-align: left; padding: 15px; border: 1px solid transparent; background: #1a1a1a; justify-content: flex-start;}
+            .nav-item.active { border-color: var(--primary); background: #222; }
+            
             #chat-view { background: #0b0b0b; }
             #msg-container { padding: 40px; }
             .msg { max-width: 60%; }
-            /* Desktop Title */
-            #desk-title { display: block !important; margin-bottom: 20px; font-size: 1.5rem; color: #fff; letter-spacing: 2px; }
+            #desk-title { display: block !important; margin-bottom: 20px; font-size: 1.5rem; color: #fff; letter-spacing: 2px; text-align: center;}
+            .ping-box { margin-top: auto; }
         }
     </style>
 </head>
@@ -160,21 +180,22 @@
         <div class="room-nav">
             <div id="desk-title" style="display:none;">GX-LINK</div>
             
-            <div class="nav-item active" onclick="switchTab('chat')">
-                💬 CHAT <span id="online-count" style="font-size:0.7rem; color:var(--primary); float:right;">1 ON</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('call')">
-                📞 CALL <div class="nav-badge" id="call-badge"></div>
+            <div class="nav-switch">
+                <div class="nav-item active" onclick="switchTab('chat')">
+                    <span>💬 CHAT</span> <span id="online-count" style="font-size:0.7rem; color:var(--primary); margin-left:auto;">1 ON</span>
+                </div>
+                <div class="nav-item" onclick="switchTab('call')">
+                    <span>📞 CALL</span> <div class="nav-badge" id="call-badge">LIVE</div>
+                </div>
             </div>
             
             <div class="ping-box">
-                <div class="ping-dot" id="ping-dot"></div>
-                <span id="ping-text">-- ms</span>
+                <div class="ping-dot" id="ping-dot"></div> <span id="ping-text">-- ms</span>
             </div>
 
-            <div style="display:flex; gap:10px; width:100%; padding: 10px 0;">
-                <button class="icon-btn" onclick="shareLink()" title="Invite" style="flex:1; border:1px solid #333; border-radius:8px;">🔗</button>
-                <button class="icon-btn" style="color:var(--danger); flex:1; border:1px solid #333; border-radius:8px;" onclick="location.reload()">🚪</button>
+            <div style="margin-top:10px; display:flex; gap:10px; width:100%;">
+                <button class="icon-btn" onclick="shareLink()" title="Invite" style="flex:1; border:1px solid #333; border-radius:8px; font-size:1rem;">🔗 INVITE</button>
+                <button class="icon-btn" style="color:var(--danger); flex:1; border:1px solid #333; border-radius:8px; font-size:1rem;" onclick="location.reload()">🚪 EXIT</button>
             </div>
         </div>
 
@@ -259,7 +280,7 @@
             if(window.innerWidth > 800) document.getElementById('desk-title').style.display = 'block';
             
             setInterval(cleanGhosts, 3000); 
-            setInterval(pingLoop, 2000); // START PING LOOP
+            setInterval(pingLoop, 2000); 
 
             const url = new URLSearchParams(window.location.search);
             if(url.has('room')) {
@@ -325,7 +346,7 @@
                 else if(d.type === 'EDIT') updateMsgUI(d.id, d.text);
                 else if(d.type === 'FILE') renderFile(d.id, d.name, d.blob, 'them', d.isAudio);
                 
-                // 3. PING PONG (NEW)
+                // 3. PING
                 else if(d.type === 'PING') conn.send({ type:'PONG', time:d.time });
                 else if(d.type === 'PONG') updatePing(Date.now() - d.time);
             });
@@ -336,7 +357,7 @@
             });
         }
 
-        // --- PING SYSTEM (NEW) ---
+        // --- PING SYSTEM ---
         function pingLoop() {
             if(!peer || !peer.id) return;
             const keys = Object.keys(connections);
@@ -345,7 +366,6 @@
                 document.getElementById('ping-dot').className = "ping-dot";
                 return;
             }
-            // Ping random connected peer to measure latency
             const target = keys[Math.floor(Math.random() * keys.length)];
             if(connections[target].open) connections[target].send({ type:'PING', time:Date.now() });
         }
@@ -354,7 +374,6 @@
             const elText = document.getElementById('ping-text');
             const elDot = document.getElementById('ping-dot');
             elText.innerText = ms + " ms";
-            
             elDot.className = "ping-dot";
             if(ms < 60) elDot.classList.add("good");
             else if(ms < 200) elDot.classList.add("med");
@@ -391,7 +410,6 @@
             
             let html = (type==='them' ? `<span class="sender-name">${name}</span>` : '') + `<span class="content">${txt}</span>`;
             
-            // TITIK TIGA (MENU)
             if(type === 'me') {
                 html += `<button class="msg-opt-btn" onclick="openMenuAt(event, '${id}')">⋮</button>`;
             }
@@ -401,13 +419,14 @@
             c.appendChild(d); c.scrollTop = c.scrollHeight;
         }
 
-        // --- CONTEXT MENU LOGIC ---
+        // --- CONTEXT MENU ---
         function openMenuAt(e, id) {
             e.stopPropagation();
             ctxTargetId = id;
             const menu = document.getElementById('ctx-menu');
-            
-            // Position
+            const items = menu.querySelectorAll('.ctx-item');
+            items.forEach(i => i.style.display = 'flex');
+
             const rect = e.target.getBoundingClientRect();
             menu.style.display = 'block';
             menu.style.top = (rect.bottom + 5) + 'px';
@@ -467,6 +486,7 @@
             if(mediaRec && mediaRec.state !== 'inactive') {
                 mediaRec.onstop = () => {
                     const blob = new Blob(chunks, { type: 'audio/webm' });
+                    // Kirim isAudio flag
                     const file = new File([blob], `VN_${Date.now()}.webm`, { type: 'audio/webm' });
                     processUpload(file, true);
                     resetVNUI();
@@ -507,6 +527,7 @@
             d.id = `msg-${id}`;
             
             if(isAudio) {
+                // FIXED: Receive Logic VN
                 d.innerHTML = `<audio controls src="${url}"></audio>`;
             } else {
                 d.innerHTML = `<a href="${url}" download="${name}" style="color:var(--secondary)">📄 ${name}</a>`;
@@ -544,6 +565,14 @@
         function switchTab(t) { 
             document.getElementById('chat-view').className = t==='chat'?'view-panel active':'view-panel';
             document.getElementById('call-view').className = t==='call'?'view-panel active':'view-panel';
+            if(t === 'chat') {
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+                document.querySelectorAll('.nav-item')[1].classList.remove('active');
+            } else {
+                document.querySelectorAll('.nav-item')[0].classList.remove('active');
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                document.getElementById('call-badge').style.display = 'none';
+            }
         }
         function updateUI() {
             const count = Object.keys(members).length;
