@@ -80,7 +80,7 @@ The suite includes specialized modules divided into 6 categories:
 | :--- | :---: | :--- |
 | **Img Converter** | 🖼️ | Convert images between JPG, PNG, and WEBP formats entirely client-side. |
 | **Img Resizer** | 📏 | Scale images up/down with quality controls. Useful for reducing file size or 2x upscaling. |
-| **Img Compressor**| 🗜️ | Smart compression to reduce image file size without significant quality loss. |
+| **File Compressor**| 🗜️ | **(UPDATED)** Universal Tool: Compress **Image, PDF (ATS-Safe), Audio & Video**. Includes Text Minifier & ZIP Archiver. |
 | **Pricelist Gen** | 🏷️ | **Voucher Maker:** Generate professional top-up price lists for game resellers (Mobile Legends, FF, etc). |
 | **Retro Asset** | 👾 | **8-Bit Generator:** Create retro pixel art sprites and chiptune sound effects (SFX) instantly. |
 | **Meta/Hoax** | 🕵️ | **Digital Forensics:** View EXIF data (Camera Model, GPS, Date) and detect potential photo editing/manipulation. |
@@ -96,17 +96,18 @@ The suite includes specialized modules divided into 6 categories:
 
 ---
 
-## 🛠️ APIs & Data Sources
+## 🛠️ APIs & Libraries
 
-This project relies on the following open-source services:
+This project relies on the following open-source services and libraries:
 
-1.  **[Aladhan API](https://aladhan.com/):** Prayer Times & Hijri conversion.
-2.  **[Nominatim (OSM)](https://nominatim.org/):** Reverse Geocoding.
-3.  **[API-HariLibur](https://api-harilibur.vercel.app/):** Syncing Indonesia's National Holidays.
-4.  **[GamerPower API](https://www.gamerpower.com/):** Aggregator for free game giveaways.
-5.  **[Ipify](https://www.ipify.org/):** Public IP Address detection.
-6.  **[Isan.eu.org](https://api.isan.eu.org/):** Game Nickname Checker API.
-7.  **[CorsProxy.io](https://corsproxy.io/):** High-speed proxy for bypassing CORS restrictions in Indonesia.
+1.  **[PeerJS](https://peerjs.com/):** WebRTC wrapper for P2P connections (GX-Link).
+2.  **[FFmpeg.wasm](https://ffmpegwasm.netlify.app/):** Core engine for client-side Audio & Video compression.
+3.  **[PDF-Lib & PDF.js](https://pdf-lib.js.org/):** PDF manipulation, rasterization, and compression.
+4.  **[Aladhan API](https://aladhan.com/):** Prayer Times & Hijri conversion.
+5.  **[Nominatim (OSM)](https://nominatim.org/):** Reverse Geocoding.
+6.  **[API-HariLibur](https://api-harilibur.vercel.app/):** Syncing Indonesia's National Holidays.
+7.  **[GamerPower API](https://www.gamerpower.com/):** Aggregator for free game giveaways.
+8.  **[CorsProxy.io](https://corsproxy.io/):** High-speed proxy for bypassing CORS restrictions in Indonesia.
 
 ---
 
@@ -117,6 +118,7 @@ GXDiag-Project/
 ├── css/
 │   └── style.css            # Global Theme (Dark/Neon)
 ├── modules/
+│   ├── gx-link/             # P2P Chat, Call, File Transfer
 │   ├── keyboard/            # Ghosting & Chatter Logic
 │   ├── typing/              # WPM Logic
 │   ├── mouse/               # Polling Rate Logic
@@ -136,7 +138,7 @@ GXDiag-Project/
 │   ├── translator/          # Morse/Binary Encoder
 │   ├── img-converter/       # Client-side Image Conversion
 │   ├── img-resizer/         # Canvas Scaling Logic
-│   ├── img-compress/        # Blob Compression
+│   ├── file-compress/       # Universal Compressor (Img/PDF/AV)
 │   ├── pricelist-generator/ # Voucher Price List Maker
 │   ├── meta-detect/         # EXIF Reader & ELA Analysis
 │   ├── voice-studio/        # WebSpeech API Implementation
