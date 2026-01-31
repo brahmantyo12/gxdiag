@@ -14,7 +14,7 @@
         
         .container { max-width: 800px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; }
 
-        /* TABS (Seperti File Compress) */
+        /* TABS */
         .tabs { display: flex; background: #1a1a1a; padding: 5px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
         .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #666; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .tab.active { background: linear-gradient(135deg, #111, #222); color: var(--gold); border: 1px solid var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
@@ -59,11 +59,34 @@
         .ayat-text { font-family: 'Traditional Arabic', serif; font-size: 2rem; text-align: right; line-height: 2.2; margin-bottom: 10px; }
         .ayat-trans { font-size: 0.9rem; color: #aaa; line-height: 1.5; }
 
-        /* --- 3. LIVE SECTION --- */
-        .live-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 15px; border: 1px solid #333; }
-        .live-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        /* --- 3. LIVE SECTION (SEAMLESS TRICK) --- */
+        .live-container { 
+            position: relative; 
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0; 
+            overflow: hidden; 
+            border-radius: 15px; 
+            border: 1px solid #333; 
+            background: #000;
+        }
+        .live-container iframe { 
+            position: absolute; 
+            top: -15%; /* Crop Top Bar */
+            left: -15%; 
+            width: 130%; /* Zoom In */
+            height: 130%; 
+            border: none;
+            pointer-events: none; /* Disable click/hover UI */
+            filter: contrast(1.1) saturate(1.1); /* Enhance looks */
+        }
+        
         .live-status { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--danger); font-weight: bold; }
         .live-dot { width: 10px; height: 10px; background: red; border-radius: 50%; animation: pulse 1s infinite; }
+        .btn-mute-toggle {
+            margin-top: 15px; width: 100%; padding: 12px; background: #222; color: #fff;
+            border: 1px solid #333; border-radius: 10px; cursor: pointer; display: flex; 
+            align-items: center; justify-content: center; gap: 10px; font-weight: bold;
+        }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -112,11 +135,22 @@
         </div>
 
         <div id="view-live" class="view-section">
-            <div class="live-status"><div class="live-dot"></div> LIVE NOW: MAKKAH</div>
+            <div class="live-status"><div class="live-dot"></div> LIVE MAKKAH (CCTV MODE)</div>
+            
             <div class="live-container">
-                <iframe src="https://www.youtube.com/embed/K9Z27z3K2ls" title="Makkah Live" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                <iframe id="kaaba-frame" 
+                    src="https://www.youtube.com/embed/K9Z27z3K2ls?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1" 
+                    title="Makkah Live" allow="autoplay; encrypted-media">
+                </iframe>
             </div>
-            <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">*Stream provided by external YouTube channel.</p>
+            
+            <button class="btn-mute-toggle" onclick="toggleMute()">
+                <span id="mute-icon">🔊</span> Unmute / Audio (Klik jika hening)
+            </button>
+            <p style="font-size:0.7rem; color:#555; margin-top:10px; text-align:center;">
+                *Interface YouTube disembunyikan untuk pengalaman immersive.<br>
+                Jika video tidak jalan otomatis, refresh halaman.
+            </p>
         </div>
 
     </div>
@@ -129,8 +163,30 @@
             document.getElementById(`view-${t}`).classList.add('active');
             event.target.classList.add('active');
             
-            // Stop Audio if leaving Quran tab
             if(t !== 'quran') stopAudio();
+        }
+
+        // --- SEAMLESS AUDIO CONTROL ---
+        // Karena pointer-events:none, kita butuh cara manual buat unmute (biasanya browser blokir autoplay with sound)
+        let isMuted = true;
+        function toggleMute() {
+            // Trik: Reload iframe dengan/tanpa mute parameter
+            // Sayangnya Youtube Iframe API ribet, cara termudah refresh src
+            const frame = document.getElementById('kaaba-frame');
+            const url = "https://www.youtube.com/embed/K9Z27z3K2ls?autoplay=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1";
+            
+            if(isMuted) {
+                // Unmute = remove mute param
+                frame.src = url + "&mute=0";
+                document.getElementById('mute-icon').innerText = "🔇";
+                document.querySelector('.btn-mute-toggle').innerHTML = "🔇 Mute Audio";
+                isMuted = false;
+            } else {
+                frame.src = url + "&mute=1";
+                document.getElementById('mute-icon').innerText = "🔊";
+                document.querySelector('.btn-mute-toggle').innerHTML = "🔊 Unmute / Audio";
+                isMuted = true;
+            }
         }
 
         // ================= 1. PRAYER LOGIC =================
@@ -138,21 +194,16 @@
             if(navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async (pos) => {
                     const { latitude, longitude } = pos.coords;
-                    
-                    // 1. Get City Name
                     try {
                         const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                         const data = await geo.json();
                         document.getElementById('loc-name').innerText = "📍 " + (data.address.city || data.address.town || "My Location");
                     } catch(e) {}
-
-                    // 2. Get Prayer Times
                     try {
                         const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=20`);
                         const json = await res.json();
                         renderJadwal(json.data.timings);
                     } catch(e) { alert("Prayer API Error"); }
-
                 }, () => { document.getElementById('loc-name').innerText = "❌ GPS Denied"; });
             }
         }
@@ -162,31 +213,21 @@
             const names = {'Fajr':'Subuh', 'Dhuhr':'Dzuhur', 'Asr':'Ashar', 'Maghrib':'Maghrib', 'Isha':'Isya'};
             const grid = document.getElementById('jadwal-grid');
             grid.innerHTML = "";
-            
             const now = new Date();
             const curMin = now.getHours()*60 + now.getMinutes();
             let nextFound = false;
-
             list.forEach(k => {
                 const time = timings[k];
                 const [h, m] = time.split(':').map(Number);
                 const pMin = h*60 + m;
                 let active = false;
-
                 if(pMin > curMin && !nextFound) {
                     active = true; nextFound = true;
                     document.getElementById('next-label').innerText = "NEXT: " + names[k];
                     document.getElementById('next-time').innerText = time;
                 }
-
-                grid.innerHTML += `
-                <div class="jadwal-item ${active?'active':''}">
-                    <div class="j-name">${names[k]}</div>
-                    <div class="j-time">${time}</div>
-                </div>`;
+                grid.innerHTML += `<div class="jadwal-item ${active?'active':''}"><div class="j-name">${names[k]}</div><div class="j-time">${time}</div></div>`;
             });
-
-            // If all passed, next is Subuh tomorrow
             if(!nextFound) {
                 document.getElementById('next-label').innerText = "NEXT: SUBUH";
                 document.getElementById('next-time').innerText = timings['Fajr'];
@@ -210,13 +251,7 @@
             const grid = document.getElementById('surah-grid');
             grid.innerHTML = "";
             data.forEach(s => {
-                grid.innerHTML += `
-                <div class="surah-card" onclick="openSurah(${s.nomor}, '${s.namaLatin}')">
-                    <div class="surah-num">${s.nomor}</div>
-                    <div class="surah-arab">${s.nama}</div>
-                    <div class="surah-latin">${s.namaLatin}</div>
-                    <div class="surah-arti">${s.arti}</div>
-                </div>`;
+                grid.innerHTML += `<div class="surah-card" onclick="openSurah(${s.nomor}, '${s.namaLatin}')"><div class="surah-num">${s.nomor}</div><div class="surah-arab">${s.nama}</div><div class="surah-latin">${s.namaLatin}</div><div class="surah-arti">${s.arti}</div></div>`;
             });
         }
 
@@ -230,7 +265,6 @@
             document.getElementById('ayat-view').style.display='block';
             document.getElementById('s-name').innerText = name;
             document.getElementById('ayat-container').innerHTML = "<div style='text-align:center; padding:20px;'>Loading Ayat...</div>";
-            
             try {
                 const res = await fetch(`https://equran.id/api/v2/surat/${no}`);
                 const json = await res.json();
@@ -243,15 +277,7 @@
             con.innerHTML = "";
             ayats.forEach(a => {
                 const audio = a.audio['05'] || a.audio['01'];
-                con.innerHTML += `
-                <div class="ayat-item">
-                    <div class="ayat-top">
-                        <span style="font-size:0.8rem; color:#555;">${a.nomorAyat}</span>
-                        <button class="play-btn" onclick="playAudio('${audio}', this)">▶</button>
-                    </div>
-                    <div class="ayat-text">${a.teksArab}</div>
-                    <div class="ayat-trans">${a.teksIndonesia}</div>
-                </div>`;
+                con.innerHTML += `<div class="ayat-item"><div class="ayat-top"><span style="font-size:0.8rem; color:#555;">${a.nomorAyat}</span><button class="play-btn" onclick="playAudio('${audio}', this)">▶</button></div><div class="ayat-text">${a.teksArab}</div><div class="ayat-trans">${a.teksIndonesia}</div></div>`;
             });
         }
 
@@ -263,39 +289,22 @@
 
         function playAudio(url, btn) {
             const player = document.getElementById('quran-player');
-            if(currentBtn === btn && !player.paused) {
-                stopAudio(); return;
-            }
-            if(currentBtn) {
-                currentBtn.innerHTML = "▶";
-                currentBtn.classList.remove('playing');
-            }
+            if(currentBtn === btn && !player.paused) { stopAudio(); return; }
+            if(currentBtn) { currentBtn.innerHTML = "▶"; currentBtn.classList.remove('playing'); }
             currentBtn = btn;
-            player.src = url;
-            player.play();
-            btn.innerHTML = "⏸";
-            btn.classList.add('playing');
-            player.onended = () => {
-                btn.innerHTML = "▶";
-                btn.classList.remove('playing');
-                currentBtn = null;
-            }
+            player.src = url; player.play();
+            btn.innerHTML = "⏸"; btn.classList.add('playing');
+            player.onended = () => { btn.innerHTML = "▶"; btn.classList.remove('playing'); currentBtn = null; }
         }
 
         function stopAudio() {
             const player = document.getElementById('quran-player');
             player.pause();
-            if(currentBtn) {
-                currentBtn.innerHTML = "▶";
-                currentBtn.classList.remove('playing');
-                currentBtn = null;
-            }
+            if(currentBtn) { currentBtn.innerHTML = "▶"; currentBtn.classList.remove('playing'); currentBtn = null; }
         }
 
-        // INITIALIZE
         initPrayer();
         initQuran();
-
     </script>
 </body>
 </html>
