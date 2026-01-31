@@ -9,44 +9,6 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
     <link rel="stylesheet" href="css/style.css">
-    
-    <style>
-        /* --- SECRET CARD MECHANIC --- */
-        .card-secret {
-            border-color: #ffd700;
-            background: linear-gradient(145deg, #2b1d14, #000);
-            opacity: 0; 
-            transform: scale(0.9);
-            filter: blur(5px);
-            transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-        }
-        .card-secret:hover {
-            opacity: 1;
-            transform: scale(1) translateY(-7px);
-            filter: blur(0);
-            box-shadow: 0 0 25px #ffd700;
-        }
-        @media (max-width: 900px) {
-            .card-secret { opacity: 0.15; filter: grayscale(100%); transform: scale(0.95); }
-            .card-secret::before { content: "?"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: #333; font-weight: bold; }
-            .card-secret:active, .card-secret:focus { opacity: 1; filter: grayscale(0%); transform: scale(1); }
-            .card-secret:active::before { content: none; }
-        }
-
-        /* --- FEATURED CARD STYLE --- */
-        .card-featured {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card-featured:hover {
-            transform: translateY(-5px);
-        }
-        /* Animasi kedip halus untuk border */
-        @keyframes borderPulse {
-            0% { border-color: rgba(255, 255, 255, 0.2); }
-            50% { border-color: currentColor; }
-            100% { border-color: rgba(255, 255, 255, 0.2); }
-        }
-    </style>
 </head>
 <body>
 
@@ -130,15 +92,15 @@
 
     <div class="menu-grid">
         
-        <a href="modules/gx-link/index.html" class="card theme-net card-featured" style="border: 1px solid #00e5ff; box-shadow: 0 0 25px rgba(0, 229, 255, 0.2);">
+        <a href="modules/gx-link/index.html" class="card theme-net card-featured">
             <div class="icon">💬</div>
-            <div class="title" style="color: #00e5ff; text-shadow: 0 0 10px rgba(0,229,255,0.3);">GX-Link</div>
+            <div class="title">GX-Link</div>
             <div class="desc">P2P Chat, Call & Transfer</div>
         </a>
 
-        <a href="modules/keyboard/index.html" class="card theme-input card-featured" style="border: 1px solid #ffb300; box-shadow: 0 0 25px rgba(255, 179, 0, 0.2);">
+        <a href="modules/keyboard/index.html" class="card theme-input card-featured">
             <div class="icon">⌨️</div>
-            <div class="title" style="color: #ffb300; text-shadow: 0 0 10px rgba(255, 179, 0, 0.3);">Keyboard</div>
+            <div class="title">Keyboard</div>
             <div class="desc">Ghosting & Chatter</div>
         </a>
 
@@ -161,14 +123,15 @@
         <a href="modules/reflex/index.html" class="card theme-tool"><div class="icon">⚡</div><div class="title">Reflex Test</div><div class="desc">Reaction Time (ms)</div></a>
         <a href="modules/gameid/index.html" class="card theme-tool"><div class="icon">🆔</div><div class="title">Game Check</div><div class="desc">GameID Checker</div></a>
         <a href="modules/translator/index.html" class="card theme-tool"><div class="icon">💬</div><div class="title">Translator</div><div class="desc">encrypt decrypt code</div></a>
+        <a href="modules/password-gen/index.html" class="card theme-tool"><div class="icon">🔐</div><div class="title">PassGen</div><div class="desc">Secure Password Maker</div></a>
         <a href="modules/emergency/index.html" class="card theme-alert"><div class="icon">🆘</div><div class="title">Emergency</div><div class="desc">SOS Flash & Morse Tool</div></a>
 
         <a href="modules/img-converter/index.html" class="card theme-media"><div class="icon">🖼️</div><div class="title">Img Convert</div><div class="desc">JPG, PNG, WEBP Tool</div></a>
         <a href="modules/img-resizer/index.html" class="card theme-media"><div class="icon">📏</div><div class="title">Img Resizer</div><div class="desc">Scale & 2x Resolution</div></a>
         
-        <a href="modules/file-compress/index.html" class="card theme-sys" style="border: 1px solid #00ff88;">
+        <a href="modules/file-compress/index.html" class="card theme-sys">
             <div class="icon">🗜️</div>
-            <div class="title" style="color:#00ff88;">File Compress</div>
+            <div class="title">File Compress</div>
             <div class="desc">Img, PDF, Audio & Video</div>
         </a>
         
@@ -182,10 +145,16 @@
         <a href="modules/voice-studio/index.html" class="card theme-audio"><div class="icon">🎙️</div><div class="title">Voice Studio</div><div class="desc">TTS & Speech to Text</div></a>
         <a href="modules/retro-asset/index.html" class="card theme-retro"><div class="icon">👾</div><div class="title">Retro Asset</div><div class="desc">Sprite & 8-Bit Audio Gen</div></a>
 
+        <a href="modules/islamic-path/index.html" class="card card-secret">
+            <div class="icon" style="filter: grayscale(0);">☪️</div>
+            <div class="title">Islamic Path</div>
+            <div class="desc">Prayer, Quran & Live</div>
+        </a>
+
         <a href="modules/metranslator/index.html" class="card card-secret">
-            <div class="icon" style="filter: grayscale(0); text-shadow: 0 0 10px #ffd700;">💍</div>
-            <div class="title" style="color: #ffd700; font-family: serif;">Middle Earth</div>
-            <div class="desc" style="color: #d4af37;">one ring to rule them all</div>
+            <div class="icon" style="filter: grayscale(0);">💍</div>
+            <div class="title">Middle Earth</div>
+            <div class="desc">one ring to rule them all</div>
         </a>
     </div>
 
@@ -348,7 +317,6 @@
         fetchHolidays(); renderCalendar(); updateInfoPanel(currentDate);
 
         // --- 5. FREE GAMES API (DUAL ENGINE & SMART LABEL) ---
-        // Mencoba CorsProxy.io (Cepat) -> Gagal -> Coba AllOrigins (Cadangan)
         async function fetchFreeGames() {
             const listContainer = document.getElementById('free-games-list');
             const targetUrl = 'https://www.gamerpower.com/api/giveaways?platform=pc&type=game&sort-by=value';
@@ -406,11 +374,9 @@
                     } else if (platforms.includes("itch")) {
                         platformLabel = "ITCH.IO";
                     } else {
-                        // Fallback jika tidak ada toko besar
                         platformLabel = "DRM-FREE";
                     }
 
-                    // Fallback Image
                     const thumb = game.thumbnail || 'https://via.placeholder.com/260x140?text=No+Image';
 
                     html += `
