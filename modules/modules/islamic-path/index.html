@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamic Path</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        :root { --gold: #ffd700; --emerald: #00ff88; --bg: #050505; --card: #111; }
+        body { background: var(--bg); color: #eee; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
+        
+        .header { padding: 15px 20px; border-bottom: 1px solid #333; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+        
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; }
+
+        /* TABS (Seperti File Compress) */
+        .tabs { display: flex; background: #1a1a1a; padding: 5px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
+        .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #666; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .tab.active { background: linear-gradient(135deg, #111, #222); color: var(--gold); border: 1px solid var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
+
+        .view-section { display: none; animation: fadeIn 0.4s; }
+        .view-section.active { display: block; }
+
+        /* --- 1. PRAYER SECTION --- */
+        .prayer-hero { text-align: center; padding: 30px 20px; background: linear-gradient(to bottom, #111, #050505); border: 1px solid #333; border-radius: 20px; margin-bottom: 20px; }
+        .next-prayer-label { color: var(--emerald); font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+        .next-prayer-time { font-size: 3rem; font-weight: bold; color: #fff; text-shadow: 0 0 20px rgba(0,255,136,0.2); }
+        .location-badge { display: inline-block; background: #222; padding: 5px 15px; border-radius: 20px; margin-top: 15px; font-size: 0.8rem; color: #aaa; border: 1px solid #333; }
+        
+        .jadwal-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
+        .jadwal-item { background: #111; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #222; }
+        .jadwal-item.active { border-color: var(--gold); background: rgba(255, 215, 0, 0.05); }
+        .j-name { font-size: 0.8rem; color: #888; margin-bottom: 5px; }
+        .j-time { font-weight: bold; font-size: 1.1rem; color: #fff; }
+
+        /* --- 2. QURAN SECTION --- */
+        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #151515; color: #fff; font-size: 1rem; margin-bottom: 20px; outline: none; }
+        .search-box:focus { border-color: var(--gold); }
+        
+        .surah-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .surah-card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; cursor: pointer; position: relative; transition: 0.2s; }
+        .surah-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+        .surah-num { font-size: 0.7rem; color: #555; position: absolute; top: 10px; left: 10px; }
+        .surah-arab { font-family: 'Traditional Arabic', serif; font-size: 1.6rem; text-align: right; color: var(--gold); margin-bottom: 5px; }
+        .surah-latin { font-weight: bold; font-size: 0.9rem; }
+        .surah-arti { font-size: 0.7rem; color: #888; }
+
+        /* Ayat View */
+        #ayat-view { display: none; }
+        .ayat-header { text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #333; position: relative; }
+        .bismillah { font-family: 'Traditional Arabic', serif; font-size: 2rem; color: var(--gold); margin: 15px 0; }
+        .close-btn { position: absolute; top: 0; left: 0; background: none; border: none; color: #fff; cursor: pointer; font-size: 1rem; }
+        
+        .ayat-item { padding: 20px 0; border-bottom: 1px solid #222; }
+        .ayat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .play-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #444; background: none; color: var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .play-btn.playing { background: var(--gold); color: #000; animation: pulse 1s infinite; }
+        .ayat-text { font-family: 'Traditional Arabic', serif; font-size: 2rem; text-align: right; line-height: 2.2; margin-bottom: 10px; }
+        .ayat-trans { font-size: 0.9rem; color: #aaa; line-height: 1.5; }
+
+        /* --- 3. LIVE SECTION --- */
+        .live-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 15px; border: 1px solid #333; }
+        .live-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .live-status { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--danger); font-weight: bold; }
+        .live-dot { width: 10px; height: 10px; background: red; border-radius: 50%; animation: pulse 1s infinite; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-weight:bold; color:var(--gold);">ISLAMIC PATH</div>
+        <div style="width:80px;"></div> 
+    </div>
+
+    <div class="container">
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('prayer')">🕌 Prayer</div>
+            <div class="tab" onclick="switchTab('quran')">📖 Qur'an</div>
+            <div class="tab" onclick="switchTab('live')">🕋 Live</div>
+        </div>
+
+        <div id="view-prayer" class="view-section active">
+            <div class="prayer-hero">
+                <div class="next-prayer-label" id="next-label">NEXT PRAYER</div>
+                <div class="next-prayer-time" id="next-time">--:--</div>
+                <div class="location-badge" id="loc-name">📍 Locating...</div>
+            </div>
+            <div class="jadwal-list" id="jadwal-grid"></div>
+        </div>
+
+        <div id="view-quran" class="view-section">
+            <div id="surah-list">
+                <input type="text" class="search-box" id="search-in" placeholder="Search Surah..." onkeyup="filterSurah()">
+                <div class="surah-grid" id="surah-grid"></div>
+            </div>
+            
+            <div id="ayat-view">
+                <div class="ayat-header">
+                    <button class="close-btn" onclick="closeSurah()">← BACK</button>
+                    <h2 id="s-name" style="margin:0; color:var(--gold);">-</h2>
+                    <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+                </div>
+                <div id="ayat-container"></div>
+            </div>
+            <audio id="quran-player"></audio>
+        </div>
+
+        <div id="view-live" class="view-section">
+            <div class="live-status"><div class="live-dot"></div> LIVE NOW: MAKKAH</div>
+            <div class="live-container">
+                <iframe src="https://www.youtube.com/embed/K9Z27z3K2ls" title="Makkah Live" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+            <p style="font-size:0.8rem; color:#666; margin-top:10px; text-align:center;">*Stream provided by external YouTube channel.</p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GLOBAL LOGIC ---
+        function switchTab(t) {
+            document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+            document.getElementById(`view-${t}`).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Stop Audio if leaving Quran tab
+            if(t !== 'quran') stopAudio();
+        }
+
+        // ================= 1. PRAYER LOGIC =================
+        function initPrayer() {
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    
+                    // 1. Get City Name
+                    try {
+                        const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const data = await geo.json();
+                        document.getElementById('loc-name').innerText = "📍 " + (data.address.city || data.address.town || "My Location");
+                    } catch(e) {}
+
+                    // 2. Get Prayer Times
+                    try {
+                        const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=20`);
+                        const json = await res.json();
+                        renderJadwal(json.data.timings);
+                    } catch(e) { alert("Prayer API Error"); }
+
+                }, () => { document.getElementById('loc-name').innerText = "❌ GPS Denied"; });
+            }
+        }
+
+        function renderJadwal(timings) {
+            const list = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
+            const names = {'Fajr':'Subuh', 'Dhuhr':'Dzuhur', 'Asr':'Ashar', 'Maghrib':'Maghrib', 'Isha':'Isya'};
+            const grid = document.getElementById('jadwal-grid');
+            grid.innerHTML = "";
+            
+            const now = new Date();
+            const curMin = now.getHours()*60 + now.getMinutes();
+            let nextFound = false;
+
+            list.forEach(k => {
+                const time = timings[k];
+                const [h, m] = time.split(':').map(Number);
+                const pMin = h*60 + m;
+                let active = false;
+
+                if(pMin > curMin && !nextFound) {
+                    active = true; nextFound = true;
+                    document.getElementById('next-label').innerText = "NEXT: " + names[k];
+                    document.getElementById('next-time').innerText = time;
+                }
+
+                grid.innerHTML += `
+                <div class="jadwal-item ${active?'active':''}">
+                    <div class="j-name">${names[k]}</div>
+                    <div class="j-time">${time}</div>
+                </div>`;
+            });
+
+            // If all passed, next is Subuh tomorrow
+            if(!nextFound) {
+                document.getElementById('next-label').innerText = "NEXT: SUBUH";
+                document.getElementById('next-time').innerText = timings['Fajr'];
+            }
+        }
+
+        // ================= 2. QURAN LOGIC =================
+        let allSurahs = [];
+        let currentBtn = null;
+
+        async function initQuran() {
+            try {
+                const res = await fetch('https://equran.id/api/v2/surat');
+                const json = await res.json();
+                allSurahs = json.data;
+                renderSurahs(allSurahs);
+            } catch(e) { document.getElementById('surah-grid').innerHTML = "Failed to load Quran."; }
+        }
+
+        function renderSurahs(data) {
+            const grid = document.getElementById('surah-grid');
+            grid.innerHTML = "";
+            data.forEach(s => {
+                grid.innerHTML += `
+                <div class="surah-card" onclick="openSurah(${s.nomor}, '${s.namaLatin}')">
+                    <div class="surah-num">${s.nomor}</div>
+                    <div class="surah-arab">${s.nama}</div>
+                    <div class="surah-latin">${s.namaLatin}</div>
+                    <div class="surah-arti">${s.arti}</div>
+                </div>`;
+            });
+        }
+
+        function filterSurah() {
+            const q = document.getElementById('search-in').value.toLowerCase();
+            renderSurahs(allSurahs.filter(s => s.namaLatin.toLowerCase().includes(q)));
+        }
+
+        async function openSurah(no, name) {
+            document.getElementById('surah-list').style.display='none';
+            document.getElementById('ayat-view').style.display='block';
+            document.getElementById('s-name').innerText = name;
+            document.getElementById('ayat-container').innerHTML = "<div style='text-align:center; padding:20px;'>Loading Ayat...</div>";
+            
+            try {
+                const res = await fetch(`https://equran.id/api/v2/surat/${no}`);
+                const json = await res.json();
+                renderAyat(json.data.ayat);
+            } catch(e) { alert("Error loading ayat"); }
+        }
+
+        function renderAyat(ayats) {
+            const con = document.getElementById('ayat-container');
+            con.innerHTML = "";
+            ayats.forEach(a => {
+                const audio = a.audio['05'] || a.audio['01'];
+                con.innerHTML += `
+                <div class="ayat-item">
+                    <div class="ayat-top">
+                        <span style="font-size:0.8rem; color:#555;">${a.nomorAyat}</span>
+                        <button class="play-btn" onclick="playAudio('${audio}', this)">▶</button>
+                    </div>
+                    <div class="ayat-text">${a.teksArab}</div>
+                    <div class="ayat-trans">${a.teksIndonesia}</div>
+                </div>`;
+            });
+        }
+
+        function closeSurah() {
+            stopAudio();
+            document.getElementById('ayat-view').style.display='none';
+            document.getElementById('surah-list').style.display='block';
+        }
+
+        function playAudio(url, btn) {
+            const player = document.getElementById('quran-player');
+            if(currentBtn === btn && !player.paused) {
+                stopAudio(); return;
+            }
+            if(currentBtn) {
+                currentBtn.innerHTML = "▶";
+                currentBtn.classList.remove('playing');
+            }
+            currentBtn = btn;
+            player.src = url;
+            player.play();
+            btn.innerHTML = "⏸";
+            btn.classList.add('playing');
+            player.onended = () => {
+                btn.innerHTML = "▶";
+                btn.classList.remove('playing');
+                currentBtn = null;
+            }
+        }
+
+        function stopAudio() {
+            const player = document.getElementById('quran-player');
+            player.pause();
+            if(currentBtn) {
+                currentBtn.innerHTML = "▶";
+                currentBtn.classList.remove('playing');
+                currentBtn = null;
+            }
+        }
+
+        // INITIALIZE
+        initPrayer();
+        initQuran();
+
+    </script>
+</body>
+</html>
