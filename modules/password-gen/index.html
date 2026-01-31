@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GX-PassGen</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        :root { --primary: #00e5ff; --success: #00ff88; --warn: #ffb300; --danger: #ff1744; --bg: #050505; --card: #111; }
+        body { background: var(--bg); color: #eee; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
+        
+        .header { padding: 15px 20px; border-bottom: 1px solid #333; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+        
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        /* OUTPUT BOX */
+        .pass-box {
+            background: #1a1a1a; border: 2px solid #333; border-radius: 15px; padding: 25px;
+            text-align: center; position: relative; transition: 0.3s;
+        }
+        .pass-box:hover { border-color: var(--primary); box-shadow: 0 0 20px rgba(0, 229, 255, 0.1); }
+        
+        .pass-display {
+            font-family: 'Courier New', monospace; font-size: 1.8rem; font-weight: bold;
+            color: #fff; word-break: break-all; margin-bottom: 15px; letter-spacing: 2px;
+            min-height: 40px;
+        }
+        
+        .action-row { display: flex; justify-content: center; gap: 15px; }
+        .icon-btn {
+            background: #333; border: none; color: #fff; width: 45px; height: 45px; border-radius: 10px;
+            cursor: pointer; font-size: 1.2rem; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .icon-btn:hover { background: var(--primary); color: #000; transform: translateY(-2px); }
+        .icon-btn.copied { background: var(--success); color: #000; }
+
+        /* STRENGTH METER */
+        .strength-container { margin-top: 20px; }
+        .strength-bar-bg { height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+        .strength-bar-fill { height: 100%; width: 0%; transition: 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+        .strength-text { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
+        .crack-time { color: var(--primary); font-weight: bold; }
+
+        /* CONTROLS */
+        .control-card { background: #111; border: 1px solid #333; border-radius: 15px; padding: 20px; }
+        
+        .slider-group { margin-bottom: 20px; }
+        .slider-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; }
+        input[type="range"] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .checkbox-label {
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
+            background: #1a1a1a; padding: 12px; border-radius: 8px; border: 1px solid #333; transition: 0.2s;
+        }
+        .checkbox-label:hover { background: #222; }
+        .checkbox-label input { accent-color: var(--primary); width: 18px; height: 18px; }
+        .checkbox-label span { font-size: 0.9rem; color: #ccc; }
+
+        .btn-gen {
+            width: 100%; padding: 15px; background: var(--primary); color: #000; font-weight: bold;
+            border: none; border-radius: 12px; font-size: 1.1rem; cursor: pointer; margin-top: 20px;
+            transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-gen:hover { filter: brightness(1.1); box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
+
+        /* HISTORY */
+        .history-section { margin-top: 10px; }
+        
+        /* UPDATED: Header History agar tombol CLEAR di kanan */
+        .history-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .history-title { font-size: 0.8rem; color: #666; letter-spacing: 1px; }
+        
+        /* Tombol Clear baru */
+        .btn-clear {
+            background: transparent; border: 1px solid #333; color: var(--danger);
+            padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-clear:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+        .history-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #111; padding: 10px 15px; border-bottom: 1px solid #222;
+            font-family: monospace; color: #aaa; cursor: pointer; transition: 0.2s;
+        }
+        .history-item:hover { background: #1a1a1a; color: #fff; }
+        .history-item:first-child { border-top-left-radius: 10px; border-top-right-radius: 10px; }
+        .history-item:last-child { border-bottom: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+
+        @media (max-width: 600px) {
+            .pass-display { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-weight:bold; color:var(--primary);">GX-PASSGEN</div>
+        <div style="width:80px;"></div> 
+    </div>
+
+    <div class="container">
+        
+        <div class="pass-box">
+            <div class="pass-display" id="output">Loading...</div>
+            <div class="action-row">
+                <button class="icon-btn" onclick="copyPass()" title="Copy"><span id="copy-icon">📋</span></button>
+                <button class="icon-btn" onclick="generate()" title="Regenerate">🔄</button>
+            </div>
+            
+            <div class="strength-container">
+                <div class="strength-bar-bg">
+                    <div class="strength-bar-fill" id="strength-fill" style="width: 0%; background: red;"></div>
+                </div>
+                <div class="strength-text">
+                    <span id="strength-label">Weak</span>
+                    <span class="crack-time" id="crack-time">Instant</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-card">
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span>Length</span>
+                    <span id="len-val" style="color:var(--primary)">16</span>
+                </div>
+                <input type="range" id="length" min="4" max="64" value="16" oninput="updateLen()">
+            </div>
+
+            <div class="options-grid">
+                <label class="checkbox-label"><input type="checkbox" id="chk-upper" checked> <span>Uppercase (A-Z)</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="chk-lower" checked> <span>Lowercase (a-z)</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="chk-num" checked> <span>Numbers (0-9)</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="chk-sym" checked> <span>Symbols (!@#)</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="chk-amb"> <span>No Ambiguous (i l 1 O 0)</span></label>
+            </div>
+
+            <button class="btn-gen" onclick="generate()">⚡ GENERATE PASSWORD</button>
+        </div>
+
+        <div class="history-section">
+            <div class="history-header">
+                <div class="history-title">RECENT HISTORY</div>
+                <button class="btn-clear" onclick="clearHistory()">🗑️ CLEAR ALL</button>
+            </div>
+            <div id="history-list"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // CONFIG
+        const CHARS = {
+            upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            lower: "abcdefghijklmnopqrstuvwxyz",
+            num: "0123456789",
+            sym: "!@#$%^&*()_+~`|}{[]:;?><,./-=",
+            ambiguous: "Il1O0" // Characters to exclude if requested
+        };
+
+        function updateLen() {
+            document.getElementById('len-val').innerText = document.getElementById('length').value;
+            generate();
+        }
+
+        function generate() {
+            const len = parseInt(document.getElementById('length').value);
+            const useUpper = document.getElementById('chk-upper').checked;
+            const useLower = document.getElementById('chk-lower').checked;
+            const useNum = document.getElementById('chk-num').checked;
+            const useSym = document.getElementById('chk-sym').checked;
+            const noAmb = document.getElementById('chk-amb').checked;
+
+            if(!useUpper && !useLower && !useNum && !useSym) {
+                document.getElementById('output').innerText = "Select Option!";
+                return;
+            }
+
+            let charset = "";
+            if(useUpper) charset += CHARS.upper;
+            if(useLower) charset += CHARS.lower;
+            if(useNum) charset += CHARS.num;
+            if(useSym) charset += CHARS.sym;
+
+            if(noAmb) {
+                // Remove ambiguous chars using regex
+                for(let char of CHARS.ambiguous) {
+                    charset = charset.split(char).join('');
+                }
+            }
+
+            let password = "";
+            const array = new Uint32Array(len);
+            window.crypto.getRandomValues(array); // Secure Random
+
+            for(let i=0; i<len; i++) {
+                password += charset[array[i] % charset.length];
+            }
+
+            document.getElementById('output').innerText = password;
+            checkStrength(password, charset.length);
+            saveHistory(password);
+        }
+
+        function checkStrength(pass, poolSize) {
+            const len = pass.length;
+            // Entropy Calculation: Length * log2(PoolSize)
+            const entropy = len * Math.log2(poolSize);
+            
+            const fill = document.getElementById('strength-fill');
+            const label = document.getElementById('strength-label');
+            const timeLabel = document.getElementById('crack-time');
+
+            let color = "red";
+            let text = "Weak";
+            let width = "20%";
+
+            if(entropy > 120) { color = "var(--success)"; text = "Excellent"; width = "100%"; }
+            else if(entropy > 80) { color = "var(--primary)"; text = "Strong"; width = "75%"; }
+            else if(entropy > 50) { color = "var(--warn)"; text = "Moderate"; width = "50%"; }
+
+            fill.style.width = width;
+            fill.style.backgroundColor = color;
+            label.innerText = text;
+            label.style.color = color;
+
+            // Crack Time Estimation (Assume 1 Trillion guesses/sec for supercomputer)
+            const guesses = Math.pow(poolSize, len);
+            const seconds = guesses / 1000000000000; 
+            timeLabel.innerText = formatTime(seconds);
+        }
+
+        function formatTime(seconds) {
+            if(seconds < 1) return "Instant";
+            if(seconds < 60) return Math.round(seconds) + " Seconds";
+            if(seconds < 3600) return Math.round(seconds/60) + " Minutes";
+            if(seconds < 86400) return Math.round(seconds/3600) + " Hours";
+            if(seconds < 31536000) return Math.round(seconds/86400) + " Days";
+            
+            const years = seconds / 31536000;
+            if(years > 1000000) return "Millions of Years";
+            if(years > 1000) return Math.round(years/1000) + "k Years";
+            return Math.round(years) + " Years";
+        }
+
+        function copyPass() {
+            const txt = document.getElementById('output').innerText;
+            navigator.clipboard.writeText(txt);
+            
+            const btn = document.querySelector('.icon-btn[title="Copy"]');
+            btn.innerHTML = "✅";
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = "📋";
+                btn.classList.remove('copied');
+            }, 1500);
+        }
+
+        // HISTORY SYSTEM
+        function saveHistory(pass) {
+            let hist = JSON.parse(localStorage.getItem('gx_pass_hist') || "[]");
+            // Prevent duplicate adjacent
+            if(hist.length > 0 && hist[0] === pass) return;
+            
+            hist.unshift(pass);
+            if(hist.length > 5) hist.pop(); // Keep last 5
+            localStorage.setItem('gx_pass_hist', JSON.stringify(hist));
+            renderHistory();
+        }
+
+        // --- NEW: CLEAR HISTORY ---
+        function clearHistory() {
+            localStorage.removeItem('gx_pass_hist'); // Hapus dari browser
+            renderHistory(); // Refresh tampilan
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            const hist = JSON.parse(localStorage.getItem('gx_pass_hist') || "[]");
+            
+            if(hist.length === 0) {
+                list.innerHTML = "<div class='history-item' style='justify-content:center; color:#444; cursor:default;'>No history (Safe Mode)</div>";
+                return;
+            }
+
+            let html = "";
+            hist.forEach(p => {
+                // Mask password for privacy visually
+                const mask = p.substring(0, 3) + "••••" + p.substring(p.length-2);
+                html += `<div class="history-item" onclick="restorePass('${p}')">
+                    <span>${mask}</span>
+                    <span style="font-size:0.7rem; color:var(--primary);">RESTORE</span>
+                </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function restorePass(p) {
+            document.getElementById('output').innerText = p;
+            // Recalculate strength roughly
+            checkStrength(p, 90); 
+        }
+
+        // Init
+        generate();
+        renderHistory();
+
+    </script>
+</body>
+</html>
