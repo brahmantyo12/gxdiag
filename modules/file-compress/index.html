@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GX-Compressor Ultimate</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
+    <style>
+        :root { --primary: #00e5ff; --secondary: #00ff88; --warn: #ffb300; --danger: #ff1744; --bg: #050505; --card: #111; }
+        body { background: var(--bg); color: #eee; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
+        
+        .header { padding: 15px 20px; border-bottom: 1px solid #333; background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
+        
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; }
+        
+        /* SCROLLABLE TABS */
+        .tabs-wrapper { overflow-x: auto; white-space: nowrap; margin-bottom: 20px; -webkit-overflow-scrolling: touch; padding-bottom: 5px; }
+        .tabs { display: inline-flex; background: #1a1a1a; padding: 5px; border-radius: 12px; border: 1px solid #333; min-width: 100%; box-sizing: border-box; }
+        .tab { flex: 1; text-align: center; padding: 12px 20px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #666; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 100px; }
+        .tab.active { background: var(--primary); color: #000; box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
+        .tab:hover:not(.active) { color: #fff; background: #222; }
+
+        .view-section { display: none; animation: fadeIn 0.4s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* DROP ZONE */
+        .drop-zone {
+            border: 2px dashed #444; background: #111; border-radius: 15px; padding: 40px 20px;
+            text-align: center; cursor: pointer; transition: 0.3s; margin-bottom: 20px;
+        }
+        .drop-zone:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.05); }
+        .drop-icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+        
+        /* CONTROLS */
+        .control-box { background: #151515; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        
+        /* SLIDERS & INPUTS */
+        .slider-group { margin-bottom: 15px; }
+        .slider-label { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; color: #ccc; }
+        input[type="range"] { width: 100%; accent-color: var(--primary); }
+        select { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; width: 100%; }
+
+        /* CARDS & GRIDS */
+        .mode-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .mode-card { 
+            background: #222; border: 2px solid #333; padding: 15px; border-radius: 12px; 
+            cursor: pointer; text-align: left; transition: 0.2s; position: relative; opacity: 0.7;
+        }
+        .mode-card.active { border-color: var(--primary); background: rgba(0, 229, 255, 0.1); opacity: 1; }
+        .mode-icon { font-size: 1.5rem; margin-bottom: 5px; }
+        .mode-title { font-weight: bold; color: #fff; }
+        .mode-desc { font-size: 0.75rem; color: #aaa; }
+
+        /* PREVIEW AREAS */
+        .compare-view { display: flex; gap: 10px; flex-wrap: wrap; }
+        .img-card { flex: 1; background: #000; border: 1px solid #333; border-radius: 10px; padding: 10px; min-width: 250px; }
+        .img-card img { width: 100%; height: auto; border-radius: 5px; }
+        
+        /* FILE LIST (ZIP/TEXT) */
+        .file-list { max-height: 200px; overflow-y: auto; background: #000; padding: 10px; border-radius: 10px; border: 1px solid #333; margin-bottom: 15px; }
+        .file-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #222; font-size: 0.85rem; }
+        .file-item:last-child { border-bottom: none; }
+
+        /* PROGRESS & BUTTONS */
+        .progress-container { display: none; margin-top: 20px; }
+        .progress-bar { width: 100%; height: 10px; background: #222; border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s; }
+        .progress-text { text-align: center; font-size: 0.8rem; margin-top: 5px; color: var(--primary); }
+
+        .btn-action { background: var(--primary); color: #000; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+        .btn-action:disabled { background: #333; color: #666; cursor: not-allowed; }
+        .size-badge { background: #222; padding: 2px 6px; border-radius: 4px; color: #fff; font-size: 0.8rem; }
+        .size-badge.optimized { color: var(--primary); }
+
+        /* ENGINE LOADER BOX */
+        .engine-gate {
+            text-align: center; padding: 40px 20px; background: #111; border: 1px solid #333; border-radius: 15px;
+        }
+        .engine-gate h3 { color: var(--warn); margin-bottom: 10px; }
+        .engine-gate p { color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+        .btn-load-engine {
+            background: transparent; border: 2px solid var(--secondary); color: var(--secondary);
+            padding: 10px 25px; border-radius: 20px; cursor: pointer; font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-load-engine:hover { background: var(--secondary); color: #000; }
+        .engine-status { font-size: 0.8rem; margin-top: 10px; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-weight:bold;">GX-COMPRESSOR</div>
+        <div style="width:80px;"></div> 
+    </div>
+
+    <div class="container">
+        
+        <div class="tabs-wrapper">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('img')">🖼️ Image</div>
+                <div class="tab" onclick="switchTab('pdf')">📄 PDF</div>
+                <div class="tab" onclick="switchTab('audio')">🎵 Audio</div>
+                <div class="tab" onclick="switchTab('video')">📹 Video</div>
+                <div class="tab" onclick="switchTab('text')">📝 Text</div>
+                <div class="tab" onclick="switchTab('zip')">📦 ZIP</div>
+            </div>
+        </div>
+
+        <div id="view-img" class="view-section active">
+            <div class="drop-zone" onclick="document.getElementById('img-input').click()">
+                <span class="drop-icon">🖼️</span><h3>Upload Image</h3><p>JPG, PNG, WEBP</p>
+                <input type="file" id="img-input" accept="image/*" style="display:none" onchange="handleImage(this.files[0])">
+            </div>
+            <div id="img-ui" style="display:none;">
+                <div class="control-box">
+                    <div class="slider-group"><div class="slider-label"><span>Quality</span><span id="qual-val">80%</span></div><input type="range" id="quality" min="0.1" max="1.0" step="0.05" value="0.8" oninput="updateImagePreview()"></div>
+                    <div class="slider-group"><div class="slider-label"><span>Scale</span><span id="scale-val">100%</span></div><input type="range" id="scale" min="0.1" max="1.0" step="0.1" value="1.0" oninput="updateImagePreview()"></div>
+                </div>
+                <div class="compare-view">
+                    <div class="img-card"><div>Original</div><img id="prev-orig"><div class="file-info"><span class="size-badge" id="size-orig">0 KB</span></div></div>
+                    <div class="img-card" style="border-color:var(--primary);"><div>Result</div><img id="prev-res"><div class="file-info"><span class="size-badge optimized" id="size-res">0 KB</span></div></div>
+                </div>
+                <button class="btn-action" onclick="downloadImage()">⬇️ DOWNLOAD</button>
+            </div>
+        </div>
+
+        <div id="view-pdf" class="view-section">
+            <div class="drop-zone" onclick="document.getElementById('pdf-input').click()">
+                <span class="drop-icon">📄</span><h3>Upload PDF</h3><p>CV, Portfolio (Max 10MB)</p>
+                <input type="file" id="pdf-input" accept="application/pdf" style="display:none" onchange="handlePDF(this.files[0])">
+            </div>
+            <div id="pdf-ui" style="display:none;">
+                <div class="control-box">
+                    <div style="text-align:center; font-weight:bold; margin-bottom:10px;" id="pdf-name">file.pdf</div>
+                    <div class="mode-grid">
+                        <div class="mode-card active" onclick="setPdfMode('clean')" id="mode-clean"><div class="mode-icon">🧹</div><div class="mode-title">Smart Cleaner</div><div class="mode-desc">ATS Friendly. Text Selectable.</div></div>
+                        <div class="mode-card" onclick="setPdfMode('flatten')" id="mode-flatten"><div class="mode-icon">📉</div><div class="mode-title">Extreme Flatten</div><div class="mode-desc">Text to Image. Max Compression.</div></div>
+                    </div>
+                    <button class="btn-action" onclick="processPDF()">🚀 COMPRESS PDF</button>
+                </div>
+                <div id="pdf-result" class="control-box" style="display:none; text-align:center; border-color:var(--secondary);">
+                    <h3>Done!</h3><div style="margin:10px 0;"><span id="pdf-old">0MB</span> ➝ <span id="pdf-new" style="color:var(--secondary); font-weight:bold;">0MB</span></div>
+                    <button class="btn-action" style="background:var(--secondary);" onclick="downloadPDF()">⬇️ SAVE PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-audio" class="view-section">
+            <div id="audio-gate" class="engine-gate">
+                <h3>⚠️ Konfirmasi Data</h3>
+                <p>Fitur Audio Compressor membutuhkan library sistem (FFmpeg) sebesar <b>~10 MB</b>. File ini akan didownload sekali dan disimpan di memori browser.</p>
+                <button class="btn-load-engine" onclick="initEngine('audio')">📦 Load Engine (10 MB)</button>
+                <div class="engine-status">Klik jika Anda terhubung ke WiFi atau punya kuota cukup.</div>
+            </div>
+
+            <div id="audio-app" style="display:none;">
+                <div class="drop-zone" onclick="document.getElementById('audio-input').click()">
+                    <span class="drop-icon">🎵</span><h3>Upload Audio</h3><p>MP3, WAV, OGG, M4A</p>
+                    <input type="file" id="audio-input" accept="audio/*" style="display:none" onchange="handleAudio(this.files[0])">
+                </div>
+                <div id="audio-ui" style="display:none;">
+                    <div class="control-box">
+                        <div style="margin-bottom:10px;">Target Bitrate:</div>
+                        <select id="audio-bitrate">
+                            <option value="64k">64 kbps (Voice Note/Speech)</option>
+                            <option value="128k" selected>128 kbps (Standard Music)</option>
+                            <option value="192k">192 kbps (High Quality)</option>
+                        </select>
+                        <button class="btn-action" onclick="processMedia('audio')">🚀 COMPRESS AUDIO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-video" class="view-section">
+            <div id="video-gate" class="engine-gate">
+                <h3>⚠️ Konfirmasi Data</h3>
+                <p>Fitur Video Compressor membutuhkan library sistem (FFmpeg) sebesar <b>~10 MB</b>.</p>
+                <button class="btn-load-engine" onclick="initEngine('video')">📦 Load Engine (10 MB)</button>
+                <div class="engine-status">Disarankan menggunakan PC/Laptop untuk performa terbaik.</div>
+            </div>
+
+            <div id="video-app" style="display:none;">
+                <div class="drop-zone" onclick="document.getElementById('video-input').click()">
+                    <span class="drop-icon">📹</span><h3>Upload Video</h3><p>MP4, MOV, AVI (Max 50MB Rec.)</p>
+                    <input type="file" id="video-input" accept="video/*" style="display:none" onchange="handleVideo(this.files[0])">
+                </div>
+                <div id="video-ui" style="display:none;">
+                    <div class="control-box">
+                        <div class="slider-group"><div class="slider-label"><span>Resolution Scale</span><span id="vid-scale-val">720p</span></div><input type="range" id="vid-scale" min="360" max="1080" step="120" value="720" oninput="updateVidLabel()"></div>
+                        <div class="slider-group"><div class="slider-label"><span>CRF (Quality vs Size)</span><span id="vid-crf-val">28 (Balanced)</span></div><input type="range" id="vid-crf" min="18" max="40" step="1" value="28" oninput="updateVidLabel()"></div>
+                        <button class="btn-action" onclick="processMedia('video')">🚀 COMPRESS VIDEO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-text" class="view-section">
+            <div class="drop-zone" onclick="document.getElementById('text-input').click()">
+                <span class="drop-icon">📝</span><h3>Upload Code/Text</h3><p>JSON, HTML, CSS, JS, XML</p>
+                <input type="file" id="text-input" accept=".json,.html,.css,.js,.xml,.txt" style="display:none" onchange="handleText(this.files[0])">
+            </div>
+            <div id="text-ui" style="display:none;">
+                <div class="control-box">
+                    <div>Detected: <span id="text-type" style="color:var(--primary); font-weight:bold;">-</span></div>
+                    <div style="font-size:0.8rem; color:#888; margin-bottom:10px;">Minification removes spaces, newlines, and comments.</div>
+                    <textarea id="text-preview" style="width:100%; height:150px; background:#000; color:#0f0; border:1px solid #333; font-family:monospace; padding:10px; font-size:0.8rem;" readonly></textarea>
+                    <button class="btn-action" onclick="processText()">🚀 MINIFY CODE</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-zip" class="view-section">
+            <div class="drop-zone" onclick="document.getElementById('zip-input').click()">
+                <span class="drop-icon">📦</span><h3>Select Multiple Files</h3><p>Combine photos/docs into one ZIP</p>
+                <input type="file" id="zip-input" multiple style="display:none" onchange="handleZip(this.files)">
+            </div>
+            <div id="zip-ui" style="display:none;">
+                <div class="control-box">
+                    <div style="margin-bottom:10px;">Selected Files:</div>
+                    <div class="file-list" id="zip-list"></div>
+                    <div style="margin-top:10px;">Output Name:</div>
+                    <input type="text" id="zip-name" value="GX_Archive" style="margin-top:5px;">
+                    <button class="btn-action" onclick="processZip()">🚀 CREATE ZIP</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container" id="global-progress">
+            <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+            <div class="progress-text" id="prog-text">Processing...</div>
+        </div>
+        <div id="media-result" class="control-box" style="display:none; text-align:center; border-color:var(--primary); margin-top:20px;">
+            <h3>Success!</h3>
+            <div style="margin:10px 0;"><span id="med-old"></span> ➝ <span id="med-new" style="color:var(--primary); font-weight:bold;"></span></div>
+            <button class="btn-action" onclick="downloadMedia()">⬇️ DOWNLOAD RESULT</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- UTILS ---
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        let ffmpeg = null;
+        let currentFile = null;
+        let finalBlob = null;
+        let selectedPdfMode = 'clean';
+        let engineLoaded = false;
+        
+        // --- TABS ---
+        function switchTab(t) {
+            document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+            document.getElementById(`view-${t}`).classList.add('active');
+            event.target.classList.add('active');
+            // Reset UIs
+            document.getElementById('media-result').style.display = 'none';
+            document.getElementById('global-progress').style.display = 'none';
+        }
+
+        function formatSize(bytes) {
+            if(bytes===0) return '0 B'; const k=1024; const s=['B','KB','MB','GB'];
+            const i=Math.floor(Math.log(bytes)/Math.log(k)); return parseFloat((bytes/Math.pow(k,i)).toFixed(2))+' '+s[i];
+        }
+
+        // ================= 1. IMAGE =================
+        function handleImage(file) {
+            if(!file) return; currentFile=file;
+            document.getElementById('img-ui').style.display='block';
+            const r = new FileReader();
+            r.onload = e => { document.getElementById('prev-orig').src=e.target.result; document.getElementById('size-orig').innerText=formatSize(file.size); updateImagePreview(); };
+            r.readAsDataURL(file);
+        }
+        function updateImagePreview() {
+            if(!currentFile) return;
+            const q = parseFloat(document.getElementById('quality').value);
+            const s = parseFloat(document.getElementById('scale').value);
+            document.getElementById('qual-val').innerText = Math.round(q*100)+"%";
+            document.getElementById('scale-val').innerText = Math.round(s*100)+"%";
+            const img = new Image(); img.src = document.getElementById('prev-orig').src;
+            img.onload = () => {
+                const c = document.createElement('canvas'); const ctx = c.getContext('2d');
+                c.width = img.width*s; c.height = img.height*s;
+                ctx.drawImage(img,0,0,c.width,c.height);
+                c.toBlob(b => {
+                    finalBlob = b;
+                    document.getElementById('prev-res').src = URL.createObjectURL(b);
+                    document.getElementById('size-res').innerText = formatSize(b.size);
+                }, 'image/jpeg', q);
+            };
+        }
+        function downloadImage() { if(finalBlob) { const a=document.createElement('a'); a.href=URL.createObjectURL(finalBlob); a.download="GX_"+currentFile.name; a.click(); } }
+
+        // ================= 2. PDF =================
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        function handlePDF(file) { if(!file) return; currentFile=file; document.getElementById('pdf-ui').style.display='block'; document.getElementById('pdf-name').innerText=file.name; document.getElementById('pdf-orig-size').innerText=formatSize(file.size); }
+        function setPdfMode(m) { selectedPdfMode=m; document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('active')); document.getElementById('mode-'+m).classList.add('active'); }
+        
+        async function processPDF() {
+            if(!currentFile) return;
+            const pBox = document.getElementById('global-progress'); pBox.style.display='block';
+            const fill = document.getElementById('prog-fill'); const txt = document.getElementById('prog-text');
+            
+            try {
+                const ab = await currentFile.arrayBuffer();
+                if(selectedPdfMode==='clean') {
+                    txt.innerText = "Cleaning..."; fill.style.width="50%";
+                    const { PDFDocument } = PDFLib;
+                    const pdfDoc = await PDFDocument.load(ab);
+                    const newPdf = await PDFDocument.create();
+                    const pages = await newPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+                    pages.forEach(p => newPdf.addPage(p));
+                    const bytes = await newPdf.save();
+                    finalBlob = new Blob([bytes], {type:'application/pdf'});
+                } else {
+                    const pdf = await pdfjsLib.getDocument(ab).promise;
+                    const { jsPDF } = window.jspdf; const newPdf = new jsPDF(); newPdf.deletePage(1);
+                    for(let i=1; i<=pdf.numPages; i++) {
+                        txt.innerText = `Rasterizing ${i}/${pdf.numPages}`; fill.style.width = (i/pdf.numPages)*100+"%";
+                        const page = await pdf.getPage(i);
+                        const vp = page.getViewport({scale:1.5});
+                        const c = document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+                        await page.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
+                        const img = c.toDataURL('image/jpeg', 0.6);
+                        newPdf.addPage([vp.width*0.264, vp.height*0.264]);
+                        newPdf.addImage(img,'JPEG',0,0,vp.width*0.264, vp.height*0.264);
+                    }
+                    finalBlob = newPdf.output('blob');
+                }
+                pBox.style.display='none';
+                document.getElementById('pdf-result').style.display='block';
+                document.getElementById('pdf-new').innerText = formatSize(finalBlob.size);
+                document.getElementById('pdf-old').innerText = formatSize(currentFile.size);
+            } catch(e) { alert("Error: "+e.message); pBox.style.display='none'; }
+        }
+        function downloadPDF() { if(finalBlob) { const a=document.createElement('a'); a.href=URL.createObjectURL(finalBlob); a.download="GX_"+currentFile.name; a.click(); } }
+
+        // ================= 3 & 4. AUDIO & VIDEO (FFMPEG ENGINE) =================
+        
+        async function initEngine(type) {
+            const pBox = document.getElementById('global-progress');
+            document.getElementById('prog-text').innerText = "Downloading FFmpeg Engine (10MB)...";
+            pBox.style.display='block';
+            
+            try {
+                if(!ffmpeg) {
+                    ffmpeg = createFFmpeg({ log: true });
+                    await ffmpeg.load();
+                }
+                engineLoaded = true;
+                pBox.style.display='none';
+                
+                // Show UIs, Hide Gates
+                document.getElementById('audio-gate').style.display='none';
+                document.getElementById('video-gate').style.display='none';
+                document.getElementById('audio-app').style.display='block';
+                document.getElementById('video-app').style.display='block';
+                
+                // Auto switch based on trigger
+                if(type === 'audio') document.getElementById('audio-input').click();
+                if(type === 'video') document.getElementById('video-input').click();
+
+            } catch(e) {
+                alert("Gagal memuat Engine: " + e.message);
+                pBox.style.display='none';
+            }
+        }
+
+        function handleAudio(file) { currentFile=file; document.getElementById('audio-ui').style.display='block'; }
+        function handleVideo(file) { currentFile=file; document.getElementById('video-ui').style.display='block'; }
+        function updateVidLabel() {
+            document.getElementById('vid-scale-val').innerText = document.getElementById('vid-scale').value + "p";
+            document.getElementById('vid-crf-val').innerText = document.getElementById('vid-crf').value;
+        }
+
+        async function processMedia(type) {
+            try {
+                if(!engineLoaded) return alert("Engine belum dimuat!");
+                
+                const pBox = document.getElementById('global-progress'); pBox.style.display='block';
+                const fName = 'input_' + Date.now();
+                const outName = 'output.mp4'; 
+                
+                ffmpeg.FS('writeFile', fName, await fetchFile(currentFile));
+                
+                let args = [];
+                if(type === 'audio') {
+                    const br = document.getElementById('audio-bitrate').value;
+                    args = ['-i', fName, '-b:a', br, 'output.mp3'];
+                } else {
+                    const scale = document.getElementById('vid-scale').value;
+                    const crf = document.getElementById('vid-crf').value;
+                    args = ['-i', fName, '-vf', `scale=-2:${scale}`, '-c:v', 'libx264', '-crf', crf, '-preset', 'ultrafast', 'output.mp4'];
+                }
+
+                document.getElementById('prog-text').innerText = "Compressing... (Don't close tab)";
+                
+                await ffmpeg.run(...args);
+                
+                const data = ffmpeg.FS('readFile', type==='audio'?'output.mp3':'output.mp4');
+                finalBlob = new Blob([data.buffer], { type: type==='audio'?'audio/mp3':'video/mp4' });
+                
+                // Cleanup
+                ffmpeg.FS('unlink', fName);
+                ffmpeg.FS('unlink', type==='audio'?'output.mp3':'output.mp4');
+
+                pBox.style.display='none';
+                const resBox = document.getElementById('media-result');
+                resBox.style.display='block';
+                document.getElementById('med-old').innerText = formatSize(currentFile.size);
+                document.getElementById('med-new').innerText = formatSize(finalBlob.size);
+
+            } catch(e) { 
+                alert("Process Error: " + e.message); 
+                document.getElementById('global-progress').style.display='none';
+            }
+        }
+        function downloadMedia() { 
+            const a=document.createElement('a'); a.href=URL.createObjectURL(finalBlob); 
+            a.download="GX_"+(currentFile.name.split('.')[0])+(finalBlob.type.includes('audio')?'.mp3':'.mp4'); 
+            a.click(); 
+        }
+
+        // ================= 5. TEXT MINIFIER =================
+        function handleText(file) {
+            if(!file) return; currentFile=file;
+            document.getElementById('text-ui').style.display='block';
+            document.getElementById('text-type').innerText = file.name.split('.').pop().toUpperCase();
+            const r = new FileReader();
+            r.onload = e => document.getElementById('text-preview').value = e.target.result;
+            r.readAsText(file);
+        }
+        
+        function processText() {
+            const raw = document.getElementById('text-preview').value;
+            const ext = currentFile.name.split('.').pop().toLowerCase();
+            let minified = raw;
+
+            if(ext === 'json') {
+                try { minified = JSON.stringify(JSON.parse(raw)); } catch(e){ alert("Invalid JSON"); return; }
+            } else {
+                minified = raw.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1') // remove comments
+                              .replace(/\s+/g, ' ') // collapse spaces
+                              .replace(/\s*([{};,:])\s*/g, '$1'); 
+            }
+
+            finalBlob = new Blob([minified], {type: 'text/plain'});
+            document.getElementById('media-result').style.display='block';
+            document.getElementById('med-old').innerText = formatSize(raw.length);
+            document.getElementById('med-new').innerText = formatSize(minified.length);
+        }
+
+        // ================= 6. ZIP ARCHIVER =================
+        let zipFiles = [];
+        function handleZip(files) {
+            zipFiles = Array.from(files);
+            document.getElementById('zip-ui').style.display='block';
+            const list = document.getElementById('zip-list'); list.innerHTML='';
+            zipFiles.forEach(f => {
+                list.innerHTML += `<div class="file-item"><span>${f.name}</span><span>${formatSize(f.size)}</span></div>`;
+            });
+        }
+
+        function processZip() {
+            if(zipFiles.length===0) return;
+            const zip = new JSZip();
+            zipFiles.forEach(f => zip.file(f.name, f));
+            
+            const pBox = document.getElementById('global-progress'); pBox.style.display='block';
+            document.getElementById('prog-text').innerText = "Zipping...";
+
+            zip.generateAsync({type:"blob"}).then(content => {
+                finalBlob = content;
+                pBox.style.display='none';
+                document.getElementById('media-result').style.display='block';
+                document.getElementById('med-old').innerText = zipFiles.length + " Files";
+                document.getElementById('med-new').innerText = formatSize(content.size);
+            });
+        }
+    </script>
+</body>
+</html>
