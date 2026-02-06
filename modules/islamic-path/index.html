@@ -155,10 +155,12 @@
                     <div class="audio-settings">
                         <select id="qari-select" class="audio-select" onchange="stopAudio()">
                             <option value="ar.alafasy" selected>Mishary Al-Afasy</option>
-                            <option value="ar.abdulrahmansudais">Abdurrahman As-Sudais</option>
-                            <option value="ar.saadalghamdi">Saad Al-Ghamidi</option>
+                            <option value="ar.mahermuaiqly">Maher Al-Muaiqly</option>
+                            <option value="ar.abdurrahmaansudais">Abdurrahman As-Sudais</option>
+                            <option value="ar.abdullahaljuhany">Abdullah Al-Juhany</option>
                             <option value="ar.husary">Mahmoud Al-Husary</option>
-                            <option value="ar.saudshuraim">Saud Al-Shuraim</option>
+                            <option value="ar.saoodshuraym">Saud Al-Shuraim</option>
+                            <option value="ar.aljunayd">Muhammad Taha Al-Junayd</option>
                         </select>
                         <select id="play-mode" class="audio-select">
                             <option value="next" selected>Auto Next</option>
@@ -168,32 +170,42 @@
                     </div>
 
                     <details class="reciter-details">
-                        <summary>Reciter Info</summary>
+                        <summary>Reciter Info (Klik untuk Detail)</summary>
                         <div class="reciter-list">
-                            <div class="reciter-item">
-                                <span class="reciter-name">Mahmoud Al-Husary</span>
-                                <span class="reciter-maqam">Bayyati (Qarar)</span>
-                                Stabil, rendah, wibawa, dan sangat jelas. Standar emas untuk belajar tajwid bagi pemula.
-                            </div>
-                            <div class="reciter-item">
-                                <span class="reciter-name">Saad Al-Ghamidi</span>
-                                <span class="reciter-maqam">Nahawand</span>
-                                Lembut, syahdu, dan melankolis. Sangat cocok untuk relaksasi dan penenang hati.
-                            </div>
                             <div class="reciter-item">
                                 <span class="reciter-name">Mishary Al-Afasy</span>
                                 <span class="reciter-maqam">Kurd & Nahawand</span>
                                 Emosional, variatif, dan modern. Nadanya mengikuti makna ayat, cocok untuk tadabur.
                             </div>
                             <div class="reciter-item">
+                                <span class="reciter-name">Maher Al-Muaiqly</span>
+                                <span class="reciter-maqam">Kurd & Nahawand (Syahdu)</span>
+                                Lembut, syahdu, dan mengalir. Imam Masjidil Haram dengan suara yang menenangkan jiwa.
+                            </div>
+                            <div class="reciter-item">
+                                <span class="reciter-name">Abdullah Al-Juhany</span>
+                                <span class="reciter-maqam">Jiharkah & Sikah</span>
+                                Nada yang 'renyah', bright, dan manis. Membawa nuansa ceria namun tetap khusyuk. Khas Makkah.
+                            </div>
+                            <div class="reciter-item">
                                 <span class="reciter-name">Abdurrahman As-Sudais</span>
                                 <span class="reciter-maqam">Rast & Sikah</span>
-                                Bersemangat, nada tinggi, dan menghentak. Khas Imam Masjidil Haram, cocok untuk membangkitkan semangat.
+                                Bersemangat, nada tinggi, dan menghentak. Khas Imam Masjidil Haram, cocok untuk semangat.
+                            </div>
+                            <div class="reciter-item">
+                                <span class="reciter-name">Mahmoud Al-Husary</span>
+                                <span class="reciter-maqam">Bayyati (Qarar)</span>
+                                Stabil, rendah, wibawa, dan sangat jelas. Standar emas untuk belajar tajwid.
                             </div>
                             <div class="reciter-item">
                                 <span class="reciter-name">Saud Al-Shuraim</span>
                                 <span class="reciter-maqam">Rast (Cepat/Hadr)</span>
-                                Ritmik, mengalir cepat, dengan suara bass yang dalam. Sangat efektif untuk murajaah (mengulang) hafalan.
+                                Ritmik, mengalir cepat, dengan suara bass yang dalam. Sangat efektif untuk murajaah hafalan.
+                            </div>
+                            <div class="reciter-item">
+                                <span class="reciter-name">Muhammad Taha Al-Junayd</span>
+                                <span class="reciter-maqam">Kurd & Hijaz (Remaja)</span>
+                                Suara emas yang sangat populer dan dicintai di Indonesia. Nadanya lembut, polos, dan menyentuh.
                             </div>
                         </div>
                     </details>
@@ -367,11 +379,9 @@
         // --- CALCULATE GLOBAL ID (FOR QURAN CDN) ---
         function getGlobalAyahId(surah, ayat) {
             let globalId = 0;
-            // Sum all ayats from previous surahs
             for (let i = 0; i < surah - 1; i++) {
                 globalId += verseCounts[i];
             }
-            // Add current ayah number
             globalId += parseInt(ayat);
             return globalId;
         }
