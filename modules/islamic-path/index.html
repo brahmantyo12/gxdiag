@@ -83,32 +83,38 @@
         .reciter-name { color: #fff; font-weight: bold; display: block; margin-bottom: 2px; }
         .reciter-maqam { color: var(--emerald); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;}
 
-        /* Ayat Items */
-        .ayat-item { padding: 20px 0; border-bottom: 1px solid #222; }
+        /* Ayat Items Styling */
+        .ayat-item { padding: 25px 0; border-bottom: 1px solid #222; position: relative; }
         .ayat-item.active { background: rgba(255, 215, 0, 0.05); border-left: 2px solid var(--gold); } 
-        .ayat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .play-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #444; background: none; color: var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .ayat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .ayat-actions { display: flex; gap: 10px; }
+        
+        .icon-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #444; background: none; color: #888; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+        .icon-btn:hover { color: var(--gold); border-color: var(--gold); }
+        .icon-btn.active-btn { color: var(--emerald); border-color: var(--emerald); background: rgba(0, 255, 136, 0.1); }
+
+        .play-btn { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--gold); background: rgba(255, 215, 0, 0.1); color: var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .play-btn.playing { background: var(--gold); color: #000; animation: pulse 1s infinite; }
-        .play-btn.loading { border-color: #666; animation: spin 1s infinite linear; }
-        .ayat-text { font-family: 'Traditional Arabic', serif; font-size: 2rem; text-align: right; line-height: 2.2; margin-bottom: 10px; }
+        .play-btn.loading { border-color: #666; animation: spin 1s infinite linear; background: none; color: transparent; }
+
+        /* Typography */
+        .ayat-text { font-family: 'Traditional Arabic', serif; font-size: 2.2rem; text-align: right; line-height: 2.4; margin-bottom: 15px; color: #eee; }
+        
+        /* New: Latin & Tajweed Image */
+        .ayat-latin { font-size: 0.95rem; color: var(--gold); font-style: italic; margin-bottom: 8px; line-height: 1.5; }
         .ayat-trans { font-size: 0.9rem; color: #aaa; line-height: 1.5; }
+        
+        .tajweed-img { display: none; width: 100%; max-width: 100%; margin-bottom: 15px; filter: invert(1) brightness(2); } /* Invert to make it white on dark bg */
+        .show-tajweed .ayat-text { display: none; }
+        .show-tajweed .tajweed-img { display: block; }
 
         /* --- 3. LIVE SECTION --- */
-        .live-container { 
-            position: relative; padding-bottom: 56.25%; height: 0; 
-            overflow: hidden; border-radius: 15px; border: 1px solid #333; background: #000;
-        }
-        .live-container iframe { 
-            position: absolute; top: -15%; left: -15%; width: 130%; height: 130%; 
-            border: none; pointer-events: none; filter: contrast(1.1) saturate(1.1);
-        }
+        .live-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 15px; border: 1px solid #333; background: #000; }
+        .live-container iframe { position: absolute; top: -15%; left: -15%; width: 130%; height: 130%; border: none; pointer-events: none; filter: contrast(1.1) saturate(1.1); }
         .live-status { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--danger); font-weight: bold; }
         .live-dot { width: 10px; height: 10px; background: red; border-radius: 50%; animation: pulse 1s infinite; }
-        .btn-mute-toggle {
-            margin-top: 15px; width: 100%; padding: 12px; background: #222; color: #fff;
-            border: 1px solid #333; border-radius: 10px; cursor: pointer; display: flex; 
-            align-items: center; justify-content: center; gap: 10px; font-weight: bold;
-        }
+        .btn-mute-toggle { margin-top: 15px; width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #333; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -155,12 +161,7 @@
                     <div class="audio-settings">
                         <select id="qari-select" class="audio-select" onchange="stopAudio()">
                             <option value="ar.alafasy" selected>Mishary Al-Afasy</option>
-                            <option value="ar.mahermuaiqly">Maher Al-Muaiqly</option>
-                            <option value="ar.abdurrahmaansudais">Abdurrahman As-Sudais</option>
-                            <option value="ar.abdullahaljuhany">Abdullah Al-Juhany</option>
                             <option value="ar.husary">Mahmoud Al-Husary</option>
-                            <option value="ar.saoodshuraym">Saud Al-Shuraim</option>
-                            <option value="ar.aljunayd">Muhammad Taha Al-Junayd</option>
                         </select>
                         <select id="play-mode" class="audio-select">
                             <option value="next" selected>Auto Next</option>
@@ -178,34 +179,9 @@
                                 Emosional, variatif, dan modern. Nadanya mengikuti makna ayat, cocok untuk tadabur.
                             </div>
                             <div class="reciter-item">
-                                <span class="reciter-name">Maher Al-Muaiqly</span>
-                                <span class="reciter-maqam">Kurd & Nahawand (Syahdu)</span>
-                                Lembut, syahdu, dan mengalir. Imam Masjidil Haram dengan suara yang menenangkan jiwa.
-                            </div>
-                            <div class="reciter-item">
-                                <span class="reciter-name">Abdullah Al-Juhany</span>
-                                <span class="reciter-maqam">Jiharkah & Sikah</span>
-                                Nada yang 'renyah', bright, dan manis. Membawa nuansa ceria namun tetap khusyuk. Khas Makkah.
-                            </div>
-                            <div class="reciter-item">
-                                <span class="reciter-name">Abdurrahman As-Sudais</span>
-                                <span class="reciter-maqam">Rast & Sikah</span>
-                                Bersemangat, nada tinggi, dan menghentak. Khas Imam Masjidil Haram, cocok untuk semangat.
-                            </div>
-                            <div class="reciter-item">
                                 <span class="reciter-name">Mahmoud Al-Husary</span>
                                 <span class="reciter-maqam">Bayyati (Qarar)</span>
                                 Stabil, rendah, wibawa, dan sangat jelas. Standar emas untuk belajar tajwid.
-                            </div>
-                            <div class="reciter-item">
-                                <span class="reciter-name">Saud Al-Shuraim</span>
-                                <span class="reciter-maqam">Rast (Cepat/Hadr)</span>
-                                Ritmik, mengalir cepat, dengan suara bass yang dalam. Sangat efektif untuk murajaah hafalan.
-                            </div>
-                            <div class="reciter-item">
-                                <span class="reciter-name">Muhammad Taha Al-Junayd</span>
-                                <span class="reciter-maqam">Kurd & Hijaz (Remaja)</span>
-                                Suara emas yang sangat populer dan dicintai di Indonesia. Nadanya lembut, polos, dan menyentuh.
                             </div>
                         </div>
                     </details>
@@ -213,7 +189,7 @@
                 </div>
                 <div id="ayat-container"></div>
             </div>
-            </div>
+        </div>
 
         <div id="view-live" class="view-section">
             <div class="live-status"><div class="live-dot"></div> LIVE MAKKAH (CCTV MODE)</div>
@@ -240,7 +216,7 @@
         let currentBtn = null;
         let currentSurahNum = 0;
 
-        // DATA AYAT COUNTS (Surah 1-114) for Global ID Calculation
+        // DATA AYAT COUNTS (Surah 1-114) for Global ID
         const verseCounts = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
         function switchTab(t) {
@@ -248,11 +224,9 @@
             document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
             document.getElementById(`view-${t}`).classList.add('active');
             event.target.classList.add('active');
-            
             if(t !== 'quran') stopAudio();
         }
 
-        // --- SEAMLESS AUDIO LIVE CONTROL ---
         let isMuted = true;
         function toggleMute() {
             const frame = document.getElementById('kaaba-frame');
@@ -362,12 +336,27 @@
                 <div class="ayat-item" id="ayat-box-${a.nomorAyat}">
                     <div class="ayat-top">
                         <span style="font-size:0.8rem; color:#555;">${a.nomorAyat}</span>
-                        <button class="play-btn" data-ayat="${a.nomorAyat}" onclick="playVerse(this)">▶</button>
+                        <div class="ayat-actions">
+                            <button class="icon-btn" title="Lihat Tajwid (Gambar)" onclick="toggleTajweedView(this)">🎨</button>
+                            <button class="play-btn" data-ayat="${a.nomorAyat}" onclick="playVerse(this)">▶</button>
+                        </div>
                     </div>
-                    <div class="ayat-text">${a.teksArab}</div>
-                    <div class="ayat-trans">${a.teksIndonesia}</div>
+                    
+                    <div class="ayat-content">
+                        <img src="https://verses.quran.com/tajweed/png/${surahNum}_${a.nomorAyat}.png" class="tajweed-img" alt="Tajweed">
+                        <div class="ayat-text">${a.teksArab}</div>
+                        <div class="ayat-latin">${a.teksLatin}</div>
+                        <div class="ayat-trans">${a.teksIndonesia}</div>
+                    </div>
                 </div>`;
             });
+        }
+
+        // --- Toggle Tajweed Image ---
+        function toggleTajweedView(btn) {
+            const wrapper = btn.closest('.ayat-item');
+            wrapper.classList.toggle('show-tajweed');
+            btn.classList.toggle('active-btn');
         }
 
         function closeSurah() {
@@ -379,14 +368,12 @@
         // --- CALCULATE GLOBAL ID (FOR QURAN CDN) ---
         function getGlobalAyahId(surah, ayat) {
             let globalId = 0;
-            for (let i = 0; i < surah - 1; i++) {
-                globalId += verseCounts[i];
-            }
+            for (let i = 0; i < surah - 1; i++) { globalId += verseCounts[i]; }
             globalId += parseInt(ayat);
             return globalId;
         }
 
-        // --- FIXED AUDIO PLAYER (Use QuranCDN) ---
+        // --- FIXED AUDIO PLAYER (Use QuranCDN with Global ID) ---
         function playVerse(btn) {
             if (currentBtn === btn) { stopAudio(); return; }
             stopAudio();
@@ -396,8 +383,6 @@
             
             // Calculate Global ID
             const globalId = getGlobalAyahId(currentSurahNum, ayatNum);
-            
-            // Format URL: https://cdn.islamic.network/quran/audio/128/{edition}/{globalId}.mp3
             const url = `https://cdn.islamic.network/quran/audio/128/${qari}/${globalId}.mp3`;
 
             currentAudio = new Audio(url);
@@ -429,25 +414,20 @@
                         const nextBtn = nextItem.querySelector('.play-btn');
                         if(nextBtn) nextBtn.click();
                         nextItem.scrollIntoView({behavior: "smooth", block: "center"});
-                    } else {
-                        stopAudio();
-                    }
-                } else {
-                    stopAudio();
-                }
+                    } else { stopAudio(); }
+                } else { stopAudio(); }
             });
 
             currentAudio.addEventListener('error', () => {
-                alert("Gagal memuat audio dari QuranCDN. Cek koneksi.");
-                stopAudio();
+                if(currentBtn === btn) {
+                    alert("Gagal memuat audio dari QuranCDN. Cek koneksi.");
+                    stopAudio();
+                }
             });
         }
 
         function stopAudio() {
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio = null;
-            }
+            if (currentAudio) { currentAudio.pause(); currentAudio = null; }
             if (currentBtn) {
                 currentBtn.innerHTML = "▶";
                 currentBtn.classList.remove('playing');
@@ -457,10 +437,8 @@
             }
         }
 
-        // INITIALIZE
         initPrayer();
         initQuran();
-
     </script>
 </body>
 </html>
