@@ -23,11 +23,24 @@
         .view-section.active { display: block; }
 
         /* --- 1. PRAYER SECTION --- */
-        .prayer-hero { text-align: center; padding: 30px 20px; background: linear-gradient(to bottom, #111, #050505); border: 1px solid #333; border-radius: 20px; margin-bottom: 20px; }
+        .prayer-hero { text-align: center; padding: 30px 20px; background: linear-gradient(to bottom, #111, #050505); border: 1px solid #333; border-radius: 20px; margin-bottom: 20px; position: relative; }
         .next-prayer-label { color: var(--emerald); font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
         .next-prayer-time { font-size: 3rem; font-weight: bold; color: #fff; text-shadow: 0 0 20px rgba(0,255,136,0.2); }
-        .location-badge { display: inline-block; background: #222; padding: 5px 15px; border-radius: 20px; margin-top: 15px; font-size: 0.8rem; color: #aaa; border: 1px solid #333; }
         
+        /* Location Control */
+        .loc-wrapper { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .location-badge { background: #222; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; color: #aaa; border: 1px solid #333; display: flex; align-items: center; gap: 5px;}
+        .change-loc-btn { background: none; border: none; color: var(--gold); cursor: pointer; font-size: 0.8rem; text-decoration: underline; }
+        
+        /* Manual Search Box */
+        .manual-loc-box { display: none; margin-top: 15px; background: #1a1a1a; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        .manual-loc-box.active { display: block; animation: fadeIn 0.3s; }
+        .loc-input-group { display: flex; gap: 10px; }
+        .loc-input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #000; color: #fff; }
+        .loc-action-btn { padding: 8px 15px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-search { background: var(--gold); color: #000; }
+        .btn-gps { background: #333; color: #fff; border: 1px solid #555; }
+
         .jadwal-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
         .jadwal-item { background: #111; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #222; }
         .jadwal-item.active { border-color: var(--gold); background: rgba(255, 215, 0, 0.05); }
@@ -62,60 +75,50 @@
             background: #222; color: #fff; border: 1px solid #444; padding: 8px;
             border-radius: 6px; width: 100%; outline: none; font-size: 0.85rem;
         }
-        .audio-select:focus { border-color: var(--gold); }
+        
+        /* View Toggles */
+        .view-toggles { display: flex; justify-content: center; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        .toggle-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: #aaa; user-select: none; }
+        .toggle-label input { accent-color: var(--gold); transform: scale(1.2); }
+        .toggle-label span { transition: color 0.3s; }
+        .toggle-label input:checked + span { color: #fff; font-weight: bold; }
 
-        /* Reciter Info Dropdown */
-        .reciter-details {
-            text-align: left; font-size: 0.8rem; color: #888;
-            background: #151515; border: 1px solid #333; border-radius: 8px; overflow: hidden;
+        /* Link Button */
+        .learn-tajwid-btn {
+            display: inline-block; margin-top: 15px; padding: 8px 15px; 
+            background: rgba(0, 255, 136, 0.1); color: var(--emerald); 
+            border: 1px solid var(--emerald); border-radius: 20px; 
+            text-decoration: none; font-size: 0.8rem; transition: 0.3s;
         }
-        .reciter-details summary {
-            padding: 10px; cursor: pointer; font-weight: bold; color: var(--gold);
-            list-style: none; display: flex; justify-content: space-between; align-items: center;
-        }
-        .reciter-details summary::-webkit-details-marker { display: none; }
+        .learn-tajwid-btn:hover { background: var(--emerald); color: #000; }
+
+        /* Reciter Info */
+        .reciter-details { text-align: left; font-size: 0.8rem; color: #888; background: #151515; border: 1px solid #333; border-radius: 8px; overflow: hidden; margin-top: 15px; }
+        .reciter-details summary { padding: 10px; cursor: pointer; font-weight: bold; color: var(--gold); list-style: none; display: flex; justify-content: space-between; align-items: center; }
         .reciter-details summary::after { content: '+'; font-size: 1.2rem; font-weight: normal; }
         .reciter-details[open] summary::after { content: '-'; }
-        
         .reciter-list { padding: 0 15px 15px 15px; border-top: 1px solid #222; }
         .reciter-item { margin-top: 10px; line-height: 1.4; border-bottom: 1px solid #222; padding-bottom: 10px; }
         .reciter-item:last-child { border-bottom: none; }
         .reciter-name { color: #fff; font-weight: bold; display: block; margin-bottom: 2px; }
         .reciter-maqam { color: var(--emerald); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;}
 
-        /* Ayat Items Styling */
-        .ayat-item { padding: 25px 0; border-bottom: 1px solid #222; position: relative; }
+        /* Ayat Items */
+        .ayat-item { padding: 25px 0; border-bottom: 1px solid #222; }
         .ayat-item.active { background: rgba(255, 215, 0, 0.05); border-left: 2px solid var(--gold); } 
-        
-        .ayat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .ayat-actions { display: flex; gap: 10px; }
-        
-        .icon-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #444; background: none; color: #888; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
-        .icon-btn:hover { color: var(--gold); border-color: var(--gold); }
-        .icon-btn.active-btn { color: var(--emerald); border-color: var(--emerald); background: rgba(0, 255, 136, 0.1); }
-
+        .ayat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .play-btn { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--gold); background: rgba(255, 215, 0, 0.1); color: var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .play-btn.playing { background: var(--gold); color: #000; animation: pulse 1s infinite; }
         .play-btn.loading { border-color: #666; animation: spin 1s infinite linear; background: none; color: transparent; }
-
-        /* Typography */
+        
         .ayat-text { font-family: 'Traditional Arabic', serif; font-size: 2.2rem; text-align: right; line-height: 2.4; margin-bottom: 15px; color: #eee; }
-        
-        /* New: Latin & Mushaf Image */
-        .ayat-latin { font-size: 0.95rem; color: var(--gold); font-style: italic; margin-bottom: 8px; line-height: 1.5; }
-        .ayat-trans { font-size: 0.9rem; color: #aaa; line-height: 1.5; }
-        
-        /* Mushaf Image (Official V4) */
-        .mushaf-img { display: none; width: 100%; max-width: 600px; margin: 0 auto 15px auto; filter: invert(1) brightness(0.9); border-radius: 5px; } 
-        .show-mushaf .ayat-text { display: none; }
-        .show-mushaf .mushaf-img { display: block; }
+        .ayat-latin { font-size: 0.95rem; color: var(--gold); font-style: italic; margin-bottom: 8px; line-height: 1.5; display: block; }
+        .ayat-trans { font-size: 0.9rem; color: #aaa; line-height: 1.5; display: block; }
 
-        /* --- 3. LIVE SECTION --- */
-        .live-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 15px; border: 1px solid #333; background: #000; }
-        .live-container iframe { position: absolute; top: -15%; left: -15%; width: 130%; height: 130%; border: none; pointer-events: none; filter: contrast(1.1) saturate(1.1); }
-        .live-status { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--danger); font-weight: bold; }
-        .live-dot { width: 10px; height: 10px; background: red; border-radius: 50%; animation: pulse 1s infinite; }
-        .btn-mute-toggle { margin-top: 15px; width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #333; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold; }
+        #ayat-container.hide-latin .ayat-latin { display: none; }
+        #ayat-container.hide-trans .ayat-trans { display: none; }
+
+        .attribution { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #222; font-size: 0.75rem; color: #555; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -135,14 +138,28 @@
         <div class="tabs">
             <div class="tab active" onclick="switchTab('prayer')">🕌 Prayer</div>
             <div class="tab" onclick="switchTab('quran')">📖 Qur'an</div>
-            <div class="tab" onclick="switchTab('live')">🕋 Live</div>
         </div>
 
         <div id="view-prayer" class="view-section active">
             <div class="prayer-hero">
                 <div class="next-prayer-label" id="next-label">NEXT PRAYER</div>
                 <div class="next-prayer-time" id="next-time">--:--</div>
-                <div class="location-badge" id="loc-name">📍 Locating...</div>
+                
+                <div class="loc-wrapper">
+                    <div class="location-badge" id="loc-name">📍 Locating...</div>
+                    <button class="change-loc-btn" onclick="toggleLocBox()">⚙️ Ubah</button>
+                </div>
+
+                <div id="manual-loc-box" class="manual-loc-box">
+                    <div class="loc-input-group">
+                        <input type="text" id="city-input" class="loc-input" placeholder="Nama Kota (Cth: Bandung)...">
+                        <button class="loc-action-btn btn-search" onclick="manualSearch()">Cari</button>
+                    </div>
+                    <div style="margin-top:10px; font-size:0.8rem; color:#888;">
+                        Atau gunakan <a href="#" onclick="initPrayer(true); return false;" style="color:var(--emerald);">📍 Deteksi GPS Otomatis</a>
+                    </div>
+                </div>
+
             </div>
             <div class="jadwal-list" id="jadwal-grid"></div>
         </div>
@@ -171,42 +188,43 @@
                         </select>
                     </div>
 
+                    <div class="view-toggles">
+                        <label class="toggle-label">
+                            <input type="checkbox" checked onchange="toggleView('latin', this.checked)">
+                            <span>Latin</span>
+                        </label>
+                        <label class="toggle-label">
+                            <input type="checkbox" checked onchange="toggleView('trans', this.checked)">
+                            <span>Terjemahan</span>
+                        </label>
+                    </div>
+
+                    <a href="https://quran.com" target="_blank" class="learn-tajwid-btn">📖 Belajar Tajwid (Quran.com)</a>
+
                     <details class="reciter-details">
-                        <summary>Reciter Info (Klik untuk Detail)</summary>
+                        <summary>Reciter Info</summary>
                         <div class="reciter-list">
                             <div class="reciter-item">
                                 <span class="reciter-name">Mishary Al-Afasy</span>
                                 <span class="reciter-maqam">Kurd & Nahawand</span>
-                                Emosional, variatif, dan modern. Nadanya mengikuti makna ayat, cocok untuk tadabur.
+                                Emosional, variatif, dan modern. Nadanya mengikuti makna ayat.
                             </div>
                             <div class="reciter-item">
                                 <span class="reciter-name">Mahmoud Al-Husary</span>
                                 <span class="reciter-maqam">Bayyati (Qarar)</span>
-                                Stabil, rendah, wibawa, dan sangat jelas. Standar emas untuk belajar tajwid.
+                                Stabil, rendah, wibawa. Standar emas untuk belajar tajwid.
                             </div>
                         </div>
                     </details>
 
                 </div>
                 <div id="ayat-container"></div>
+                
+                <div class="attribution">
+                    Data Source Inspired by <b>EQuran.id</b> <br> 
+                    Built by GXDiag
+                </div>
             </div>
-        </div>
-
-        <div id="view-live" class="view-section">
-            <div class="live-status"><div class="live-dot"></div> LIVE MAKKAH (CCTV MODE)</div>
-            <div class="live-container">
-                <iframe id="kaaba-frame" 
-                    src="https://www.youtube.com/embed/live_stream?channel=UC1t_pM3F2V7J8rK3gX9q8g&autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1" 
-                    title="Makkah Live" allow="autoplay; encrypted-media">
-                </iframe>
-            </div>
-            <button class="btn-mute-toggle" onclick="toggleMute()">
-                <span id="mute-icon">🔊</span> Unmute / Audio
-            </button>
-            <p style="font-size:0.7rem; color:#555; margin-top:10px; text-align:center;">
-                *Interface YouTube disembunyikan untuk pengalaman immersive.<br>
-                Jika video tidak jalan, refresh halaman atau cek koneksi internet.
-            </p>
         </div>
 
     </div>
@@ -216,8 +234,6 @@
         let currentAudio = null;
         let currentBtn = null;
         let currentSurahNum = 0;
-
-        // DATA AYAT COUNTS (Required for QuranCDN Global ID)
         const verseCounts = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
         function switchTab(t) {
@@ -228,39 +244,87 @@
             if(t !== 'quran') stopAudio();
         }
 
-        let isMuted = true;
-        function toggleMute() {
-            const frame = document.getElementById('kaaba-frame');
-            const base = "https://www.youtube.com/embed/live_stream?channel=UC1t_pM3F2V7J8rK3gX9q8g&autoplay=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1";
-            if(isMuted) {
-                frame.src = base + "&mute=0";
-                document.getElementById('mute-icon').innerText = "🔇";
-                document.querySelector('.btn-mute-toggle').innerHTML = "🔇 Mute Audio";
-                isMuted = false;
+        // ================= 1. PRAYER LOGIC (HYBRID) =================
+        
+        // Initial Load: Cek LocalStorage dulu, kalau kosong baru GPS
+        window.addEventListener('load', () => {
+            const savedLoc = localStorage.getItem('gx_prayer_loc');
+            if(savedLoc) {
+                const data = JSON.parse(savedLoc);
+                updatePrayerTimes(data.lat, data.lon, data.name);
             } else {
-                frame.src = base + "&mute=1";
-                document.getElementById('mute-icon').innerText = "🔊";
-                document.querySelector('.btn-mute-toggle').innerHTML = "🔊 Unmute / Audio";
-                isMuted = true;
+                initPrayer(true); // Auto GPS
             }
+            initQuran();
+        });
+
+        function toggleLocBox() {
+            const box = document.getElementById('manual-loc-box');
+            box.classList.toggle('active');
         }
 
-        // ================= 1. PRAYER LOGIC =================
-        function initPrayer() {
-            if(navigator.geolocation) {
+        function initPrayer(useGPS = false) {
+            if(useGPS && navigator.geolocation) {
+                document.getElementById('loc-name').innerText = "📍 Detecting GPS...";
+                toggleLocBox(); // Hide box if open
                 navigator.geolocation.getCurrentPosition(async (pos) => {
                     const { latitude, longitude } = pos.coords;
+                    // Get City Name
                     try {
                         const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                         const data = await geo.json();
-                        document.getElementById('loc-name').innerText = "📍 " + (data.address.city || data.address.town || "My Location");
-                    } catch(e) {}
-                    try {
-                        const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=20`);
-                        const json = await res.json();
-                        renderJadwal(json.data.timings);
-                    } catch(e) { alert("Prayer API Error"); }
-                }, () => { document.getElementById('loc-name').innerText = "❌ GPS Denied"; });
+                        const cityName = data.address.city || data.address.town || data.address.county || "Lokasi Saya";
+                        updatePrayerTimes(latitude, longitude, "📍 " + cityName);
+                        
+                        // Save to storage
+                        localStorage.setItem('gx_prayer_loc', JSON.stringify({lat: latitude, lon: longitude, name: "📍 " + cityName}));
+                    } catch(e) {
+                        updatePrayerTimes(latitude, longitude, "📍 Koordinat GPS");
+                    }
+                }, () => { 
+                    document.getElementById('loc-name').innerText = "❌ GPS Gagal"; 
+                    alert("GPS tidak diizinkan. Silakan gunakan pencarian manual.");
+                });
+            }
+        }
+
+        async function manualSearch() {
+            const query = document.getElementById('city-input').value;
+            if(!query) return;
+
+            document.getElementById('loc-name').innerText = "🔍 Mencari...";
+            try {
+                // Search via OpenStreetMap
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
+                const data = await res.json();
+                
+                if(data.length > 0) {
+                    const lat = data[0].lat;
+                    const lon = data[0].lon;
+                    const name = data[0].display_name.split(',')[0]; // Ambil nama depan saja
+                    
+                    updatePrayerTimes(lat, lon, "📍 " + name);
+                    toggleLocBox(); // Close box
+                    
+                    // Save preference
+                    localStorage.setItem('gx_prayer_loc', JSON.stringify({lat: lat, lon: lon, name: "📍 " + name}));
+                } else {
+                    alert("Kota tidak ditemukan. Coba nama yang lebih spesifik.");
+                    document.getElementById('loc-name').innerText = "❌ Tidak Ketemu";
+                }
+            } catch(e) {
+                alert("Gagal koneksi ke server peta.");
+            }
+        }
+
+        async function updatePrayerTimes(lat, lon, locationName) {
+            document.getElementById('loc-name').innerText = locationName;
+            try {
+                const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`); // Method 20 = Kemenag RI (Standard Indo)
+                const json = await res.json();
+                renderJadwal(json.data.timings);
+            } catch(e) { 
+                document.getElementById('loc-name').innerText = "❌ API Error";
             }
         }
 
@@ -269,14 +333,17 @@
             const names = {'Fajr':'Subuh', 'Dhuhr':'Dzuhur', 'Asr':'Ashar', 'Maghrib':'Maghrib', 'Isha':'Isya'};
             const grid = document.getElementById('jadwal-grid');
             grid.innerHTML = "";
+            
             const now = new Date();
             const curMin = now.getHours()*60 + now.getMinutes();
             let nextFound = false;
+            
             list.forEach(k => {
                 const time = timings[k];
                 const [h, m] = time.split(':').map(Number);
                 const pMin = h*60 + m;
                 let active = false;
+                
                 if(pMin > curMin && !nextFound) {
                     active = true; nextFound = true;
                     document.getElementById('next-label').innerText = "NEXT: " + names[k];
@@ -284,23 +351,21 @@
                 }
                 grid.innerHTML += `<div class="jadwal-item ${active?'active':''}"><div class="j-name">${names[k]}</div><div class="j-time">${time}</div></div>`;
             });
+            
             if(!nextFound) {
                 document.getElementById('next-label').innerText = "NEXT: SUBUH";
                 document.getElementById('next-time').innerText = timings['Fajr'];
             }
         }
 
-        // ================= 2. QURAN LOGIC (API V4) =================
-        let allSurahs = [];
-
+        // ================= 2. QURAN LOGIC (EQuran API) =================
         async function initQuran() {
             try {
-                // Fetch Surah List (equran.id is stable for listing)
                 const res = await fetch('https://equran.id/api/v2/surat');
                 const json = await res.json();
                 allSurahs = json.data;
                 renderSurahs(allSurahs);
-            } catch(e) { document.getElementById('surah-grid').innerHTML = "Failed to load Quran."; }
+            } catch(e) { document.getElementById('surah-grid').innerHTML = "Gagal memuat daftar surat."; }
         }
 
         function renderSurahs(data) {
@@ -316,69 +381,46 @@
             renderSurahs(allSurahs.filter(s => s.namaLatin.toLowerCase().includes(q)));
         }
 
-        // --- CORE: HYBRID FETCHER ---
         async function openSurah(no, name) {
             currentSurahNum = no;
             document.getElementById('surah-list').style.display='none';
             document.getElementById('ayat-view').style.display='block';
             document.getElementById('s-name').innerText = name;
-            document.getElementById('ayat-container').innerHTML = "<div style='text-align:center; padding:20px;'>Loading from API V4...</div>";
+            document.getElementById('ayat-container').innerHTML = "<div style='text-align:center; padding:20px;'>Memuat Ayat...</div>";
             
-            await fetchAndRenderVerses();
-        }
-
-        async function fetchAndRenderVerses() {
-            const container = document.getElementById('ayat-container');
-            
-            // 1. DATA FROM QURAN.COM V4 (Official Text & Images)
-            const url = `https://api.quran.com/api/v4/verses/by_chapter/${currentSurahNum}?language=id&words=false&translations=33&fields=text_uthmani,image_url&per_page=300`;
-
             try {
-                const res = await fetch(url);
+                const res = await fetch(`https://equran.id/api/v2/surat/${no}`);
                 const json = await res.json();
-                renderAyat(json.verses);
-            } catch(e) {
-                container.innerHTML = "Error loading verses. Check connection.";
-            }
+                renderAyat(json.data.ayat, no);
+            } catch(e) { alert("Gagal memuat ayat."); }
         }
 
-        function renderAyat(ayats) {
+        function renderAyat(ayats, surahNum) {
             const con = document.getElementById('ayat-container');
             con.innerHTML = "";
             ayats.forEach(a => {
-                const translationText = a.translations[0]?.text || "Translation unavailable";
-                // 2. IMAGE FROM QURAN.COM V4 (Official)
-                const imgUrl = a.image?.url ? `https://verses.quran.com/${a.image.url}` : "";
-                
-                // Audio is handled dynamically in playVerse() to use QuranCDN
-                // We extract verse number from "verse_key" (e.g., "1:1")
-                const verseNumber = a.verse_key.split(':')[1];
-
                 con.innerHTML += `
-                <div class="ayat-item" id="ayat-box-${a.id}">
+                <div class="ayat-item" id="ayat-box-${a.nomorAyat}">
                     <div class="ayat-top">
-                        <span style="font-size:0.8rem; color:#555;">${a.verse_key}</span>
-                        <div class="ayat-actions">
-                            <button class="icon-btn" title="Lihat Mushaf (Img)" onclick="toggleMushafView(this)">📜</button>
-                            <button class="play-btn" data-ayat="${verseNumber}" onclick="playVerse(this)">▶</button>
-                        </div>
+                        <span style="font-size:0.8rem; color:#555;">${a.nomorAyat}</span>
+                        <button class="play-btn" data-ayat="${a.nomorAyat}" onclick="playVerse(this)">▶</button>
                     </div>
-                    
-                    <div class="ayat-content">
-                        <img src="${imgUrl}" class="mushaf-img" alt="Mushaf View" loading="lazy">
-                        
-                        <div class="ayat-text">${a.text_uthmani}</div>
-                        <div class="ayat-trans">${translationText}</div>
-                    </div>
+                    <div class="ayat-text">${a.teksArab}</div>
+                    <div class="ayat-latin">${a.teksLatin}</div>
+                    <div class="ayat-trans">${a.teksIndonesia}</div>
                 </div>`;
             });
         }
 
-        // --- UI Toggles ---
-        function toggleMushafView(btn) {
-            const wrapper = btn.closest('.ayat-item');
-            wrapper.classList.toggle('show-mushaf');
-            btn.classList.toggle('active-btn');
+        function toggleView(type, isChecked) {
+            const container = document.getElementById('ayat-container');
+            if (type === 'latin') {
+                if(isChecked) container.classList.remove('hide-latin');
+                else container.classList.add('hide-latin');
+            } else if (type === 'trans') {
+                if(isChecked) container.classList.remove('hide-trans');
+                else container.classList.add('hide-trans');
+            }
         }
 
         function closeSurah() {
@@ -387,7 +429,6 @@
             document.getElementById('surah-list').style.display='block';
         }
 
-        // --- CALCULATE GLOBAL ID (FOR QURAN CDN) ---
         function getGlobalAyahId(surah, ayat) {
             let globalId = 0;
             for (let i = 0; i < surah - 1; i++) { globalId += verseCounts[i]; }
@@ -395,7 +436,6 @@
             return globalId;
         }
 
-        // --- AUDIO PLAYER (QURAN CDN - HYBRID) ---
         function playVerse(btn) {
             if (currentBtn === btn) { stopAudio(); return; }
             stopAudio();
@@ -403,7 +443,6 @@
             const qari = document.getElementById('qari-select').value;
             const ayatNum = btn.getAttribute('data-ayat');
             
-            // 3. FORCE AUDIO SOURCE TO QURAN CDN
             const globalId = getGlobalAyahId(currentSurahNum, ayatNum);
             const url = `https://cdn.islamic.network/quran/audio/128/${qari}/${globalId}.mp3`;
 
@@ -458,9 +497,6 @@
                 currentBtn = null;
             }
         }
-
-        initPrayer();
-        initQuran();
     </script>
 </body>
 </html>
