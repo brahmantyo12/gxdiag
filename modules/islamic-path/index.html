@@ -101,13 +101,14 @@
         /* Typography */
         .ayat-text { font-family: 'Traditional Arabic', serif; font-size: 2.2rem; text-align: right; line-height: 2.4; margin-bottom: 15px; color: #eee; }
         
-        /* New: Latin & Tajweed Image */
+        /* New: Latin & Mushaf Image */
         .ayat-latin { font-size: 0.95rem; color: var(--gold); font-style: italic; margin-bottom: 8px; line-height: 1.5; }
         .ayat-trans { font-size: 0.9rem; color: #aaa; line-height: 1.5; }
         
-        .tajweed-img { display: none; width: 100%; max-width: 100%; margin-bottom: 15px; filter: invert(1) brightness(2); } /* Invert to make it white on dark bg */
-        .show-tajweed .ayat-text { display: none; }
-        .show-tajweed .tajweed-img { display: block; }
+        /* Mushaf Image (Official V4) */
+        .mushaf-img { display: none; width: 100%; max-width: 600px; margin: 0 auto 15px auto; filter: invert(1) brightness(0.9); border-radius: 5px; } 
+        .show-mushaf .ayat-text { display: none; }
+        .show-mushaf .mushaf-img { display: block; }
 
         /* --- 3. LIVE SECTION --- */
         .live-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 15px; border: 1px solid #333; background: #000; }
@@ -204,7 +205,7 @@
             </button>
             <p style="font-size:0.7rem; color:#555; margin-top:10px; text-align:center;">
                 *Interface YouTube disembunyikan untuk pengalaman immersive.<br>
-                Jika video tidak jalan otomatis, refresh halaman.
+                Jika video tidak jalan, refresh halaman atau cek koneksi internet.
             </p>
         </div>
 
@@ -216,7 +217,7 @@
         let currentBtn = null;
         let currentSurahNum = 0;
 
-        // DATA AYAT COUNTS (Surah 1-114) for Global ID
+        // DATA AYAT COUNTS (Required for QuranCDN Global ID)
         const verseCounts = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
         function switchTab(t) {
@@ -289,11 +290,12 @@
             }
         }
 
-        // ================= 2. QURAN LOGIC =================
+        // ================= 2. QURAN LOGIC (API V4) =================
         let allSurahs = [];
 
         async function initQuran() {
             try {
+                // Fetch Surah List (equran.id is stable for listing)
                 const res = await fetch('https://equran.id/api/v2/surat');
                 const json = await res.json();
                 allSurahs = json.data;
@@ -314,48 +316,68 @@
             renderSurahs(allSurahs.filter(s => s.namaLatin.toLowerCase().includes(q)));
         }
 
+        // --- CORE: HYBRID FETCHER ---
         async function openSurah(no, name) {
             currentSurahNum = no;
             document.getElementById('surah-list').style.display='none';
             document.getElementById('ayat-view').style.display='block';
             document.getElementById('s-name').innerText = name;
-            document.getElementById('ayat-container').innerHTML = "<div style='text-align:center; padding:20px;'>Loading Ayat...</div>";
+            document.getElementById('ayat-container').innerHTML = "<div style='text-align:center; padding:20px;'>Loading from API V4...</div>";
             
-            try {
-                const res = await fetch(`https://equran.id/api/v2/surat/${no}`);
-                const json = await res.json();
-                renderAyat(json.data.ayat, no);
-            } catch(e) { alert("Error loading ayat"); }
+            await fetchAndRenderVerses();
         }
 
-        function renderAyat(ayats, surahNum) {
+        async function fetchAndRenderVerses() {
+            const container = document.getElementById('ayat-container');
+            
+            // 1. DATA FROM QURAN.COM V4 (Official Text & Images)
+            const url = `https://api.quran.com/api/v4/verses/by_chapter/${currentSurahNum}?language=id&words=false&translations=33&fields=text_uthmani,image_url&per_page=300`;
+
+            try {
+                const res = await fetch(url);
+                const json = await res.json();
+                renderAyat(json.verses);
+            } catch(e) {
+                container.innerHTML = "Error loading verses. Check connection.";
+            }
+        }
+
+        function renderAyat(ayats) {
             const con = document.getElementById('ayat-container');
             con.innerHTML = "";
             ayats.forEach(a => {
+                const translationText = a.translations[0]?.text || "Translation unavailable";
+                // 2. IMAGE FROM QURAN.COM V4 (Official)
+                const imgUrl = a.image?.url ? `https://verses.quran.com/${a.image.url}` : "";
+                
+                // Audio is handled dynamically in playVerse() to use QuranCDN
+                // We extract verse number from "verse_key" (e.g., "1:1")
+                const verseNumber = a.verse_key.split(':')[1];
+
                 con.innerHTML += `
-                <div class="ayat-item" id="ayat-box-${a.nomorAyat}">
+                <div class="ayat-item" id="ayat-box-${a.id}">
                     <div class="ayat-top">
-                        <span style="font-size:0.8rem; color:#555;">${a.nomorAyat}</span>
+                        <span style="font-size:0.8rem; color:#555;">${a.verse_key}</span>
                         <div class="ayat-actions">
-                            <button class="icon-btn" title="Lihat Tajwid (Gambar)" onclick="toggleTajweedView(this)">🎨</button>
-                            <button class="play-btn" data-ayat="${a.nomorAyat}" onclick="playVerse(this)">▶</button>
+                            <button class="icon-btn" title="Lihat Mushaf (Img)" onclick="toggleMushafView(this)">📜</button>
+                            <button class="play-btn" data-ayat="${verseNumber}" onclick="playVerse(this)">▶</button>
                         </div>
                     </div>
                     
                     <div class="ayat-content">
-                        <img src="https://verses.quran.com/tajweed/png/${surahNum}_${a.nomorAyat}.png" class="tajweed-img" alt="Tajweed">
-                        <div class="ayat-text">${a.teksArab}</div>
-                        <div class="ayat-latin">${a.teksLatin}</div>
-                        <div class="ayat-trans">${a.teksIndonesia}</div>
+                        <img src="${imgUrl}" class="mushaf-img" alt="Mushaf View" loading="lazy">
+                        
+                        <div class="ayat-text">${a.text_uthmani}</div>
+                        <div class="ayat-trans">${translationText}</div>
                     </div>
                 </div>`;
             });
         }
 
-        // --- Toggle Tajweed Image ---
-        function toggleTajweedView(btn) {
+        // --- UI Toggles ---
+        function toggleMushafView(btn) {
             const wrapper = btn.closest('.ayat-item');
-            wrapper.classList.toggle('show-tajweed');
+            wrapper.classList.toggle('show-mushaf');
             btn.classList.toggle('active-btn');
         }
 
@@ -373,7 +395,7 @@
             return globalId;
         }
 
-        // --- FIXED AUDIO PLAYER (Use QuranCDN with Global ID) ---
+        // --- AUDIO PLAYER (QURAN CDN - HYBRID) ---
         function playVerse(btn) {
             if (currentBtn === btn) { stopAudio(); return; }
             stopAudio();
@@ -381,7 +403,7 @@
             const qari = document.getElementById('qari-select').value;
             const ayatNum = btn.getAttribute('data-ayat');
             
-            // Calculate Global ID
+            // 3. FORCE AUDIO SOURCE TO QURAN CDN
             const globalId = getGlobalAyahId(currentSurahNum, ayatNum);
             const url = `https://cdn.islamic.network/quran/audio/128/${qari}/${globalId}.mp3`;
 
