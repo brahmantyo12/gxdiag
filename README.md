@@ -12,7 +12,7 @@
 
 ## 🚀 Overview
 
-**Project GXDiag** is a comprehensive diagnostic toolkit built entirely with **Vanilla HTML5, CSS3, and JavaScript**. It creates a centralized "Command Center" dashboard that aggregates real-time environmental data and provides quick access to **22 specialized modules**.
+**Project GXDiag** is a comprehensive diagnostic toolkit built entirely with **Vanilla HTML5, CSS3, and JavaScript**. It creates a centralized "Command Center" dashboard that aggregates real-time environmental data and provides quick access to **24 specialized modules**.
 
 It is designed to be **lightweight, privacy-focused (client-side only), and responsive**. It features **Smart Device Detection**, automatically filtering relevant tools based on whether the user is on a Desktop or Mobile device.
 
@@ -40,7 +40,7 @@ The main menu (`index.html`) serves as a smart information hub with real-time wi
 
 ---
 
-## 🧩 Diagnostic Modules (22 Tools)
+## 🧩 Diagnostic Modules (24 Tools)
 
 The suite includes specialized modules divided into 6 categories:
 
@@ -80,19 +80,21 @@ The suite includes specialized modules divided into 6 categories:
 | :--- | :---: | :--- |
 | **Img Converter** | 🖼️ | Convert images between JPG, PNG, and WEBP formats entirely client-side. |
 | **Img Resizer** | 📏 | Scale images up/down with quality controls. Useful for reducing file size or 2x upscaling. |
-| **File Compressor**| 🗜️ | **(UPDATED)** Universal Tool: Compress **Image, PDF (ATS-Safe), Audio & Video**. Includes Text Minifier & ZIP Archiver. |
+| **File Compressor**| 🗜️ | **(UPDATED)** Universal Tool: Compress **Image, PDF (ATS-Safe), Audio & Video (FFmpeg)**. Includes Text Minifier & ZIP. |
 | **Pricelist Gen** | 🏷️ | **Voucher Maker:** Generate professional top-up price lists for game resellers (Mobile Legends, FF, etc). |
 | **Retro Asset** | 👾 | **8-Bit Generator:** Create retro pixel art sprites and chiptune sound effects (SFX) instantly. |
 | **Meta/Hoax** | 🕵️ | **Digital Forensics:** View EXIF data (Camera Model, GPS, Date) and detect potential photo editing/manipulation. |
 
-### 🆘 Utility & Secret
+### 🆘 Utility & Secret (Spiritual & Security)
 | Module | Icon | Description |
 | :--- | :---: | :--- |
 | **Emergency** | 🆘 | **Survival Kit:** Auto SOS Signal (Flashlight + Screen + Sound), Manual Morse Key, and Strobe Light. |
 | **Translator** | 💬 | **Cipher Tool:** Convert Text <-> Morse Code (with Audio Playback), Binary, Hexadecimal, and Base64. |
 | **Reflex Test** | ⚡ | Measures reaction time in milliseconds (ms) with ranking system (e.g., "Pro Gamer" vs "Grandma"). |
 | **Game Check** | 🆔 | **Tournament Tool:** Validates Game IDs for MLBB, FF, PUBG, Genshin, etc. Supports offline regex fallback. |
-| **Middle-Earth**| 💍 | **Hidden Module:** Translate English to Elvish (Sindarin/Quenya), Dwarvish, or Black Speech. (Ghost Card). |
+| **GX-PassGen** | 🔐 | **(NEW)** Secure Password Generator with real-time entropy strength meter, crack time estimation, and history. |
+| **Islamic Path** | ☪️ | **(Secret)** Spiritual Hub: Prayer Times, Digital Qur'an (Audio/Tajweed Toggle), and Live Makkah TV. |
+| **Middle-Earth**| 💍 | **(Secret)** Translate English to Elvish (Sindarin/Quenya), Dwarvish, or Black Speech. |
 
 ---
 
@@ -108,6 +110,8 @@ This project relies on the following open-source services and libraries:
 6.  **[API-HariLibur](https://api-harilibur.vercel.app/):** Syncing Indonesia's National Holidays.
 7.  **[GamerPower API](https://www.gamerpower.com/):** Aggregator for free game giveaways.
 8.  **[CorsProxy.io](https://corsproxy.io/):** High-speed proxy for bypassing CORS restrictions in Indonesia.
+9.  **[QuranCDN / EveryAyah](https://everyayah.com/):** High-quality MP3 Quran recitation endpoints.
+10. **[EQuran.id](https://equran.id/):** Indonesian Quran translation and transliteration API.
 
 ---
 
@@ -136,6 +140,7 @@ GXDiag-Project/
 │   ├── gameid/              # Tournament ID Validator
 │   ├── emergency/           # Flashlight & SOS Logic
 │   ├── translator/          # Morse/Binary Encoder
+│   ├── password-gen/        # Secure Pass Gen & Entropy
 │   ├── img-converter/       # Client-side Image Conversion
 │   ├── img-resizer/         # Canvas Scaling Logic
 │   ├── file-compress/       # Universal Compressor (Img/PDF/AV)
@@ -143,8 +148,10 @@ GXDiag-Project/
 │   ├── meta-detect/         # EXIF Reader & ELA Analysis
 │   ├── voice-studio/        # WebSpeech API Implementation
 │   ├── retro-asset/         # 8-Bit Sprite & Audio Gen
+│   ├── islamic-path/        # (Secret) Prayer, Quran, Live Makkah
 │   └── metranslator/        # (Secret) Middle-Earth Translator
 ├── index.html               # Main Command Center
 ├── sitemap.xml              # SEO Sitemap
+├── sw.js                    # Service Worker (PWA Cache)
 ├── LICENSE                  # MIT License File
 └── README.md                # Documentation
