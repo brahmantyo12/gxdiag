@@ -3,14 +3,30 @@
    
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/</loc>
-      <lastmod>2026-02-01</lastmod>
+      <lastmod>2025-02-08</lastmod>
       <priority>1.0</priority>
    </url>
 
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/gx-link/index.html</loc>
-      <lastmod>2026-01-31</lastmod>
+      <lastmod>2025-02-01</lastmod>
       <priority>0.9</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/network/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/subnet/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/nfc/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/qr/index.html</loc>
+      <priority>0.8</priority>
    </url>
 
    <url>
@@ -57,23 +73,6 @@
    </url>
 
    <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/network/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/subnet/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/nfc/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/qr/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-
-   <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/reflex/index.html</loc>
       <priority>0.8</priority>
    </url>
@@ -89,6 +88,11 @@
       <loc>https://gxdiag.brahmantyo12.my.id/modules/translator/index.html</loc>
       <priority>0.8</priority>
    </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/password-gen/index.html</loc>
+      <lastmod>2025-02-08</lastmod>
+      <priority>0.8</priority>
+   </url>
 
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/img-converter/index.html</loc>
@@ -98,13 +102,11 @@
       <loc>https://gxdiag.brahmantyo12.my.id/modules/img-resizer/index.html</loc>
       <priority>0.8</priority>
    </url>
-   
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/file-compress/index.html</loc>
-      <lastmod>2026-02-01</lastmod>
+      <lastmod>2025-02-08</lastmod>
       <priority>0.8</priority>
    </url>
-   
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/retro-asset/index.html</loc>
       <priority>0.8</priority>
@@ -113,9 +115,14 @@
       <loc>https://gxdiag.brahmantyo12.my.id/modules/pricelist-generator/index.html</loc>
       <priority>0.8</priority>
    </url>
-
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/meta-detect/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/islamic-path/index.html</loc>
+      <lastmod>2025-02-08</lastmod>
       <priority>0.8</priority>
    </url>
    <url>
