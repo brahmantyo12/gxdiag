@@ -39,13 +39,38 @@
         .loc-input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #000; color: #fff; }
         .loc-action-btn { padding: 8px 15px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
         .btn-search { background: var(--gold); color: #000; }
-        .btn-gps { background: #333; color: #fff; border: 1px solid #555; }
 
-        .jadwal-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
-        .jadwal-item { background: #111; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #222; }
-        .jadwal-item.active { border-color: var(--gold); background: rgba(255, 215, 0, 0.05); }
-        .j-name { font-size: 0.8rem; color: #888; margin-bottom: 5px; }
-        .j-time { font-weight: bold; font-size: 1.1rem; color: #fff; }
+        /* HIGHLIGHT GRID (Imsak, Subuh, Maghrib, Isya) */
+        .highlight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
+        .highlight-item {
+            background: linear-gradient(145deg, #1a1a1a, #111);
+            border: 1px solid var(--gold);
+            border-radius: 10px; padding: 12px 5px; text-align: center;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.05);
+        }
+        .highlight-item.active { background: var(--gold); color: #000; }
+        .highlight-item.active .h-name, .highlight-item.active .h-time { color: #000; }
+        .h-name { font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        .h-time { font-size: 1.1rem; font-weight: bold; color: #fff; }
+
+        /* STANDARD GRID (Syuruq, Dhuha, Dzuhur, Ashar) */
+        .jadwal-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .jadwal-item { background: #111; padding: 12px 5px; border-radius: 10px; text-align: center; border: 1px solid #333; }
+        .jadwal-item.active { border-color: var(--emerald); background: rgba(0, 255, 136, 0.1); }
+        .j-name { font-size: 0.7rem; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+        .j-time { font-weight: bold; font-size: 1rem; color: #fff; }
+
+        /* EDUCATIONAL NOTES */
+        .prayer-notes { margin-top: 20px; border: 1px solid #333; border-radius: 10px; background: #0a0a0a; overflow: hidden; }
+        .prayer-notes summary { padding: 12px; cursor: pointer; font-weight: bold; color: #fff; background: #151515; display: flex; align-items: center; gap: 8px; list-style: none; }
+        .prayer-notes summary::before { content: '💡'; }
+        .prayer-notes[open] summary { border-bottom: 1px solid #333; color: var(--gold); }
+        
+        .note-content { padding: 15px; font-size: 0.85rem; line-height: 1.6; color: #ccc; }
+        .note-item { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #222; }
+        .note-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .note-label { display: block; color: var(--emerald); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }
+        .note-text strong { color: #fff; }
 
         /* --- 2. QURAN SECTION --- */
         .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #151515; color: #fff; font-size: 1rem; margin-bottom: 20px; outline: none; }
@@ -59,7 +84,7 @@
         .surah-latin { font-weight: bold; font-size: 0.9rem; }
         .surah-arti { font-size: 0.7rem; color: #888; }
 
-        /* Ayat View & Controls */
+        /* Ayat View */
         #ayat-view { display: none; }
         .ayat-header { text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #333; position: relative; }
         .bismillah { font-family: 'Traditional Arabic', serif; font-size: 2rem; color: var(--gold); margin: 15px 0; }
@@ -83,7 +108,6 @@
         .toggle-label span { transition: color 0.3s; }
         .toggle-label input:checked + span { color: #fff; font-weight: bold; }
 
-        /* Link Button */
         .learn-tajwid-btn {
             display: inline-block; margin-top: 15px; padding: 8px 15px; 
             background: rgba(0, 255, 136, 0.1); color: var(--emerald); 
@@ -161,7 +185,29 @@
                 </div>
 
             </div>
+
+            <div class="highlight-grid" id="highlight-grid"></div>
+
             <div class="jadwal-list" id="jadwal-grid"></div>
+
+            <details class="prayer-notes">
+                <summary>Catatan Penting (Imsak & Syuruq)</summary>
+                <div class="note-content">
+                    <div class="note-item">
+                        <span class="note-label">🌙 Tentang Imsak</span>
+                        <div class="note-text">
+                            Imsak adalah <strong>peringatan 10 menit</strong> sebelum Subuh. Ini waktu terbaik untuk bersiap menyudahi Sahur (gosok gigi/bersih-bersih). Namun, <strong>makan & minum masih sah/boleh</strong> dilakukan sampai terdengar Adzan Subuh.
+                        </div>
+                    </div>
+                    <div class="note-item">
+                        <span class="note-label">☀️ Tentang Syuruq (Terbit)</span>
+                        <div class="note-text">
+                            Syuruq menandakan matahari terbit dan <strong>habisnya waktu sholat Subuh</strong>. Haram melakukan sholat tepat di waktu ini. Sholat Sunnah Syuruq (Isyraq) atau Dhuha Awal baru boleh dilakukan <strong>10-15 menit setelah</strong> waktu Syuruq berlalu (saat matahari setinggi tombak).
+                        </div>
+                    </div>
+                </div>
+            </details>
+
         </div>
 
         <div id="view-quran" class="view-section">
@@ -244,16 +290,14 @@
             if(t !== 'quran') stopAudio();
         }
 
-        // ================= 1. PRAYER LOGIC (HYBRID) =================
-        
-        // Initial Load: Cek LocalStorage dulu, kalau kosong baru GPS
+        // ================= 1. PRAYER LOGIC =================
         window.addEventListener('load', () => {
             const savedLoc = localStorage.getItem('gx_prayer_loc');
             if(savedLoc) {
                 const data = JSON.parse(savedLoc);
                 updatePrayerTimes(data.lat, data.lon, data.name);
             } else {
-                initPrayer(true); // Auto GPS
+                initPrayer(true);
             }
             initQuran();
         });
@@ -266,17 +310,14 @@
         function initPrayer(useGPS = false) {
             if(useGPS && navigator.geolocation) {
                 document.getElementById('loc-name').innerText = "📍 Detecting GPS...";
-                toggleLocBox(); // Hide box if open
+                toggleLocBox();
                 navigator.geolocation.getCurrentPosition(async (pos) => {
                     const { latitude, longitude } = pos.coords;
-                    // Get City Name
                     try {
                         const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                         const data = await geo.json();
                         const cityName = data.address.city || data.address.town || data.address.county || "Lokasi Saya";
                         updatePrayerTimes(latitude, longitude, "📍 " + cityName);
-                        
-                        // Save to storage
                         localStorage.setItem('gx_prayer_loc', JSON.stringify({lat: latitude, lon: longitude, name: "📍 " + cityName}));
                     } catch(e) {
                         updatePrayerTimes(latitude, longitude, "📍 Koordinat GPS");
@@ -294,22 +335,18 @@
 
             document.getElementById('loc-name').innerText = "🔍 Mencari...";
             try {
-                // Search via OpenStreetMap
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
                 const data = await res.json();
                 
                 if(data.length > 0) {
                     const lat = data[0].lat;
                     const lon = data[0].lon;
-                    const name = data[0].display_name.split(',')[0]; // Ambil nama depan saja
-                    
+                    const name = data[0].display_name.split(',')[0];
                     updatePrayerTimes(lat, lon, "📍 " + name);
-                    toggleLocBox(); // Close box
-                    
-                    // Save preference
+                    toggleLocBox(); 
                     localStorage.setItem('gx_prayer_loc', JSON.stringify({lat: lat, lon: lon, name: "📍 " + name}));
                 } else {
-                    alert("Kota tidak ditemukan. Coba nama yang lebih spesifik.");
+                    alert("Kota tidak ditemukan.");
                     document.getElementById('loc-name').innerText = "❌ Tidak Ketemu";
                 }
             } catch(e) {
@@ -320,7 +357,7 @@
         async function updatePrayerTimes(lat, lon, locationName) {
             document.getElementById('loc-name').innerText = locationName;
             try {
-                const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`); // Method 20 = Kemenag RI (Standard Indo)
+                const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`); 
                 const json = await res.json();
                 renderJadwal(json.data.timings);
             } catch(e) { 
@@ -328,37 +365,68 @@
             }
         }
 
+        function addMinutes(timeStr, minsToAdd) {
+            let [h, m] = timeStr.split(':').map(Number);
+            let date = new Date();
+            date.setHours(h);
+            date.setMinutes(m + minsToAdd);
+            return String(date.getHours()).padStart(2,'0') + ':' + String(date.getMinutes()).padStart(2,'0');
+        }
+
         function renderJadwal(timings) {
-            const list = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
-            const names = {'Fajr':'Subuh', 'Dhuhr':'Dzuhur', 'Asr':'Ashar', 'Maghrib':'Maghrib', 'Isha':'Isya'};
-            const grid = document.getElementById('jadwal-grid');
-            grid.innerHTML = "";
+            const dhuhaTime = addMinutes(timings['Sunrise'], 20);
+
+            const highlightKeys = ['Imsak', 'Fajr', 'Maghrib', 'Isha'];
+            const highlightNames = {'Imsak': 'Imsak', 'Fajr': 'Subuh', 'Maghrib': 'Maghrib', 'Isha': 'Isya'};
+            
+            const bottomGridData = [
+                { key: 'Sunrise', name: 'Syuruq', time: timings['Sunrise'] },
+                { key: 'Dhuha',   name: 'Dhuha',  time: dhuhaTime },
+                { key: 'Dhuhr',   name: 'Dzuhur', time: timings['Dhuhr'] },
+                { key: 'Asr',     name: 'Ashar',  time: timings['Asr'] }
+            ];
+
+            const hGrid = document.getElementById('highlight-grid');
+            const jGrid = document.getElementById('jadwal-grid');
+            
+            hGrid.innerHTML = "";
+            jGrid.innerHTML = "";
             
             const now = new Date();
             const curMin = now.getHours()*60 + now.getMinutes();
             let nextFound = false;
-            
-            list.forEach(k => {
+
+            highlightKeys.forEach(k => {
                 const time = timings[k];
                 const [h, m] = time.split(':').map(Number);
                 const pMin = h*60 + m;
                 let active = false;
-                
+
                 if(pMin > curMin && !nextFound) {
                     active = true; nextFound = true;
-                    document.getElementById('next-label').innerText = "NEXT: " + names[k];
+                    document.getElementById('next-label').innerText = "NEXT: " + highlightNames[k];
                     document.getElementById('next-time').innerText = time;
                 }
-                grid.innerHTML += `<div class="jadwal-item ${active?'active':''}"><div class="j-name">${names[k]}</div><div class="j-time">${time}</div></div>`;
+                hGrid.innerHTML += `<div class="highlight-item ${active?'active':''}"><div class="h-name">${highlightNames[k]}</div><div class="h-time">${time}</div></div>`;
             });
-            
+
+            bottomGridData.forEach(item => {
+                const [h, m] = item.time.split(':').map(Number);
+                const pMin = h*60 + m;
+                
+                if(pMin > curMin && !nextFound) {
+                    // Logic optional jika ingin Dhuha/Syuruq juga bisa jadi "NEXT"
+                }
+                jGrid.innerHTML += `<div class="jadwal-item"><div class="j-name">${item.name}</div><div class="j-time">${item.time}</div></div>`;
+            });
+
             if(!nextFound) {
-                document.getElementById('next-label').innerText = "NEXT: SUBUH";
-                document.getElementById('next-time').innerText = timings['Fajr'];
+                document.getElementById('next-label').innerText = "NEXT: IMSAK";
+                document.getElementById('next-time').innerText = timings['Imsak'];
             }
         }
 
-        // ================= 2. QURAN LOGIC (EQuran API) =================
+        // ================= 2. QURAN LOGIC =================
         async function initQuran() {
             try {
                 const res = await fetch('https://equran.id/api/v2/surat');
