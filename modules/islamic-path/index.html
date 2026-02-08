@@ -16,7 +16,7 @@
 
         /* TABS */
         .tabs { display: flex; background: #1a1a1a; padding: 5px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
-        .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #666; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #666; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; }
         .tab.active { background: linear-gradient(135deg, #111, #222); color: var(--gold); border: 1px solid var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
 
         .view-section { display: none; animation: fadeIn 0.4s; }
@@ -27,12 +27,10 @@
         .next-prayer-label { color: var(--emerald); font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
         .next-prayer-time { font-size: 3rem; font-weight: bold; color: #fff; text-shadow: 0 0 20px rgba(0,255,136,0.2); }
         
-        /* Location Control */
         .loc-wrapper { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
         .location-badge { background: #222; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; color: #aaa; border: 1px solid #333; display: flex; align-items: center; gap: 5px;}
         .change-loc-btn { background: none; border: none; color: var(--gold); cursor: pointer; font-size: 0.8rem; text-decoration: underline; }
         
-        /* Manual Search Box */
         .manual-loc-box { display: none; margin-top: 15px; background: #1a1a1a; padding: 15px; border-radius: 10px; border: 1px solid #333; }
         .manual-loc-box.active { display: block; animation: fadeIn 0.3s; }
         .loc-input-group { display: flex; gap: 10px; }
@@ -40,70 +38,41 @@
         .loc-action-btn { padding: 8px 15px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
         .btn-search { background: var(--gold); color: #000; }
 
-        /* HIGHLIGHT GRID */
         .highlight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
-        .highlight-item {
-            background: linear-gradient(145deg, #1a1a1a, #111);
-            border: 1px solid var(--gold);
-            border-radius: 10px; padding: 12px 5px; text-align: center;
-            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.05);
-        }
+        .highlight-item { background: linear-gradient(145deg, #1a1a1a, #111); border: 1px solid var(--gold); border-radius: 10px; padding: 12px 5px; text-align: center; }
         .highlight-item.active { background: var(--gold); color: #000; }
         .highlight-item.active .h-name, .highlight-item.active .h-time { color: #000; }
         .h-name { font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
         .h-time { font-size: 1.1rem; font-weight: bold; color: #fff; }
 
-        /* STANDARD GRID */
         .jadwal-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .jadwal-item { background: #111; padding: 12px 5px; border-radius: 10px; text-align: center; border: 1px solid #333; }
         .jadwal-item.active { border-color: var(--emerald); background: rgba(0, 255, 136, 0.1); }
         .j-name { font-size: 0.7rem; color: #888; margin-bottom: 5px; text-transform: uppercase; }
         .j-time { font-weight: bold; font-size: 1rem; color: #fff; }
 
-        /* EDUCATIONAL NOTES */
         .prayer-notes { margin-top: 20px; border: 1px solid #333; border-radius: 10px; background: #0a0a0a; overflow: hidden; }
         .prayer-notes summary { padding: 12px; cursor: pointer; font-weight: bold; color: #fff; background: #151515; display: flex; align-items: center; gap: 8px; list-style: none; }
         .prayer-notes summary::before { content: '💡'; }
-        .prayer-notes[open] summary { border-bottom: 1px solid #333; color: var(--gold); }
         .note-content { padding: 15px; font-size: 0.85rem; line-height: 1.6; color: #ccc; }
         .note-item { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #222; }
-        .note-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
         .note-label { display: block; color: var(--emerald); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }
         .note-text strong { color: #fff; }
 
-        /* RAMADHAN SECTION */
         .ramadhan-section { margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; }
         .ramadhan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .ramadhan-title { font-size: 1.1rem; font-weight: bold; color: var(--gold); display: flex; align-items: center; gap: 8px; }
-        
-        .r-controls { display: flex; gap: 10px; align-items: center; }
-        /* NEW: Input Number Style */
-        .year-input { 
-            background: #222; color: #fff; border: 1px solid #444; 
-            padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; outline: none; 
-            width: 80px; text-align: center;
-        }
+        .year-input { background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; outline: none; width: 80px; text-align: center; }
         .r-btn { background: #333; border: 1px solid #555; color: #fff; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
-        .r-btn:hover { background: #444; border-color: var(--gold); }
-
         .ramadhan-table-wrapper { overflow-x: auto; border: 1px solid #333; border-radius: 10px; max-height: 400px; min-height: 50px; position: relative; }
         .r-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; }
         .r-table th { background: #1a1a1a; color: var(--gold); padding: 10px; border-bottom: 1px solid #333; font-weight: bold; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
         .r-table td { padding: 10px; border-bottom: 1px solid #222; color: #ddd; }
-        .r-table tr:last-child td { border-bottom: none; }
-        .r-table tr:nth-child(even) { background: rgba(255, 255, 255, 0.03); }
-        .r-table tr:hover { background: rgba(255, 215, 0, 0.05); }
-
-        .loading-overlay { 
-            position: absolute; top:0; left:0; width:100%; height:100%; 
-            background: rgba(0,0,0,0.8); display: none; 
-            justify-content: center; align-items: center; color: var(--gold); font-weight: bold; z-index: 20;
-        }
+        .loading-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; color: var(--gold); font-weight: bold; z-index: 20; }
 
         /* --- 2. QURAN SECTION --- */
         .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #151515; color: #fff; font-size: 1rem; margin-bottom: 20px; outline: none; }
         .search-box:focus { border-color: var(--gold); }
-        
         .surah-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
         .surah-card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; cursor: pointer; position: relative; transition: 0.2s; }
         .surah-card:hover { border-color: var(--gold); transform: translateY(-3px); }
@@ -111,64 +80,72 @@
         .surah-arab { font-family: 'Traditional Arabic', serif; font-size: 1.6rem; text-align: right; color: var(--gold); margin-bottom: 5px; }
         .surah-latin { font-weight: bold; font-size: 0.9rem; }
         .surah-arti { font-size: 0.7rem; color: #888; }
-
-        /* Ayat View */
         #ayat-view { display: none; }
         .ayat-header { text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #333; position: relative; }
         .bismillah { font-family: 'Traditional Arabic', serif; font-size: 2rem; color: var(--gold); margin: 15px 0; }
         .close-btn { position: absolute; top: 0; left: 0; background: none; border: none; color: #fff; cursor: pointer; font-size: 1rem; }
-        
-        /* Audio Controls */
-        .audio-settings {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-            background: #111; padding: 10px; border-radius: 10px; border: 1px solid #333;
-            margin-bottom: 15px;
-        }
-        .audio-select {
-            background: #222; color: #fff; border: 1px solid #444; padding: 8px;
-            border-radius: 6px; width: 100%; outline: none; font-size: 0.85rem;
-        }
-        
-        /* View Toggles */
+        .audio-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #111; padding: 10px; border-radius: 10px; border: 1px solid #333; margin-bottom: 15px; }
+        .audio-select { background: #222; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 6px; width: 100%; outline: none; font-size: 0.85rem; }
         .view-toggles { display: flex; justify-content: center; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
         .toggle-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: #aaa; user-select: none; }
         .toggle-label input { accent-color: var(--gold); transform: scale(1.2); }
         .toggle-label span { transition: color 0.3s; }
         .toggle-label input:checked + span { color: #fff; font-weight: bold; }
-
-        .learn-tajwid-btn {
-            display: inline-block; margin-top: 15px; padding: 8px 15px; 
-            background: rgba(0, 255, 136, 0.1); color: var(--emerald); 
-            border: 1px solid var(--emerald); border-radius: 20px; 
-            text-decoration: none; font-size: 0.8rem; transition: 0.3s;
-        }
+        .learn-tajwid-btn { display: inline-block; margin-top: 15px; padding: 8px 15px; background: rgba(0, 255, 136, 0.1); color: var(--emerald); border: 1px solid var(--emerald); border-radius: 20px; text-decoration: none; font-size: 0.8rem; transition: 0.3s; }
         .learn-tajwid-btn:hover { background: var(--emerald); color: #000; }
-
-        /* Reciter Info */
         .reciter-details { text-align: left; font-size: 0.8rem; color: #888; background: #151515; border: 1px solid #333; border-radius: 8px; overflow: hidden; margin-top: 15px; }
         .reciter-details summary { padding: 10px; cursor: pointer; font-weight: bold; color: var(--gold); list-style: none; display: flex; justify-content: space-between; align-items: center; }
-        .reciter-details summary::after { content: '+'; font-size: 1.2rem; font-weight: normal; }
-        .reciter-details[open] summary::after { content: '-'; }
         .reciter-list { padding: 0 15px 15px 15px; border-top: 1px solid #222; }
         .reciter-item { margin-top: 10px; line-height: 1.4; border-bottom: 1px solid #222; padding-bottom: 10px; }
         .reciter-item:last-child { border-bottom: none; }
         .reciter-name { color: #fff; font-weight: bold; display: block; margin-bottom: 2px; }
         .reciter-maqam { color: var(--emerald); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;}
-
-        /* Ayat Items */
         .ayat-item { padding: 25px 0; border-bottom: 1px solid #222; }
         .ayat-item.active { background: rgba(255, 215, 0, 0.05); border-left: 2px solid var(--gold); } 
         .ayat-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .play-btn { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--gold); background: rgba(255, 215, 0, 0.1); color: var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .play-btn.playing { background: var(--gold); color: #000; animation: pulse 1s infinite; }
         .play-btn.loading { border-color: #666; animation: spin 1s infinite linear; background: none; color: transparent; }
-        
         .ayat-text { font-family: 'Traditional Arabic', serif; font-size: 2.2rem; text-align: right; line-height: 2.4; margin-bottom: 15px; color: #eee; }
         .ayat-latin { font-size: 0.95rem; color: var(--gold); font-style: italic; margin-bottom: 8px; line-height: 1.5; display: block; }
         .ayat-trans { font-size: 0.9rem; color: #aaa; line-height: 1.5; display: block; }
-
         #ayat-container.hide-latin .ayat-latin { display: none; }
         #ayat-container.hide-trans .ayat-trans { display: none; }
+
+        /* --- 3. CERAMAH SECTION --- */
+        .ceramah-controls { margin-bottom: 20px; text-align: center; }
+        .ceramah-btn { 
+            background: linear-gradient(135deg, var(--gold), #e6c200); 
+            color: #000; border: none; padding: 12px 25px; 
+            border-radius: 50px; font-weight: bold; cursor: pointer; 
+            font-size: 1rem; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            transition: 0.3s;
+        }
+        .ceramah-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); }
+
+        .ceramah-card { 
+            background: #151515; border: 1px solid #333; border-radius: 15px; 
+            padding: 25px; margin-bottom: 20px; animation: fadeIn 0.5s; 
+        }
+        .c-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .c-title { font-size: 1.5rem; color: var(--gold); font-weight: bold; line-height: 1.3; }
+        .c-source { color: #666; font-size: 0.8rem; margin-top: 5px; font-style: italic; }
+        
+        .c-dalil-box { background: rgba(0, 255, 136, 0.05); border-left: 3px solid var(--emerald); padding: 15px; margin-bottom: 20px; border-radius: 0 10px 10px 0; }
+        .c-dalil-arabic { font-family: 'Traditional Arabic', serif; font-size: 1.4rem; text-align: right; margin-bottom: 10px; color: #eee; line-height: 1.8; }
+        .c-dalil-trans { font-size: 0.9rem; color: #aaa; font-style: italic; }
+
+        .c-points { list-style: none; padding: 0; }
+        .c-point-item { margin-bottom: 15px; display: flex; gap: 10px; }
+        .c-num { 
+            background: #333; color: var(--gold); width: 25px; height: 25px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; flex-shrink: 0; font-size: 0.8rem;
+        }
+        .c-text { line-height: 1.5; color: #ddd; }
+        .c-text strong { color: #fff; }
+
+        .c-closing { text-align: center; margin-top: 20px; font-style: italic; color: #888; font-size: 0.9rem; border-top: 1px solid #333; padding-top: 15px; }
 
         .attribution { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #222; font-size: 0.75rem; color: #555; }
 
@@ -190,6 +167,7 @@
         <div class="tabs">
             <div class="tab active" onclick="switchTab('prayer')">🕌 Prayer</div>
             <div class="tab" onclick="switchTab('quran')">📖 Qur'an</div>
+            <div class="tab" onclick="switchTab('ceramah')">🎙️ Ceramah</div>
         </div>
 
         <div id="view-prayer" class="view-section active">
@@ -325,11 +303,23 @@
 
                 </div>
                 <div id="ayat-container"></div>
-                
-                <div class="attribution">
-                    Data Source Inspired by <b>EQuran.id</b> <br> 
-                    Built by GXDiag
+            </div>
+        </div>
+
+        <div id="view-ceramah" class="view-section">
+            <div class="ceramah-controls">
+                <button class="ceramah-btn" onclick="generateCeramah()">🎲 Acak Tema Kultum</button>
+            </div>
+
+            <div id="ceramah-content">
+                <div style="text-align:center; color:#666; padding:50px;">
+                    Klik tombol di atas untuk mendapatkan ide materi ceramah.
                 </div>
+            </div>
+            
+            <div class="attribution">
+                Inspired by <b>Riyadhus Shalihin</b> & <b>Arbain Nawawi</b><br>
+                GX-Cultum Engine
             </div>
         </div>
 
@@ -345,12 +335,141 @@
         
         const verseCounts = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
+        // --- CERAMAH DATABASE (LOCAL) ---
+        const ceramahDB = [
+            {
+                title: "Keutamaan Menuntut Ilmu",
+                source: "HR. Muslim",
+                dalil_arab: "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ",
+                dalil_trans: "Barangsiapa menempuh jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga.",
+                points: [
+                    "Ilmu adalah cahaya yang membedakan haq dan batil.",
+                    "Menuntut ilmu adalah kewajiban setiap Muslim, tidak terbatas usia.",
+                    "Allah menjanjikan kemudahan jalan ke surga bagi penuntut ilmu."
+                ],
+                closing: "Semoga kita istiqomah dalam majelis ilmu."
+            },
+            {
+                title: "Bahaya Lisan",
+                source: "HR. Bukhari & Muslim",
+                dalil_arab: "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ",
+                dalil_trans: "Barangsiapa beriman kepada Allah dan hari akhir, hendaklah ia berkata baik atau diam.",
+                points: [
+                    "Lisan adalah anggota tubuh kecil yang dampaknya besar (bisa surga/neraka).",
+                    "Diam adalah emas jika ucapan tidak mengandung kebaikan.",
+                    "Hindari ghibah, namimah (adu domba), dan perkataan kotor."
+                ],
+                closing: "Mari jaga lisan agar selamat di dunia dan akhirat."
+            },
+            {
+                title: "Keutamaan Sholat Berjamaah",
+                source: "HR. Bukhari & Muslim",
+                dalil_arab: "صَلاَةُ الْجَمَاعَةِ تَفْضُلُ صَلاَةَ الْفَذِّ بِسَبْعٍ وَعِشْرِينَ دَرَجَةً",
+                dalil_trans: "Shalat berjamaah lebih utama daripada shalat sendirian sebanyak dua puluh tujuh derajat.",
+                points: [
+                    "Pahala berlipat ganda (27 derajat) dibanding sholat sendiri.",
+                    "Mempererat ukhuwah islamiyah antar tetangga dan warga.",
+                    "Langkah kaki ke masjid menghapus dosa dan mengangkat derajat."
+                ],
+                closing: "Jangan biarkan masjid kita sepi, mari ramaikan."
+            },
+            {
+                title: "Sedekah Tidak Mengurangi Harta",
+                source: "HR. Muslim",
+                dalil_arab: "مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ",
+                dalil_trans: "Harta tidak akan berkurang karena sedekah.",
+                points: [
+                    "Secara matematika berkurang, tapi secara berkah bertambah.",
+                    "Sedekah adalah penolak bala dan penyembuh penyakit.",
+                    "Allah akan mengganti dengan yang lebih baik di dunia atau akhirat."
+                ],
+                closing: "Sisihkan rezeki kita, walau sedikit tapi rutin."
+            },
+            {
+                title: "Pentingnya Sabar",
+                source: "QS. Al-Baqarah: 153",
+                dalil_arab: "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
+                dalil_trans: "Wahai orang-orang yang beriman! Mohonlah pertolongan (kepada Allah) dengan sabar dan salat. Sungguh, Allah beserta orang-orang yang sabar.",
+                points: [
+                    "Sabar adalah pilar keimanan, tidak ada iman tanpa kesabaran.",
+                    "Sabar ada 3: Sabar dalam taat, sabar menjauhi maksiat, sabar menghadapi musibah.",
+                    "Allah membersamai orang yang sabar (Innallaha ma'ashobirin)."
+                ],
+                closing: "Semoga Allah meluaskan hati kita dengan kesabaran."
+            },
+            {
+                title: "Berbakti Kepada Orang Tua",
+                source: "HR. Tirmidzi",
+                dalil_arab: "رِضَا الرَّبِّ فِي رِضَا الْوَالِدِ وَسَخَطُ الرَّبِّ فِي سَخَطِ الْوَالِدِ",
+                dalil_trans: "Ridha Allah tergantung pada ridha orang tua dan murka Allah tergantung pada murka orang tua.",
+                points: [
+                    "Birrul Walidain adalah amalan utama setelah sholat.",
+                    "Jangan pernah berkata 'Ah' atau membentak mereka (QS Al-Isra: 23).",
+                    "Doa orang tua adalah doa yang mustajab."
+                ],
+                closing: "Muliakanlah orang tua selagi mereka masih ada."
+            },
+            {
+                title: "Menjaga Kebersihan (Thaharah)",
+                source: "HR. Muslim",
+                dalil_arab: "الطُّهُورُ شَطْرُ الْإِيمَانِ",
+                dalil_trans: "Bersuci (thaharah) itu adalah setengah dari iman.",
+                points: [
+                    "Islam sangat mencintai kebersihan lahir dan batin.",
+                    "Wudhu menggugurkan dosa-dosa kecil dari anggota tubuh.",
+                    "Kebersihan lingkungan adalah cerminan pribadi Muslim."
+                ],
+                closing: "Jagalah wudhu dan kebersihan hati kita."
+            }
+        ];
+
         function switchTab(t) {
             document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
             document.getElementById(`view-${t}`).classList.add('active');
             event.target.classList.add('active');
             if(t !== 'quran') stopAudio();
+        }
+
+        // ================= 3. CERAMAH LOGIC =================
+        function generateCeramah() {
+            const contentDiv = document.getElementById('ceramah-content');
+            
+            // Randomly select topic
+            const randomIdx = Math.floor(Math.random() * ceramahDB.length);
+            const data = ceramahDB[randomIdx];
+
+            // Build HTML
+            let pointsHTML = '';
+            data.points.forEach((p, idx) => {
+                pointsHTML += `
+                <li class="c-point-item">
+                    <div class="c-num">${idx+1}</div>
+                    <div class="c-text"><strong>Poin ${idx+1}:</strong> ${p}</div>
+                </li>`;
+            });
+
+            contentDiv.innerHTML = `
+                <div class="ceramah-card">
+                    <div class="c-header">
+                        <div class="c-title">${data.title}</div>
+                        <div class="c-source">Sumber: ${data.source}</div>
+                    </div>
+                    
+                    <div class="c-dalil-box">
+                        <div class="c-dalil-arabic">${data.dalil_arab}</div>
+                        <div class="c-dalil-trans">"${data.dalil_trans}"</div>
+                    </div>
+
+                    <ul class="c-points">
+                        ${pointsHTML}
+                    </ul>
+
+                    <div class="c-closing">
+                        ${data.closing}
+                    </div>
+                </div>
+            `;
         }
 
         // ================= 1. PRAYER LOGIC =================
@@ -537,6 +656,7 @@
                         const dateObj = new Date(day.date.readable);
                         const dateStr = dateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
                         
+                        // Parse times (remove timezone suffix if any)
                         const imsak = day.timings.Imsak.split(' ')[0];
                         const subuh = day.timings.Fajr.split(' ')[0];
                         const maghrib = day.timings.Maghrib.split(' ')[0];
@@ -545,7 +665,7 @@
                         tbody.innerHTML += `
                             <tr>
                                 <td>${dateStr}</td>
-                                <td><span style="color:var(--emerald)">${hijriDay}</span></td>
+                                <td><span style="color:var(--emerald)">${hijriDay} Ramadhan</span></td>
                                 <td>${imsak}</td>
                                 <td>${subuh}</td>
                                 <td>${maghrib}</td>
