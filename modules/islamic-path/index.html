@@ -38,7 +38,7 @@
         .loc-action-btn { padding: 8px 15px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
         .btn-search { background: var(--gold); color: #000; }
 
-        /* HIGHLIGHT GRID (4 items: Imsak, Subuh, Maghrib, Isya) */
+        /* HIGHLIGHT GRID (4 Items) */
         .highlight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
         .highlight-item { background: linear-gradient(145deg, #1a1a1a, #111); border: 1px solid var(--gold); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 4px 10px rgba(255, 215, 0, 0.05); }
         .highlight-item.active { background: var(--gold); color: #000; }
@@ -46,7 +46,7 @@
         .h-name { font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
         .h-time { font-size: 1.1rem; font-weight: bold; color: #fff; }
 
-        /* FULL GRID (9 items: 2/3 Malam, Imsak, Subuh, Syuruq, Dhuha, Dzuhur, Ashar, Maghrib, Isya) */
+        /* FULL GRID (9 Items) */
         .jadwal-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .jadwal-item { background: #111; padding: 12px 5px; border-radius: 10px; text-align: center; border: 1px solid #333; }
         .jadwal-item.active { border-color: var(--emerald); background: rgba(0, 255, 136, 0.1); }
@@ -178,7 +178,7 @@
 
             <div class="highlight-grid" id="highlight-grid"></div>
 
-            <div style="margin-bottom:10px; font-size:0.9rem; font-weight:bold; color:var(--gold);">Jadwal Lengkap:</div>
+            <div style="margin-bottom:10px; font-size:0.9rem; font-weight:bold; color:var(--gold); border-bottom:1px solid #333; padding-bottom:5px;">Jadwal Lengkap (9 Waktu):</div>
             <div class="jadwal-list" id="jadwal-grid"></div>
 
             <details class="prayer-notes">
@@ -333,7 +333,22 @@
                 points: ["Ilmu adalah cahaya yang membedakan haq dan batil.", "Menuntut ilmu kewajiban setiap Muslim.", "Allah menjanjikan surga bagi penuntut ilmu."],
                 closing: "Semoga kita istiqomah dalam majelis ilmu."
             },
-            // ... (Same DB as before) ...
+            {
+                title: "Bahaya Lisan",
+                source: "HR. Bukhari & Muslim",
+                dalil_arab: "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ",
+                dalil_trans: "Barangsiapa beriman kepada Allah dan hari akhir, hendaklah ia berkata baik atau diam.",
+                points: ["Lisan adalah anggota tubuh kecil yang dampaknya besar.", "Diam adalah emas jika ucapan tidak mengandung kebaikan.", "Hindari ghibah, namimah, dan perkataan kotor."],
+                closing: "Mari jaga lisan agar selamat di dunia dan akhirat."
+            },
+            {
+                title: "Keutamaan Sholat Berjamaah",
+                source: "HR. Bukhari & Muslim",
+                dalil_arab: "صَلاَةُ الْجَمَاعَةِ تَفْضُلُ صَلاَةَ الْفَذِّ بِسَبْعٍ وَعِشْرِينَ دَرَجَةً",
+                dalil_trans: "Shalat berjamaah lebih utama daripada shalat sendirian sebanyak dua puluh tujuh derajat.",
+                points: ["Pahala berlipat ganda (27 derajat).", "Mempererat ukhuwah islamiyah.", "Langkah kaki ke masjid menghapus dosa."],
+                closing: "Jangan biarkan masjid kita sepi, mari ramaikan."
+            },
             {
                 title: "Pentingnya Sabar",
                 source: "QS. Al-Baqarah: 153",
@@ -341,6 +356,14 @@
                 dalil_trans: "Wahai orang-orang yang beriman! Mohonlah pertolongan (kepada Allah) dengan sabar dan salat.",
                 points: ["Sabar adalah pilar keimanan.", "Sabar ada 3 jenis: Taat, Maksiat, Musibah.", "Allah membersamai orang yang sabar."],
                 closing: "Semoga Allah meluaskan hati kita dengan kesabaran."
+            },
+            {
+                title: "Berbakti Kepada Orang Tua",
+                source: "HR. Tirmidzi",
+                dalil_arab: "رِضَا الرَّبِّ فِي رِضَا الْوَالِدِ وَسَخَطُ الرَّبِّ فِي سَخَطِ الْوَالِدِ",
+                dalil_trans: "Ridha Allah tergantung pada ridha orang tua dan murka Allah tergantung pada murka orang tua.",
+                points: ["Birrul Walidain adalah amalan utama setelah sholat.", "Jangan pernah berkata 'Ah'.", "Doa orang tua adalah doa yang mustajab."],
+                closing: "Muliakanlah orang tua selagi mereka masih ada."
             }
         ];
 
@@ -447,24 +470,18 @@
             return String(date.getHours()).padStart(2,'0') + ':' + String(date.getMinutes()).padStart(2,'0');
         }
 
-        // Logic for 2/3 Malam (Last Third of Night)
         function calculateLastThird(maghribStr, fajrStr) {
-            // Simplified logic: Assume Night length is Roughly Maghrib (prev day) to Fajr
-            // Since we only have today's Maghrib, we estimate night length using Today's Maghrib -> Tomorrow's Fajr
-            // Or simpler: Today's Fajr - (NightLength/3). 
-            // Better Approch for Client Side without previous day data:
-            // Calculate Night Length = (24h - Maghrib) + Fajr
             const [mH, mM] = maghribStr.split(':').map(Number);
             const [fH, fM] = fajrStr.split(':').map(Number);
             
             const maghribMins = mH * 60 + mM;
             const fajrMins = fH * 60 + fM;
             
-            // Night Duration (Mins)
+            // Estimasi durasi malam: (24 jam - Maghrib) + Subuh
             let nightDuration = (1440 - maghribMins) + fajrMins; 
             
-            // Start of Last Third = Fajr - (NightDuration / 3)
-            // Need to handle if calculation goes back to previous day, but for display time it's fine
+            // Waktu 2/3 Malam = Subuh - (1/3 Durasi Malam)
+            // Atau: Maghrib + (2/3 Durasi Malam)
             let lastThirdStartMins = fajrMins + 1440 - (nightDuration / 3);
             if(lastThirdStartMins >= 1440) lastThirdStartMins -= 1440;
             
@@ -477,21 +494,17 @@
             const dhuhaTime = addMinutes(timings['Sunrise'], 20);
             const lastThirdTime = calculateLastThird(timings['Maghrib'], timings['Fajr']);
 
-            // 1. Highlight Grid (4 Waktu Utama)
-            const highlightKeys = ['Imsak', 'Fajr', 'Maghrib', 'Isha'];
-            const highlightNames = {'Imsak': 'Imsak', 'Fajr': 'Subuh', 'Maghrib': 'Maghrib', 'Isha': 'Isya'};
-            
-            // 2. Full Grid (9 Waktu)
-            const fullGridData = [
-                { name: '2/3 Malam', time: lastThirdTime },
-                { name: 'Imsak', time: timings['Imsak'] },
-                { name: 'Subuh', time: timings['Fajr'] },
-                { name: 'Syuruq', time: timings['Sunrise'] },
-                { name: 'Dhuha', time: dhuhaTime },
-                { name: 'Dzuhur', time: timings['Dhuhr'] },
-                { name: 'Ashar', time: timings['Asr'] },
-                { name: 'Maghrib', time: timings['Maghrib'] },
-                { name: 'Isya', time: timings['Isha'] }
+            // 1. Data Source (9 Events for "Next Logic")
+            const allEvents = [
+                { id: 'LastThird', name: '2/3 Malam', time: lastThirdTime },
+                { id: 'Imsak', name: 'Imsak', time: timings['Imsak'] },
+                { id: 'Fajr', name: 'Subuh', time: timings['Fajr'] },
+                { id: 'Sunrise', name: 'Syuruq', time: timings['Sunrise'] },
+                { id: 'Dhuha', name: 'Dhuha', time: dhuhaTime },
+                { id: 'Dhuhr', name: 'Dzuhur', time: timings['Dhuhr'] },
+                { id: 'Asr', name: 'Ashar', time: timings['Asr'] },
+                { id: 'Maghrib', name: 'Maghrib', time: timings['Maghrib'] },
+                { id: 'Isha', name: 'Isya', time: timings['Isha'] }
             ];
 
             const hGrid = document.getElementById('highlight-grid');
@@ -504,29 +517,43 @@
             const curMin = now.getHours()*60 + now.getMinutes();
             let nextFound = false;
 
-            // Render Highlight
-            highlightKeys.forEach(k => {
-                const time = timings[k];
-                const [h, m] = time.split(':').map(Number);
-                const pMin = h*60 + m;
-                let active = false;
-                if(pMin > curMin && !nextFound) {
+            // Determine NEXT Event based on Full List
+            allEvents.forEach(e => {
+                const [h, m] = e.time.split(':').map(Number);
+                const eMin = h*60 + m;
+                e.active = false; // Reset status
+
+                if(eMin > curMin && !nextFound) {
                     active = true; nextFound = true;
-                    document.getElementById('next-label').innerText = "NEXT: " + highlightNames[k];
-                    document.getElementById('next-time').innerText = time;
+                    e.active = true; // Mark this event as active
+                    document.getElementById('next-label').innerText = "NEXT: " + e.name;
+                    document.getElementById('next-time').innerText = e.time;
                 }
-                hGrid.innerHTML += `<div class="highlight-item ${active?'active':''}"><div class="h-name">${highlightNames[k]}</div><div class="h-time">${time}</div></div>`;
             });
 
-            // Render Full Grid
-            fullGridData.forEach(item => {
-                jGrid.innerHTML += `<div class="jadwal-item"><div class="j-name">${item.name}</div><div class="j-time">${item.time}</div></div>`;
-            });
-
+            // Loop back to tomorrow (usually 2/3 Malam) if late night
             if(!nextFound) {
-                document.getElementById('next-label').innerText = "NEXT: IMSAK";
-                document.getElementById('next-time').innerText = timings['Imsak'];
+                document.getElementById('next-label').innerText = "NEXT: 2/3 Malam";
+                document.getElementById('next-time').innerText = allEvents[0].time;
+                allEvents[0].active = true; // Highlight first event visually
             }
+
+            // Render Highlight Grid (Only 4 Items)
+            const highlightKeys = ['Imsak', 'Fajr', 'Maghrib', 'Isha']; // ID reference
+            const highlightMap = {'Imsak': 'Imsak', 'Fajr': 'Subuh', 'Maghrib': 'Maghrib', 'Isha': 'Isya'}; // Display Name
+
+            // Filter from allEvents to keep logic consistent
+            allEvents.forEach(e => {
+                // If this event is in the highlight list
+                if(highlightKeys.includes(e.id)) {
+                     hGrid.innerHTML += `<div class="highlight-item ${e.active?'active':''}"><div class="h-name">${highlightMap[e.id]}</div><div class="h-time">${e.time}</div></div>`;
+                }
+            });
+
+            // Render Full Grid (All 9 Items)
+            allEvents.forEach(e => {
+                jGrid.innerHTML += `<div class="jadwal-item ${e.active?'active':''}"><div class="j-name">${e.name}</div><div class="j-time">${e.time}</div></div>`;
+            });
         }
 
         // ================= RAMADHAN LOGIC =================
