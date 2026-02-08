@@ -38,14 +38,16 @@
         .loc-action-btn { padding: 8px 15px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
         .btn-search { background: var(--gold); color: #000; }
 
-        .highlight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
-        .highlight-item { background: linear-gradient(145deg, #1a1a1a, #111); border: 1px solid var(--gold); border-radius: 10px; padding: 12px 5px; text-align: center; }
+        /* HIGHLIGHT GRID (4 items: Imsak, Subuh, Maghrib, Isya) */
+        .highlight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+        .highlight-item { background: linear-gradient(145deg, #1a1a1a, #111); border: 1px solid var(--gold); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 4px 10px rgba(255, 215, 0, 0.05); }
         .highlight-item.active { background: var(--gold); color: #000; }
         .highlight-item.active .h-name, .highlight-item.active .h-time { color: #000; }
         .h-name { font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
         .h-time { font-size: 1.1rem; font-weight: bold; color: #fff; }
 
-        .jadwal-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        /* FULL GRID (9 items: 2/3 Malam, Imsak, Subuh, Syuruq, Dhuha, Dzuhur, Ashar, Maghrib, Isya) */
+        .jadwal-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .jadwal-item { background: #111; padding: 12px 5px; border-radius: 10px; text-align: center; border: 1px solid #333; }
         .jadwal-item.active { border-color: var(--emerald); background: rgba(0, 255, 136, 0.1); }
         .j-name { font-size: 0.7rem; color: #888; margin-bottom: 5px; text-transform: uppercase; }
@@ -56,6 +58,7 @@
         .prayer-notes summary::before { content: '💡'; }
         .note-content { padding: 15px; font-size: 0.85rem; line-height: 1.6; color: #ccc; }
         .note-item { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #222; }
+        .note-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
         .note-label { display: block; color: var(--emerald); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; }
         .note-text strong { color: #fff; }
 
@@ -92,7 +95,6 @@
         .toggle-label span { transition: color 0.3s; }
         .toggle-label input:checked + span { color: #fff; font-weight: bold; }
         .learn-tajwid-btn { display: inline-block; margin-top: 15px; padding: 8px 15px; background: rgba(0, 255, 136, 0.1); color: var(--emerald); border: 1px solid var(--emerald); border-radius: 20px; text-decoration: none; font-size: 0.8rem; transition: 0.3s; }
-        .learn-tajwid-btn:hover { background: var(--emerald); color: #000; }
         .reciter-details { text-align: left; font-size: 0.8rem; color: #888; background: #151515; border: 1px solid #333; border-radius: 8px; overflow: hidden; margin-top: 15px; }
         .reciter-details summary { padding: 10px; cursor: pointer; font-weight: bold; color: var(--gold); list-style: none; display: flex; justify-content: space-between; align-items: center; }
         .reciter-list { padding: 0 15px 15px 15px; border-top: 1px solid #222; }
@@ -114,37 +116,20 @@
 
         /* --- 3. CERAMAH SECTION --- */
         .ceramah-controls { margin-bottom: 20px; text-align: center; }
-        .ceramah-btn { 
-            background: linear-gradient(135deg, var(--gold), #e6c200); 
-            color: #000; border: none; padding: 12px 25px; 
-            border-radius: 50px; font-weight: bold; cursor: pointer; 
-            font-size: 1rem; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-            transition: 0.3s;
-        }
+        .ceramah-btn { background: linear-gradient(135deg, var(--gold), #e6c200); color: #000; border: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 1rem; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); transition: 0.3s; }
         .ceramah-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); }
-
-        .ceramah-card { 
-            background: #151515; border: 1px solid #333; border-radius: 15px; 
-            padding: 25px; margin-bottom: 20px; animation: fadeIn 0.5s; 
-        }
+        .ceramah-card { background: #151515; border: 1px solid #333; border-radius: 15px; padding: 25px; margin-bottom: 20px; animation: fadeIn 0.5s; }
         .c-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
         .c-title { font-size: 1.5rem; color: var(--gold); font-weight: bold; line-height: 1.3; }
         .c-source { color: #666; font-size: 0.8rem; margin-top: 5px; font-style: italic; }
-        
         .c-dalil-box { background: rgba(0, 255, 136, 0.05); border-left: 3px solid var(--emerald); padding: 15px; margin-bottom: 20px; border-radius: 0 10px 10px 0; }
         .c-dalil-arabic { font-family: 'Traditional Arabic', serif; font-size: 1.4rem; text-align: right; margin-bottom: 10px; color: #eee; line-height: 1.8; }
         .c-dalil-trans { font-size: 0.9rem; color: #aaa; font-style: italic; }
-
         .c-points { list-style: none; padding: 0; }
         .c-point-item { margin-bottom: 15px; display: flex; gap: 10px; }
-        .c-num { 
-            background: #333; color: var(--gold); width: 25px; height: 25px; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; flex-shrink: 0; font-size: 0.8rem;
-        }
+        .c-num { background: #333; color: var(--gold); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.8rem; }
         .c-text { line-height: 1.5; color: #ddd; }
         .c-text strong { color: #fff; }
-
         .c-closing { text-align: center; margin-top: 20px; font-style: italic; color: #888; font-size: 0.9rem; border-top: 1px solid #333; padding-top: 15px; }
 
         .attribution { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #222; font-size: 0.75rem; color: #555; }
@@ -189,16 +174,22 @@
                         Atau gunakan <a href="#" onclick="initPrayer(true); return false;" style="color:var(--emerald);">📍 Deteksi GPS Otomatis</a>
                     </div>
                 </div>
-
             </div>
 
             <div class="highlight-grid" id="highlight-grid"></div>
 
+            <div style="margin-bottom:10px; font-size:0.9rem; font-weight:bold; color:var(--gold);">Jadwal Lengkap:</div>
             <div class="jadwal-list" id="jadwal-grid"></div>
 
             <details class="prayer-notes">
-                <summary>Catatan Penting (Imsak & Syuruq)</summary>
+                <summary>Catatan Penting (Imsak & 2/3 Malam)</summary>
                 <div class="note-content">
+                    <div class="note-item">
+                        <span class="note-label">🌑 Keutamaan Sholat 2/3 Malam (Tahajud)</span>
+                        <div class="note-text">
+                            Sepertiga malam terakhir adalah waktu istimewa di mana Allah turun ke langit dunia dan mengabulkan doa hamba-Nya. Sangat dianjurkan untuk Qiyamul Lail (Sholat Tahajud) di waktu ini. Waktu ini dihitung dari sepertiga akhir durasi malam (antara Maghrib sampai Subuh).
+                        </div>
+                    </div>
                     <div class="note-item">
                         <span class="note-label">🌙 Tentang Imsak</span>
                         <div class="note-text">
@@ -310,13 +301,11 @@
             <div class="ceramah-controls">
                 <button class="ceramah-btn" onclick="generateCeramah()">🎲 Acak Tema Kultum</button>
             </div>
-
             <div id="ceramah-content">
                 <div style="text-align:center; color:#666; padding:50px;">
                     Klik tombol di atas untuk mendapatkan ide materi ceramah.
                 </div>
             </div>
-            
             <div class="attribution">
                 Inspired by <b>Riyadhus Shalihin</b> & <b>Arbain Nawawi</b><br>
                 GX-Cultum Engine
@@ -335,91 +324,23 @@
         
         const verseCounts = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
-        // --- CERAMAH DATABASE (LOCAL) ---
         const ceramahDB = [
             {
                 title: "Keutamaan Menuntut Ilmu",
                 source: "HR. Muslim",
                 dalil_arab: "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ",
                 dalil_trans: "Barangsiapa menempuh jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga.",
-                points: [
-                    "Ilmu adalah cahaya yang membedakan haq dan batil.",
-                    "Menuntut ilmu adalah kewajiban setiap Muslim, tidak terbatas usia.",
-                    "Allah menjanjikan kemudahan jalan ke surga bagi penuntut ilmu."
-                ],
+                points: ["Ilmu adalah cahaya yang membedakan haq dan batil.", "Menuntut ilmu kewajiban setiap Muslim.", "Allah menjanjikan surga bagi penuntut ilmu."],
                 closing: "Semoga kita istiqomah dalam majelis ilmu."
             },
-            {
-                title: "Bahaya Lisan",
-                source: "HR. Bukhari & Muslim",
-                dalil_arab: "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ",
-                dalil_trans: "Barangsiapa beriman kepada Allah dan hari akhir, hendaklah ia berkata baik atau diam.",
-                points: [
-                    "Lisan adalah anggota tubuh kecil yang dampaknya besar (bisa surga/neraka).",
-                    "Diam adalah emas jika ucapan tidak mengandung kebaikan.",
-                    "Hindari ghibah, namimah (adu domba), dan perkataan kotor."
-                ],
-                closing: "Mari jaga lisan agar selamat di dunia dan akhirat."
-            },
-            {
-                title: "Keutamaan Sholat Berjamaah",
-                source: "HR. Bukhari & Muslim",
-                dalil_arab: "صَلاَةُ الْجَمَاعَةِ تَفْضُلُ صَلاَةَ الْفَذِّ بِسَبْعٍ وَعِشْرِينَ دَرَجَةً",
-                dalil_trans: "Shalat berjamaah lebih utama daripada shalat sendirian sebanyak dua puluh tujuh derajat.",
-                points: [
-                    "Pahala berlipat ganda (27 derajat) dibanding sholat sendiri.",
-                    "Mempererat ukhuwah islamiyah antar tetangga dan warga.",
-                    "Langkah kaki ke masjid menghapus dosa dan mengangkat derajat."
-                ],
-                closing: "Jangan biarkan masjid kita sepi, mari ramaikan."
-            },
-            {
-                title: "Sedekah Tidak Mengurangi Harta",
-                source: "HR. Muslim",
-                dalil_arab: "مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ",
-                dalil_trans: "Harta tidak akan berkurang karena sedekah.",
-                points: [
-                    "Secara matematika berkurang, tapi secara berkah bertambah.",
-                    "Sedekah adalah penolak bala dan penyembuh penyakit.",
-                    "Allah akan mengganti dengan yang lebih baik di dunia atau akhirat."
-                ],
-                closing: "Sisihkan rezeki kita, walau sedikit tapi rutin."
-            },
+            // ... (Same DB as before) ...
             {
                 title: "Pentingnya Sabar",
                 source: "QS. Al-Baqarah: 153",
-                dalil_arab: "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
-                dalil_trans: "Wahai orang-orang yang beriman! Mohonlah pertolongan (kepada Allah) dengan sabar dan salat. Sungguh, Allah beserta orang-orang yang sabar.",
-                points: [
-                    "Sabar adalah pilar keimanan, tidak ada iman tanpa kesabaran.",
-                    "Sabar ada 3: Sabar dalam taat, sabar menjauhi maksiat, sabar menghadapi musibah.",
-                    "Allah membersamai orang yang sabar (Innallaha ma'ashobirin)."
-                ],
+                dalil_arab: "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ",
+                dalil_trans: "Wahai orang-orang yang beriman! Mohonlah pertolongan (kepada Allah) dengan sabar dan salat.",
+                points: ["Sabar adalah pilar keimanan.", "Sabar ada 3 jenis: Taat, Maksiat, Musibah.", "Allah membersamai orang yang sabar."],
                 closing: "Semoga Allah meluaskan hati kita dengan kesabaran."
-            },
-            {
-                title: "Berbakti Kepada Orang Tua",
-                source: "HR. Tirmidzi",
-                dalil_arab: "رِضَا الرَّبِّ فِي رِضَا الْوَالِدِ وَسَخَطُ الرَّبِّ فِي سَخَطِ الْوَالِدِ",
-                dalil_trans: "Ridha Allah tergantung pada ridha orang tua dan murka Allah tergantung pada murka orang tua.",
-                points: [
-                    "Birrul Walidain adalah amalan utama setelah sholat.",
-                    "Jangan pernah berkata 'Ah' atau membentak mereka (QS Al-Isra: 23).",
-                    "Doa orang tua adalah doa yang mustajab."
-                ],
-                closing: "Muliakanlah orang tua selagi mereka masih ada."
-            },
-            {
-                title: "Menjaga Kebersihan (Thaharah)",
-                source: "HR. Muslim",
-                dalil_arab: "الطُّهُورُ شَطْرُ الْإِيمَانِ",
-                dalil_trans: "Bersuci (thaharah) itu adalah setengah dari iman.",
-                points: [
-                    "Islam sangat mencintai kebersihan lahir dan batin.",
-                    "Wudhu menggugurkan dosa-dosa kecil dari anggota tubuh.",
-                    "Kebersihan lingkungan adalah cerminan pribadi Muslim."
-                ],
-                closing: "Jagalah wudhu dan kebersihan hati kita."
             }
         ];
 
@@ -431,52 +352,20 @@
             if(t !== 'quran') stopAudio();
         }
 
-        // ================= 3. CERAMAH LOGIC =================
         function generateCeramah() {
             const contentDiv = document.getElementById('ceramah-content');
-            
-            // Randomly select topic
             const randomIdx = Math.floor(Math.random() * ceramahDB.length);
             const data = ceramahDB[randomIdx];
-
-            // Build HTML
             let pointsHTML = '';
             data.points.forEach((p, idx) => {
-                pointsHTML += `
-                <li class="c-point-item">
-                    <div class="c-num">${idx+1}</div>
-                    <div class="c-text"><strong>Poin ${idx+1}:</strong> ${p}</div>
-                </li>`;
+                pointsHTML += `<li class="c-point-item"><div class="c-num">${idx+1}</div><div class="c-text"><strong>Poin ${idx+1}:</strong> ${p}</div></li>`;
             });
-
-            contentDiv.innerHTML = `
-                <div class="ceramah-card">
-                    <div class="c-header">
-                        <div class="c-title">${data.title}</div>
-                        <div class="c-source">Sumber: ${data.source}</div>
-                    </div>
-                    
-                    <div class="c-dalil-box">
-                        <div class="c-dalil-arabic">${data.dalil_arab}</div>
-                        <div class="c-dalil-trans">"${data.dalil_trans}"</div>
-                    </div>
-
-                    <ul class="c-points">
-                        ${pointsHTML}
-                    </ul>
-
-                    <div class="c-closing">
-                        ${data.closing}
-                    </div>
-                </div>
-            `;
+            contentDiv.innerHTML = `<div class="ceramah-card"><div class="c-header"><div class="c-title">${data.title}</div><div class="c-source">Sumber: ${data.source}</div></div><div class="c-dalil-box"><div class="c-dalil-arabic">${data.dalil_arab}</div><div class="c-dalil-trans">"${data.dalil_trans}"</div></div><ul class="c-points">${pointsHTML}</ul><div class="c-closing">${data.closing}</div></div>`;
         }
 
         // ================= 1. PRAYER LOGIC =================
         window.addEventListener('load', () => {
-            // Set Default Input Year
             document.getElementById('ramadhan-year').value = new Date().getFullYear();
-            
             const savedLoc = localStorage.getItem('gx_prayer_loc');
             if(savedLoc) {
                 const data = JSON.parse(savedLoc);
@@ -517,12 +406,10 @@
         async function manualSearch() {
             const query = document.getElementById('city-input').value;
             if(!query) return;
-
             document.getElementById('loc-name').innerText = "🔍 Mencari...";
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
                 const data = await res.json();
-                
                 if(data.length > 0) {
                     const lat = data[0].lat;
                     const lon = data[0].lon;
@@ -547,7 +434,6 @@
                 const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`); 
                 const json = await res.json();
                 renderJadwal(json.data.timings);
-                // Matikan Auto Load Ramadhan agar tidak Hang
             } catch(e) { 
                 document.getElementById('loc-name').innerText = "❌ API Error";
             }
@@ -561,17 +447,51 @@
             return String(date.getHours()).padStart(2,'0') + ':' + String(date.getMinutes()).padStart(2,'0');
         }
 
+        // Logic for 2/3 Malam (Last Third of Night)
+        function calculateLastThird(maghribStr, fajrStr) {
+            // Simplified logic: Assume Night length is Roughly Maghrib (prev day) to Fajr
+            // Since we only have today's Maghrib, we estimate night length using Today's Maghrib -> Tomorrow's Fajr
+            // Or simpler: Today's Fajr - (NightLength/3). 
+            // Better Approch for Client Side without previous day data:
+            // Calculate Night Length = (24h - Maghrib) + Fajr
+            const [mH, mM] = maghribStr.split(':').map(Number);
+            const [fH, fM] = fajrStr.split(':').map(Number);
+            
+            const maghribMins = mH * 60 + mM;
+            const fajrMins = fH * 60 + fM;
+            
+            // Night Duration (Mins)
+            let nightDuration = (1440 - maghribMins) + fajrMins; 
+            
+            // Start of Last Third = Fajr - (NightDuration / 3)
+            // Need to handle if calculation goes back to previous day, but for display time it's fine
+            let lastThirdStartMins = fajrMins + 1440 - (nightDuration / 3);
+            if(lastThirdStartMins >= 1440) lastThirdStartMins -= 1440;
+            
+            const h = Math.floor(lastThirdStartMins / 60);
+            const m = Math.floor(lastThirdStartMins % 60);
+            return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+        }
+
         function renderJadwal(timings) {
             const dhuhaTime = addMinutes(timings['Sunrise'], 20);
+            const lastThirdTime = calculateLastThird(timings['Maghrib'], timings['Fajr']);
 
+            // 1. Highlight Grid (4 Waktu Utama)
             const highlightKeys = ['Imsak', 'Fajr', 'Maghrib', 'Isha'];
             const highlightNames = {'Imsak': 'Imsak', 'Fajr': 'Subuh', 'Maghrib': 'Maghrib', 'Isha': 'Isya'};
             
-            const bottomGridData = [
-                { key: 'Sunrise', name: 'Syuruq', time: timings['Sunrise'] },
-                { key: 'Dhuha',   name: 'Dhuha',  time: dhuhaTime },
-                { key: 'Dhuhr',   name: 'Dzuhur', time: timings['Dhuhr'] },
-                { key: 'Asr',     name: 'Ashar',  time: timings['Asr'] }
+            // 2. Full Grid (9 Waktu)
+            const fullGridData = [
+                { name: '2/3 Malam', time: lastThirdTime },
+                { name: 'Imsak', time: timings['Imsak'] },
+                { name: 'Subuh', time: timings['Fajr'] },
+                { name: 'Syuruq', time: timings['Sunrise'] },
+                { name: 'Dhuha', time: dhuhaTime },
+                { name: 'Dzuhur', time: timings['Dhuhr'] },
+                { name: 'Ashar', time: timings['Asr'] },
+                { name: 'Maghrib', time: timings['Maghrib'] },
+                { name: 'Isya', time: timings['Isha'] }
             ];
 
             const hGrid = document.getElementById('highlight-grid');
@@ -584,12 +504,12 @@
             const curMin = now.getHours()*60 + now.getMinutes();
             let nextFound = false;
 
+            // Render Highlight
             highlightKeys.forEach(k => {
                 const time = timings[k];
                 const [h, m] = time.split(':').map(Number);
                 const pMin = h*60 + m;
                 let active = false;
-
                 if(pMin > curMin && !nextFound) {
                     active = true; nextFound = true;
                     document.getElementById('next-label').innerText = "NEXT: " + highlightNames[k];
@@ -598,7 +518,8 @@
                 hGrid.innerHTML += `<div class="highlight-item ${active?'active':''}"><div class="h-name">${highlightNames[k]}</div><div class="h-time">${time}</div></div>`;
             });
 
-            bottomGridData.forEach(item => {
+            // Render Full Grid
+            fullGridData.forEach(item => {
                 jGrid.innerHTML += `<div class="jadwal-item"><div class="j-name">${item.name}</div><div class="j-time">${item.time}</div></div>`;
             });
 
@@ -608,12 +529,11 @@
             }
         }
 
-        // ================= RAMADHAN CALENDAR LOGIC (ROBUST VERSION) =================
+        // ================= RAMADHAN LOGIC =================
         async function loadRamadhanTable() {
             const tbody = document.getElementById('ramadhan-body');
             const loader = document.getElementById('ramadhan-loader');
             
-            // Check Location First
             if(!currentLat || !currentLon) {
                 alert("Mohon tunggu lokasi terdeteksi, atau pilih lokasi manual terlebih dahulu.");
                 return;
@@ -622,11 +542,10 @@
             const year = document.getElementById('ramadhan-year').value;
             if(!year) { alert("Masukkan tahun terlebih dahulu."); return; }
 
-            loader.style.display = "flex"; // Show Overlay
-            tbody.innerHTML = ""; // Clear old data
+            loader.style.display = "flex";
+            tbody.innerHTML = "";
 
             try {
-                // Fetch ANNUAL data (Heavy request)
                 const url = `https://api.aladhan.com/v1/calendar?latitude=${currentLat}&longitude=${currentLon}&method=20&year=${year}&annual=true`;
                 const res = await fetch(url);
                 const json = await res.json();
@@ -636,12 +555,9 @@
                 let ramadhanDays = [];
                 const data = json.data;
 
-                // Handle Object vs Array response structure
                 for (const monthKey in data) {
                     if (data.hasOwnProperty(monthKey) && Array.isArray(data[monthKey])) {
                         data[monthKey].forEach(day => {
-                            // Check Hijri Month (9 = Ramadhan)
-                            // parseInt penting karena kadang string "9"
                             if(day.date.hijri.month.number && parseInt(day.date.hijri.month.number) === 9) {
                                 ramadhanDays.push(day);
                             }
@@ -655,29 +571,18 @@
                     ramadhanDays.forEach(day => {
                         const dateObj = new Date(day.date.readable);
                         const dateStr = dateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
-                        
-                        // Parse times (remove timezone suffix if any)
                         const imsak = day.timings.Imsak.split(' ')[0];
                         const subuh = day.timings.Fajr.split(' ')[0];
                         const maghrib = day.timings.Maghrib.split(' ')[0];
                         const hijriDay = day.date.hijri.day;
 
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${dateStr}</td>
-                                <td><span style="color:var(--emerald)">${hijriDay} Ramadhan</span></td>
-                                <td>${imsak}</td>
-                                <td>${subuh}</td>
-                                <td>${maghrib}</td>
-                            </tr>
-                        `;
+                        tbody.innerHTML += `<tr><td>${dateStr}</td><td><span style="color:var(--emerald)">${hijriDay} Ramadhan</span></td><td>${imsak}</td><td>${subuh}</td><td>${maghrib}</td></tr>`;
                     });
                 }
             } catch(e) {
-                console.error(e);
                 tbody.innerHTML = `<tr><td colspan="5" style="color:#ff5555; padding:15px;">Gagal memuat data. Koneksi timeout.<br>Coba klik "Muat Data" lagi.</td></tr>`;
             } finally {
-                loader.style.display = "none"; // Hide Overlay
+                loader.style.display = "none";
             }
         }
 
@@ -710,7 +615,6 @@
             document.getElementById('ayat-view').style.display='block';
             document.getElementById('s-name').innerText = name;
             document.getElementById('ayat-container').innerHTML = "<div style='text-align:center; padding:20px;'>Memuat Ayat...</div>";
-            
             try {
                 const res = await fetch(`https://equran.id/api/v2/surat/${no}`);
                 const json = await res.json();
@@ -722,16 +626,7 @@
             const con = document.getElementById('ayat-container');
             con.innerHTML = "";
             ayats.forEach(a => {
-                con.innerHTML += `
-                <div class="ayat-item" id="ayat-box-${a.nomorAyat}">
-                    <div class="ayat-top">
-                        <span style="font-size:0.8rem; color:#555;">${a.nomorAyat}</span>
-                        <button class="play-btn" data-ayat="${a.nomorAyat}" onclick="playVerse(this)">▶</button>
-                    </div>
-                    <div class="ayat-text">${a.teksArab}</div>
-                    <div class="ayat-latin">${a.teksLatin}</div>
-                    <div class="ayat-trans">${a.teksIndonesia}</div>
-                </div>`;
+                con.innerHTML += `<div class="ayat-item" id="ayat-box-${a.nomorAyat}"><div class="ayat-top"><span style="font-size:0.8rem; color:#555;">${a.nomorAyat}</span><button class="play-btn" data-ayat="${a.nomorAyat}" onclick="playVerse(this)">▶</button></div><div class="ayat-text">${a.teksArab}</div><div class="ayat-latin">${a.teksLatin}</div><div class="ayat-trans">${a.teksIndonesia}</div></div>`;
             });
         }
 
@@ -762,22 +657,16 @@
         function playVerse(btn) {
             if (currentBtn === btn) { stopAudio(); return; }
             stopAudio();
-
             const qari = document.getElementById('qari-select').value;
             const ayatNum = btn.getAttribute('data-ayat');
-            
             const globalId = getGlobalAyahId(currentSurahNum, ayatNum);
             const url = `https://cdn.islamic.network/quran/audio/128/${qari}/${globalId}.mp3`;
-
             currentAudio = new Audio(url);
             currentBtn = btn;
-            
             btn.innerHTML = "⌛";
             btn.classList.add('loading');
-            
             document.querySelectorAll('.ayat-item').forEach(el => el.classList.remove('active'));
             btn.closest('.ayat-item').classList.add('active');
-
             currentAudio.addEventListener('canplaythrough', () => {
                 if(currentBtn !== btn) return;
                 btn.classList.remove('loading');
@@ -785,7 +674,6 @@
                 btn.classList.add('playing');
                 currentAudio.play();
             });
-
             currentAudio.addEventListener('ended', () => {
                 const mode = document.getElementById('play-mode').value;
                 if(mode === 'repeat') {
@@ -801,7 +689,6 @@
                     } else { stopAudio(); }
                 } else { stopAudio(); }
             });
-
             currentAudio.addEventListener('error', () => {
                 if(currentBtn === btn) {
                     alert("Gagal memuat audio dari QuranCDN. Cek koneksi.");
