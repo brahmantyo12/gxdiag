@@ -117,11 +117,11 @@
                 <button class="btn btn-primary" onclick="speakText()">▶ Preview Voice</button>
                 <button class="btn btn-secondary" onclick="stopText()">■ Stop</button>
                 <div style="flex-grow:1;"></div>
-                <button class="btn btn-danger" id="btn-capture-tts" onclick="captureTTS()">🔴 Capture to .WAV</button>
+                <button class="btn btn-danger" id="btn-capture-tts" onclick="captureTTS()">🔴 Capture to .MP3</button>
             </div>
             
             <div class="hint-box">
-                ℹ️ <strong>How to Save TTS:</strong> Click "Capture to .WAV". Browser will ask to share a tab. Select <strong>"This Tab"</strong> and ensure <strong>"Share Tab Audio"</strong> is checked. The audio will be recorded as high-quality WAV.
+                ℹ️ <strong>How to Save TTS:</strong> Pilih suara dari bagian <strong>"☁️ Cloud Voices"</strong> pada pengaturan mesin, lalu klik "Capture to .MP3" untuk mengunduh audio secara langsung. Suara dari Device tidak bisa diunduh.
             </div>
         </div>
 
@@ -155,7 +155,7 @@
             </div>
             
             <div class="hint-box">
-                ℹ️ <strong>Export Info:</strong> .DOC files are compatible with Microsoft Word. .JSON includes timestamps for developers.
+                ℹ️ <strong>Export Info:</strong> Hasil STT kini menggunakan sistem Auto-Restart (anti mati sendiri) dan dilengkapi dengan Timestamp per kalimat saat diekspor.
             </div>
         </div>
 
@@ -170,114 +170,200 @@
             document.getElementById(`panel-${tab}`).classList.add('active');
         }
 
-        // --- TTS SYSTEM ---
+        // --- TTS SYSTEM (HYBRID: CLOUD + LOCAL) ---
         const synth = window.speechSynthesis;
         const voiceSelect = document.getElementById('voice-select');
         let voices = [];
-        let mediaRecorder;
-        let audioChunks = [];
+        let cloudAudio = null;
+        let cloudAudioQueue = [];
 
         function populateVoices() {
-            voices = synth.getVoices();
             voiceSelect.innerHTML = '';
-            // Sort: ID first, then EN
-            voices.sort((a, b) => (a.lang === 'id-ID' ? -1 : 1));
-            voices.forEach((voice) => {
+
+            // 1. CLOUD VOICES
+            const cloudGroup = document.createElement('optgroup');
+            cloudGroup.label = "☁️ Cloud Voices (Bisa Diunduh)";
+            
+            const cloudLangs = [
+                { code: 'id', label: '🇮🇩 Indonesia (Cloud)' },
+                { code: 'en', label: '🇺🇸 English (Cloud)' },
+                { code: 'ja', label: '🇯🇵 Japanese (Cloud)' }
+            ];
+            
+            cloudLangs.forEach(lang => {
                 const opt = document.createElement('option');
-                opt.textContent = `${voice.name} (${voice.lang})`;
-                opt.setAttribute('data-name', voice.name);
-                voiceSelect.appendChild(opt);
+                opt.textContent = lang.label;
+                opt.setAttribute('data-type', 'cloud');
+                opt.setAttribute('data-lang', lang.code);
+                cloudGroup.appendChild(opt);
             });
+            voiceSelect.appendChild(cloudGroup);
+
+            // 2. LOCAL VOICES
+            voices = synth.getVoices();
+            const localGroup = document.createElement('optgroup');
+            localGroup.label = "💻 Device Voices (Bawaan Perangkat)";
+            
+            const targetLangs = [
+                { code: 'id-ID', label: '🇮🇩 Indonesia (Native)' },
+                { code: 'en-US', label: '🇺🇸 English US (Native)' },
+                { code: 'ja-JP', label: '🇯🇵 Japanese (Native)' }
+            ];
+            
+            let hasLocal = false;
+            targetLangs.forEach(target => {
+                const bestVoice = 
+                    voices.find(v => v.lang.replace('_', '-').includes(target.code) && v.name.includes('Google')) ||
+                    voices.find(v => v.lang.replace('_', '-').includes(target.code) && v.default) ||
+                    voices.find(v => v.lang.replace('_', '-').includes(target.code));
+
+                if (bestVoice) {
+                    hasLocal = true;
+                    const opt = document.createElement('option');
+                    opt.textContent = target.label;
+                    opt.setAttribute('data-type', 'local');
+                    opt.setAttribute('data-name', bestVoice.name);
+                    localGroup.appendChild(opt);
+                }
+            });
+            
+            if (hasLocal) voiceSelect.appendChild(localGroup);
         }
+
         populateVoices();
-        if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = populateVoices;
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoices;
+        }
 
         document.getElementById('rate').oninput = function() { document.getElementById('rate-val').innerText = this.value + 'x'; };
 
         function speakText() {
-            if (synth.speaking) synth.cancel();
-            const txt = document.getElementById('tts-input').value;
-            if (txt !== '') {
+            stopText();
+            const txt = document.getElementById('tts-input').value.trim();
+            if (txt === '') return;
+
+            const selectedOption = voiceSelect.selectedOptions[0];
+            const type = selectedOption.getAttribute('data-type');
+            const rateVal = document.getElementById('rate').value;
+
+            if (type === 'cloud') {
+                const lang = selectedOption.getAttribute('data-lang');
+                cloudAudioQueue = txt.match(/[^.!?,\n]+[.!?,\n]+/g) || [txt]; 
+                playNextCloudChunk(lang, rateVal);
+            } else {
                 const utter = new SpeechSynthesisUtterance(txt);
-                const selectedName = voiceSelect.selectedOptions[0].getAttribute('data-name');
+                const selectedName = selectedOption.getAttribute('data-name');
                 utter.voice = voices.find(v => v.name === selectedName);
-                utter.rate = document.getElementById('rate').value;
+                utter.rate = rateVal;
                 synth.speak(utter);
-                return utter; // Return for recorder
             }
         }
-        function stopText() { synth.cancel(); }
 
-        // --- TTS RECORDER (CAPTURE TAB AUDIO) ---
-        async function captureTTS() {
-            const btn = document.getElementById('btn-capture-tts');
+        function playNextCloudChunk(lang, rate) {
+            if (cloudAudioQueue.length === 0) return;
             
-            if (btn.classList.contains('recording')) {
-                // STOP RECORDING
-                mediaRecorder.stop();
-                btn.classList.remove('recording');
-                btn.innerHTML = "🔴 Capture to .WAV";
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-danger');
-                document.getElementById('tts-rec-status').style.display = 'none';
-                stopText(); // Stop speaking
+            const chunk = cloudAudioQueue.shift().trim();
+            if (!chunk) return playNextCloudChunk(lang, rate);
+
+            const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+            cloudAudio = new Audio(url);
+            cloudAudio.playbackRate = rate;
+            cloudAudio.onended = () => playNextCloudChunk(lang, rate);
+            
+            cloudAudio.play().catch(e => {
+                console.error("Cloud TTS error:", e);
+                alert("Gagal memutar suara Cloud. Cek koneksi internet.");
+            });
+        }
+
+        function stopText() {
+            if (synth.speaking) synth.cancel();
+            if (cloudAudio) {
+                cloudAudio.pause();
+                cloudAudio.currentTime = 0;
+                cloudAudioQueue = [];
+            }
+        }
+
+        // --- TTS RECORDER (1-CLICK DOWNLOAD MP3) ---
+        async function captureTTS() {
+            const txt = document.getElementById('tts-input').value.trim();
+            if (txt === '') return alert("Ketik teks dulu sebelum mendownload!");
+
+            const selectedOption = voiceSelect.selectedOptions[0];
+            const type = selectedOption.getAttribute('data-type');
+            const lang = selectedOption.getAttribute('data-lang');
+
+            if (type === 'local') {
+                alert("🔒 Suara bawaan perangkat (Device Voices) diproteksi oleh browser dan tidak bisa diunduh langsung.\n\n💡 Solusi: Silakan ubah pilihan suara ke bagian '☁️ Cloud Voices' pada dropdown Voice Engine.");
                 return;
             }
 
+            const btn = document.getElementById('btn-capture-tts');
+            btn.innerHTML = "⏳ Memproses...";
+            btn.disabled = true;
+            btn.classList.replace('btn-danger', 'btn-secondary');
+
             try {
-                // 1. Request Tab Audio
-                const stream = await navigator.mediaDevices.getDisplayMedia({ 
-                    video: true, // Required for getDisplayMedia, even if we only want audio
-                    audio: true,
-                    preferCurrentTab: true 
-                });
+                const chunks = txt.match(/[^.!?,\n]+[.!?,\n]+/g) || [txt];
+                let audioBlobs = [];
 
-                // 2. Setup Recorder
-                const audioStream = new MediaStream(stream.getAudioTracks());
-                mediaRecorder = new MediaRecorder(audioStream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(audioChunks, { type: 'audio/wav' }); // Browser saves as WebM/Opus usually
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = `GXDiag-TTS-${new Date().getTime()}.wav`; // Save as WAV (container might be webm but players handle it)
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
+                for (let chunk of chunks) {
+                    chunk = chunk.trim();
+                    if (!chunk) continue;
                     
-                    // Stop tracks to remove "Sharing this tab" banner
-                    stream.getTracks().forEach(track => track.stop());
-                };
+                    const targetUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                    
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error("Gagal mengambil audio");
+                    
+                    const blob = await response.blob();
+                    audioBlobs.push(blob);
+                }
 
-                // 3. Start Recording & Speaking
-                mediaRecorder.start();
-                speakText();
+                const finalBlob = new Blob(audioBlobs, { type: 'audio/mpeg' });
+                const downloadUrl = URL.createObjectURL(finalBlob);
+                
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = downloadUrl;
+                a.download = `GXDiag-VoiceStudio-${new Date().getTime()}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
 
-                // UI Updates
-                btn.classList.add('recording');
-                btn.innerHTML = "💾 Stop & Save";
-                btn.classList.remove('btn-danger');
-                btn.classList.add('btn-success');
-                document.getElementById('tts-rec-status').style.display = 'block';
+                btn.innerHTML = "✅ Berhasil!";
+                btn.classList.replace('btn-secondary', 'btn-success');
+                
+                setTimeout(() => {
+                    btn.innerHTML = "🔴 Capture to .MP3";
+                    btn.classList.replace('btn-success', 'btn-danger');
+                    btn.disabled = false;
+                }, 2000);
 
             } catch (err) {
-                console.error("Error capturing audio:", err);
-                alert("Capture cancelled or not supported. Please select 'Share Tab Audio' when prompted.");
+                console.error("Download error:", err);
+                alert("Gagal mendownload audio. Pastikan koneksi internet stabil.");
+                btn.innerHTML = "🔴 Coba Lagi";
+                btn.classList.replace('btn-secondary', 'btn-danger');
+                btn.disabled = false;
             }
         }
 
-        // --- STT SYSTEM ---
+        // --- STT SYSTEM (AUTO-RESTART & TIMESTAMPS) ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const sttOutput = document.getElementById('stt-output');
         const sttStatus = document.getElementById('stt-status');
         const visualizer = document.getElementById('visualizer');
         const btnListen = document.getElementById('btn-listen');
+
         let recognition;
         let isListening = false;
+        let isIntentionallyStopped = true;
+        let sttHistory = [];
 
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
@@ -289,10 +375,15 @@
                 sttStatus.innerText = "LISTENING... (Speak Clearly)";
                 sttStatus.style.color = "#00ff88";
                 visualizer.classList.add('listening');
-                btnListen.innerHTML = "🛑 Stop";
+                btnListen.innerHTML = "🛑 Stop Dictation";
                 btnListen.classList.replace('btn-primary', 'btn-danger');
             };
+            
             recognition.onend = () => {
+                if (!isIntentionallyStopped) {
+                    try { recognition.start(); return; } catch(e) {}
+                }
+                
                 isListening = false;
                 sttStatus.innerText = "MICROPHONE IDLE";
                 sttStatus.style.color = "#aaa";
@@ -300,53 +391,80 @@
                 btnListen.innerHTML = "🎙️ Start Dictation";
                 btnListen.classList.replace('btn-danger', 'btn-primary');
             };
+            
             recognition.onresult = (event) => {
-                let final = '';
+                let finalSegment = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) final += event.results[i][0].transcript + ' ';
+                    if (event.results[i].isFinal) {
+                        finalSegment += event.results[i][0].transcript.trim() + ' ';
+                    }
                 }
-                if(final) sttOutput.value += final;
+                
+                if(finalSegment) {
+                    finalSegment = finalSegment.charAt(0).toUpperCase() + finalSegment.slice(1);
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                    
+                    sttHistory.push({ time: timeString, text: finalSegment });
+                    sttOutput.value += `[${timeString}] ${finalSegment}\n`;
+                    sttOutput.scrollTop = sttOutput.scrollHeight;
+                }
             };
         }
 
         function toggleListening() {
-            if(!recognition) return alert("Browser not supported.");
-            if(isListening) recognition.stop();
-            else {
+            if(!recognition) return alert("Browser tidak mendukung fitur ini.");
+            if(isListening) {
+                isIntentionallyStopped = true;
+                recognition.stop();
+            } else {
+                isIntentionallyStopped = false;
                 recognition.lang = document.getElementById('stt-lang').value;
                 recognition.start();
             }
         }
-        function clearText() { sttOutput.value = ""; }
 
-        // --- EXPORT FUNCTIONS ---
+        function clearText() { 
+            sttOutput.value = ""; 
+            sttHistory = []; 
+        }
+
+        // --- EXPORT FUNCTIONS (ENHANCED) ---
         function exportFile(type) {
-            const text = sttOutput.value;
-            if(!text) return alert("No text to export!");
+            if(sttHistory.length === 0) return alert("Belum ada teks untuk diekspor!");
             
             const timestamp = new Date().toISOString().slice(0,10);
             let blob, filename;
 
             if (type === 'doc') {
-                // Fake Word Doc using HTML (Works perfectly in MS Word)
+                const docLines = sttHistory.map(item => `<p style="margin-bottom: 5px;"><strong style="color: #0078d7;">[${item.time}]</strong> ${item.text}</p>`).join('');
                 const htmlContent = `
                     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
                     <head><meta charset='utf-8'><title>Export</title></head>
                     <body>
-                        <h1 style="color:#000;">GXDiag Transcription</h1>
-                        <p style="color:#555; font-size:10px;">Date: ${timestamp}</p>
+                        <h1 style="color:#000;">GXDiag Transcription Log</h1>
+                        <p style="color:#555; font-size:10px;">Recorded Date: ${timestamp}</p>
                         <hr>
-                        <p style="font-family:Arial; font-size:12pt;">${text.replace(/\n/g, "<br>")}</p>
+                        <div style="font-family: Arial, sans-serif; font-size: 11pt;">
+                            ${docLines}
+                        </div>
                     </body></html>`;
                 blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
                 filename = `GXDiag-Transcript-${timestamp}.doc`;
             } 
             else if (type === 'txt') {
-                blob = new Blob([text], { type: 'text/plain' });
+                const txtContent = "GXDiag Transcription Log\nDate: " + timestamp + "\n\n" + 
+                                   sttHistory.map(item => `[${item.time}] ${item.text}`).join('\n');
+                blob = new Blob([txtContent], { type: 'text/plain' });
                 filename = `GXDiag-Transcript-${timestamp}.txt`;
             } 
             else if (type === 'json') {
-                const data = { app: "GXDiag Voice Studio", date: timestamp, content: text, length: text.length };
+                const data = { 
+                    app: "GXDiag Voice Studio", 
+                    date: timestamp, 
+                    total_segments: sttHistory.length,
+                    transcription: sttHistory 
+                };
                 blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 filename = `GXDiag-Data-${timestamp}.json`;
             }
