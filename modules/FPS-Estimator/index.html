@@ -178,7 +178,6 @@
 
         async function initSystem() {
             try {
-                // Pastikan file 'database.json' berada di dalam folder yang sama dengan file HTML ini
                 const response = await fetch('./database.json');
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 db = await response.json();
@@ -236,7 +235,13 @@
             for (const [k, v] of Object.entries(db.rams)) {
                 if (validRamTypes.includes(v.type)) selRam.innerHTML += `<option value="${k}">[${v.type}] ${v.name}</option>`;
             }
-            if(currentRamVal && [...selRam.options].some(opt => opt.value === currentRamVal)) selRam.value = currentRamVal;
+            
+            // FIX NaN BUG: Pastikan RAM selalu terpilih dari opsi yang tersedia
+            if(currentRamVal && [...selRam.options].some(opt => opt.value === currentRamVal)) {
+                selRam.value = currentRamVal;
+            } else {
+                selRam.selectedIndex = 0; // Fallback ke pilihan pertama agar tidak undefined
+            }
         }
 
         function updateGpuState() {
@@ -264,50 +269,57 @@
             const game = db.games[document.getElementById('game-select').value];
             const cpu = db.cpus[document.getElementById('cpu-select').value];
             const gpuKey = document.getElementById('gpu-select').value;
-            const ram = db.rams[document.getElementById('ram-select').value];
-            const resKey = resKeys[document.getElementById('res-slider').value];
-            const presetKey = presetKeys[document.getElementById('preset-slider').value];
-
+            const ramKey = document.getElementById('ram-select').value;
+            
             const avgDisplay = document.getElementById('avg-fps');
             const lowDisplay = document.getElementById('low-fps');
             const statusLog = document.getElementById('status-log');
 
-            if(gpuKey === "none") return; 
+            // Proteksi agar jika RAM belum ke-load sempurna, fungsi direturn dulu
+            if(!ramKey || gpuKey === "none") return; 
+
+            const ram = db.rams[ramKey];
+            const resKey = resKeys[document.getElementById('res-slider').value];
+            const presetKey = presetKeys[document.getElementById('preset-slider').value];
 
             const gpu = db.gpus[gpuKey];
             let base = gpu[`base${resKey.replace('p', '')}`];
             let ramMod = gpu.type === "igpu" ? ram.p_igpu : ram.p_gpu;
             
-            // Perhitungan awal
+            // Kalkulasi Murni (Logika Fatal Error dihapus sepenuhnya)
             let rawAvg = base * game.engineWeight * cpu.multi * ramMod * presetMod[presetKey];
             let maxCpuLimit = cpu.maxLimit * game.cpuBoundLimit;
+            
             let finalAvg = Math.min(rawAvg, maxCpuLimit);
             
-            // --- LOGIKA FATAL ERROR (Hardware Terlalu Lawas) ---
-            // Jika CPU multiplier terlalu kecil ATAU hasil FPS di bawah batas playable (misal 15 FPS)
-            if (cpu.multi < 0.2 || finalAvg < 15) {
-                avgDisplay.innerText = "ERR";
-                lowDisplay.innerText = "ERR";
-                avgDisplay.style.color = "var(--danger)";
-                lowDisplay.style.color = "var(--danger)";
-                
-                statusLog.innerHTML = `<span style="color:var(--danger); font-size:1.1em; font-weight:bold;">[FATAL ERROR] Incompatible Architecture!</span><br>
-                Prosesor / Sistem yang Anda pilih (<b>${cpu.name}</b>) gagal memuat <i>instruction set</i> yang dibutuhkan oleh <b>${game.name}</b>. Performa berada jauh di bawah ambang batas minimal untuk <i>rendering</i> (Taksiran: ${Math.round(finalAvg)} FPS).`;
-                return; // Hentikan eksekusi FPS di sini
-            }
+            // Floor Limit: Agar FPS tidak pernah bernilai 0 jika kalkulasinya 0.sekian
+            finalAvg = Math.max(1, finalAvg); 
+            
+            let finalLow = Math.max(1, finalAvg * 0.6); 
 
-            // Normal Execution
-            let finalLow = finalAvg * 0.6; 
+            // Render Angka ke Layar
             avgDisplay.innerText = Math.round(finalAvg);
             lowDisplay.innerText = Math.round(finalLow);
 
-            if (finalAvg < 60) avgDisplay.style.color = "var(--danger)";
-            else if (finalAvg < 144) avgDisplay.style.color = "var(--warning)";
-            else avgDisplay.style.color = "var(--emerald)";
+            // Indikator Warna
+            if (finalAvg < 30) {
+                avgDisplay.style.color = "var(--danger)";
+            } else if (finalAvg < 60) {
+                avgDisplay.style.color = "var(--warning)";
+            } else {
+                avgDisplay.style.color = "var(--emerald)";
+            }
 
+            // Logika Status Notifikasi
             let log = `<b>Topologi:</b> Modul ${ram.type} tervalidasi. ${ram.log}`;
-            if (finalAvg >= maxCpuLimit * 0.95) log += `<br><span style="color:var(--warning)">[Bottleneck CPU]</span> Limitasi arsitektur menahan GPU.`;
-            else if (gpu.type === "igpu" && (resKey === "1440p" || resKey === "2160p")) log += `<br><span style="color:var(--danger)">[Bottleneck GPU]</span> Bandwidth iGPU defisit untuk resolusi tinggi.`;
+            
+            if (finalAvg < 30) {
+                log += `<br><span style="color:var(--danger)">[PERINGATAN]</span> Performa di bawah standar layak main (Unplayable). Arsitektur terlalu usang atau resolusi terlalu tinggi.`;
+            } else if (finalAvg >= maxCpuLimit * 0.95) {
+                log += `<br><span style="color:var(--warning)">[Bottleneck CPU]</span> Limitasi arsitektur menahan GPU.`;
+            } else if (gpu.type === "igpu" && (resKey === "1440p" || resKey === "2160p")) {
+                log += `<br><span style="color:var(--danger)">[Bottleneck GPU]</span> Bandwidth iGPU defisit untuk resolusi tinggi.`;
+            }
             
             statusLog.innerHTML = log;
         }
