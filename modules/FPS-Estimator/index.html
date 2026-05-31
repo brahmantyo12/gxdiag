@@ -178,6 +178,7 @@
 
         async function initSystem() {
             try {
+                // Pastikan file 'database.json' berada di dalam folder yang sama dengan file HTML ini
                 const response = await fetch('./database.json');
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 db = await response.json();
@@ -286,15 +287,25 @@
             let base = gpu[`base${resKey.replace('p', '')}`];
             let ramMod = gpu.type === "igpu" ? ram.p_igpu : ram.p_gpu;
             
-            // Kalkulasi Murni (Logika Fatal Error dihapus sepenuhnya)
-            let rawAvg = base * game.engineWeight * cpu.multi * ramMod * presetMod[presetKey];
+            // --- LOGIKA BARU: ASYMMETRIC HARDWARE SCALING ---
+            // Kekuatan Murni GPU (Tanpa dipotong nilai 'multi' CPU)
+            let gpuRaw = base * ramMod * presetMod[presetKey];
+            
+            // Bonus optimisasi untuk game ringan (Minecraft, LoL, CS2, Valorant). 
+            // Game e-sports berjalan jauh lebih efisien di arsitektur lawas.
+            let optimizationBonus = 0;
+            if (game.engineWeight >= 1.0) optimizationBonus = 45;
+            else if (game.engineWeight >= 0.8) optimizationBonus = 25;
+            
+            let rawAvg = (gpuRaw * game.engineWeight) + optimizationBonus;
+            
+            // CPU hanya bertindak sebagai 'Atap' (Ceiling Bottleneck), bukan pengurang performa murni
             let maxCpuLimit = cpu.maxLimit * game.cpuBoundLimit;
             
             let finalAvg = Math.min(rawAvg, maxCpuLimit);
             
-            // Floor Limit: Agar FPS tidak pernah bernilai 0 jika kalkulasinya 0.sekian
+            // Failsafe: Frame rate terendah adalah 1 FPS agar terhindar dari NaN/0
             finalAvg = Math.max(1, finalAvg); 
-            
             let finalLow = Math.max(1, finalAvg * 0.6); 
 
             // Render Angka ke Layar
@@ -304,21 +315,24 @@
             // Indikator Warna
             if (finalAvg < 30) {
                 avgDisplay.style.color = "var(--danger)";
+                lowDisplay.style.color = "var(--danger)";
             } else if (finalAvg < 60) {
                 avgDisplay.style.color = "var(--warning)";
+                lowDisplay.style.color = "var(--warning)";
             } else {
                 avgDisplay.style.color = "var(--emerald)";
+                lowDisplay.style.color = "var(--gold)";
             }
 
-            // Logika Status Notifikasi
+            // Logika Status Notifikasi (Fatal Error Teks Dihapus)
             let log = `<b>Topologi:</b> Modul ${ram.type} tervalidasi. ${ram.log}`;
             
             if (finalAvg < 30) {
-                log += `<br><span style="color:var(--danger)">[PERINGATAN]</span> Performa di bawah standar layak main (Unplayable). Arsitektur terlalu usang atau resolusi terlalu tinggi.`;
+                log += `<br><span style="color:var(--danger)">[PERINGATAN]</span> Frame-rate berada di bawah standar kenyamanan visual.`;
             } else if (finalAvg >= maxCpuLimit * 0.95) {
-                log += `<br><span style="color:var(--warning)">[Bottleneck CPU]</span> Limitasi arsitektur menahan GPU.`;
+                log += `<br><span style="color:var(--warning)">[Bottleneck CPU]</span> Limitasi arsitektur menahan performa maksimal GPU.`;
             } else if (gpu.type === "igpu" && (resKey === "1440p" || resKey === "2160p")) {
-                log += `<br><span style="color:var(--danger)">[Bottleneck GPU]</span> Bandwidth iGPU defisit untuk resolusi tinggi.`;
+                log += `<br><span style="color:var(--danger)">[Bottleneck GPU]</span> Bandwidth iGPU defisit untuk merender resolusi tinggi.`;
             }
             
             statusLog.innerHTML = log;
