@@ -237,11 +237,10 @@
                 if (validRamTypes.includes(v.type)) selRam.innerHTML += `<option value="${k}">[${v.type}] ${v.name}</option>`;
             }
             
-            // FIX NaN BUG: Pastikan RAM selalu terpilih dari opsi yang tersedia
             if(currentRamVal && [...selRam.options].some(opt => opt.value === currentRamVal)) {
                 selRam.value = currentRamVal;
             } else {
-                selRam.selectedIndex = 0; // Fallback ke pilihan pertama agar tidak undefined
+                if(selRam.options.length > 0) selRam.selectedIndex = 0; 
             }
         }
 
@@ -276,43 +275,57 @@
             const lowDisplay = document.getElementById('low-fps');
             const statusLog = document.getElementById('status-log');
 
-            // Proteksi agar jika RAM belum ke-load sempurna, fungsi direturn dulu
             if(!ramKey || gpuKey === "none") return; 
 
             const ram = db.rams[ramKey];
+            if(!ram) return; // Failsafe
+
             const resKey = resKeys[document.getElementById('res-slider').value];
             const presetKey = presetKeys[document.getElementById('preset-slider').value];
 
             const gpu = db.gpus[gpuKey];
-            let base = gpu[`base${resKey.replace('p', '')}`];
+            
+            // --- FIX NaN BUG UNTUK 720P ---
+            let resNum = resKey.replace('p', '');
+            let base = gpu[`base${resNum}`];
+            
+            // Jika base (terutama 720p) tidak ditemukan di database, kalkulasi otomatis dari 1080p
+            if (base === undefined) {
+                if (resNum === "720" && gpu['base1080']) {
+                    base = gpu['base1080'] * 1.7; // Asumsi 720p lebih ringan ~70% dari 1080p
+                } else {
+                    base = 1; // Fallback mutlak agar tidak NaN
+                }
+            }
+
             let ramMod = gpu.type === "igpu" ? ram.p_igpu : ram.p_gpu;
             
-            // --- LOGIKA BARU: ASYMMETRIC HARDWARE SCALING ---
-            // Kekuatan Murni GPU (Tanpa dipotong nilai 'multi' CPU)
             let gpuRaw = base * ramMod * presetMod[presetKey];
             
-            // Bonus optimisasi untuk game ringan (Minecraft, LoL, CS2, Valorant). 
-            // Game e-sports berjalan jauh lebih efisien di arsitektur lawas.
             let optimizationBonus = 0;
             if (game.engineWeight >= 1.0) optimizationBonus = 45;
             else if (game.engineWeight >= 0.8) optimizationBonus = 25;
             
             let rawAvg = (gpuRaw * game.engineWeight) + optimizationBonus;
             
-            // CPU hanya bertindak sebagai 'Atap' (Ceiling Bottleneck), bukan pengurang performa murni
             let maxCpuLimit = cpu.maxLimit * game.cpuBoundLimit;
             
             let finalAvg = Math.min(rawAvg, maxCpuLimit);
             
-            // Failsafe: Frame rate terendah adalah 1 FPS agar terhindar dari NaN/0
             finalAvg = Math.max(1, finalAvg); 
             let finalLow = Math.max(1, finalAvg * 0.6); 
 
-            // Render Angka ke Layar
+            // Cek jika entah kenapa masih NaN
+            if (isNaN(finalAvg)) {
+                avgDisplay.innerText = "ERR";
+                lowDisplay.innerText = "ERR";
+                statusLog.innerHTML = `<span style="color:var(--danger)">Kalkulasi Gagal. Parameter data tidak lengkap di database.</span>`;
+                return;
+            }
+
             avgDisplay.innerText = Math.round(finalAvg);
             lowDisplay.innerText = Math.round(finalLow);
 
-            // Indikator Warna
             if (finalAvg < 30) {
                 avgDisplay.style.color = "var(--danger)";
                 lowDisplay.style.color = "var(--danger)";
@@ -324,8 +337,14 @@
                 lowDisplay.style.color = "var(--gold)";
             }
 
-            // Logika Status Notifikasi (Fatal Error Teks Dihapus)
-            let log = `<b>Topologi:</b> Modul ${ram.type} tervalidasi. ${ram.log}`;
+            // --- FIX RAM LOG CONFUSION ---
+            let displayRamLog = ram.log;
+            // Cegah pesan "Bottleneck iGPU" muncul jika user menggunakan Discrete GPU
+            if (gpu.type === "discrete" && displayRamLog.includes("iGPU")) {
+                displayRamLog = "Kapasitas minimalis. Limitasi bandwidth terdeteksi (Single-Channel).";
+            }
+            
+            let log = `<b>Topologi:</b> Modul ${ram.type} tervalidasi. ${displayRamLog}`;
             
             if (finalAvg < 30) {
                 log += `<br><span style="color:var(--danger)">[PERINGATAN]</span> Frame-rate berada di bawah standar kenyamanan visual.`;
