@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab-Sim: Architecture & Power Matrix</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        /* GXDiag Official Color Palette */
+        :root { 
+            --gold: #ffd700; 
+            --emerald: #00ff88; 
+            --danger: #ff4444; 
+            --warning: #ffaa00; 
+            --bg: #050505; 
+            --panel: #111; 
+            --panel-alt: #1a1a1a; 
+            --text: #eee; 
+            --border: #333; 
+        }
+        
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
+        
+        /* GXDiag Header Style */
+        .header { padding: 15px 20px; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; }
+        .back-btn { text-decoration: none; color: #fff; font-weight: bold; transition: 0.3s; }
+        .back-btn:hover { color: var(--gold); }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; }
+
+        .dashboard { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--gold); margin-top: 0; font-size: 1.5em; text-transform: uppercase; letter-spacing: 1px; }
+        h3.section-title { font-size: 1.1em; color: #888; border-bottom: 1px dashed var(--border); padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        .control-group { margin-bottom: 15px; }
+        label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        .dynamic-label { color: var(--gold); font-weight: bold; }
+        
+        /* Input & Select GXDiag Style */
+        select, input[type=number] { width: 100%; padding: 10px; background: #151515; color: #fff; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.9em; box-sizing: border-box; transition: 0.3s; }
+        select:focus, input[type=number]:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 8px rgba(255, 215, 0, 0.2); }
+        select:disabled, input:disabled { opacity: 0.5; cursor: not-allowed; }
+        .optgroup-header { background: #222; font-weight: bold; color: var(--gold); }
+        
+        /* Slider Styling */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; padding: 10px 0; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--gold); cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border); border-radius: 2px; }
+        .slider-ticks { display: flex; justify-content: space-between; font-size: 0.7em; color: #666; margin-top: 4px; }
+        
+        /* Data Panels */
+        .panel-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .output-panel { padding: 20px; background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px; text-align: center; position: relative; overflow: hidden; }
+        .output-panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+        
+        .fps-display { display: flex; justify-content: space-around; margin-bottom: 10px; }
+        .metric h4 { margin: 0 0 5px; font-size: 0.85em; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .metric .value { font-size: 2.5em; font-weight: bold; color: var(--emerald); transition: color 0.3s; text-shadow: 0 0 15px rgba(0, 255, 136, 0.2); }
+        .metric .value.low { color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+        .metric .value.watt { color: var(--warning); text-shadow: 0 0 15px rgba(255, 170, 0, 0.2); }
+        .metric .value.psu { color: #a371f7; text-shadow: 0 0 15px rgba(163, 113, 247, 0.2); }
+        
+        .log { font-size: 0.8em; color: #888; border-top: 1px dashed var(--border); padding-top: 15px; text-align: left; line-height: 1.5; margin-top: 15px; }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .panel-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <div style="font-weight:bold; color:var(--gold);">LAB-SIM</div>
+        <div style="width:80px;"></div> 
+    </div>
+
+    <div class="container">
+        <div class="dashboard">
+            <h2>Architecture & Power Matrix</h2>
+            
+            <h3 class="section-title">I. Matriks Komputasi & Grafis</h3>
+            <div class="control-group">
+                <label>Target Render Engine</label>
+                <select id="game-select" disabled><option>Memuat Database...</option></select>
+            </div>
+
+            <div class="grid-2">
+                <div class="control-group">
+                    <label>Prosesor (CPU)</label>
+                    <select id="cpu-select" disabled></select>
+                </div>
+                <div class="control-group">
+                    <label>Kartu Grafis (GPU)</label>
+                    <select id="gpu-select" disabled></select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Topologi Memori (RAM) - Divalidasi CPU</label>
+                <select id="ram-select" disabled></select>
+            </div>
+
+            <div class="grid-2">
+                <div class="control-group">
+                    <label><span>Resolusi Render</span><span id="res-label" class="dynamic-label">1920x1080 (FHD)</span></label>
+                    <input type="range" id="res-slider" min="0" max="3" step="1" value="1" disabled>
+                    <div class="slider-ticks"><span>720p</span><span>1080p</span><span>1440p</span><span>4K</span></div>
+                </div>
+                <div class="control-group">
+                    <label><span>Preset Visual</span><span id="preset-label" class="dynamic-label">Low (Esports)</span></label>
+                    <input type="range" id="preset-slider" min="0" max="2" step="1" value="0" disabled>
+                    <div class="slider-ticks"><span>Low</span><span>Medium</span><span>High</span></div>
+                </div>
+            </div>
+
+            <h3 class="section-title">II. Infrastruktur Daya & Periferal</h3>
+            <div class="grid-3">
+                <div class="control-group">
+                    <label>Motherboard Form Factor</label>
+                    <select id="mobo-select" disabled></select>
+                </div>
+                <div class="control-group">
+                    <label>Sistem Pendingin CPU</label>
+                    <select id="cooler-select" disabled></select>
+                </div>
+                <div class="control-group">
+                    <label>Modul Penyimpanan 1</label>
+                    <select id="storage1-select" disabled></select>
+                </div>
+                <div class="control-group">
+                    <label>Modul Penyimpanan 2</label>
+                    <select id="storage2-select" disabled></select>
+                </div>
+                <div class="control-group">
+                    <label>Jumlah Kipas (Case Fan)</label>
+                    <input type="number" id="fan-count" value="3" min="0" max="20" disabled>
+                </div>
+                <div class="control-group">
+                    <label>Kompensasi Daya (Watt)</label>
+                    <input type="number" id="custom-watt" value="0" min="0" max="500" placeholder="RGB, USB Card, dll" disabled>
+                </div>
+            </div>
+
+            <div class="panel-container">
+                <div class="output-panel">
+                    <div class="fps-display">
+                        <div class="metric"><h4>Avg FPS</h4><div class="value" id="avg-fps">0</div></div>
+                        <div class="metric"><h4>1% Low</h4><div class="value low" id="low-fps">0</div></div>
+                    </div>
+                    <div class="log" id="status-log">Menginisialisasi komputasi...</div>
+                </div>
+                
+                <div class="output-panel" style="background: var(--panel-alt);">
+                    <div class="fps-display">
+                        <div class="metric"><h4>Estimasi Beban</h4><div class="value watt" id="total-watt">0W</div></div>
+                        <div class="metric"><h4>PSU Minimal</h4><div class="value psu" id="psu-rec">0W</div></div>
+                    </div>
+                    <div class="log" id="power-log">Mengkalkulasi beban kelistrikan...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = {};
+        const resKeys = ["720p", "1080p", "1440p", "2160p"];
+        const resNames = ["1280x720", "1920x1080", "2560x1440", "3840x2160"];
+        const presetKeys = ["low", "medium", "high"];
+        const presetNames = ["Low", "Medium", "High"];
+        const presetMod = { "low": 1.0, "medium": 0.8, "high": 0.65 };
+        const FAN_WATTAGE = 3; 
+
+        async function initSystem() {
+            try {
+                // Pastikan file 'database.json' berada di dalam folder yang sama dengan file HTML ini
+                const response = await fetch('./database.json');
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                db = await response.json();
+                
+                document.querySelectorAll('select, input').forEach(el => el.disabled = false);
+                buildUI();
+            } catch (error) {
+                document.getElementById('status-log').innerHTML = `<span style="color:var(--danger)">Gagal memuat database. Error: ${error.message}</span>`;
+                document.getElementById('power-log').innerHTML = `<span style="color:var(--danger)">Pastikan file 'database.json' berada satu folder dengan index.html ini dan server lokal berjalan.</span>`;
+            }
+        }
+
+        function buildUI() {
+            const populate = (id, dataObj) => {
+                const el = document.getElementById(id);
+                el.innerHTML = '';
+                for (const [k, v] of Object.entries(dataObj)) el.innerHTML += `<option value="${k}">${v.name}</option>`;
+            };
+
+            populate('game-select', db.games);
+            populate('cpu-select', db.cpus);
+            populate('mobo-select', db.motherboards);
+            populate('cooler-select', db.coolers);
+            populate('storage1-select', db.storages);
+            populate('storage2-select', db.storages);
+            
+            const selGpu = document.getElementById('gpu-select');
+            selGpu.innerHTML = '<option id="gpu-auto-option" value="none" class="optgroup-header">[Auto] Mendeteksi iGPU...</option>';
+            for (const [k, v] of Object.entries(db.gpus)) {
+                if (v.type === 'discrete') selGpu.innerHTML += `<option value="${k}">${v.name}</option>`;
+            }
+            
+            const runEngine = () => { calculatePerformance(); calculatePower(); };
+            
+            document.getElementById('cpu-select').addEventListener('change', () => { updateRamCompatibility(); updateGpuState(); });
+            document.querySelectorAll('select, input[type=number]').forEach(el => {
+                if(el.id !== 'cpu-select') el.addEventListener('change', runEngine);
+                if(el.type === 'number') el.addEventListener('input', runEngine);
+            });
+            
+            document.getElementById('res-slider').addEventListener('input', (e) => { document.getElementById('res-label').innerText = resNames[e.target.value]; runEngine(); });
+            document.getElementById('preset-slider').addEventListener('input', (e) => { document.getElementById('preset-label').innerText = presetNames[e.target.value]; runEngine(); });
+            
+            updateRamCompatibility(); 
+            updateGpuState();
+        }
+
+        function updateRamCompatibility() {
+            const cpuKey = document.getElementById('cpu-select').value;
+            const validRamTypes = db.cpus[cpuKey].supported_ram;
+            const selRam = document.getElementById('ram-select');
+            const currentRamVal = selRam.value;
+            
+            selRam.innerHTML = ''; 
+            for (const [k, v] of Object.entries(db.rams)) {
+                if (validRamTypes.includes(v.type)) selRam.innerHTML += `<option value="${k}">[${v.type}] ${v.name}</option>`;
+            }
+            if(currentRamVal && [...selRam.options].some(opt => opt.value === currentRamVal)) selRam.value = currentRamVal;
+        }
+
+        function updateGpuState() {
+            const cpuKey = document.getElementById('cpu-select').value;
+            const cpu = db.cpus[cpuKey];
+            const gpuSelect = document.getElementById('gpu-select');
+            const autoOption = document.getElementById('gpu-auto-option');
+
+            if (cpu.igpu && db.gpus[cpu.igpu]) {
+                autoOption.text = `[iGPU Aktif] Gunakan ${db.gpus[cpu.igpu].name}`;
+                autoOption.value = cpu.igpu;
+                autoOption.disabled = false;
+                if (gpuSelect.value === "none") gpuSelect.selectedIndex = 0;
+            } else {
+                autoOption.text = `[Kritis] Prosesor ini tidak memiliki iGPU`;
+                autoOption.value = "none";
+                autoOption.disabled = true;
+                if (gpuSelect.selectedIndex === 0) gpuSelect.selectedIndex = 1; 
+            }
+            calculatePerformance();
+            calculatePower();
+        }
+
+        function calculatePerformance() {
+            const game = db.games[document.getElementById('game-select').value];
+            const cpu = db.cpus[document.getElementById('cpu-select').value];
+            const gpuKey = document.getElementById('gpu-select').value;
+            const ram = db.rams[document.getElementById('ram-select').value];
+            const resKey = resKeys[document.getElementById('res-slider').value];
+            const presetKey = presetKeys[document.getElementById('preset-slider').value];
+
+            const avgDisplay = document.getElementById('avg-fps');
+            const lowDisplay = document.getElementById('low-fps');
+            const statusLog = document.getElementById('status-log');
+
+            if(gpuKey === "none") return; 
+
+            const gpu = db.gpus[gpuKey];
+            let base = gpu[`base${resKey.replace('p', '')}`];
+            let ramMod = gpu.type === "igpu" ? ram.p_igpu : ram.p_gpu;
+            
+            // Perhitungan awal
+            let rawAvg = base * game.engineWeight * cpu.multi * ramMod * presetMod[presetKey];
+            let maxCpuLimit = cpu.maxLimit * game.cpuBoundLimit;
+            let finalAvg = Math.min(rawAvg, maxCpuLimit);
+            
+            // --- LOGIKA FATAL ERROR (Hardware Terlalu Lawas) ---
+            // Jika CPU multiplier terlalu kecil ATAU hasil FPS di bawah batas playable (misal 15 FPS)
+            if (cpu.multi < 0.2 || finalAvg < 15) {
+                avgDisplay.innerText = "ERR";
+                lowDisplay.innerText = "ERR";
+                avgDisplay.style.color = "var(--danger)";
+                lowDisplay.style.color = "var(--danger)";
+                
+                statusLog.innerHTML = `<span style="color:var(--danger); font-size:1.1em; font-weight:bold;">[FATAL ERROR] Incompatible Architecture!</span><br>
+                Prosesor / Sistem yang Anda pilih (<b>${cpu.name}</b>) gagal memuat <i>instruction set</i> yang dibutuhkan oleh <b>${game.name}</b>. Performa berada jauh di bawah ambang batas minimal untuk <i>rendering</i> (Taksiran: ${Math.round(finalAvg)} FPS).`;
+                return; // Hentikan eksekusi FPS di sini
+            }
+
+            // Normal Execution
+            let finalLow = finalAvg * 0.6; 
+            avgDisplay.innerText = Math.round(finalAvg);
+            lowDisplay.innerText = Math.round(finalLow);
+
+            if (finalAvg < 60) avgDisplay.style.color = "var(--danger)";
+            else if (finalAvg < 144) avgDisplay.style.color = "var(--warning)";
+            else avgDisplay.style.color = "var(--emerald)";
+
+            let log = `<b>Topologi:</b> Modul ${ram.type} tervalidasi. ${ram.log}`;
+            if (finalAvg >= maxCpuLimit * 0.95) log += `<br><span style="color:var(--warning)">[Bottleneck CPU]</span> Limitasi arsitektur menahan GPU.`;
+            else if (gpu.type === "igpu" && (resKey === "1440p" || resKey === "2160p")) log += `<br><span style="color:var(--danger)">[Bottleneck GPU]</span> Bandwidth iGPU defisit untuk resolusi tinggi.`;
+            
+            statusLog.innerHTML = log;
+        }
+
+        function calculatePower() {
+            const cpu = db.cpus[document.getElementById('cpu-select').value];
+            const gpuKey = document.getElementById('gpu-select').value;
+            const gpu = gpuKey !== "none" ? db.gpus[gpuKey] : { tdp: 0 };
+            const mobo = db.motherboards[document.getElementById('mobo-select').value];
+            const cooler = db.coolers[document.getElementById('cooler-select').value];
+            const st1 = db.storages[document.getElementById('storage1-select').value];
+            const st2 = db.storages[document.getElementById('storage2-select').value];
+            
+            const fanCount = parseInt(document.getElementById('fan-count').value) || 0;
+            const customWatt = parseInt(document.getElementById('custom-watt').value) || 0;
+            
+            const ramWattage = 10; 
+            const cpuTDP = cpu.tdp || 0;
+            const gpuTDP = gpu.tdp || 0;
+
+            const totalLoad = cpuTDP + gpuTDP + mobo.tdp + cooler.tdp + st1.tdp + st2.tdp + (fanCount * FAN_WATTAGE) + ramWattage + customWatt;
+            const recommendedPSU = Math.ceil((totalLoad * 1.5) / 50) * 50; 
+
+            document.getElementById('total-watt').innerText = totalLoad + "W";
+            document.getElementById('psu-rec').innerText = recommendedPSU + "W";
+
+            let powerLog = `Beban Maksimal CPU: <b>${cpuTDP}W</b> | GPU: <b>${gpuTDP}W</b>.<br>`;
+            powerLog += `Margin of Safety (Headroom) dikunci pada 50% untuk meredam <i>transient power spikes</i> dan memastikan efisiensi komponen.`;
+            
+            if (cpuTDP === 0 || gpuTDP === 0) {
+                powerLog = `<span style="color:var(--danger)">[SYSTEM ERROR] Parameter 'tdp' tidak ditemukan pada Database JSON.</span>`;
+            }
+
+            document.getElementById('power-log').innerHTML = powerLog;
+        }
+
+        // Auto-Init saat halaman dimuat
+        window.addEventListener('load', initSystem);
+    </script>
+</body>
+</html>
