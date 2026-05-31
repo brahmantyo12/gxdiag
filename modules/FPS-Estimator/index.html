@@ -6,6 +6,7 @@
     <title>Lab-Sim: Architecture & Power Matrix</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
+        /* GXDiag Official Color Palette */
         :root { 
             --gold: #ffd700; 
             --emerald: #00ff88; 
@@ -20,6 +21,7 @@
         
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
         
+        /* GXDiag Header Style */
         .header { padding: 15px 20px; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; }
         .back-btn { text-decoration: none; color: #fff; font-weight: bold; transition: 0.3s; }
         .back-btn:hover { color: var(--gold); }
@@ -38,17 +40,20 @@
         label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
         .dynamic-label { color: var(--gold); font-weight: bold; }
         
+        /* Input & Select GXDiag Style */
         select, input[type=number] { width: 100%; padding: 10px; background: #151515; color: #fff; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.9em; box-sizing: border-box; transition: 0.3s; }
         select:focus, input[type=number]:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 8px rgba(255, 215, 0, 0.2); }
         select:disabled, input:disabled { opacity: 0.5; cursor: not-allowed; }
         .optgroup-header { background: #222; font-weight: bold; color: var(--gold); }
         
+        /* Slider Styling */
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; padding: 10px 0; }
         input[type=range]:focus { outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--gold); cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border); border-radius: 2px; }
         .slider-ticks { display: flex; justify-content: space-between; font-size: 0.7em; color: #666; margin-top: 4px; }
         
+        /* Data Panels */
         .panel-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
         .output-panel { padding: 20px; background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px; text-align: center; position: relative; overflow: hidden; }
         .output-panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
@@ -168,7 +173,8 @@
         const resNames = ["1280x720", "1920x1080", "2560x1440", "3840x2160"];
         const presetKeys = ["low", "medium", "high"];
         const presetNames = ["Low", "Medium", "High"];
-        const presetMod = { "low": 1.0, "medium": 0.8, "high": 0.65 };
+        // Modifikasi pengali preset agar lebih realistis untuk PC Potato (Preset Low memberi boost lebih besar)
+        const presetMod = { "low": 1.4, "medium": 1.0, "high": 0.7 };
         const FAN_WATTAGE = 3; 
 
         async function initSystem() {
@@ -279,37 +285,47 @@
 
             const gpu = db.gpus[gpuKey];
             
+            // --- KALKULASI RESOLUSI DINAMIS (ANTI-NAN) ---
             let resNum = resKey.replace('p', '');
-            let base = gpu[`base${resNum}`];
+            let baseGPU = gpu[`base${resNum}`];
             
-            // Konversi resolusi dinamis jika base tidak tercantum di DB
-            if (base === undefined) {
+            // Jika base tidak ditemukan (misal 720p untuk GPU jadul), kalkulasi dari base1080
+            if (baseGPU === undefined || isNaN(baseGPU)) {
                 if (resNum === "720" && gpu['base1080']) {
-                    base = gpu['base1080'] * 1.7; 
+                    // Di resolusi 720p, performa GPU naik ~70-90% dibanding 1080p
+                    baseGPU = gpu['base1080'] * 1.8; 
+                } else if (resNum === "1440" && gpu['base1080']) {
+                    baseGPU = gpu['base1080'] * 0.65;
+                } else if (resNum === "2160" && gpu['base1080']) {
+                    baseGPU = gpu['base1080'] * 0.35;
                 } else {
-                    base = 1; 
+                    baseGPU = 1; // Failsafe mutlak
                 }
             }
 
+            // Pengali RAM: Jika GPU diskrit, pengaruh RAM sistem tidak sebesar iGPU
             let ramMod = gpu.type === "igpu" ? ram.p_igpu : ram.p_gpu;
             
-            // Kalkulasi Raw GPU Performance
-            let gpuRaw = base * ramMod * presetMod[presetKey];
+            // --- LOGIKA PERFORMA INTi ---
+            // Kekuatan Murni GPU setelah resolusi, memori, dan preset grafis
+            let gpuRawPower = baseGPU * ramMod * presetMod[presetKey];
             
-            // PERBAIKAN: Menggunakan multiplier dinamis untuk optimalisasi game e-sports, bukan penambahan konstan +45
-            let dynamicBonus = 1.0;
-            if (game.engineWeight >= 1.0) dynamicBonus = 1.45;
-            else if (game.engineWeight >= 0.8) dynamicBonus = 1.25;
+            // Pengaruh Game Engine (Semakin besar engineWeight, semakin enteng gamenya)
+            let enginePower = gpuRawPower * game.engineWeight;
             
-            let rawAvg = gpuRaw * game.engineWeight * dynamicBonus;
-            let maxCpuLimit = cpu.maxLimit * game.cpuBoundLimit;
+            // --- LOGIKA BOTTLENECK CPU (REVISI) ---
+            // CPU TIDAK memotong performa dasar GPU, melainkan menentukan BATAS ATAS (Ceiling Limit)
+            // Batas atas ini dihitung dari CPU maxLimit * batas engine game
+            let cpuFrameCeiling = cpu.maxLimit * game.cpuBoundLimit;
             
-            let finalAvg = Math.min(rawAvg, maxCpuLimit);
+            // Performa aktual adalah nilai terkecil antara kekuatan GPU dan Plafon CPU
+            let finalAvg = Math.min(enginePower, cpuFrameCeiling);
             
-            // Floor failsafe
+            // Floor failsafe: Pastikan tidak pernah di bawah 1
             finalAvg = Math.max(1, finalAvg); 
-            let finalLow = Math.max(1, finalAvg * 0.6); 
+            let finalLow = Math.max(1, finalAvg * 0.7); 
 
+            // Cek jika entah kenapa masih NaN
             if (isNaN(finalAvg)) {
                 avgDisplay.innerText = "ERR";
                 lowDisplay.innerText = "ERR";
@@ -331,19 +347,22 @@
                 lowDisplay.style.color = "var(--gold)";
             }
 
+            // --- PERBAIKAN LOG RAM (Context-Aware) ---
             let displayRamLog = ram.log;
+            
+            // Jika user pakai GPU Diskrit tapi log RAM-nya menyebut iGPU, ganti teksnya
             if (gpu.type === "discrete" && displayRamLog.includes("iGPU")) {
-                displayRamLog = "Kapasitas minimalis. Limitasi bandwidth terdeteksi (Single-Channel).";
+                displayRamLog = "Kapasitas minimalis. Limitasi bandwidth terdeteksi (Single-Channel), dapat memicu stuttering ringan.";
             }
             
             let log = `<b>Topologi:</b> Modul ${ram.type} tervalidasi. ${displayRamLog}`;
             
             if (finalAvg < 30) {
-                log += `<br><span style="color:var(--danger)">[PERINGATAN]</span> Frame-rate berada di bawah standar kenyamanan visual.`;
-            } else if (finalAvg >= maxCpuLimit * 0.95) {
-                log += `<br><span style="color:var(--warning)">[Bottleneck CPU]</span> Limitasi arsitektur menahan performa maksimal GPU.`;
+                log += `<br><span style="color:var(--danger)">[PERINGATAN]</span> Frame-rate berada di bawah standar kenyamanan visual. Pertimbangkan menurunkan resolusi.`;
+            } else if (finalAvg >= cpuFrameCeiling * 0.95) {
+                log += `<br><span style="color:var(--warning)">[Bottleneck CPU]</span> Prosesor tidak mampu menyuplai instruksi <i>draw-call</i> yang cukup cepat untuk GPU ini.`;
             } else if (gpu.type === "igpu" && (resKey === "1440p" || resKey === "2160p")) {
-                log += `<br><span style="color:var(--danger)">[Bottleneck GPU]</span> Bandwidth iGPU defisit untuk merender resolusi tinggi.`;
+                log += `<br><span style="color:var(--danger)">[Bottleneck GPU]</span> Bandwidth iGPU defisit untuk merender resolusi tinggi secara mulus.`;
             }
             
             statusLog.innerHTML = log;
@@ -381,6 +400,7 @@
             document.getElementById('power-log').innerHTML = powerLog;
         }
 
+        // Auto-Init saat halaman dimuat
         window.addEventListener('load', initSystem);
     </script>
 </body>
