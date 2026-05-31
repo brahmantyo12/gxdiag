@@ -6,7 +6,6 @@
     <title>Lab-Sim: Architecture & Power Matrix</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        /* GXDiag Official Color Palette */
         :root { 
             --gold: #ffd700; 
             --emerald: #00ff88; 
@@ -21,7 +20,6 @@
         
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
         
-        /* GXDiag Header Style */
         .header { padding: 15px 20px; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; }
         .back-btn { text-decoration: none; color: #fff; font-weight: bold; transition: 0.3s; }
         .back-btn:hover { color: var(--gold); }
@@ -40,20 +38,17 @@
         label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
         .dynamic-label { color: var(--gold); font-weight: bold; }
         
-        /* Input & Select GXDiag Style */
         select, input[type=number] { width: 100%; padding: 10px; background: #151515; color: #fff; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.9em; box-sizing: border-box; transition: 0.3s; }
         select:focus, input[type=number]:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 8px rgba(255, 215, 0, 0.2); }
         select:disabled, input:disabled { opacity: 0.5; cursor: not-allowed; }
         .optgroup-header { background: #222; font-weight: bold; color: var(--gold); }
         
-        /* Slider Styling */
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; padding: 10px 0; }
         input[type=range]:focus { outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--gold); cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border); border-radius: 2px; }
         .slider-ticks { display: flex; justify-content: space-between; font-size: 0.7em; color: #666; margin-top: 4px; }
         
-        /* Data Panels */
         .panel-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
         .output-panel { padding: 20px; background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px; text-align: center; position: relative; overflow: hidden; }
         .output-panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
@@ -178,7 +173,6 @@
 
         async function initSystem() {
             try {
-                // Pastikan file 'database.json' berada di dalam folder yang sama dengan file HTML ini
                 const response = await fetch('./database.json');
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 db = await response.json();
@@ -278,48 +272,48 @@
             if(!ramKey || gpuKey === "none") return; 
 
             const ram = db.rams[ramKey];
-            if(!ram) return; // Failsafe
+            if(!ram) return;
 
             const resKey = resKeys[document.getElementById('res-slider').value];
             const presetKey = presetKeys[document.getElementById('preset-slider').value];
 
             const gpu = db.gpus[gpuKey];
             
-            // --- FIX NaN BUG UNTUK 720P ---
             let resNum = resKey.replace('p', '');
             let base = gpu[`base${resNum}`];
             
-            // Jika base (terutama 720p) tidak ditemukan di database, kalkulasi otomatis dari 1080p
+            // Konversi resolusi dinamis jika base tidak tercantum di DB
             if (base === undefined) {
                 if (resNum === "720" && gpu['base1080']) {
-                    base = gpu['base1080'] * 1.7; // Asumsi 720p lebih ringan ~70% dari 1080p
+                    base = gpu['base1080'] * 1.7; 
                 } else {
-                    base = 1; // Fallback mutlak agar tidak NaN
+                    base = 1; 
                 }
             }
 
             let ramMod = gpu.type === "igpu" ? ram.p_igpu : ram.p_gpu;
             
+            // Kalkulasi Raw GPU Performance
             let gpuRaw = base * ramMod * presetMod[presetKey];
             
-            let optimizationBonus = 0;
-            if (game.engineWeight >= 1.0) optimizationBonus = 45;
-            else if (game.engineWeight >= 0.8) optimizationBonus = 25;
+            // PERBAIKAN: Menggunakan multiplier dinamis untuk optimalisasi game e-sports, bukan penambahan konstan +45
+            let dynamicBonus = 1.0;
+            if (game.engineWeight >= 1.0) dynamicBonus = 1.45;
+            else if (game.engineWeight >= 0.8) dynamicBonus = 1.25;
             
-            let rawAvg = (gpuRaw * game.engineWeight) + optimizationBonus;
-            
+            let rawAvg = gpuRaw * game.engineWeight * dynamicBonus;
             let maxCpuLimit = cpu.maxLimit * game.cpuBoundLimit;
             
             let finalAvg = Math.min(rawAvg, maxCpuLimit);
             
+            // Floor failsafe
             finalAvg = Math.max(1, finalAvg); 
             let finalLow = Math.max(1, finalAvg * 0.6); 
 
-            // Cek jika entah kenapa masih NaN
             if (isNaN(finalAvg)) {
                 avgDisplay.innerText = "ERR";
                 lowDisplay.innerText = "ERR";
-                statusLog.innerHTML = `<span style="color:var(--danger)">Kalkulasi Gagal. Parameter data tidak lengkap di database.</span>`;
+                statusLog.innerHTML = `<span style="color:var(--danger)">Kalkulasi Gagal. Parameter data korup.</span>`;
                 return;
             }
 
@@ -337,9 +331,7 @@
                 lowDisplay.style.color = "var(--gold)";
             }
 
-            // --- FIX RAM LOG CONFUSION ---
             let displayRamLog = ram.log;
-            // Cegah pesan "Bottleneck iGPU" muncul jika user menggunakan Discrete GPU
             if (gpu.type === "discrete" && displayRamLog.includes("iGPU")) {
                 displayRamLog = "Kapasitas minimalis. Limitasi bandwidth terdeteksi (Single-Channel).";
             }
@@ -389,7 +381,6 @@
             document.getElementById('power-log').innerHTML = powerLog;
         }
 
-        // Auto-Init saat halaman dimuat
         window.addEventListener('load', initSystem);
     </script>
 </body>
