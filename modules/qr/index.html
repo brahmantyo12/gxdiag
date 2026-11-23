@@ -10,67 +10,516 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     
     <style>
+        /* =========================================
+           1. ISOLATED RESET & RESPONSIVE SHELL
+           ========================================= */
+        *, *::before, *::after { box-sizing: border-box; }
+
         body { 
-            background: var(--bg-dark, #0a0a0a); 
+            background: var(--bg-dark, #121212); 
+            color: #eee;
             display: flex; 
             flex-direction: column; 
-            height: 100vh; 
+            align-items: stretch;
+            min-height: 100vh;
+            min-height: 100dvh;
             padding: 0;
-            overflow: hidden; 
+            margin: 0;
+            overflow-x: hidden; 
         }
 
         .mod-header { 
             width: 100%;
-            padding: 12px 20px; 
+            padding: 12px 16px; 
             background: #111; 
             border-bottom: 1px solid var(--border-color, #333); 
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
             z-index: 100;
         }
-        .mod-header .back-btn { position: static; }
-        .mod-title { font-size: 0.85rem; font-weight: 800; color: var(--c-cyan); letter-spacing: 1.5px; text-transform: uppercase; }
+        .mod-header .back-btn { position: static; margin: 0; white-space: nowrap; }
+        .mod-title { 
+            font-size: 0.86rem; 
+            font-weight: 800; 
+            color: var(--c-cyan, #00e5ff); 
+            letter-spacing: 1.4px; 
+            text-transform: uppercase; 
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+            text-align: center;
+        }
+        .header-badge {
+            font-size: 0.68rem;
+            font-family: monospace;
+            color: #888;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        @media (max-width: 520px) {
+            .header-badge { display: none; }
+            .mod-title { font-size: 0.78rem; letter-spacing: 1px; }
+        }
         
-        .tabs { width: 100%; display: flex; border-bottom: 1px solid var(--border-color, #333); background: #151515; }
-        .tab { flex: 1; padding: 14px; text-align: center; color: #888; cursor: pointer; font-weight: bold; font-size: 0.85rem; letter-spacing: 1px; transition: 0.2s; }
-        .tab.active { color: var(--c-cyan); background: #1e1e1e; border-bottom: 2px solid var(--c-cyan); }
-
-        .tab-content { 
-            display: none; 
+        /* 3-Tab Navigation Bar */
+        .tabs-wrapper {
             width: 100%;
-            flex-grow: 1; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 20px; 
-            overflow-y: auto; 
+            background: #151515;
+            border-bottom: 1px solid var(--border-color, #333);
+            display: flex;
+            justify-content: center;
         }
-        .tab-content.active { display: flex; }
-
-        /* SCANNER UI */
-        #reader { width: 100%; max-width: 420px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color, #333); background: #000; }
-        .scan-result { 
-            margin-top: 20px; width: 100%; max-width: 420px; 
-            background: var(--bg-card, #1e1e1e); padding: 15px; 
-            border-radius: 10px; border: 1px solid var(--border-color, #444); 
-            display: none; word-break: break-all; 
+        .tabs { 
+            width: 100%; 
+            max-width: 1280px;
+            display: flex; 
         }
-        .scan-actions { display: flex; gap: 10px; margin-top: 12px; }
+        .tab { 
+            flex: 1; 
+            padding: 14px 8px; 
+            text-align: center; 
+            color: #888; 
+            cursor: pointer; 
+            font-weight: 800; 
+            font-size: 0.8rem; 
+            letter-spacing: 0.8px; 
+            transition: 0.2s; 
+            border-bottom: 3px solid transparent;
+            user-select: none;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+        }
+        @media (max-width: 420px) {
+            .tab { font-size: 0.72rem; letter-spacing: 0.2px; padding: 12px 4px; }
+        }
+        .tab:hover { color: #ccc; background: rgba(255,255,255,0.02); }
+        .tab.active { 
+            color: var(--c-cyan, #00e5ff); 
+            background: #1b1b1b; 
+            border-bottom-color: var(--c-cyan, #00e5ff); 
+        }
+        .tab.retail-tab.active {
+            color: var(--c-green, #00e676);
+            border-bottom-color: var(--c-green, #00e676);
+        }
 
-        /* GENERATOR UI */
-        .gen-workspace {
+        .main-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 14px;
+            flex-grow: 1;
+        }
+
+        .tab-content { display: none; width: 100%; }
+        .tab-content.active { display: block; }
+
+        /* =========================================
+           2. TAB 1: CLASSIC SCANNER (CAMERA + UPLOAD)
+           ========================================= */
+        .classic-scan-wrap {
             width: 100%;
             max-width: 480px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 14px;
-            padding-bottom: 35px;
         }
 
+        #reader { 
+            width: 100% !important; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 2px solid #333 !important; 
+            background: #181818;
+            padding: 10px;
+            color: #ccc;
+        }
+        #reader * { max-width: 100%; }
+        #reader video, #reader__scan_region img { 
+            width: 100% !important; 
+            height: auto !important; 
+            border-radius: 8px; 
+        }
+        #reader button {
+            background: var(--c-cyan, #00e5ff);
+            color: #000;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.76rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin: 6px 4px;
+            transition: 0.2s;
+            min-height: 40px;
+        }
+        #reader button:hover { filter: brightness(1.12); }
+        #reader select {
+            background: #121212;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin: 6px 0;
+            width: 100%;
+            min-height: 40px;
+        }
+        #reader a, #reader__dashboard_section_swaplink {
+            color: var(--c-cyan, #00e5ff) !important;
+            text-decoration: underline !important;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+        #reader input[type="file"] {
+            color: #ccc;
+            font-size: 0.8rem;
+            margin: 8px auto;
+            width: 100%;
+        }
+
+        .scan-result { 
+            margin-top: 16px; 
+            width: 100%; 
+            background: #1e1e1e; 
+            padding: 15px; 
+            border-radius: 10px; 
+            border: 1px solid #444; 
+            display: none; 
+            word-break: break-all; 
+        }
+
+        /* =========================================
+           3. SPLIT-GRID & SHARED COMPONENTS
+           ========================================= */
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        @media (min-width: 920px) {
+            .main-container { padding: 24px; }
+            .split-layout {
+                grid-template-columns: 440px 1fr;
+                gap: 24px;
+            }
+            .sticky-pane {
+                position: sticky;
+                top: 72px;
+            }
+        }
+
+        .panel-card {
+            width: 100%;
+            background: var(--bg-card, linear-gradient(145deg, #1e1e1e, #252525));
+            border: 1px solid var(--border-color, #333);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .section-heading {
+            font-size: 0.74rem;
+            font-weight: 800;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-row { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .control-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        @media (max-width: 420px) {
+            .control-grid-2 { grid-template-columns: 1fr; }
+        }
+
+        label { 
+            font-size: 0.72rem; 
+            color: #aaa; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .val-pill { color: var(--c-cyan, #00e5ff); font-family: monospace; font-size: 0.78rem; }
+        
+        input[type="text"], select {
+            background: #121212;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            width: 100%;
+            min-height: 42px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        /* Cegah auto-zoom browser mobile (iOS Safari / Android WebView) saat fokus input */
+        @media (max-width: 768px) {
+            input[type="text"], select { font-size: 16px; }
+        }
+        input[type="text"]:focus, select:focus { border-color: var(--c-cyan, #00e5ff); }
+
+        .hint-text { font-size: 0.72rem; color: #777; font-family: monospace; line-height: 1.4; }
+        
+        .error-banner {
+            display: none;
+            width: 100%;
+            background: rgba(255, 23, 68, 0.15);
+            border: 1px solid var(--c-red, #ff1744);
+            color: #ff8a80;
+            font-size: 0.8rem;
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .btn {
+            min-height: 42px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.78rem;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-cyan { background: var(--c-cyan, #00e5ff); color: #000; }
+        .btn-cyan:hover:not(:disabled) { filter: brightness(1.12); }
+        .btn-green { background: var(--c-green, #00e676); color: #000; }
+        .btn-green:hover:not(:disabled) { filter: brightness(1.12); }
+        .btn-danger { background: rgba(255, 23, 68, 0.15); border: 1px solid var(--c-red, #ff1744); color: var(--c-red, #ff1744); }
+        .btn-danger:hover:not(:disabled) { background: var(--c-red, #ff1744); color: #fff; }
+        .btn-dark { background: #181818; color: #ddd; border: 1px solid #444; }
+        .btn-dark:hover:not(:disabled) { border-color: var(--c-cyan, #00e5ff); color: var(--c-cyan, #00e5ff); }
+        .btn-dark.active-toggle { background: rgba(0, 229, 255, 0.15); border-color: var(--c-cyan, #00e5ff); color: var(--c-cyan, #00e5ff); }
+
+        .quick-action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .quick-action-row .btn { flex: 1; min-width: 105px; min-height: 38px; font-size: 0.72rem; }
+
+        /* =========================================
+           4. TAB 2: RETAIL PRODUCT SCANNER & POS
+           ========================================= */
+        .viewport-box {
+            position: relative;
+            width: 100%;
+            min-height: 240px;
+            background: #080808;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .reader-mount { width: 100%; }
+        .reader-mount video { object-fit: cover !important; border-radius: 8px; width: 100% !important; }
+
+        .laser-line {
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            top: 50%;
+            height: 2px;
+            background: var(--c-red, #ff1744);
+            box-shadow: 0 0 12px var(--c-red, #ff1744), 0 0 4px #fff;
+            pointer-events: none;
+            z-index: 10;
+            animation: laserPulse 1.6s infinite ease-in-out;
+        }
+        @keyframes laserPulse {
+            0%, 100% { opacity: 0.55; transform: translateY(-10px); }
+            50% { opacity: 1; transform: translateY(10px); }
+        }
+
+        .cam-placeholder {
+            text-align: center;
+            padding: 30px 15px;
+            color: #666;
+            font-size: 0.8rem;
+            font-family: monospace;
+            line-height: 1.5;
+        }
+
+        .cam-toolbar-4 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        @media (min-width: 480px) {
+            .cam-toolbar-4 { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        .manual-sku-bar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .scan-hero-result {
+            background: #121212;
+            border: 1px solid #333;
+            border-left: 4px solid var(--c-green, #00e676);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .scan-code-display {
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #fff;
+            word-break: break-all;
+            letter-spacing: 0.5px;
+        }
+        .scan-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+        .meta-tag {
+            font-size: 0.7rem;
+            font-family: monospace;
+            padding: 3px 8px;
+            border-radius: 5px;
+            background: #222;
+            color: var(--c-cyan, #00e5ff);
+            border: 1px solid #383838;
+        }
+        .meta-tag.gs1 { color: var(--c-green, #00e676); border-color: rgba(0, 230, 118, 0.3); }
+
+        .batch-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+        .batch-empty {
+            text-align: center;
+            padding: 28px 12px;
+            color: #666;
+            font-size: 0.78rem;
+            font-family: monospace;
+            border: 1px dashed #333;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+        .batch-item {
+            background: #141414;
+            border: 1px solid #2e2e2e;
+            border-radius: 9px;
+            padding: 10px 12px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            transition: 0.2s;
+        }
+        .batch-item.flash-new {
+            border-color: var(--c-green, #00e676);
+            background: rgba(0, 230, 118, 0.08);
+        }
+        .batch-code {
+            font-family: monospace;
+            font-weight: 800;
+            font-size: 0.92rem;
+            color: #fff;
+            word-break: break-all;
+        }
+        .batch-sub {
+            font-size: 0.68rem;
+            color: #888;
+            font-family: monospace;
+            margin-top: 2px;
+        }
+        .batch-note-input {
+            background: #1c1c1c !important;
+            border: 1px solid #333 !important;
+            padding: 6px 8px !important;
+            min-height: 34px !important;
+            font-size: 0.8rem !important;
+            margin-top: 6px;
+            color: #ddd !important;
+        }
+        @media (max-width: 768px) {
+            .batch-note-input { font-size: 16px !important; }
+        }
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .qty-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #222;
+            color: #fff;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qty-btn:hover { border-color: var(--c-green, #00e676); color: var(--c-green, #00e676); }
+        .qty-val {
+            font-family: monospace;
+            font-weight: 800;
+            font-size: 0.95rem;
+            min-width: 26px;
+            text-align: center;
+            color: var(--c-green, #00e676);
+        }
+
+        /* =========================================
+           5. TAB 3: HIGH-RES GENERATOR
+           ========================================= */
         .preview-stage {
             width: 100%;
-            min-height: 250px;
+            min-height: 230px;
             padding: 20px;
             border-radius: 12px;
             border: 1px solid var(--border-color, #333);
@@ -88,68 +537,45 @@
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
+        @media (min-width: 920px) {
+            .preview-stage { min-height: 320px; padding: 28px; }
+        }
 
         #output-canvas {
-            max-width: 240px;
-            max-height: 240px;
+            max-width: 210px;
+            max-height: 210px;
             width: auto;
             height: auto;
             border-radius: 6px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.65);
+        }
+        @media (min-width: 920px) {
+            #output-canvas { max-width: 270px; max-height: 270px; }
         }
         #output-canvas.barcode-mode {
             max-width: 100%;
-            max-height: 160px;
+            max-height: 165px;
         }
 
         .res-badge {
-            margin-top: 10px;
+            margin-top: 12px;
             font-size: 0.7rem;
             font-family: monospace;
-            color: var(--c-green);
+            color: var(--c-green, #00e676);
             background: rgba(0, 230, 118, 0.1);
             border: 1px solid rgba(0, 230, 118, 0.3);
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
+            text-align: center;
         }
 
-        .control-panel {
-            width: 100%;
-            background: var(--bg-card, #1e1e1e);
-            border: 1px solid var(--border-color, #333);
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .control-row { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-        .control-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
-
-        label { font-size: 0.72rem; color: #aaa; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
-        .val-pill { color: var(--c-cyan); font-family: monospace; font-size: 0.78rem; }
-        
-        input[type="text"], select {
-            background: #121212;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 10px 12px;
-            border-radius: 8px;
-            width: 100%;
-            font-size: 0.88rem;
-            outline: none;
-            transition: 0.2s;
-        }
-        input[type="text"]:focus, select:focus { border-color: var(--c-cyan); }
-
-        /* Range Slider Styling */
         input[type="range"] {
             -webkit-appearance: none;
             width: 100%;
             background: transparent;
-            padding: 6px 0;
+            padding: 10px 0;
             cursor: pointer;
+            touch-action: pan-y;
         }
         input[type="range"]::-webkit-slider-runnable-track {
             width: 100%;
@@ -160,11 +586,11 @@
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
+            height: 20px;
+            width: 20px;
             border-radius: 50%;
-            background: var(--c-cyan);
-            margin-top: -6px;
+            background: var(--c-cyan, #00e5ff);
+            margin-top: -8px;
             box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
         }
         .slider-scale {
@@ -175,15 +601,10 @@
             color: #666;
         }
 
-        /* Custom File Upload Bar */
-        .logo-upload-bar {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            width: 100%;
-        }
+        .logo-upload-bar { display: flex; gap: 8px; align-items: center; width: 100%; }
         .file-label {
             flex: 1;
+            min-height: 42px;
             background: #121212;
             border: 1px dashed #555;
             color: #ccc;
@@ -199,198 +620,810 @@
             text-transform: none;
             font-weight: 500;
         }
-        .file-label:hover { border-color: var(--c-cyan); color: #fff; }
+        .file-label:hover { border-color: var(--c-cyan, #00e5ff); color: #fff; }
         .file-name-truncate {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 240px;
-        }
-        .btn-clear-logo {
-            background: rgba(255, 23, 68, 0.15);
-            border: 1px solid var(--c-red);
-            color: var(--c-red);
-            padding: 9px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: none;
-        }
-        .btn-clear-logo:hover { background: var(--c-red); color: #fff; }
-
-        .hint-text { font-size: 0.72rem; color: #777; font-family: monospace; line-height: 1.35; }
-        .error-banner {
-            display: none;
-            width: 100%;
-            background: rgba(255, 23, 68, 0.15);
-            border: 1px solid var(--c-red);
-            color: #ff8a80;
-            font-size: 0.8rem;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
+            max-width: 200px;
         }
 
         .download-bar {
             display: grid;
-            grid-template-columns: 115px 1fr;
+            grid-template-columns: 110px 1fr;
             gap: 10px;
             width: 100%;
-            margin-top: 4px;
         }
-
-        .btn {
-            padding: 11px 16px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 0.82rem;
-            letter-spacing: 0.8px;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .btn:disabled { opacity: 0.5; cursor: wait; }
-        .btn-download { background: var(--c-green); color: #000; }
-        .btn-download:hover:not(:disabled) { filter: brightness(1.15); }
-        .btn-secondary { background: #2a2a2a; color: #eee; border: 1px solid #444; padding: 8px 12px; font-size: 0.75rem; }
-        .btn-secondary:hover { border-color: var(--c-cyan); color: var(--c-cyan); }
     </style>
 </head>
 <body>
     <div class="mod-header">
         <a href="../../index.html" class="back-btn">← DASHBOARD</a>
         <span class="mod-title">BARCODE & QR STUDIO</span>
-        <div style="width: 80px;"></div>
+        <span class="header-badge">3-IN-1 STUDIO</span>
     </div>
 
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('scan', this)">SCANNER (ALL)</div>
-        <div class="tab" onclick="switchTab('gen', this)">HIGH-RES GENERATOR</div>
-    </div>
-
-    <!-- TAB 1: SCANNER -->
-    <div id="scan" class="tab-content active">
-        <div id="reader"></div>
-        <div style="color:#666; font-size:0.75rem; margin-top:10px; font-family:monospace;">Mendukung: QR, EAN-13/8, UPC, Code128, Code39, ITF</div>
-        <div class="scan-result" id="scan-res-box">
-            <div style="color:#888; font-size:0.7rem; text-transform:uppercase;">Hasil Pemindaian:</div>
-            <div id="scan-data" style="color:#fff; font-family:monospace; font-size:1.1rem; font-weight:bold; margin-top:4px;">-</div>
-            <div id="scan-format" style="color:var(--c-cyan); font-size:0.75rem; margin-top:4px;">-</div>
-            <div class="scan-actions">
-                <button class="btn btn-secondary" onclick="copyScanResult()">Salin Teks</button>
-                <button class="btn btn-secondary" onclick="sendToGenerator()">Kirim ke Generator</button>
-            </div>
+    <div class="tabs-wrapper">
+        <div class="tabs">
+            <div class="tab active" id="tab-btn-scan" onclick="switchTab('scan')">SCANNER (ALL)</div>
+            <div class="tab retail-tab" id="tab-btn-retail" onclick="switchTab('retail')">PRODUK RITEL</div>
+            <div class="tab" id="tab-btn-gen" onclick="switchTab('gen')">GENERATOR</div>
         </div>
     </div>
 
-    <!-- TAB 2: HIGH-RES GENERATOR -->
-    <div id="gen" class="tab-content">
-        <div class="gen-workspace">
-            <div class="preview-stage">
-                <canvas id="output-canvas"></canvas>
-                <div class="res-badge" id="dim-info">2048 × 2048 px (300+ DPI Print Ready)</div>
+    <div class="main-container">
+        <!-- =========================================
+             TAB 1: CLASSIC SCANNER (KAMERA & UNGGAH FILE)
+             ========================================= -->
+        <div id="scan" class="tab-content active">
+            <div class="classic-scan-wrap">
+                <div id="reader"></div>
+                <div style="color:#666; font-size:0.78rem; margin-top:10px; text-align:center;">
+                    Supports: QR, UPC, EAN (Snacks), Code128 &amp; Scan Image File
+                </div>
+                <div class="scan-result" id="scan-res-box">
+                    <div style="color:#888; font-size:0.75rem; font-weight:bold;">RESULT:</div>
+                    <div id="scan-data" style="color:#fff; font-family:monospace; font-size:1.1rem; font-weight:bold; margin-top:4px;">-</div>
+                    <div id="scan-format" style="color:var(--c-cyan, #00e5ff); font-size:0.8rem; margin-top:5px;">-</div>
+                    <div class="quick-action-row">
+                        <button type="button" class="btn btn-dark" onclick="copyClassicResult()">📋 Salin</button>
+                        <button type="button" class="btn btn-cyan" id="btn-classic-open" onclick="openClassicUrl()" style="display:none;">🌐 Buka Link</button>
+                        <button type="button" class="btn btn-dark" onclick="sendClassicToGenerator()">⚙ Ke Generator</button>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <div class="error-banner" id="gen-error"></div>
-
-            <div class="control-panel">
-                <div class="control-row">
-                    <label for="code-type">Jenis Kode (2D / 1D Barcode)</label>
-                    <select id="code-type" onchange="onFormatChange()">
-                        <option value="QR" selected>QR Code (2D Matrix - High Res)</option>
-                        <option value="CODE128">Code 128 (Alfanumerik / Logistik)</option>
-                        <option value="EAN13">EAN-13 (Produk Retail - 12/13 Digit)</option>
-                        <option value="EAN8">EAN-8 (Kemasan Kecil - 7/8 Digit)</option>
-                        <option value="UPC">UPC-A (Retail Standar US - 11/12 Digit)</option>
-                        <option value="CODE39">Code 39 (Industri / Inventaris Aset)</option>
-                        <option value="ITF14">ITF-14 (Karton / Dus Distribusi - 13/14 Digit)</option>
-                        <option value="MSI">MSI Plessey (Rak Gudang - Numerik)</option>
-                        <option value="codabar">Codabar (Medis / Perpustakaan)</option>
-                    </select>
-                </div>
-
-                <div class="control-row">
-                    <label for="code-text">Data / Konten Kode</label>
-                    <input type="text" id="code-text" placeholder="Masukkan teks, URL, atau angka..." value="https://brahmantyo12.my.id" oninput="generateCode()">
-                    <span class="hint-text" id="format-hint">Mendukung URL, teks, Wi-Fi string. Area tengah kosong bebas tabrakan modul.</span>
-                </div>
-
-                <!-- Opsi Khusus QR Code -->
-                <div id="qr-only-section" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="control-row">
-                        <label for="qr-clear-slider">
-                            <span>Kosongkan Area Tengah (Lebar Sisi)</span>
-                            <span class="val-pill" id="clear-zone-readout">36% Lebar (~13.0% Area)</span>
-                        </label>
-                        <input type="range" id="qr-clear-slider" min="0" max="50" step="1" value="36" oninput="generateCode()">
-                        <div class="slider-scale">
-                            <span>0% (Penuh)</span>
-                            <span>28% (Kecil)</span>
-                            <span>40% (Optimal Max)</span>
-                            <span>50% (Ekstrem)</span>
+        <!-- =========================================
+             TAB 2: PRODUK RITEL (POS & INVENTORY MODE)
+             ========================================= -->
+        <div id="retail" class="tab-content">
+            <div class="split-layout">
+                <!-- Kiri (Sticky di Desktop): Kamera POS & Input Manual -->
+                <div class="sticky-pane" style="display: flex; flex-direction: column; gap: 14px;">
+                    <div class="panel-card">
+                        <div class="section-heading">
+                            <span>Scanner Produk Ritel (1D)</span>
+                            <span id="rtl-status-pill" style="color: #777; font-family: monospace;">STANDBY</span>
                         </div>
-                        <span class="hint-text" id="clear-zone-status" style="color: var(--c-green);">[Aman] Kapasitas Error Correction Level H (30%) mencukupi.</span>
+
+                        <div class="viewport-box">
+                            <div id="reader-retail" class="reader-mount"></div>
+                            <div class="laser-line"></div>
+                            <div class="cam-placeholder" id="rtl-placeholder">
+                                Mode kasir / stok opname siap.<br>Tekan <b>MULAI</b> untuk memindai barcode kemasan.
+                            </div>
+                        </div>
+
+                        <div class="control-row" id="rtl-cam-row" style="display: none;">
+                            <label for="rtl-cam-select">Pilih Lensa Kamera</label>
+                            <select id="rtl-cam-select" onchange="restartRtlCamera()"></select>
+                        </div>
+
+                        <div class="cam-toolbar-4">
+                            <button type="button" class="btn btn-green" id="btn-rtl-toggle" onclick="toggleRtlCamera()">▶ MULAI</button>
+                            <button type="button" class="btn btn-dark active-toggle" id="btn-beep-toggle" onclick="toggleBeep()">🔊 BEEP</button>
+                            <button type="button" class="btn btn-dark" id="btn-rtl-torch" onclick="toggleRtlTorch()" disabled>🔦 FLASH</button>
+                            <label for="rtl-file-input" class="btn btn-dark" style="margin:0; cursor:pointer;">🖼 FOTO</label>
+                            <input type="file" id="rtl-file-input" accept="image/*" style="display:none;" onchange="scanRtlFromFile(event)">
+                        </div>
+
+                        <div class="error-banner" id="rtl-error"></div>
+
+                        <div class="control-row" style="border-top: 1px solid #333; padding-top: 10px;">
+                            <label for="manual-sku-input">Input SKU Manual (Jika Label Rusak)</label>
+                            <div class="manual-sku-bar">
+                                <input type="text" id="manual-sku-input" placeholder="Ketik angka barcode..." onkeydown="if(event.key==='Enter') submitManualSku()">
+                                <button type="button" class="btn btn-dark" onclick="submitManualSku()">+ TAMBAH</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kanan: Info SKU Terakhir & Daftar Rekap Stok -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="panel-card">
+                        <div class="section-heading">
+                            <span>Produk Terakhir Terdeteksi</span>
+                            <span id="rtl-time" style="font-family: monospace; color: #666;">-</span>
+                        </div>
+
+                        <div class="scan-hero-result">
+                            <div class="scan-code-display" id="rtl-data">Arahkan garis merah ke barcode barang...</div>
+                            <div class="scan-meta-row">
+                                <span class="meta-tag" id="rtl-format">Format: -</span>
+                                <span class="meta-tag gs1" id="rtl-gs1" style="display:none;">-</span>
+                            </div>
+                            <div class="quick-action-row">
+                                <button type="button" class="btn btn-dark" id="btn-rtl-copy" onclick="copyRtlResult()" disabled>📋 Salin SKU</button>
+                                <button type="button" class="btn btn-green" id="btn-rtl-lookup" onclick="lookupRetailWeb()" disabled>🔍 Cek Nama Produk</button>
+                                <button type="button" class="btn btn-dark" id="btn-rtl-gen" onclick="sendRtlToGenerator()" disabled>⚙ Cetak Ulang Barcode</button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="control-row">
-                        <label>Sisipkan Logo Tengah (Opsional)</label>
-                        <div class="logo-upload-bar">
-                            <label for="logo-input" class="file-label">
-                                <span class="file-name-truncate" id="logo-filename">Pilih gambar logo (PNG/SVG/JPG/WebP)...</span>
-                                <span style="color: var(--c-cyan); font-weight: bold;">UNGGAH</span>
+                    <!-- Daftar Rekap Stok Opname -->
+                    <div class="panel-card">
+                        <div class="section-heading">
+                            <span>Daftar Barang (<span id="total-sku-count" style="color:var(--c-cyan);">0</span> SKU / <span id="total-qty-count" style="color:var(--c-green);">0</span> PCS)</span>
+                            <label style="text-transform:none; font-size:0.72rem; cursor:pointer; gap:5px; color:#ccc;">
+                                <input type="checkbox" id="chk-auto-batch" checked style="accent-color:var(--c-green);"> Catat Otomatis
                             </label>
-                            <input type="file" id="logo-input" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
-                            <button type="button" class="btn-clear-logo" id="clear-logo-btn" onclick="removeLogo()" title="Hapus Logo">✕</button>
                         </div>
-                        <span class="hint-text" id="logo-hint">Logo otomatis diskalakan proporsional di dalam zona kosong tanpa memotong kotak QR.</span>
+
+                        <div class="batch-list" id="batch-list">
+                            <div class="batch-empty">
+                                Belum ada produk dipindai.<br>Setiap barcode barang yang terbaca otomatis masuk ke daftar ini dan tersimpan otomatis di peramban.
+                            </div>
+                        </div>
+
+                        <div class="control-grid-2" style="margin-top: 4px;">
+                            <button type="button" class="btn btn-green" id="btn-export-csv" onclick="exportBatchCSV()" disabled>⬇ UNDUH REKAP CSV</button>
+                            <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px;">
+                                <button type="button" class="btn btn-dark" id="btn-copy-batch" onclick="copyBatchText()" disabled>📋 SALIN LIST</button>
+                                <button type="button" class="btn btn-danger" id="btn-clear-batch" onclick="clearBatchList()" disabled title="Kosongkan Daftar">🗑</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================
+             TAB 3: HIGH-RES GENERATOR
+             ========================================= -->
+        <div id="gen" class="tab-content">
+            <div class="split-layout">
+                <!-- Kiri (Sticky di Desktop): Live Preview & Export -->
+                <div class="sticky-pane">
+                    <div class="panel-card">
+                        <div class="section-heading">
+                            <span>Live Print Preview</span>
+                            <span style="color: var(--c-green); font-family: monospace;">SHARP INTEGER</span>
+                        </div>
+
+                        <div class="preview-stage">
+                            <canvas id="output-canvas"></canvas>
+                            <div class="res-badge" id="dim-info">2048 × 2048 px (300+ DPI Print Ready)</div>
+                        </div>
+
+                        <div class="error-banner" id="gen-error"></div>
+
+                        <div class="download-bar">
+                            <select id="export-format" aria-label="Format Unduhan">
+                                <option value="png" selected>PNG</option>
+                                <option value="jpg">JPG</option>
+                                <option value="jxl">JXL</option>
+                            </select>
+                            <button type="button" class="btn btn-green" id="download-btn" onclick="downloadImage()">⬇ UNDUH GAMBAR</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="control-grid-2">
+                <!-- Kanan: Parameter & Kustomisasi -->
+                <div class="panel-card">
+                    <div class="section-heading">
+                        <span>Konfigurasi Kode & Matriks</span>
+                        <span style="color: #666; font-family: monospace;">2D / 1D</span>
+                    </div>
+
                     <div class="control-row">
-                        <label for="bg-mode">Latar Belakang</label>
-                        <select id="bg-mode" onchange="generateCode()">
-                            <option value="white" selected>Putih Solid (#FFFFFF)</option>
-                            <option value="transparent">Transparan (Alpha)</option>
+                        <label for="code-type">Jenis Kode (2D / 1D Barcode)</label>
+                        <select id="code-type" onchange="onFormatChange()">
+                            <option value="QR" selected>QR Code (2D Matrix - High Res)</option>
+                            <option value="CODE128">Code 128 (Alfanumerik / Logistik)</option>
+                            <option value="EAN13">EAN-13 (Produk Retail - 12/13 Digit)</option>
+                            <option value="EAN8">EAN-8 (Kemasan Kecil - 7/8 Digit)</option>
+                            <option value="UPC">UPC-A (Retail Standar US - 11/12 Digit)</option>
+                            <option value="CODE39">Code 39 (Industri / Inventaris Aset)</option>
+                            <option value="ITF14">ITF-14 (Karton / Dus Distribusi - 13/14 Digit)</option>
+                            <option value="MSI">MSI Plessey (Rak Gudang - Numerik)</option>
+                            <option value="codabar">Codabar (Medis / Perpustakaan)</option>
                         </select>
                     </div>
-                    <div class="control-row" id="qr-ecc-row">
-                        <label for="qr-ecc">Error Correction</label>
-                        <select id="qr-ecc" onchange="generateCode()">
-                            <option value="L">Low (7%)</option>
-                            <option value="M">Medium (15%)</option>
-                            <option value="Q">Quartile (25%)</option>
-                            <option value="H" selected>High (30% - Wajib Logo)</option>
-                        </select>
-                    </div>
-                    <div class="control-row" id="barcode-text-row" style="display: none;">
-                        <label for="show-hr-text">Teks Angka Bawah</label>
-                        <select id="show-hr-text" onchange="generateCode()">
-                            <option value="true" selected>Tampilkan</option>
-                            <option value="false">Sembunyikan</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="download-bar">
-                    <select id="export-format" aria-label="Format Unduhan">
-                        <option value="png" selected>PNG</option>
-                        <option value="jpg">JPG</option>
-                        <option value="jxl">JXL</option>
-                    </select>
-                    <button class="btn btn-download" id="download-btn" onclick="downloadImage()">⬇ UNDUH GAMBAR</button>
+                    <div class="control-row">
+                        <label for="code-text">Data / Konten Kode</label>
+                        <input type="text" id="code-text" placeholder="Masukkan teks, URL, atau angka..." value="https://brahmantyo12.my.id" oninput="scheduleGenerateCode()">
+                        <span class="hint-text" id="format-hint">Mendukung URL, teks, Wi-Fi string. Area tengah kosong bebas tabrakan modul.</span>
+                    </div>
+
+                    <!-- Opsi Khusus QR Code -->
+                    <div id="qr-only-section" style="display: flex; flex-direction: column; gap: 14px; border-top: 1px solid #333; padding-top: 12px;">
+                        <div class="control-row">
+                            <label for="qr-clear-slider">
+                                <span>Kosongkan Area Tengah (Lebar Sisi)</span>
+                                <span class="val-pill" id="clear-zone-readout">36% Lebar (~13.0% Area)</span>
+                            </label>
+                            <input type="range" id="qr-clear-slider" min="0" max="50" step="1" value="36" oninput="scheduleGenerateCode()">
+                            <div class="slider-scale">
+                                <span>0% (Penuh)</span>
+                                <span>28% (Kecil)</span>
+                                <span>40% (Optimal Max)</span>
+                                <span>50% (Ekstrem)</span>
+                            </div>
+                            <span class="hint-text" id="clear-zone-status" style="color: var(--c-green);">[Aman] Kapasitas Error Correction Level H (30%) mencukupi.</span>
+                        </div>
+
+                        <div class="control-row">
+                            <label>Sisipkan Logo Tengah (Opsional)</label>
+                            <div class="logo-upload-bar">
+                                <label for="logo-input" class="file-label">
+                                    <span class="file-name-truncate" id="logo-filename">Pilih gambar logo (PNG/SVG/JPG/WebP)...</span>
+                                    <span style="color: var(--c-cyan); font-weight: bold;">UNGGAH</span>
+                                </label>
+                                <input type="file" id="logo-input" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
+                                <button type="button" class="btn btn-danger" id="clear-logo-btn" onclick="removeLogo()" style="display:none; padding: 0 12px;" title="Hapus Logo">✕</button>
+                            </div>
+                            <span class="hint-text" id="logo-hint">Logo otomatis diskalakan proporsional di dalam zona kosong tanpa memotong kotak QR.</span>
+                        </div>
+                    </div>
+
+                    <div class="control-grid-2" style="border-top: 1px solid #333; padding-top: 12px;">
+                        <div class="control-row">
+                            <label for="bg-mode">Latar Belakang</label>
+                            <select id="bg-mode" onchange="generateCode()">
+                                <option value="white" selected>Putih Solid (#FFFFFF)</option>
+                                <option value="transparent">Transparan (Alpha)</option>
+                            </select>
+                        </div>
+                        <div class="control-row" id="qr-ecc-row">
+                            <label for="qr-ecc">Error Correction</label>
+                            <select id="qr-ecc" onchange="generateCode()">
+                                <option value="L">Low (7%)</option>
+                                <option value="M">Medium (15%)</option>
+                                <option value="Q">Quartile (25%)</option>
+                                <option value="H" selected>High (30% - Wajib Logo)</option>
+                            </select>
+                        </div>
+                        <div class="control-row" id="barcode-text-row" style="display: none;">
+                            <label for="show-hr-text">Teks Angka Bawah</label>
+                            <select id="show-hr-text" onchange="generateCode()">
+                                <option value="true" selected>Tampilkan</option>
+                                <option value="false">Sembunyikan</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // =========================================
+        // 1. TAB NAVIGATION & HARDWARE ARBITRATION
+        // =========================================
+        let camMutex = false;
+
+        async function switchTab(id) {
+            if (camMutex) return;
+            camMutex = true;
+            try {
+                if (id !== 'scan' && scanner) {
+                    await stopClassicScanner();
+                }
+                if (id !== 'retail' && rtlIsScanning) {
+                    await stopRtlCamera();
+                }
+
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                document.getElementById(`tab-btn-${id}`).classList.add('active');
+
+                if (id === 'scan') {
+                    startScanner();
+                }
+            } finally {
+                camMutex = false;
+            }
+        }
+
+        // Otomatis matikan kamera jika aplikasi/tab diminimize di HP
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && rtlIsScanning) {
+                stopRtlCamera();
+            }
+        });
+
+        // =========================================
+        // 2. TAB 1: CLASSIC SCANNER (CAMERA + UPLOAD)
+        // =========================================
+        let scanner = null;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            document.getElementById('scan-res-box').style.display = 'block';
+            document.getElementById('scan-data').innerText = decodedText;
+            document.getElementById('scan-format').innerText = decodedResult.result.format?.formatName || "Detected";
+
+            const isUrl = /^https?:\/\/[^\s]+$/i.test(decodedText.trim());
+            document.getElementById('btn-classic-open').style.display = isUrl ? 'inline-flex' : 'none';
+
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+
+        function startScanner() {
+            if (!scanner) {
+                scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 150 } });
+                scanner.render(onScanSuccess);
+            }
+        }
+
+        async function stopClassicScanner() {
+            if (scanner) {
+                try {
+                    await scanner.clear();
+                } catch (_) {}
+                scanner = null;
+            }
+        }
+
+        function copyClassicResult() {
+            navigator.clipboard.writeText(document.getElementById('scan-data').innerText);
+        }
+
+        function openClassicUrl() {
+            const url = document.getElementById('scan-data').innerText.trim();
+            if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
+        }
+
+        function sendClassicToGenerator() {
+            const text = document.getElementById('scan-data').innerText.trim();
+            if (!text || text === '-') return;
+            document.getElementById('code-type').value = 'QR';
+            onFormatChange();
+            document.getElementById('code-text').value = text;
+            generateCode();
+            switchTab('gen');
+        }
+
+        startScanner();
+
+        // =========================================
+        // 3. TAB 2: RETAIL PRODUCT SCANNER & POS
+        // =========================================
+        const STORAGE_KEY_BATCH = 'gxdiag_retail_batch_v1';
+        let rtlScanner = null;
+        let rtlIsScanning = false;
+        let rtlTorchOn = false;
+        let beepEnabled = true;
+        let audioCtx = null;
+        let lastRtlCode = '';
+        let lastRtlTimestamp = 0;
+        let scannedItems = [];
+
+        function loadSavedBatch() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY_BATCH);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) scannedItems = parsed;
+                }
+            } catch (_) {}
+            renderBatchList();
+        }
+
+        function persistBatch() {
+            try {
+                localStorage.setItem(STORAGE_KEY_BATCH, JSON.stringify(scannedItems));
+            } catch (_) {}
+        }
+
+        function playPosBeep() {
+            if (!beepEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1850, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.11);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.11);
+            } catch (_) {}
+        }
+
+        function toggleBeep() {
+            beepEnabled = !beepEnabled;
+            const btn = document.getElementById('btn-beep-toggle');
+            btn.classList.toggle('active-toggle', beepEnabled);
+            btn.innerText = beepEnabled ? '🔊 BEEP' : '🔇 MUTE';
+            if (beepEnabled) playPosBeep();
+        }
+
+        function detectGS1Origin(code) {
+            const clean = code.replace(/\s+/g, '');
+            if (!/^\d{8,14}$/.test(clean)) return null;
+
+            const p3 = parseInt(clean.substring(0, 3), 10);
+            const p2 = parseInt(clean.substring(0, 2), 10);
+
+            if (p3 === 899) return 'GS1 Indonesia (899)';
+            if (p3 === 885) return 'GS1 Thailand (885)';
+            if (p3 === 888) return 'GS1 Singapura (888)';
+            if (p3 === 955) return 'GS1 Malaysia (955)';
+            if (p3 === 880) return 'GS1 Korea Selatan (880)';
+            if (p3 === 471) return 'GS1 Taiwan (471)';
+            if (p3 === 489) return 'GS1 Hong Kong (489)';
+            if (p3 === 893) return 'GS1 Vietnam (893)';
+            if (p2 === 45 || p2 === 49) return `GS1 Jepang (${p2})`;
+            if (p3 >= 690 && p3 <= 699) return `GS1 Tiongkok (${p3})`;
+            if (p2 >= 0 && p2 <= 13) return 'UPC / GS1 US & Kanada';
+            if (p2 >= 30 && p2 <= 37) return `GS1 Prancis (${p2})`;
+            if (p3 >= 400 && p3 <= 440) return `GS1 Jerman (${p3})`;
+            if (p2 === 50) return 'GS1 Inggris (50)';
+            return `Standar Ritel (${clean.length} Digit)`;
+        }
+
+        function showRtlError(msg) {
+            const box = document.getElementById('rtl-error');
+            box.innerText = msg;
+            box.style.display = 'block';
+        }
+        function clearRtlError() {
+            document.getElementById('rtl-error').style.display = 'none';
+        }
+
+        async function populateRtlCameras() {
+            try {
+                const devices = await Html5Qrcode.getCameras();
+                const sel = document.getElementById('rtl-cam-select');
+                const row = document.getElementById('rtl-cam-row');
+                if (devices && devices.length > 0) {
+                    const prevVal = sel.value;
+                    sel.innerHTML = '';
+                    devices.forEach((dev, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = dev.id;
+                        opt.text = dev.label || `Kamera ${idx + 1}`;
+                        sel.appendChild(opt);
+                    });
+
+                    if (prevVal && devices.some(d => d.id === prevVal)) {
+                        sel.value = prevVal;
+                    } else {
+                        const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
+                        if (backCam) sel.value = backCam.id;
+                    }
+                    row.style.display = devices.length > 1 ? 'flex' : 'none';
+                }
+            } catch (_) {}
+        }
+
+        async function toggleRtlCamera() {
+            if (rtlIsScanning) {
+                await stopRtlCamera();
+            } else {
+                await startRtlCamera();
+            }
+        }
+
+        async function restartRtlCamera() {
+            if (rtlIsScanning) {
+                await stopRtlCamera();
+                await startRtlCamera();
+            }
+        }
+
+        async function startRtlCamera() {
+            if (camMutex) return;
+            camMutex = true;
+            clearRtlError();
+            await stopClassicScanner();
+
+            const toggleBtn = document.getElementById('btn-rtl-toggle');
+            const statusPill = document.getElementById('rtl-status-pill');
+            const placeholder = document.getElementById('rtl-placeholder');
+
+            toggleBtn.disabled = true;
+            statusPill.innerText = 'MEMUAT...';
+            statusPill.style.color = 'var(--c-orange)';
+
+            try {
+                const retailFormats = typeof Html5QrcodeSupportedFormats !== 'undefined' ? [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.ITF,
+                    Html5QrcodeSupportedFormats.CODABAR
+                ].filter(Boolean) : undefined;
+
+                rtlScanner = new Html5Qrcode("reader-retail", {
+                    formatsToSupport: retailFormats,
+                    verbose: false
+                });
+
+                await populateRtlCameras();
+                const camId = document.getElementById('rtl-cam-select').value;
+                const source = camId ? camId : { facingMode: "environment" };
+
+                placeholder.style.display = 'none';
+                await rtlScanner.start(
+                    source,
+                    {
+                        fps: 18,
+                        qrbox: function(w, h) {
+                            const boxW = Math.min(340, Math.floor(w * 0.86));
+                            const boxH = Math.min(135, Math.floor(h * 0.48));
+                            return { width: Math.max(180, boxW), height: Math.max(90, boxH) };
+                        }
+                    },
+                    (text, res) => handleRtlDecoded(text, res, false),
+                    () => {}
+                );
+
+                rtlIsScanning = true;
+                rtlTorchOn = false;
+                toggleBtn.innerText = '⏹ STOP';
+                toggleBtn.className = 'btn btn-danger';
+                statusPill.innerText = 'POS AKTIF';
+                statusPill.style.color = 'var(--c-green)';
+
+                try {
+                    const caps = rtlScanner.getRunningTrackCameraCapabilities();
+                    document.getElementById('btn-rtl-torch').disabled = !(caps && caps.torchFeature && caps.torchFeature().isSupported());
+                } catch (_) {
+                    document.getElementById('btn-rtl-torch').disabled = true;
+                }
+            } catch (err) {
+                placeholder.style.display = 'block';
+                statusPill.innerText = 'ERROR';
+                statusPill.style.color = 'var(--c-red)';
+                showRtlError(`Akses kamera gagal: ${err?.message || err}`);
+            } finally {
+                toggleBtn.disabled = false;
+                camMutex = false;
+            }
+        }
+
+        async function stopRtlCamera() {
+            const toggleBtn = document.getElementById('btn-rtl-toggle');
+            const statusPill = document.getElementById('rtl-status-pill');
+            const placeholder = document.getElementById('rtl-placeholder');
+            const torchBtn = document.getElementById('btn-rtl-torch');
+
+            try {
+                if (rtlScanner && rtlIsScanning) {
+                    await rtlScanner.stop();
+                }
+            } catch (_) {}
+
+            rtlScanner = null;
+            rtlIsScanning = false;
+            rtlTorchOn = false;
+            torchBtn.disabled = true;
+            torchBtn.classList.remove('active-toggle');
+            placeholder.style.display = 'block';
+            toggleBtn.innerText = '▶ MULAI';
+            toggleBtn.className = 'btn btn-green';
+            statusPill.innerText = 'STANDBY';
+            statusPill.style.color = '#777';
+        }
+
+        async function toggleRtlTorch() {
+            if (!rtlScanner || !rtlIsScanning) return;
+            try {
+                const caps = rtlScanner.getRunningTrackCameraCapabilities();
+                const torch = caps.torchFeature();
+                rtlTorchOn = !rtlTorchOn;
+                await torch.apply(rtlTorchOn);
+                document.getElementById('btn-rtl-torch').classList.toggle('active-toggle', rtlTorchOn);
+            } catch (_) {}
+        }
+
+        async function scanRtlFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            clearRtlError();
+            if (rtlIsScanning) await stopRtlCamera();
+
+            try {
+                const fileScanner = new Html5Qrcode("reader-retail", { verbose: false });
+                const result = await fileScanner.scanFileV2(file, false);
+                handleRtlDecoded(result.decodedText, result, true);
+            } catch (_) {
+                showRtlError("Barcode produk tidak ditemukan pada gambar tersebut.");
+            } finally {
+                event.target.value = '';
+            }
+        }
+
+        function submitManualSku() {
+            const input = document.getElementById('manual-sku-input');
+            const val = input.value.trim();
+            if (!val) return;
+            handleRtlDecoded(val, { format: { formatName: 'MANUAL ENTRY' } }, true);
+            input.value = '';
+        }
+
+        function handleRtlDecoded(decodedText, decodedResult, bypassCooldown = false) {
+            const now = Date.now();
+            if (!bypassCooldown && decodedText === lastRtlCode && (now - lastRtlTimestamp) < 1500) {
+                return;
+            }
+
+            lastRtlCode = decodedText;
+            lastRtlTimestamp = now;
+
+            playPosBeep();
+            if (navigator.vibrate) navigator.vibrate(60);
+
+            const formatName = decodedResult?.result?.format?.formatName || decodedResult?.format?.formatName || "1D BARCODE";
+            const gs1Info = detectGS1Origin(decodedText);
+            const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            document.getElementById('rtl-data').innerText = decodedText;
+            document.getElementById('rtl-format').innerText = `Format: ${formatName}`;
+            document.getElementById('rtl-time').innerText = timeStr;
+
+            const gs1El = document.getElementById('rtl-gs1');
+            if (gs1Info) {
+                gs1El.innerText = gs1Info;
+                gs1El.style.display = 'inline-block';
+            } else {
+                gs1El.style.display = 'none';
+            }
+
+            document.getElementById('btn-rtl-copy').disabled = false;
+            document.getElementById('btn-rtl-lookup').disabled = false;
+            document.getElementById('btn-rtl-gen').disabled = false;
+
+            if (document.getElementById('chk-auto-batch').checked) {
+                addToBatchList(decodedText, formatName, gs1Info, timeStr);
+            }
+        }
+
+        function addToBatchList(code, format, gs1, timeStr) {
+            const existingIdx = scannedItems.findIndex(item => item.code === code);
+            if (existingIdx !== -1) {
+                scannedItems[existingIdx].qty += 1;
+                scannedItems[existingIdx].time = timeStr;
+                const [updated] = scannedItems.splice(existingIdx, 1);
+                scannedItems.unshift(updated);
+            } else {
+                scannedItems.unshift({
+                    code: code,
+                    format: format,
+                    gs1: gs1 || '',
+                    note: '',
+                    qty: 1,
+                    time: timeStr
+                });
+            }
+            persistBatch();
+            renderBatchList(code);
+        }
+
+        function escapeHTML(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function renderBatchList(highlightCode = null) {
+            const container = document.getElementById('batch-list');
+            const skuEl = document.getElementById('total-sku-count');
+            const qtyEl = document.getElementById('total-qty-count');
+            const hasItems = scannedItems.length > 0;
+
+            document.getElementById('btn-export-csv').disabled = !hasItems;
+            document.getElementById('btn-copy-batch').disabled = !hasItems;
+            document.getElementById('btn-clear-batch').disabled = !hasItems;
+
+            const totalQty = scannedItems.reduce((sum, item) => sum + item.qty, 0);
+            skuEl.innerText = scannedItems.length;
+            qtyEl.innerText = totalQty;
+
+            if (!hasItems) {
+                container.innerHTML = `<div class="batch-empty">Belum ada produk dipindai.<br>Setiap barcode barang yang terbaca otomatis masuk ke daftar ini dan tersimpan otomatis di peramban.</div>`;
+                return;
+            }
+
+            container.innerHTML = scannedItems.map((item, idx) => `
+                <div class="batch-item ${item.code === highlightCode ? 'flash-new' : ''}">
+                    <div>
+                        <div class="batch-code">${escapeHTML(item.code)}</div>
+                        <div class="batch-sub">${escapeHTML(item.format)} ${item.gs1 ? '• ' + escapeHTML(item.gs1) : ''} • ${item.time}</div>
+                        <input type="text" class="batch-note-input" placeholder="Tambah nama barang / catatan..." value="${escapeHTML(item.note)}" oninput="updateBatchNote(${idx}, this.value)">
+                    </div>
+                    <div class="qty-controls">
+                        <button type="button" class="qty-btn" onclick="changeBatchQty(${idx}, -1)">-</button>
+                        <span class="qty-val">${item.qty}</span>
+                        <button type="button" class="qty-btn" onclick="changeBatchQty(${idx}, 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function changeBatchQty(idx, delta) {
+            if (!scannedItems[idx]) return;
+            scannedItems[idx].qty += delta;
+            if (scannedItems[idx].qty <= 0) {
+                scannedItems.splice(idx, 1);
+            }
+            persistBatch();
+            renderBatchList();
+        }
+
+        function updateBatchNote(idx, val) {
+            if (scannedItems[idx]) {
+                scannedItems[idx].note = val;
+                persistBatch();
+            }
+        }
+
+        function clearBatchList() {
+            scannedItems = [];
+            lastRtlCode = '';
+            persistBatch();
+            renderBatchList();
+        }
+
+        function copyRtlResult() {
+            navigator.clipboard.writeText(document.getElementById('rtl-data').innerText);
+        }
+
+        function lookupRetailWeb() {
+            const code = document.getElementById('rtl-data').innerText.trim();
+            if (!code || code.startsWith('Arahkan')) return;
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(code)}`, '_blank', 'noopener');
+        }
+
+        function sendRtlToGenerator() {
+            const text = document.getElementById('rtl-data').innerText.trim();
+            if (!text || text.startsWith('Arahkan')) return;
+
+            const codeTypeEl = document.getElementById('code-type');
+            if (/^\d{12,13}$/.test(text)) codeTypeEl.value = 'EAN13';
+            else if (/^\d{7,8}$/.test(text)) codeTypeEl.value = 'EAN8';
+            else if (/^\d{11,12}$/.test(text)) codeTypeEl.value = 'UPC';
+            else codeTypeEl.value = 'CODE128';
+
+            onFormatChange();
+            document.getElementById('code-text').value = text;
+            generateCode();
+            switchTab('gen');
+        }
+
+        function copyBatchText() {
+            if (!scannedItems.length) return;
+            const lines = scannedItems.map((it, i) => `${i + 1}. [${it.code}] x${it.qty}${it.note ? ' - ' + it.note : ''} (${it.format})`);
+            navigator.clipboard.writeText(lines.join('\n'));
+        }
+
+        function exportBatchCSV() {
+            if (!scannedItems.length) return;
+            const header = ['No', 'Barcode', 'Format', 'Info_Standar', 'Nama_Catatan', 'Qty', 'Waktu_Scan'];
+            const rows = scannedItems.map((it, i) => [
+                i + 1,
+                `"${it.code.replace(/"/g, '""')}"`,
+                `"${it.format}"`,
+                `"${it.gs1}"`,
+                `"${it.note.replace(/"/g, '""')}"`,
+                it.qty,
+                `"${it.time}"`
+            ].join(','));
+
+            const csvContent = '\uFEFF' + [header.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const dateTag = new Date().toISOString().slice(0, 10);
+            triggerBlobDownload(blob, `GXDiag_ProdukRitel_${dateTag}.csv`);
+        }
+
+        // =========================================
+        // 4. TAB 3: HIGH-RES QR & BARCODE GENERATOR
+        // =========================================
         const FORMAT_META = {
             QR: { sample: "https://brahmantyo12.my.id", hint: "Mendukung URL, teks, Wi-Fi string. Area tengah kosong bebas tabrakan modul." },
             CODE128: { sample: "BTSTORE12-INV-001", hint: "Mendukung huruf, angka, dan simbol ASCII standar." },
@@ -405,48 +1438,16 @@
 
         let uploadedLogoImg = null;
         let jxlEncoderModule = null;
+        let genRafId = null;
 
-        function switchTab(id, tabEl) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            tabEl.classList.add('active');
-            if (id === 'scan') startScanner();
+        function scheduleGenerateCode() {
+            if (genRafId) cancelAnimationFrame(genRafId);
+            genRafId = requestAnimationFrame(() => {
+                genRafId = null;
+                generateCode();
+            });
         }
 
-        // ================= SCANNER LOGIC =================
-        let scanner = null;
-        function onScanSuccess(decodedText, decodedResult) {
-            document.getElementById('scan-res-box').style.display = 'block';
-            document.getElementById('scan-data').innerText = decodedText;
-            document.getElementById('scan-format').innerText = "Format: " + (decodedResult.result.format?.formatName || "Detected");
-            if (navigator.vibrate) navigator.vibrate(50);
-        }
-
-        function startScanner() {
-            if (!scanner) {
-                scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 150 } });
-                scanner.render(onScanSuccess);
-            }
-        }
-        startScanner();
-
-        function copyScanResult() {
-            const text = document.getElementById('scan-data').innerText;
-            navigator.clipboard.writeText(text);
-        }
-
-        function sendToGenerator() {
-            const text = document.getElementById('scan-data').innerText;
-            document.getElementById('code-type').value = 'QR';
-            onFormatChange();
-            document.getElementById('code-text').value = text;
-            generateCode();
-            const genTab = document.querySelectorAll('.tab')[1];
-            switchTab('gen', genTab);
-        }
-
-        // ================= LOGO UPLOAD LOGIC =================
         function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -457,7 +1458,7 @@
                 img.onload = function() {
                     uploadedLogoImg = img;
                     document.getElementById('logo-filename').innerText = file.name;
-                    document.getElementById('clear-logo-btn').style.display = 'inline-block';
+                    document.getElementById('clear-logo-btn').style.display = 'inline-flex';
 
                     const clearSlider = document.getElementById('qr-clear-slider');
                     if (parseInt(clearSlider.value, 10) === 0) {
@@ -478,7 +1479,6 @@
             generateCode();
         }
 
-        // ================= GENERATOR LOGIC =================
         function onFormatChange() {
             const type = document.getElementById('code-type').value;
             const meta = FORMAT_META[type];
@@ -494,18 +1494,18 @@
             generateCode();
         }
 
-        function showError(msg) {
+        function showGenError(msg) {
             const errBox = document.getElementById('gen-error');
             errBox.innerText = msg;
             errBox.style.display = 'block';
         }
 
-        function clearError() {
+        function clearGenError() {
             document.getElementById('gen-error').style.display = 'none';
         }
 
         function generateCode() {
-            clearError();
+            clearGenError();
             const type = document.getElementById('code-type').value;
             const text = document.getElementById('code-text').value.trim();
             const bgMode = document.getElementById('bg-mode').value;
@@ -513,7 +1513,7 @@
             const dimInfo = document.getElementById('dim-info');
 
             if (!text) {
-                showError("Input data tidak boleh kosong.");
+                showGenError("Input data tidak boleh kosong.");
                 return;
             }
 
@@ -531,7 +1531,6 @@
         }
 
         function buildOptimalQR(text, eccLevel, clearRatio) {
-            // Boost minimum matrix version saat lubang tengah besar (>= 34%) agar Finder Pattern tidak memakan rasio area ECC
             let minVersion = 0;
             if (clearRatio >= 0.42) minVersion = 5;
             else if (clearRatio >= 0.34) minVersion = 4;
@@ -542,9 +1541,7 @@
                     qrBoosted.addData(text);
                     qrBoosted.make();
                     return qrBoosted;
-                } catch (_) {
-                    // Fallback ke deteksi ukuran otomatis jika teks melebihi kapasitas minVersion
-                }
+                } catch (_) {}
             }
 
             const qrAuto = qrcode(0, eccLevel);
@@ -561,7 +1558,6 @@
             const statusEl = document.getElementById('clear-zone-status');
             const logoHint = document.getElementById('logo-hint');
 
-            // Kunci ECC ke Level H (30%) jika area tengah dikosongkan
             if (clearRatio > 0 && eccSelect.value !== 'H') {
                 eccSelect.value = 'H';
             }
@@ -591,12 +1587,10 @@
                     ctx.fillRect(0, 0, finalSize, finalSize);
                 }
 
-                // Kalkulasi koordinat zona kosong tengah yang simetris (selalu ganjil)
                 let minEx = -1, maxEx = -1, clearModules = 0;
                 if (clearRatio > 0) {
                     clearModules = Math.round(count * clearRatio);
                     if (clearModules % 2 === 0) clearModules++;
-                    // Batas keras maksimum agar tidak pernah menyentuh Finder Pattern (7 modul + 1 separator di tiap tepi)
                     const maxAllowedModules = count - 18;
                     if (clearModules > maxAllowedModules) {
                         clearModules = maxAllowedModules % 2 === 0 ? maxAllowedModules - 1 : maxAllowedModules;
@@ -608,7 +1602,6 @@
                     maxEx = centerIdx + halfClear;
                 }
 
-                // Update Telemetri Real-Time
                 const actualSidePct = Math.round((clearModules / count) * 100);
                 const actualAreaPct = (((clearModules * clearModules) / (count * count)) * 100).toFixed(1);
                 readoutEl.innerText = `${actualSidePct}% Lebar (~${actualAreaPct}% Area)`;
@@ -641,7 +1634,6 @@
                     }
                 }
 
-                // Gambar logo di pusat zona kosong dengan margin pengaman 1.2 modul
                 if (uploadedLogoImg && clearModules > 0) {
                     const clearZonePx = clearModules * modulePx;
                     const maxLogoBox = Math.max(modulePx, clearZonePx - (modulePx * 1.2));
@@ -657,7 +1649,7 @@
                     ctx.drawImage(uploadedLogoImg, drawX, drawY, drawW, drawH);
                 }
             } catch (e) {
-                showError("Teks terlalu panjang untuk kapasitas QR Code ini.");
+                showGenError("Teks terlalu panjang untuk kapasitas QR Code ini.");
             }
         }
 
@@ -683,11 +1675,10 @@
                     }
                 });
             } catch (err) {
-                showError(err.message || `Gagal membuat barcode ${format}.`);
+                showGenError(err.message || `Gagal membuat barcode ${format}.`);
             }
         }
 
-        // ================= MULTI-FORMAT EXPORT PIPELINE =================
         function triggerBlobDownload(blob, filename) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -700,7 +1691,7 @@
         }
 
         async function downloadImage() {
-            clearError();
+            clearGenError();
             const canvas = document.getElementById('output-canvas');
             const type = document.getElementById('code-type').value;
             const ext = document.getElementById('export-format').value;
@@ -753,7 +1744,7 @@
                     triggerBlobDownload(jxlBlob, filename);
 
                 } catch (err) {
-                    showError(`Gagal melakukan encoding JXL: ${err.message}. Pastikan koneksi internet aktif untuk memuat WASM encoder atau gunakan format PNG.`);
+                    showGenError(`Gagal melakukan encoding JXL: ${err.message}. Pastikan koneksi internet aktif untuk memuat WASM encoder atau gunakan format PNG.`);
                 } finally {
                     btn.disabled = false;
                     btn.innerText = origText;
@@ -761,7 +1752,10 @@
             }
         }
 
-        window.addEventListener('DOMContentLoaded', generateCode);
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedBatch();
+            generateCode();
+        });
     </script>
 </body>
 </html>
