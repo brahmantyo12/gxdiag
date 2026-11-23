@@ -3,89 +3,765 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Barcode & QR</title>
+    <title>GXDiag - Barcode & QR Studio</title>
     <link rel="stylesheet" href="../../css/style.css">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     
     <style>
-        body { background: #0a0a0a; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .mod-header { padding: 15px 20px; background: #111; border-bottom: 1px solid #333; }
-        .back-btn { text-decoration: none; color: #fff; font-weight: bold; }
-        
-        .tabs { display: flex; border-bottom: 1px solid #333; background: #151515; }
-        .tab { flex: 1; padding: 15px; text-align: center; color: #888; cursor: pointer; font-weight: bold; }
-        .tab.active { color: #00e5ff; background: #222; border-bottom: 2px solid #00e5ff; }
+        body { 
+            background: var(--bg-dark, #0a0a0a); 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            padding: 0;
+            overflow: hidden; 
+        }
 
-        .tab-content { display: none; flex-grow: 1; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto; }
+        .mod-header { 
+            width: 100%;
+            padding: 12px 20px; 
+            background: #111; 
+            border-bottom: 1px solid var(--border-color, #333); 
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+        .mod-header .back-btn { position: static; }
+        .mod-title { font-size: 0.85rem; font-weight: 800; color: var(--c-cyan); letter-spacing: 1.5px; text-transform: uppercase; }
+        
+        .tabs { width: 100%; display: flex; border-bottom: 1px solid var(--border-color, #333); background: #151515; }
+        .tab { flex: 1; padding: 14px; text-align: center; color: #888; cursor: pointer; font-weight: bold; font-size: 0.85rem; letter-spacing: 1px; transition: 0.2s; }
+        .tab.active { color: var(--c-cyan); background: #1e1e1e; border-bottom: 2px solid var(--c-cyan); }
+
+        .tab-content { 
+            display: none; 
+            width: 100%;
+            flex-grow: 1; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
         .tab-content.active { display: flex; }
 
-        #reader { width: 100%; max-width: 400px; border-radius: 10px; overflow: hidden; border: 2px solid #333; }
-        .scan-result { margin-top: 20px; width: 100%; max-width: 400px; background: #222; padding: 15px; border-radius: 8px; border: 1px solid #444; display: none; word-break: break-all; }
+        /* SCANNER UI */
+        #reader { width: 100%; max-width: 420px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color, #333); background: #000; }
+        .scan-result { 
+            margin-top: 20px; width: 100%; max-width: 420px; 
+            background: var(--bg-card, #1e1e1e); padding: 15px; 
+            border-radius: 10px; border: 1px solid var(--border-color, #444); 
+            display: none; word-break: break-all; 
+        }
+        .scan-actions { display: flex; gap: 10px; margin-top: 12px; }
+
+        /* GENERATOR UI */
+        .gen-workspace {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 35px;
+        }
+
+        .preview-stage {
+            width: 100%;
+            min-height: 250px;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color, #333);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: #181818;
+            background-image: 
+                linear-gradient(45deg, #222 25%, transparent 25%), 
+                linear-gradient(-45deg, #222 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #222 75%), 
+                linear-gradient(-45deg, transparent 75%, #222 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        #output-canvas {
+            max-width: 240px;
+            max-height: 240px;
+            width: auto;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
+        #output-canvas.barcode-mode {
+            max-width: 100%;
+            max-height: 160px;
+        }
+
+        .res-badge {
+            margin-top: 10px;
+            font-size: 0.7rem;
+            font-family: monospace;
+            color: var(--c-green);
+            background: rgba(0, 230, 118, 0.1);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .control-panel {
+            width: 100%;
+            background: var(--bg-card, #1e1e1e);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-row { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .control-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+
+        label { font-size: 0.72rem; color: #aaa; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+        .val-pill { color: var(--c-cyan); font-family: monospace; font-size: 0.78rem; }
         
-        .gen-box { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        input { background: #222; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 8px; width: 100%; max-width: 300px; margin-bottom: 15px; outline: none; }
-        .gen-btn { background: #00e5ff; color: #000; padding: 10px 30px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        input[type="text"], select {
+            background: #121212;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 0.88rem;
+            outline: none;
+            transition: 0.2s;
+        }
+        input[type="text"]:focus, select:focus { border-color: var(--c-cyan); }
+
+        /* Range Slider Styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            padding: 6px 0;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: #121212;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: var(--c-cyan);
+            margin-top: -6px;
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+        }
+        .slider-scale {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            font-family: monospace;
+            color: #666;
+        }
+
+        /* Custom File Upload Bar */
+        .logo-upload-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            width: 100%;
+        }
+        .file-label {
+            flex: 1;
+            background: #121212;
+            border: 1px dashed #555;
+            color: #ccc;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: 0.2s;
+            overflow: hidden;
+            text-transform: none;
+            font-weight: 500;
+        }
+        .file-label:hover { border-color: var(--c-cyan); color: #fff; }
+        .file-name-truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 240px;
+        }
+        .btn-clear-logo {
+            background: rgba(255, 23, 68, 0.15);
+            border: 1px solid var(--c-red);
+            color: var(--c-red);
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+        .btn-clear-logo:hover { background: var(--c-red); color: #fff; }
+
+        .hint-text { font-size: 0.72rem; color: #777; font-family: monospace; line-height: 1.35; }
+        .error-banner {
+            display: none;
+            width: 100%;
+            background: rgba(255, 23, 68, 0.15);
+            border: 1px solid var(--c-red);
+            color: #ff8a80;
+            font-size: 0.8rem;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .download-bar {
+            display: grid;
+            grid-template-columns: 115px 1fr;
+            gap: 10px;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .btn {
+            padding: 11px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.82rem;
+            letter-spacing: 0.8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn:disabled { opacity: 0.5; cursor: wait; }
+        .btn-download { background: var(--c-green); color: #000; }
+        .btn-download:hover:not(:disabled) { filter: brightness(1.15); }
+        .btn-secondary { background: #2a2a2a; color: #eee; border: 1px solid #444; padding: 8px 12px; font-size: 0.75rem; }
+        .btn-secondary:hover { border-color: var(--c-cyan); color: var(--c-cyan); }
     </style>
 </head>
 <body>
-    <div class="mod-header"><a href="../../index.html" class="back-btn">← DASHBOARD</a></div>
-
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('scan')">SCANNER (ALL)</div>
-        <div class="tab" onclick="switchTab('gen')">GENERATOR</div>
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+        <span class="mod-title">BARCODE & QR STUDIO</span>
+        <div style="width: 80px;"></div>
     </div>
 
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('scan', this)">SCANNER (ALL)</div>
+        <div class="tab" onclick="switchTab('gen', this)">HIGH-RES GENERATOR</div>
+    </div>
+
+    <!-- TAB 1: SCANNER -->
     <div id="scan" class="tab-content active">
         <div id="reader"></div>
-        <div style="color:#555; font-size:0.8rem; margin-top:10px;">Supports: QR, UPC, EAN (Snacks), Code128</div>
+        <div style="color:#666; font-size:0.75rem; margin-top:10px; font-family:monospace;">Mendukung: QR, EAN-13/8, UPC, Code128, Code39, ITF</div>
         <div class="scan-result" id="scan-res-box">
-            <div style="color:#888; font-size:0.75rem;">RESULT:</div>
-            <div id="scan-data" style="color:#fff; font-family:monospace; font-size:1.1rem; font-weight:bold;">-</div>
-            <div id="scan-format" style="color:#00e5ff; font-size:0.8rem; margin-top:5px;">-</div>
+            <div style="color:#888; font-size:0.7rem; text-transform:uppercase;">Hasil Pemindaian:</div>
+            <div id="scan-data" style="color:#fff; font-family:monospace; font-size:1.1rem; font-weight:bold; margin-top:4px;">-</div>
+            <div id="scan-format" style="color:var(--c-cyan); font-size:0.75rem; margin-top:4px;">-</div>
+            <div class="scan-actions">
+                <button class="btn btn-secondary" onclick="copyScanResult()">Salin Teks</button>
+                <button class="btn btn-secondary" onclick="sendToGenerator()">Kirim ke Generator</button>
+            </div>
         </div>
     </div>
 
+    <!-- TAB 2: HIGH-RES GENERATOR -->
     <div id="gen" class="tab-content">
-        <div class="gen-box" id="qrcode"></div>
-        <input type="text" id="qr-text" placeholder="Type text / URL..." value="GXDiag Pro">
-        <button class="gen-btn" onclick="makeCode()">GENERATE</button>
+        <div class="gen-workspace">
+            <div class="preview-stage">
+                <canvas id="output-canvas"></canvas>
+                <div class="res-badge" id="dim-info">2048 × 2048 px (300+ DPI Print Ready)</div>
+            </div>
+
+            <div class="error-banner" id="gen-error"></div>
+
+            <div class="control-panel">
+                <div class="control-row">
+                    <label for="code-type">Jenis Kode (2D / 1D Barcode)</label>
+                    <select id="code-type" onchange="onFormatChange()">
+                        <option value="QR" selected>QR Code (2D Matrix - High Res)</option>
+                        <option value="CODE128">Code 128 (Alfanumerik / Logistik)</option>
+                        <option value="EAN13">EAN-13 (Produk Retail - 12/13 Digit)</option>
+                        <option value="EAN8">EAN-8 (Kemasan Kecil - 7/8 Digit)</option>
+                        <option value="UPC">UPC-A (Retail Standar US - 11/12 Digit)</option>
+                        <option value="CODE39">Code 39 (Industri / Inventaris Aset)</option>
+                        <option value="ITF14">ITF-14 (Karton / Dus Distribusi - 13/14 Digit)</option>
+                        <option value="MSI">MSI Plessey (Rak Gudang - Numerik)</option>
+                        <option value="codabar">Codabar (Medis / Perpustakaan)</option>
+                    </select>
+                </div>
+
+                <div class="control-row">
+                    <label for="code-text">Data / Konten Kode</label>
+                    <input type="text" id="code-text" placeholder="Masukkan teks, URL, atau angka..." value="https://brahmantyo12.my.id" oninput="generateCode()">
+                    <span class="hint-text" id="format-hint">Mendukung URL, teks, Wi-Fi string. Area tengah kosong bebas tabrakan modul.</span>
+                </div>
+
+                <!-- Opsi Khusus QR Code -->
+                <div id="qr-only-section" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="control-row">
+                        <label for="qr-clear-slider">
+                            <span>Kosongkan Area Tengah (Lebar Sisi)</span>
+                            <span class="val-pill" id="clear-zone-readout">36% Lebar (~13.0% Area)</span>
+                        </label>
+                        <input type="range" id="qr-clear-slider" min="0" max="50" step="1" value="36" oninput="generateCode()">
+                        <div class="slider-scale">
+                            <span>0% (Penuh)</span>
+                            <span>28% (Kecil)</span>
+                            <span>40% (Optimal Max)</span>
+                            <span>50% (Ekstrem)</span>
+                        </div>
+                        <span class="hint-text" id="clear-zone-status" style="color: var(--c-green);">[Aman] Kapasitas Error Correction Level H (30%) mencukupi.</span>
+                    </div>
+
+                    <div class="control-row">
+                        <label>Sisipkan Logo Tengah (Opsional)</label>
+                        <div class="logo-upload-bar">
+                            <label for="logo-input" class="file-label">
+                                <span class="file-name-truncate" id="logo-filename">Pilih gambar logo (PNG/SVG/JPG/WebP)...</span>
+                                <span style="color: var(--c-cyan); font-weight: bold;">UNGGAH</span>
+                            </label>
+                            <input type="file" id="logo-input" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
+                            <button type="button" class="btn-clear-logo" id="clear-logo-btn" onclick="removeLogo()" title="Hapus Logo">✕</button>
+                        </div>
+                        <span class="hint-text" id="logo-hint">Logo otomatis diskalakan proporsional di dalam zona kosong tanpa memotong kotak QR.</span>
+                    </div>
+                </div>
+
+                <div class="control-grid-2">
+                    <div class="control-row">
+                        <label for="bg-mode">Latar Belakang</label>
+                        <select id="bg-mode" onchange="generateCode()">
+                            <option value="white" selected>Putih Solid (#FFFFFF)</option>
+                            <option value="transparent">Transparan (Alpha)</option>
+                        </select>
+                    </div>
+                    <div class="control-row" id="qr-ecc-row">
+                        <label for="qr-ecc">Error Correction</label>
+                        <select id="qr-ecc" onchange="generateCode()">
+                            <option value="L">Low (7%)</option>
+                            <option value="M">Medium (15%)</option>
+                            <option value="Q">Quartile (25%)</option>
+                            <option value="H" selected>High (30% - Wajib Logo)</option>
+                        </select>
+                    </div>
+                    <div class="control-row" id="barcode-text-row" style="display: none;">
+                        <label for="show-hr-text">Teks Angka Bawah</label>
+                        <select id="show-hr-text" onchange="generateCode()">
+                            <option value="true" selected>Tampilkan</option>
+                            <option value="false">Sembunyikan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="download-bar">
+                    <select id="export-format" aria-label="Format Unduhan">
+                        <option value="png" selected>PNG</option>
+                        <option value="jpg">JPG</option>
+                        <option value="jxl">JXL</option>
+                    </select>
+                    <button class="btn btn-download" id="download-btn" onclick="downloadImage()">⬇ UNDUH GAMBAR</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        function switchTab(id) {
+        const FORMAT_META = {
+            QR: { sample: "https://brahmantyo12.my.id", hint: "Mendukung URL, teks, Wi-Fi string. Area tengah kosong bebas tabrakan modul." },
+            CODE128: { sample: "BTSTORE12-INV-001", hint: "Mendukung huruf, angka, dan simbol ASCII standar." },
+            EAN13: { sample: "899123456789", hint: "Wajib 12 digit angka (digit ke-13 checksum dihitung otomatis) atau 13 digit valid." },
+            EAN8: { sample: "9638507", hint: "Wajib 7 digit angka (digit ke-8 checksum otomatis) atau 8 digit valid." },
+            UPC: { sample: "012345678905", hint: "Wajib 11 atau 12 digit angka (UPC-A)." },
+            CODE39: { sample: "ASSET-2026-X99", hint: "Mendukung huruf KAPITAL (A-Z), angka (0-9), dan simbol (- . $ / + %)." },
+            ITF14: { sample: "10012345678902", hint: "Wajib 13 atau 14 digit angka untuk kemasan karton/kardus." },
+            MSI: { sample: "1234567890", hint: "Khusus angka (0-9) untuk pelabelan rak gudang." },
+            codabar: { sample: "A123456B", hint: "Angka (0-9) dan (- $ : / . +), diawali/diakhiri huruf A-D." }
+        };
+
+        let uploadedLogoImg = null;
+        let jxlEncoderModule = null;
+
+        function switchTab(id, tabEl) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(id === 'scan') startScanner();
+            tabEl.classList.add('active');
+            if (id === 'scan') startScanner();
         }
 
-        // SCANNER
+        // ================= SCANNER LOGIC =================
         let scanner = null;
         function onScanSuccess(decodedText, decodedResult) {
             document.getElementById('scan-res-box').style.display = 'block';
             document.getElementById('scan-data').innerText = decodedText;
-            document.getElementById('scan-format').innerText = decodedResult.result.format?.formatName || "Detected";
-            if(navigator.vibrate) navigator.vibrate(50);
+            document.getElementById('scan-format').innerText = "Format: " + (decodedResult.result.format?.formatName || "Detected");
+            if (navigator.vibrate) navigator.vibrate(50);
         }
 
         function startScanner() {
-            if(!scanner) {
-                // Config default mendukung scanning UPC/EAN (Barcode Makanan) secara otomatis
-                scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} });
+            if (!scanner) {
+                scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 150 } });
                 scanner.render(onScanSuccess);
             }
         }
         startScanner();
 
-        // GENERATOR
-        let qrcodeObj = new QRCode(document.getElementById("qrcode"), { width: 180, height: 180 });
-        function makeCode() {
-            const elText = document.getElementById("qr-text");
-            if(elText.value) qrcodeObj.makeCode(elText.value);
+        function copyScanResult() {
+            const text = document.getElementById('scan-data').innerText;
+            navigator.clipboard.writeText(text);
         }
-        makeCode();
+
+        function sendToGenerator() {
+            const text = document.getElementById('scan-data').innerText;
+            document.getElementById('code-type').value = 'QR';
+            onFormatChange();
+            document.getElementById('code-text').value = text;
+            generateCode();
+            const genTab = document.querySelectorAll('.tab')[1];
+            switchTab('gen', genTab);
+        }
+
+        // ================= LOGO UPLOAD LOGIC =================
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    uploadedLogoImg = img;
+                    document.getElementById('logo-filename').innerText = file.name;
+                    document.getElementById('clear-logo-btn').style.display = 'inline-block';
+
+                    const clearSlider = document.getElementById('qr-clear-slider');
+                    if (parseInt(clearSlider.value, 10) === 0) {
+                        clearSlider.value = '36';
+                    }
+                    generateCode();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeLogo() {
+            uploadedLogoImg = null;
+            document.getElementById('logo-input').value = '';
+            document.getElementById('logo-filename').innerText = 'Pilih gambar logo (PNG/SVG/JPG/WebP)...';
+            document.getElementById('clear-logo-btn').style.display = 'none';
+            generateCode();
+        }
+
+        // ================= GENERATOR LOGIC =================
+        function onFormatChange() {
+            const type = document.getElementById('code-type').value;
+            const meta = FORMAT_META[type];
+            const inputEl = document.getElementById('code-text');
+            const isQR = type === 'QR';
+
+            document.getElementById('qr-only-section').style.display = isQR ? 'flex' : 'none';
+            document.getElementById('qr-ecc-row').style.display = isQR ? 'flex' : 'none';
+            document.getElementById('barcode-text-row').style.display = isQR ? 'none' : 'flex';
+            document.getElementById('format-hint').innerText = meta.hint;
+            inputEl.value = meta.sample;
+
+            generateCode();
+        }
+
+        function showError(msg) {
+            const errBox = document.getElementById('gen-error');
+            errBox.innerText = msg;
+            errBox.style.display = 'block';
+        }
+
+        function clearError() {
+            document.getElementById('gen-error').style.display = 'none';
+        }
+
+        function generateCode() {
+            clearError();
+            const type = document.getElementById('code-type').value;
+            const text = document.getElementById('code-text').value.trim();
+            const bgMode = document.getElementById('bg-mode').value;
+            const canvas = document.getElementById('output-canvas');
+            const dimInfo = document.getElementById('dim-info');
+
+            if (!text) {
+                showError("Input data tidak boleh kosong.");
+                return;
+            }
+
+            if (type === 'QR') {
+                canvas.classList.remove('barcode-mode');
+                renderHighResQR(canvas, text, bgMode);
+                dimInfo.innerText = `${canvas.width} × ${canvas.height} px (300+ DPI Print Ready)`;
+            } else {
+                canvas.classList.add('barcode-mode');
+                renderHighResBarcode(canvas, type, text, bgMode);
+                if (document.getElementById('gen-error').style.display === 'none') {
+                    dimInfo.innerText = `${canvas.width} × ${canvas.height} px (${type} High-DPI)`;
+                }
+            }
+        }
+
+        function buildOptimalQR(text, eccLevel, clearRatio) {
+            // Boost minimum matrix version saat lubang tengah besar (>= 34%) agar Finder Pattern tidak memakan rasio area ECC
+            let minVersion = 0;
+            if (clearRatio >= 0.42) minVersion = 5;
+            else if (clearRatio >= 0.34) minVersion = 4;
+
+            if (minVersion > 0) {
+                try {
+                    const qrBoosted = qrcode(minVersion, eccLevel);
+                    qrBoosted.addData(text);
+                    qrBoosted.make();
+                    return qrBoosted;
+                } catch (_) {
+                    // Fallback ke deteksi ukuran otomatis jika teks melebihi kapasitas minVersion
+                }
+            }
+
+            const qrAuto = qrcode(0, eccLevel);
+            qrAuto.addData(text);
+            qrAuto.make();
+            return qrAuto;
+        }
+
+        function renderHighResQR(canvas, text, bgMode) {
+            const clearPct = parseInt(document.getElementById('qr-clear-slider').value, 10);
+            const clearRatio = clearPct / 100;
+            const eccSelect = document.getElementById('qr-ecc');
+            const readoutEl = document.getElementById('clear-zone-readout');
+            const statusEl = document.getElementById('clear-zone-status');
+            const logoHint = document.getElementById('logo-hint');
+
+            // Kunci ECC ke Level H (30%) jika area tengah dikosongkan
+            if (clearRatio > 0 && eccSelect.value !== 'H') {
+                eccSelect.value = 'H';
+            }
+
+            if (uploadedLogoImg && clearRatio === 0) {
+                logoHint.innerHTML = `<span style="color:var(--c-orange);">[Info] Geser slider area tengah > 0% untuk menampilkan logo tanpa menimpa modul.</span>`;
+            } else {
+                logoHint.innerText = "Logo otomatis diskalakan proporsional di dalam zona kosong tanpa memotong kotak QR.";
+            }
+
+            try {
+                const qr = buildOptimalQR(text, eccSelect.value, clearRatio);
+                const count = qr.getModuleCount();
+                const quietZone = 4;
+                const totalModules = count + (quietZone * 2);
+
+                const modulePx = Math.floor(2048 / totalModules);
+                const finalSize = modulePx * totalModules;
+
+                canvas.width = finalSize;
+                canvas.height = finalSize;
+                const ctx = canvas.getContext('2d');
+
+                ctx.clearRect(0, 0, finalSize, finalSize);
+                if (bgMode === 'white') {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, finalSize, finalSize);
+                }
+
+                // Kalkulasi koordinat zona kosong tengah yang simetris (selalu ganjil)
+                let minEx = -1, maxEx = -1, clearModules = 0;
+                if (clearRatio > 0) {
+                    clearModules = Math.round(count * clearRatio);
+                    if (clearModules % 2 === 0) clearModules++;
+                    // Batas keras maksimum agar tidak pernah menyentuh Finder Pattern (7 modul + 1 separator di tiap tepi)
+                    const maxAllowedModules = count - 18;
+                    if (clearModules > maxAllowedModules) {
+                        clearModules = maxAllowedModules % 2 === 0 ? maxAllowedModules - 1 : maxAllowedModules;
+                    }
+
+                    const halfClear = Math.floor(clearModules / 2);
+                    const centerIdx = Math.floor(count / 2);
+                    minEx = centerIdx - halfClear;
+                    maxEx = centerIdx + halfClear;
+                }
+
+                // Update Telemetri Real-Time
+                const actualSidePct = Math.round((clearModules / count) * 100);
+                const actualAreaPct = (((clearModules * clearModules) / (count * count)) * 100).toFixed(1);
+                readoutEl.innerText = `${actualSidePct}% Lebar (~${actualAreaPct}% Area)`;
+
+                if (clearPct === 0) {
+                    statusEl.style.color = '#888';
+                    statusEl.innerText = '[Standar] Matriks QR penuh tanpa ruang kosong tengah.';
+                } else if (actualSidePct <= 41) {
+                    statusEl.style.color = 'var(--c-green)';
+                    statusEl.innerText = `[Aman] Luas terpotong ${actualAreaPct}% (Batas ECC H: 30%). Terbaca optimal di semua kamera.`;
+                } else if (actualSidePct <= 45) {
+                    statusEl.style.color = 'var(--c-orange)';
+                    statusEl.innerText = `[Batas Optimal] Luas terpotong ${actualAreaPct}%. Disarankan uji scan kamera sebelum cetak massal.`;
+                } else {
+                    statusEl.style.color = 'var(--c-red)';
+                    statusEl.innerText = `[Zona Ekstrem] Luas terpotong ${actualAreaPct}% mendekati limit Reed-Solomon. Wajib uji scan!`;
+                }
+
+                ctx.fillStyle = '#000000';
+                for (let row = 0; row < count; row++) {
+                    for (let col = 0; col < count; col++) {
+                        if (clearRatio > 0 && row >= minEx && row <= maxEx && col >= minEx && col <= maxEx) {
+                            continue;
+                        }
+                        if (qr.isDark(row, col)) {
+                            const x = (col + quietZone) * modulePx;
+                            const y = (row + quietZone) * modulePx;
+                            ctx.fillRect(x, y, modulePx, modulePx);
+                        }
+                    }
+                }
+
+                // Gambar logo di pusat zona kosong dengan margin pengaman 1.2 modul
+                if (uploadedLogoImg && clearModules > 0) {
+                    const clearZonePx = clearModules * modulePx;
+                    const maxLogoBox = Math.max(modulePx, clearZonePx - (modulePx * 1.2));
+                    const scale = Math.min(maxLogoBox / uploadedLogoImg.width, maxLogoBox / uploadedLogoImg.height);
+                    
+                    const drawW = uploadedLogoImg.width * scale;
+                    const drawH = uploadedLogoImg.height * scale;
+                    const drawX = (finalSize - drawW) / 2;
+                    const drawY = (finalSize - drawH) / 2;
+
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(uploadedLogoImg, drawX, drawY, drawW, drawH);
+                }
+            } catch (e) {
+                showError("Teks terlalu panjang untuk kapasitas QR Code ini.");
+            }
+        }
+
+        function renderHighResBarcode(canvas, format, text, bgMode) {
+            const displayValue = document.getElementById('show-hr-text').value === 'true';
+            try {
+                JsBarcode(canvas, text, {
+                    format: format,
+                    width: 5,
+                    height: 240,
+                    displayValue: displayValue,
+                    font: "monospace",
+                    fontOptions: "bold",
+                    fontSize: 38,
+                    textMargin: 12,
+                    margin: 30,
+                    background: bgMode === 'white' ? '#FFFFFF' : 'rgba(0,0,0,0)',
+                    lineColor: '#000000',
+                    valid: function(valid) {
+                        if (!valid) {
+                            throw new Error(`Format data tidak valid untuk standar ${format}. Periksa panjang digit/karakter.`);
+                        }
+                    }
+                });
+            } catch (err) {
+                showError(err.message || `Gagal membuat barcode ${format}.`);
+            }
+        }
+
+        // ================= MULTI-FORMAT EXPORT PIPELINE =================
+        function triggerBlobDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function downloadImage() {
+            clearError();
+            const canvas = document.getElementById('output-canvas');
+            const type = document.getElementById('code-type').value;
+            const ext = document.getElementById('export-format').value;
+            const rawText = document.getElementById('code-text').value.trim() || 'code';
+            const safeName = rawText.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 24);
+            const filename = `GXDiag_${type}_${safeName}.${ext}`;
+            const btn = document.getElementById('download-btn');
+
+            if (ext === 'png') {
+                canvas.toBlob(blob => triggerBlobDownload(blob, filename), 'image/png');
+                return;
+            }
+
+            if (ext === 'jpg') {
+                const flatCanvas = document.createElement('canvas');
+                flatCanvas.width = canvas.width;
+                flatCanvas.height = canvas.height;
+                const fCtx = flatCanvas.getContext('2d');
+                fCtx.fillStyle = '#FFFFFF';
+                fCtx.fillRect(0, 0, flatCanvas.width, flatCanvas.height);
+                fCtx.drawImage(canvas, 0, 0);
+
+                flatCanvas.toBlob(blob => triggerBlobDownload(blob, filename), 'image/jpeg', 0.95);
+                return;
+            }
+
+            if (ext === 'jxl') {
+                btn.disabled = true;
+                const origText = btn.innerText;
+                btn.innerText = "ENCODING JXL...";
+
+                try {
+                    const nativeJxlBlob = await new Promise(resolve => {
+                        canvas.toBlob(b => resolve(b && b.type === 'image/jxl' ? b : null), 'image/jxl', 0.92);
+                    });
+
+                    if (nativeJxlBlob) {
+                        triggerBlobDownload(nativeJxlBlob, filename);
+                        return;
+                    }
+
+                    if (!jxlEncoderModule) {
+                        jxlEncoderModule = await import('https://cdn.jsdelivr.net/npm/@jsquash/jxl@1.2.0/+esm');
+                    }
+
+                    const ctx = canvas.getContext('2d');
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const jxlBuffer = await jxlEncoderModule.encode(imageData, { quality: 92 });
+                    const jxlBlob = new Blob([jxlBuffer], { type: 'image/jxl' });
+                    triggerBlobDownload(jxlBlob, filename);
+
+                } catch (err) {
+                    showError(`Gagal melakukan encoding JXL: ${err.message}. Pastikan koneksi internet aktif untuk memuat WASM encoder atau gunakan format PNG.`);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = origText;
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', generateCode);
     </script>
 </body>
 </html>
