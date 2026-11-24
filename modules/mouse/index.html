@@ -2,101 +2,1960 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>GXDiag - Mouse</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Mouse & Touchpad Lab</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        .mouse-container { display: flex; gap: 50px; justify-content: center; flex-wrap: wrap; }
-        .mouse-body { position: relative; width: 160px; height: 260px; background: #222; border-radius: 70px 70px 60px 60px; border: 2px solid #444; }
-        .ms-btn { position: absolute; background: #333; border: 1px solid #444; transition: 0.05s; }
-        .ms-btn.pressed { background: #00e5ff; box-shadow: 0 0 20px #00e5ff; }
-        .ms-left { top:0; left:0; width:78px; height:100px; border-radius:68px 0 0 0; }
-        .ms-right { top:0; right:0; width:78px; height:100px; border-radius:0 68px 0 0; }
-        .ms-mid { top:30px; left:68px; width:24px; height:45px; border-radius:12px; background:#111; z-index:2; }
-        .ms-mid.scroll { background: #ff4081; }
-        .ms-s1 { top:120px; left:-8px; width:15px; height:35px; border-radius:5px 0 0 5px; background:#444; }
-        .ms-s2 { top:160px; left:-8px; width:15px; height:35px; border-radius:5px 0 0 5px; background:#444; }
-        
-        .touch-area { width: 300px; height: 200px; background: #111; border: 2px dashed #444; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden;}
-        .touch-point { position: absolute; width: 40px; height: 40px; background: rgba(0,229,255,0.5); border-radius: 50%; transform: translate(-50%, -50%); display:flex; align-items:center; justify-content:center; font-weight:bold;}
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            overscroll-behavior-x: none;
+        }
+
+        body {
+            background: var(--bg-dark, #121212);
+            color: #eee;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Header */
+        .mod-header {
+            width: 100%;
+            padding: 12px 18px;
+            background: #111;
+            border-bottom: 1px solid var(--border-color, #333);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .mod-header .back-btn { position: static; margin: 0; white-space: nowrap; }
+        .mod-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--c-cyan, #00e5ff);
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+        }
+        @media (max-width: 520px) {
+            .mod-title { font-size: 0.76rem; letter-spacing: 0.8px; }
+        }
+        .header-controls { display: flex; align-items: center; gap: 8px; }
+
+        .lock-pill {
+            font-size: 0.68rem;
+            font-family: monospace;
+            font-weight: 800;
+            padding: 5px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            border: 1px solid rgba(0, 230, 118, 0.4);
+            background: rgba(0, 230, 118, 0.12);
+            color: var(--c-green, #00e676);
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .lock-pill.unlocked {
+            border-color: rgba(255, 145, 0, 0.4);
+            background: rgba(255, 145, 0, 0.12);
+            color: var(--c-orange, #ff9100);
+        }
+
+        /* Main Layout */
+        .main-container {
+            width: 100%;
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+            align-items: start;
+        }
+        @media (min-width: 1024px) {
+            .main-container {
+                padding: 24px;
+                grid-template-columns: 440px 1fr;
+                gap: 24px;
+            }
+            .sticky-col {
+                position: sticky;
+                top: 72px;
+            }
+        }
+
+        .panel-card {
+            width: 100%;
+            background: var(--bg-card, linear-gradient(145deg, #1e1e1e, #252525));
+            border: 1px solid var(--border-color, #333);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        .section-heading {
+            font-size: 0.74rem;
+            font-weight: 800;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            min-height: 32px;
+            padding: 5px 10px;
+            border-radius: 7px;
+            border: 1px solid #444;
+            background: #181818;
+            color: #ddd;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .btn:hover { border-color: var(--c-cyan, #00e5ff); color: var(--c-cyan, #00e5ff); }
+        .btn.active-filter {
+            background: rgba(0, 229, 255, 0.16);
+            border-color: var(--c-cyan, #00e5ff);
+            color: var(--c-cyan, #00e5ff);
+        }
+        .btn-cyan { background: var(--c-cyan, #00e5ff); color: #000; border-color: var(--c-cyan, #00e5ff); }
+        .btn-cyan:hover { filter: brightness(1.12); color: #000; }
+        .btn-green { background: rgba(0, 230, 118, 0.15); border-color: var(--c-green, #00e676); color: var(--c-green, #00e676); }
+        .btn-green:hover { background: var(--c-green, #00e676); color: #000; }
+        .btn-danger { background: rgba(255, 23, 68, 0.15); border-color: var(--c-red, #ff1744); color: var(--c-red, #ff1744); }
+        .btn-danger:hover { background: var(--c-red, #ff1744); color: #fff; }
+
+        /* =========================================
+           DEVICE IDENTITY & EXPORT BAR
+           ========================================= */
+        .device-form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        @media (min-width: 640px) {
+            .device-form-grid {
+                grid-template-columns: 1.4fr 1fr auto;
+            }
+        }
+        .gx-input, .gx-select {
+            width: 100%;
+            min-height: 36px;
+            background: #111418;
+            border: 1px solid #353c47;
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: #fff;
+            font-family: monospace;
+            font-size: 0.76rem;
+            outline: none;
+            user-select: text;
+        }
+        .gx-input:focus, .gx-select:focus {
+            border-color: var(--c-cyan, #00e5ff);
+            box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15);
+        }
+
+        .export-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: #111317;
+            border: 1px solid #2b313a;
+            border-radius: 9px;
+            padding: 8px 10px;
+        }
+        .export-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        /* =========================================
+           2D TOP-DOWN MOUSE SVG STAGE
+           ========================================= */
+        .mouse-2d-stage {
+            width: 100%;
+            background: radial-gradient(circle at 50% 50%, #191f26 0%, #0d0f13 85%);
+            border: 1px solid #2d333b;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .mouse-2d-svg {
+            width: 100%;
+            max-width: 310px;
+            height: auto;
+            display: block;
+        }
+
+        .svg-btn {
+            transition: fill 0.05s ease, stroke 0.05s ease, filter 0.05s ease;
+        }
+        .svg-btn.pressed {
+            fill: #00e5ff !important;
+            stroke: #ffffff !important;
+            filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.85));
+        }
+        .svg-btn.fault-flash {
+            fill: #ff1744 !important;
+            stroke: #ffffff !important;
+            filter: drop-shadow(0 0 10px rgba(255, 23, 68, 0.95));
+        }
+
+        .svg-vwheel.scroll-up {
+            stroke: #00e676 !important;
+            filter: drop-shadow(0 0 8px rgba(0, 230, 118, 0.85));
+        }
+        .svg-vwheel.scroll-down {
+            stroke: #ff4081 !important;
+            filter: drop-shadow(0 0 8px rgba(255, 64, 129, 0.85));
+        }
+
+        .svg-zone-lbl {
+            font-family: monospace;
+            font-size: 9.5px;
+            font-weight: 800;
+            fill: #7f8b9c;
+            pointer-events: none;
+            transition: fill 0.05s;
+        }
+        .svg-zone-lbl.lit {
+            fill: #000000;
+        }
+        .svg-side-lbl {
+            font-family: monospace;
+            font-size: 9px;
+            font-weight: 800;
+            fill: #7f8b9c;
+            pointer-events: none;
+            transition: fill 0.05s;
+        }
+        .svg-side-lbl.lit {
+            fill: #00e5ff;
+        }
+
+        /* Raw HID Inspector Strip */
+        .hid-inspector {
+            background: #101010;
+            border: 1px solid #2c2c2c;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-family: monospace;
+            font-size: 0.68rem;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        /* Switch & Encoder Diagnostic Table (All 8 Buttons) */
+        .diag-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: monospace;
+            font-size: 0.71rem;
+        }
+        .diag-table th {
+            text-align: left;
+            color: #777;
+            font-size: 0.62rem;
+            padding: 5px 5px;
+            border-bottom: 1px solid #333;
+        }
+        .diag-table td {
+            padding: 5px 5px;
+            border-bottom: 1px solid #242424;
+            color: #ddd;
+            transition: background 0.06s, color 0.06s;
+        }
+        .diag-table tr.row-pressed td {
+            background: rgba(0, 229, 255, 0.18);
+            color: #ffffff;
+        }
+        .diag-table tr.row-fault td {
+            background: rgba(255, 23, 68, 0.28) !important;
+            color: #ffffff !important;
+        }
+        .badge-ok { color: var(--c-green, #00e676); font-weight: bold; }
+        .badge-warn { color: var(--c-red, #ff1744); font-weight: bold; }
+
+        /* Dual Scroll Encoder Grid */
+        .encoder-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        @media (max-width: 400px) {
+            .encoder-grid { grid-template-columns: 1fr; }
+        }
+        .encoder-card {
+            background: #121212;
+            border: 1px solid #2e2e2e;
+            border-radius: 8px;
+            padding: 9px 10px;
+            font-family: monospace;
+            font-size: 0.71rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: border-color 0.08s, background 0.08s;
+        }
+        .encoder-card.enc-active {
+            border-color: var(--c-cyan, #00e5ff);
+            background: rgba(0, 229, 255, 0.08);
+        }
+        .enc-title { font-size: 0.61rem; color: #888; font-weight: 800; }
+
+        /* =========================================
+           TELEMETRY & CONCLUSION BOX
+           ========================================= */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        @media (min-width: 600px) {
+            .metrics-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        .metric-box {
+            background: #121212;
+            border: 1px solid #2f2f2f;
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .metric-lbl {
+            font-size: 0.65rem;
+            color: #888;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .metric-val {
+            font-family: monospace;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--c-cyan, #00e5ff);
+        }
+        .metric-sub {
+            font-family: monospace;
+            font-size: 0.66rem;
+            color: #666;
+        }
+
+        .verdict-box {
+            background: #101419;
+            border: 1px solid #2d3746;
+            border-left: 4px solid var(--c-cyan, #00e5ff);
+            border-radius: 9px;
+            padding: 10px 12px;
+            font-family: monospace;
+            font-size: 0.74rem;
+            line-height: 1.5;
+            color: #cfd8e3;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .verdict-box.verdict-pass { border-left-color: var(--c-green, #00e676); }
+        .verdict-box.verdict-warn { border-left-color: var(--c-orange, #ff9100); }
+        .verdict-box.verdict-fail { border-left-color: var(--c-red, #ff1744); }
+
+        .canvas-wrap {
+            width: 100%;
+            background: #0c0c0c;
+            border: 1px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        canvas { display: block; width: 100%; }
+
+        .hint-bar {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #777;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        /* =========================================
+           REAL-TIME ACTIVITY LOG TERMINAL
+           ========================================= */
+        .log-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .log-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .log-terminal {
+            width: 100%;
+            height: 215px;
+            overflow-y: auto;
+            background: #0a0c0f;
+            border: 1px solid #2b3038;
+            border-radius: 9px;
+            padding: 8px 10px;
+            font-family: monospace;
+            font-size: 0.71rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            user-select: text;
+        }
+        .log-row {
+            display: grid;
+            grid-template-columns: 76px 86px 1fr auto;
+            gap: 8px;
+            padding: 3px 4px;
+            border-bottom: 1px solid #161a20;
+            align-items: center;
+        }
+        @media (max-width: 560px) {
+            .log-row {
+                grid-template-columns: 68px 1fr auto;
+            }
+            .log-cat { display: none; }
+        }
+        .log-ts { color: #6c7787; }
+        .log-cat {
+            font-weight: 800;
+            font-size: 0.64rem;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: #171c24;
+            color: #9aa5b4;
+            text-align: center;
+        }
+        .log-msg { color: #dce3ec; word-break: break-word; }
+        .log-badge-ok { color: var(--c-green, #00e676); font-weight: 800; font-size: 0.65rem; }
+        .log-badge-fault { color: var(--c-red, #ff1744); font-weight: 800; font-size: 0.65rem; }
+        .log-badge-info { color: var(--c-cyan, #00e5ff); font-weight: 800; font-size: 0.65rem; }
+
+        /* Multi-Touch Panel */
+        #mt-panel {
+            height: 170px;
+            position: relative;
+            overflow: hidden;
+            touch-action: none;
+            background: #0c0c0c;
+            border: 1px dashed #3a3a3a;
+            border-radius: 10px;
+        }
+        .mt-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #3a3a3a;
+            font-family: monospace;
+            font-weight: 800;
+            font-size: 0.8rem;
+            text-align: center;
+            pointer-events: none;
+        }
+        .touch-point {
+            position: absolute;
+            width: 46px;
+            height: 46px;
+            background: rgba(0, 229, 255, 0.25);
+            border: 2px solid var(--c-cyan, #00e5ff);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.45);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: #fff;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <a href="../../index.html" class="back-btn">← MENU</a>
-    <h2>Mouse & Touchpad</h2>
-    
-    <div class="panel">
-        <div class="mouse-container">
-            <div class="mouse-body">
-                <div id="m0" class="ms-btn ms-left"></div>
-                <div id="m2" class="ms-btn ms-right"></div>
-                <div id="m1" class="ms-btn ms-mid"></div>
-                <div id="m3" class="ms-btn ms-s2"></div>
-                <div id="m4" class="ms-btn ms-s1"></div>
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn" id="exit-link">← MENU</a>
+        <span class="mod-title">MOUSE &amp; TOUCHPAD LAB</span>
+        <div class="header-controls">
+            <button type="button" class="lock-pill" id="nav-lock-btn" onclick="toggleNavLock()" title="Kunci tombol Back/Forward & swipe horizontal agar tidak keluar halaman">
+                🔒 NAV LOCK: ON
+            </button>
+            <button type="button" class="btn btn-danger" onclick="resetAllMetrics()">RESET</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- KOLOM KIRI: 2D TOP-DOWN MOUSE MAP & TABEL 8 TOMBOL -->
+        <div class="sticky-col" style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="panel-card">
+                <div class="section-heading">
+                    <span>2D Top-Down Mouse Map</span>
+                    <span id="last-event-tag" style="font-family: monospace; color: var(--c-cyan);">READY</span>
+                </div>
+
+                <!-- Clean 2D Top-Down Mouse Visual -->
+                <div class="mouse-2d-stage">
+                    <svg class="mouse-2d-svg" viewBox="0 0 320 264" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="body2dGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#282e38"/>
+                                <stop offset="100%" stop-color="#181c23"/>
+                            </linearGradient>
+                            <linearGradient id="btn2dGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#353d4b"/>
+                                <stop offset="100%" stop-color="#272e39"/>
+                            </linearGradient>
+                        </defs>
+
+                        <!-- USB Cable & Strain Relief -->
+                        <line x1="160" y1="0" x2="160" y2="16" stroke="#3c4452" stroke-width="3.5" stroke-linecap="round"/>
+                        <rect x="154" y="13" width="12" height="11" rx="2.5" fill="#222730" stroke="#454f5e" stroke-width="1.2"/>
+
+                        <!-- Outer Mouse Shadow Silhouette -->
+                        <path d="M 118,24 L 202,24 C 218,24 226,42 226,74 L 224,182 C 222,226 196,252 160,252 C 124,252 98,226 96,182 L 94,74 C 94,42 102,24 118,24 Z"
+                              fill="#0e1116" stroke="#363f4d" stroke-width="1.5"/>
+
+                        <!-- LMB (Left Click - Btn 0) -->
+                        <path id="m0" class="svg-btn"
+                              d="M 118,26 L 158,26 L 158,41 C 151,42 148,46 148,53 L 148,92 C 148,99 151,103 158,104 L 158,113 L 97,113 L 97,74 C 97,44 104,26 118,26 Z"
+                              fill="url(#btn2dGrad)" stroke="#4c5769" stroke-width="1.2"/>
+                        <text id="lbl-0" class="svg-zone-lbl" x="122" y="74" text-anchor="middle">LMB</text>
+
+                        <!-- RMB (Right Click - Btn 2) -->
+                        <path id="m2" class="svg-btn"
+                              d="M 162,26 L 202,26 C 216,26 223,44 223,74 L 223,113 L 162,113 L 162,104 C 169,103 172,99 172,92 L 172,53 C 172,46 169,42 162,41 Z"
+                              fill="url(#btn2dGrad)" stroke="#4c5769" stroke-width="1.2"/>
+                        <text id="lbl-2" class="svg-zone-lbl" x="198" y="74" text-anchor="middle">RMB</text>
+
+                        <!-- Center Scroll Well Housing -->
+                        <rect x="150" y="43" width="20" height="59" rx="9" fill="#0b0d11" stroke="#2c3340" stroke-width="1"/>
+
+                        <!-- Scroll Direction Arrows -->
+                        <polygon id="arr-up" points="160,34 155,40 165,40" fill="#445061"/>
+                        <polygon id="arr-dn" points="160,111 155,105 165,105" fill="#445061"/>
+
+                        <!-- MMB / Vertical Scroll Wheel (Btn 1) -->
+                        <rect id="m1" class="svg-btn svg-vwheel" x="153" y="50" width="14" height="45" rx="6"
+                              fill="#1e232c" stroke="#616e85" stroke-width="1.4"/>
+                        <g stroke="#4b5669" stroke-width="1.2">
+                            <line x1="155" y1="58" x2="165" y2="58"/>
+                            <line x1="155" y1="65" x2="165" y2="65"/>
+                            <line x1="155" y1="72" x2="165" y2="72"/>
+                            <line x1="155" y1="79" x2="165" y2="79"/>
+                            <line x1="155" y1="86" x2="165" y2="86"/>
+                        </g>
+
+                        <!-- Rear Palm Body Shell -->
+                        <path d="M 97,117 L 223,117 L 221,182 C 219,223 194,249 160,249 C 126,249 101,223 99,182 Z"
+                              fill="url(#body2dGrad)" stroke="#3e4756" stroke-width="1.2"/>
+
+                        <!-- Subtle Ergonomic Palm Lines & Logo -->
+                        <path d="M 114,132 C 112,175 118,212 136,232" fill="none" stroke="#313947" stroke-width="1.1" stroke-linecap="round"/>
+                        <path d="M 206,132 C 208,175 202,212 184,232" fill="none" stroke="#313947" stroke-width="1.1" stroke-linecap="round"/>
+                        <path d="M 151,196 L 160,187 L 169,196 M 154,204 L 160,198 L 166,204"
+                              fill="none" stroke="#00e5ff" stroke-opacity="0.38" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+                        <!-- Left Flank Side Buttons: MB5 Forward (Btn 4) & MB4 Back (Btn 3) -->
+                        <rect id="m4" class="svg-btn" x="87" y="102" width="8" height="36" rx="3.5"
+                              fill="#384150" stroke="#5b677c" stroke-width="1.2"/>
+                        <text id="lbl-4" class="svg-side-lbl" x="80" y="123" text-anchor="end">FWD (4)</text>
+
+                        <rect id="m3" class="svg-btn" x="87" y="144" width="8" height="36" rx="3.5"
+                              fill="#384150" stroke="#5b677c" stroke-width="1.2"/>
+                        <text id="lbl-3" class="svg-side-lbl" x="80" y="165" text-anchor="end">BACK (3)</text>
+                    </svg>
+                </div>
+
+                <!-- Raw HID Signal Inspector -->
+                <div class="hid-inspector">
+                    <span>HID: <b id="raw-hid-btn" style="color:#fff;">Btn:- | Mask:0x00</b></span>
+                    <span>KEY/MACRO: <b id="raw-hid-key" style="color:var(--c-orange);">-</b></span>
+                </div>
+
+                <!-- Tabel Diagnostik Lengkap 8 Tombol (Termasuk tombol ekstra non-visual) -->
+                <table class="diag-table">
+                    <thead>
+                        <tr>
+                            <th>TOMBOL (HID)</th>
+                            <th>KLIK</th>
+                            <th>MIN Δt</th>
+                            <th>CHATTERING</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="row-0">
+                            <td>LMB (Btn 0)</td>
+                            <td id="cnt-0">0</td>
+                            <td id="min-0">-</td>
+                            <td id="dbl-0" class="badge-ok">0 (OK)</td>
+                        </tr>
+                        <tr id="row-2">
+                            <td>RMB (Btn 2)</td>
+                            <td id="cnt-2">0</td>
+                            <td id="min-2">-</td>
+                            <td id="dbl-2" class="badge-ok">0 (OK)</td>
+                        </tr>
+                        <tr id="row-1">
+                            <td>MMB (Btn 1)</td>
+                            <td id="cnt-1">0</td>
+                            <td id="min-1">-</td>
+                            <td id="dbl-1" class="badge-ok">0 (OK)</td>
+                        </tr>
+                        <tr id="row-3">
+                            <td>MB4 BACK (Btn 3)</td>
+                            <td id="cnt-3">0</td>
+                            <td id="min-3">-</td>
+                            <td id="dbl-3" class="badge-ok">0 (OK)</td>
+                        </tr>
+                        <tr id="row-4">
+                            <td>MB5 FWD (Btn 4)</td>
+                            <td id="cnt-4">0</td>
+                            <td id="min-4">-</td>
+                            <td id="dbl-4" class="badge-ok">0 (OK)</td>
+                        </tr>
+                        <tr id="row-5">
+                            <td>MB6 SNIPER (Btn 5)</td>
+                            <td id="cnt-5">0</td>
+                            <td id="min-5">-</td>
+                            <td id="dbl-5" class="badge-ok">0 (OK)</td>
+                        </tr>
+                        <tr id="row-6">
+                            <td>MB7 / G7 (Btn 6)</td>
+                            <td id="cnt-6">0</td>
+                            <td id="min-6">-</td>
+                            <td id="dbl-6" class="badge-ok">0 (OK)</td>
+                        </tr>
+                        <tr id="row-7">
+                            <td>MB8 / G8 (Btn 7)</td>
+                            <td id="cnt-7">0</td>
+                            <td id="min-7">-</td>
+                            <td id="dbl-7" class="badge-ok">0 (OK)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Dual Scroll Wheel Encoder Diagnostics (Vertical + Horizontal) -->
+                <div class="encoder-grid">
+                    <div class="encoder-card" id="enc-v-card">
+                        <div class="enc-title">VERTICAL WHEEL (deltaY)</div>
+                        <div>
+                            <span style="color:var(--c-green);">▲ UP: <b id="scr-up-cnt">0</b></span> &nbsp;
+                            <span style="color:#ff4081;">▼ DN: <b id="scr-dn-cnt">0</b></span>
+                        </div>
+                        <div>GLITCH: <span id="scr-v-glitch" class="badge-ok">0 (OK)</span></div>
+                    </div>
+
+                    <div class="encoder-card" id="enc-h-card">
+                        <div class="enc-title">THUMB / HORIZONTAL (deltaX)</div>
+                        <div>
+                            <span style="color:var(--c-orange);">◀ LT: <b id="scr-lt-cnt">0</b></span> &nbsp;
+                            <span style="color:var(--c-cyan);">▶ RT: <b id="scr-rt-cnt">0</b></span>
+                        </div>
+                        <div>GLITCH: <span id="scr-h-glitch" class="badge-ok">0 (OK)</span></div>
+                    </div>
+                </div>
             </div>
-            <div id="touch" class="touch-area">
-                <div style="color:#666; font-size:0.8rem;">HOVER / TOUCH / SCROLL</div>
-                <h3 id="hz" style="color:#00e5ff; margin:5px 0;">0 Hz</h3>
-                <div id="coords" style="font-family:monospace;">X:0 Y:0</div>
+        </div>
+
+        <!-- KOLOM KANAN: IDENTITAS PERANGKAT, POLLING RATE + KESIMPULAN, LOG & TRAJECTORY -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- 0. Identitas Merk Mouse & Export Laporan -->
+            <div class="panel-card">
+                <div class="section-heading">
+                    <span>Identitas Unit Perangkat &amp; Export Data</span>
+                    <span id="hid-probe-status" style="font-family: monospace; color: #888;">MANUAL / WEBHID</span>
+                </div>
+
+                <div class="device-form-grid">
+                    <input type="text" id="device-brand-input" class="gx-input" placeholder="Merk & Tipe Mouse (cth: Logitech G502 X / Fantech Helios II)" oninput="updateDiagnosticVerdict()">
+                    <select id="device-conn-select" class="gx-select" onchange="updateDiagnosticVerdict()">
+                        <option value="USB Wired">USB Wired (Kabel)</option>
+                        <option value="2.4GHz Wireless Dongle">2.4GHz Wireless Dongle</option>
+                        <option value="Bluetooth LE">Bluetooth LE</option>
+                        <option value="Internal Touchpad">Internal Touchpad</option>
+                    </select>
+                    <button type="button" class="btn" onclick="probeWebHIDDevice()" title="Deteksi nama produk & Vendor ID USB/Dongle via WebHID">
+                        🔍 PROBE HID
+                    </button>
+                </div>
+
+                <div class="export-bar">
+                    <span style="font-family: monospace; font-size: 0.69rem; color: #9aa5b4;">
+                        UNDUH LAPORAN DIAGNOSTIK &amp; LOG:
+                    </span>
+                    <div class="export-actions">
+                        <button type="button" class="btn btn-cyan" onclick="exportReportJSON()">⬇ JSON</button>
+                        <button type="button" class="btn btn-green" onclick="exportLogCSV()">⬇ CSV (EXCEL)</button>
+                        <button type="button" class="btn" onclick="exportSummaryTXT()">⬇ TXT REPORT</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. Global Polling Rate, Jitter & Kesimpulan Otomatis -->
+            <div class="panel-card">
+                <div class="section-heading">
+                    <span>Global Polling Rate &amp; Kesimpulan Diagnostik</span>
+                    <span id="usb-tier-badge" style="color: var(--c-green); font-family: monospace;">GERAKKAN MOUSE DI MANA SAJA</span>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-lbl">Polling Rate (Avg)</span>
+                        <span class="metric-val" id="hz-avg">0 Hz</span>
+                        <span class="metric-sub" id="hz-tier">Standby</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-lbl">Peak Rate</span>
+                        <span class="metric-val" id="hz-peak" style="color: var(--c-green);">0 Hz</span>
+                        <span class="metric-sub">Maksimum terbaca</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-lbl">Report Interval</span>
+                        <span class="metric-val" id="dt-avg" style="color: #fff;">0.00 ms</span>
+                        <span class="metric-sub">1000Hz = 1.00ms</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-lbl">Polling Jitter (σ)</span>
+                        <span class="metric-val" id="dt-jitter" style="color: var(--c-orange);">0.00 ms</span>
+                        <span class="metric-sub" id="jitter-status">Varians waktu HID</span>
+                    </div>
+                </div>
+
+                <!-- Automated Polling & Hardware Conclusion Box -->
+                <div class="verdict-box" id="diagnostic-verdict-box">
+                    <div><b>KESIMPULAN POLLING RATE:</b> <span id="verdict-polling-text">Menunggu sampel gerakan mouse (minimal 15 paket HID)...</span></div>
+                    <div><b>STATUS HARDWARE (SWITCH/ENCODER/SENSOR):</b> <span id="verdict-hw-text" style="color: var(--c-green);">Belum ditemukan anomali (Standby)</span></div>
+                </div>
+
+                <div class="canvas-wrap">
+                    <canvas id="poll-graph" height="120"></canvas>
+                </div>
+
+                <div class="hint-bar">
+                    <span>Metode: <b>PointerEvents + getCoalescedEvents()</b> (Bypass VSync limit)</span>
+                    <span id="sample-count">Sampel: 0 paket</span>
+                </div>
+            </div>
+
+            <!-- 2. Real-Time Mouse Activity Log -->
+            <div class="panel-card">
+                <div class="section-heading">
+                    <span>Log Aktivitas Mouse (Real-Time)</span>
+                    <span id="log-counter-badge" style="font-family: monospace; color: var(--c-cyan);">0 EVENTS</span>
+                </div>
+
+                <div class="log-toolbar">
+                    <div class="log-filters">
+                        <button type="button" class="btn active-filter" id="flt-ALL" onclick="setLogFilter('ALL')">ALL</button>
+                        <button type="button" class="btn" id="flt-CLICK" onclick="setLogFilter('CLICK')">CLICKS</button>
+                        <button type="button" class="btn" id="flt-FAULT" onclick="setLogFilter('FAULT')">FAULTS</button>
+                        <button type="button" class="btn" id="flt-SCROLL" onclick="setLogFilter('SCROLL')">SCROLL</button>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" class="btn" id="btn-log-pause" onclick="toggleLogPause()">⏸ PAUSE</button>
+                        <button type="button" class="btn" onclick="clearActivityLogs()">HAPUS LOG</button>
+                    </div>
+                </div>
+
+                <div class="log-terminal" id="log-terminal">
+                    <div style="color:#5c6675; text-align:center; padding: 24px 0;">
+                        Belum ada aktivitas terekam. Klik tombol, gulir wheel, atau gerakkan mouse untuk memulai pencatatan.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Sensor Trajectory, Ripple & Spatial Jitter Pad -->
+            <div class="panel-card">
+                <div class="section-heading">
+                    <span>Sensor Trajectory &amp; Spatial Jitter Pad</span>
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" class="btn btn-cyan" id="btn-ptr-lock" onclick="requestUnboundedLock()">🔒 POINTER LOCK</button>
+                        <button type="button" class="btn" onclick="clearTrajectoryCanvas()">BERSIHKAN</button>
+                    </div>
+                </div>
+
+                <div class="canvas-wrap" id="traj-wrap">
+                    <canvas id="traj-canvas" height="200"></canvas>
+                </div>
+
+                <div class="hint-bar">
+                    <span id="coords-readout">POS: X:0 Y:0 | dX:0 dY:0</span>
+                    <span id="spatial-jitter-readout">Spatial Ripple/Jitter: <b style="color:var(--c-green);">0.0% (Bersih)</b></span>
+                </div>
+            </div>
+
+            <!-- 4. Multi-Touch & Touchpad Area -->
+            <div class="panel-card">
+                <div class="section-heading">
+                    <span>Multi-Touch Digitizer &amp; Touchpad</span>
+                    <span id="touch-count-badge" style="font-family: monospace; color: var(--c-cyan);">0 JARI AKTIF</span>
+                </div>
+
+                <div id="mt-panel">
+                    <div class="mt-watermark" id="mt-watermark">SENTUH / GESER JARI DI AREA INI (MULTI-TOUCH)</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="panel" id="mt-panel" style="height:200px; position:relative; overflow:hidden; touch-action:none;">
-        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#444; font-weight:bold;">MULTI-TOUCH SCREEN AREA</div>
-    </div>
-
     <script>
-        // Mouse Buttons
-        window.addEventListener('mousedown', e => {
-            const el = document.getElementById('m'+e.button);
-            if(el) { el.classList.add('pressed'); e.preventDefault(); }
-        });
-        window.addEventListener('mouseup', e => {
-            const el = document.getElementById('m'+e.button);
-            if(el) el.classList.remove('pressed');
-        });
-        window.addEventListener('contextmenu', e => e.preventDefault());
-        window.addEventListener('wheel', e => {
-            const el = document.getElementById('m1'); el.classList.add('scroll');
-            setTimeout(()=>el.classList.remove('scroll'), 150);
-        });
+        // =========================================
+        // 0. SESSION & ACTIVITY LOGGER ENGINE
+        // =========================================
+        const sessionStartPerf = performance.now();
+        const sessionStartDate = new Date();
+        let activityLogs = [];
+        let logSeqCounter = 0;
+        let currentLogFilter = 'ALL';
+        let isLogPaused = false;
+        let detectedHidHardware = { productName: '', vendorId: '', productId: '' };
 
-        // Polling Rate
-        let lastT = performance.now();
-        let polls = [];
-        const tArea = document.getElementById('touch');
-        tArea.addEventListener('mousemove', e => {
-            const now = performance.now();
-            const diff = now - lastT;
-            lastT = now;
-            if(diff > 0) {
-                polls.push(1000/diff);
-                if(polls.length > 50) polls.shift();
-                const avg = Math.round(polls.reduce((a,b)=>a+b)/polls.length);
-                document.getElementById('hz').innerText = avg + " Hz";
+        const VENDOR_MAP = {
+            0x046d: 'Logitech',
+            0x1532: 'Razer',
+            0x1038: 'SteelSeries',
+            0x1b1c: 'Corsair',
+            0x258a: 'Glorious / OEM',
+            0x3710: 'Pulsar',
+            0x3554: 'Lamzu',
+            0x25a7: 'Fantech / Rexus / Wireless OEM',
+            0x1ea7: 'SHARKOON / OEM',
+            0x093a: 'PixArt Imaging',
+            0x045e: 'Microsoft',
+            0x05ac: 'Apple'
+        };
+
+        function formatClockTime(d) {
+            const pad = (n, z = 2) => String(n).padStart(z, '0');
+            return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+        }
+
+        function appendActivityLog(category, code, detail, status = 'OK') {
+            if (isLogPaused) return;
+            const nowDate = new Date();
+            const relMs = +(performance.now() - sessionStartPerf).toFixed(1);
+            logSeqCounter++;
+
+            const entry = {
+                seq: logSeqCounter,
+                timestampIso: nowDate.toISOString(),
+                clockTime: formatClockTime(nowDate),
+                elapsedMs: relMs,
+                category,
+                code,
+                detail,
+                status
+            };
+
+            activityLogs.push(entry);
+            if (activityLogs.length > 2000) {
+                activityLogs.shift();
             }
-            const rect = tArea.getBoundingClientRect();
-            document.getElementById('coords').innerText = `X:${Math.round(e.clientX-rect.left)} Y:${Math.round(e.clientY-rect.top)}`;
+
+            document.getElementById('log-counter-badge').innerText = `${activityLogs.length} EVENTS`;
+            renderLogEntryDOM(entry);
+        }
+
+        function renderLogEntryDOM(entry) {
+            const term = document.getElementById('log-terminal');
+            if (currentLogFilter !== 'ALL' && entry.category !== currentLogFilter) return;
+
+            if (logSeqCounter === 1 || term.firstElementChild?.style?.textAlign === 'center') {
+                term.innerHTML = '';
+            }
+
+            const row = document.createElement('div');
+            row.className = 'log-row';
+            const badgeCls = entry.status === 'FAULT' ? 'log-badge-fault' : (entry.status === 'INFO' ? 'log-badge-info' : 'log-badge-ok');
+            row.innerHTML = `
+                <span class="log-ts">${entry.clockTime}</span>
+                <span class="log-cat">${entry.category}</span>
+                <span class="log-msg"><b>[${entry.code}]</b> ${entry.detail}</span>
+                <span class="${badgeCls}">${entry.status}</span>
+            `;
+            term.appendChild(row);
+
+            while (term.children.length > 250) {
+                term.removeChild(term.firstChild);
+            }
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function rebuildLogTerminal() {
+            const term = document.getElementById('log-terminal');
+            term.innerHTML = '';
+            const filtered = currentLogFilter === 'ALL'
+                ? activityLogs
+                : activityLogs.filter(item => item.category === currentLogFilter);
+
+            if (filtered.length === 0) {
+                term.innerHTML = `<div style="color:#5c6675; text-align:center; padding: 24px 0;">Tidak ada log pada filter [${currentLogFilter}].</div>`;
+                return;
+            }
+
+            const slice = filtered.slice(-250);
+            slice.forEach(entry => {
+                const row = document.createElement('div');
+                row.className = 'log-row';
+                const badgeCls = entry.status === 'FAULT' ? 'log-badge-fault' : (entry.status === 'INFO' ? 'log-badge-info' : 'log-badge-ok');
+                row.innerHTML = `
+                    <span class="log-ts">${entry.clockTime}</span>
+                    <span class="log-cat">${entry.category}</span>
+                    <span class="log-msg"><b>[${entry.code}]</b> ${entry.detail}</span>
+                    <span class="${badgeCls}">${entry.status}</span>
+                `;
+                term.appendChild(row);
+            });
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function setLogFilter(filterName) {
+            currentLogFilter = filterName;
+            ['ALL', 'CLICK', 'FAULT', 'SCROLL'].forEach(f => {
+                const el = document.getElementById(`flt-${f}`);
+                if (el) el.classList.toggle('active-filter', f === filterName);
+            });
+            rebuildLogTerminal();
+        }
+
+        function toggleLogPause() {
+            isLogPaused = !isLogPaused;
+            const btn = document.getElementById('btn-log-pause');
+            btn.innerText = isLogPaused ? '▶ RESUME' : '⏸ PAUSE';
+            btn.classList.toggle('active-filter', isLogPaused);
+        }
+
+        function clearActivityLogs() {
+            activityLogs = [];
+            logSeqCounter = 0;
+            document.getElementById('log-counter-badge').innerText = '0 EVENTS';
+            document.getElementById('log-terminal').innerHTML = `
+                <div style="color:#5c6675; text-align:center; padding: 24px 0;">Log dibersihkan. Siap merekam aktivitas baru.</div>
+            `;
+        }
+
+        async function probeWebHIDDevice() {
+            const statusEl = document.getElementById('hid-probe-status');
+            if (!('hid' in navigator)) {
+                statusEl.innerText = 'WEBHID TIDAK DIDUKUNG BROWSER INI';
+                statusEl.style.color = 'var(--c-orange)';
+                return;
+            }
+            try {
+                const devices = await navigator.hid.requestDevice({ filters: [] });
+                if (devices && devices.length > 0) {
+                    const dev = devices[0];
+                    const vidHex = '0x' + dev.vendorId.toString(16).toUpperCase().padStart(4, '0');
+                    const pidHex = '0x' + dev.productId.toString(16).toUpperCase().padStart(4, '0');
+                    const vendorGuess = VENDOR_MAP[dev.vendorId] || '';
+                    const fullName = dev.productName
+                        ? (vendorGuess && !dev.productName.toLowerCase().includes(vendorGuess.split(' ')[0].toLowerCase())
+                            ? `${vendorGuess} ${dev.productName}`
+                            : dev.productName)
+                        : `${vendorGuess || 'USB HID Mouse'} (${vidHex}:${pidHex})`;
+
+                    detectedHidHardware = {
+                        productName: dev.productName || 'Unknown HID',
+                        vendorId: vidHex,
+                        productId: pidHex
+                    };
+
+                    document.getElementById('device-brand-input').value = fullName;
+                    statusEl.innerText = `HID: ${vidHex}:${pidHex}`;
+                    statusEl.style.color = 'var(--c-green)';
+                    appendActivityLog('SYSTEM', 'WEBHID_DETECT', `Perangkat terdeteksi: ${fullName} (VID:${vidHex} PID:${pidHex})`, 'INFO');
+                    updateDiagnosticVerdict();
+                }
+            } catch (err) {
+                statusEl.innerText = 'PROBE DIBATALKAN';
+                statusEl.style.color = '#888';
+            }
+        }
+
+        // =========================================
+        // 1. MULTI-LAYER NAVIGATION LOCK
+        // =========================================
+        let navLockEnabled = true;
+
+        function initHistoryTrap() {
+            try {
+                history.replaceState({ gxMouseGuard: 1 }, '', location.href);
+                history.pushState({ gxMouseGuard: 2 }, '', location.href);
+            } catch (_) {}
+        }
+        initHistoryTrap();
+
+        window.addEventListener('popstate', () => {
+            if (!navLockEnabled) return;
+            try {
+                history.pushState({ gxMouseGuard: 2 }, '', location.href);
+            } catch (_) {}
+            setButtonVisualFeedback(3, true, false);
+            setTimeout(() => setButtonVisualFeedback(3, false, false), 160);
+            document.getElementById('last-event-tag').innerText = 'BLOCKED OS BACK (MB4)';
+            appendActivityLog('CLICK', 'NAV_BLOCK', 'Browser Back navigation (MB4 / Gesture) ditahan oleh Nav Lock', 'INFO');
         });
 
-        // Multi Touch
-        const mt = document.getElementById('mt-panel');
-        mt.addEventListener('touchstart', hTouch, {passive:false});
-        mt.addEventListener('touchmove', hTouch, {passive:false});
-        mt.addEventListener('touchend', hTouch);
-        function hTouch(e) {
+        function toggleNavLock() {
+            navLockEnabled = !navLockEnabled;
+            const btn = document.getElementById('nav-lock-btn');
+            if (navLockEnabled) {
+                btn.innerText = '🔒 NAV LOCK: ON';
+                btn.classList.remove('unlocked');
+                initHistoryTrap();
+            } else {
+                btn.innerText = '🔓 NAV LOCK: OFF';
+                btn.classList.add('unlocked');
+            }
+        }
+
+        window.addEventListener('keydown', e => {
+            document.getElementById('raw-hid-key').innerText = `${e.key} (${e.code})`;
+            appendActivityLog('CLICK', 'KEY_MACRO', `Sinyal keyboard/macro terdeteksi: ${e.key} (${e.code})`, 'INFO');
+
+            if (!navLockEnabled) return;
+            if (
+                e.key === 'BrowserBack' ||
+                e.key === 'BrowserForward' ||
+                (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight'))
+            ) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, { capture: true });
+
+        // =========================================
+        // 2. 2D SVG VISUALIZER & 8-BUTTON ANALYZER
+        // =========================================
+        const btnStats = {};
+        for (let i = 0; i <= 7; i++) {
+            btnStats[i] = { count: 0, lastDown: 0, currentDownAt: 0, minDiff: Infinity, dblCount: 0 };
+        }
+
+        const BUTTON_NAMES = [
+            'LMB (Btn 0)',
+            'MMB (Btn 1)',
+            'RMB (Btn 2)',
+            'MB4 BACK (Btn 3)',
+            'MB5 FWD (Btn 4)',
+            'MB6 SNIPER (Btn 5)',
+            'MB7 / G7 (Btn 6)',
+            'MB8 / G8 (Btn 7)'
+        ];
+
+        const DOUBLE_CLICK_FAULT_MS = 80;
+
+        function setButtonVisualFeedback(btnCode, isPressed, isFault) {
+            // 1. Update 2D Top-Down SVG Shape (if mapped on visual: Btn 0..4)
+            const shapeEl = document.getElementById('m' + btnCode);
+            const lblEl = document.getElementById('lbl-' + btnCode);
+
+            if (shapeEl) {
+                if (isPressed) {
+                    shapeEl.classList.add('pressed');
+                    if (isFault) {
+                        shapeEl.classList.add('fault-flash');
+                        setTimeout(() => shapeEl.classList.remove('fault-flash'), 450);
+                    }
+                } else {
+                    shapeEl.classList.remove('pressed');
+                }
+            }
+            if (lblEl) {
+                lblEl.classList.toggle('lit', isPressed);
+            }
+
+            // 2. Update Diagnostic Table Row (covers ALL 8 buttons including Btn 5, 6, 7)
+            const rowEl = document.getElementById('row-' + btnCode);
+            if (rowEl) {
+                if (isPressed) {
+                    rowEl.classList.add('row-pressed');
+                    if (isFault) {
+                        rowEl.classList.add('row-fault');
+                        setTimeout(() => rowEl.classList.remove('row-fault'), 450);
+                    }
+                } else {
+                    rowEl.classList.remove('row-pressed');
+                }
+            }
+        }
+
+        function handleGlobalMouseDown(e) {
+            const isInteractiveUI = e.target.closest('button, a, input, select');
+            if (e.button === 0 && isInteractiveUI) return;
+
+            if (navLockEnabled || e.button >= 1) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            const b = e.button;
+            const maskHex = '0x' + (e.buttons || 0).toString(16).toUpperCase().padStart(2, '0');
+            document.getElementById('raw-hid-btn').innerText = `Btn:${b} | Mask:${maskHex}`;
+
+            let isFault = false;
+            const label = BUTTON_NAMES[b] || `BTN (${b})`;
+
+            if (btnStats[b]) {
+                const now = performance.now();
+                const st = btnStats[b];
+                st.count++;
+                st.currentDownAt = now;
+
+                let diffInfo = '';
+                if (st.lastDown > 0) {
+                    const diff = now - st.lastDown;
+                    if (diff < st.minDiff) st.minDiff = diff;
+                    diffInfo = ` | Δt antar-klik: ${diff.toFixed(1)}ms`;
+                    if (diff > 1 && diff < DOUBLE_CLICK_FAULT_MS) {
+                        st.dblCount++;
+                        isFault = true;
+                    }
+                }
+                st.lastDown = now;
+
+                document.getElementById(`cnt-${b}`).innerText = st.count;
+                document.getElementById(`min-${b}`).innerText = st.minDiff === Infinity ? '-' : st.minDiff.toFixed(1) + 'ms';
+                const dblEl = document.getElementById(`dbl-${b}`);
+                if (st.dblCount > 0) {
+                    dblEl.innerText = `${st.dblCount} (FAULT!)`;
+                    dblEl.className = 'badge-warn';
+                } else {
+                    dblEl.innerText = '0 (OK)';
+                    dblEl.className = 'badge-ok';
+                }
+
+                document.getElementById('last-event-tag').innerText = label;
+
+                if (isFault) {
+                    appendActivityLog('FAULT', 'CHATTERING', `${label} terdeteksi double-click bounce${diffInfo} (<${DOUBLE_CLICK_FAULT_MS}ms)`, 'FAULT');
+                } else {
+                    appendActivityLog('CLICK', 'BTN_DOWN', `${label} ditekan (Klik #${st.count}${diffInfo})`, 'OK');
+                }
+                updateDiagnosticVerdict();
+            }
+
+            setButtonVisualFeedback(b, true, isFault);
+        }
+
+        function handleGlobalMouseUp(e) {
+            if (navLockEnabled && e.button >= 1) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            const b = e.button;
+            const maskHex = '0x' + (e.buttons || 0).toString(16).toUpperCase().padStart(2, '0');
+            document.getElementById('raw-hid-btn').innerText = `Btn:${b} | Mask:${maskHex}`;
+
+            if (btnStats[b] && btnStats[b].currentDownAt > 0) {
+                const holdMs = (performance.now() - btnStats[b].currentDownAt).toFixed(1);
+                btnStats[b].currentDownAt = 0;
+                const label = BUTTON_NAMES[b] || `BTN (${b})`;
+                appendActivityLog('CLICK', 'BTN_UP', `${label} dilepas (Durasi tahan: ${holdMs}ms)`, 'OK');
+            }
+
+            setButtonVisualFeedback(b, false, false);
+        }
+
+        window.addEventListener('mousedown', handleGlobalMouseDown, { capture: true, passive: false });
+        window.addEventListener('mouseup', handleGlobalMouseUp, { capture: true, passive: false });
+        window.addEventListener('auxclick', e => {
+            if (navLockEnabled || e.button >= 1) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, { capture: true, passive: false });
+        window.addEventListener('contextmenu', e => {
             e.preventDefault();
-            mt.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#444; font-weight:bold;">MULTI-TOUCH SCREEN AREA</div>';
-            for(let i=0; i<e.touches.length; i++) {
+            e.stopPropagation();
+        }, { capture: true });
+
+        // =========================================
+        // 3. DUAL-AXIS SCROLL ENCODER DIAGNOSTIC
+        // =========================================
+        let scrollUpCount = 0;
+        let scrollDnCount = 0;
+        let scrollVGlitch = 0;
+        let lastVDir = 0;
+        let lastVTime = 0;
+        let vStreak = 0;
+        let vResetTimer = null;
+
+        let scrollLtCount = 0;
+        let scrollRtCount = 0;
+        let scrollHGlitch = 0;
+        let lastHDir = 0;
+        let lastHTime = 0;
+        let hStreak = 0;
+        let hResetTimer = null;
+
+        window.addEventListener('wheel', e => {
+            const now = performance.now();
+
+            // 1. Vertical Wheel (deltaY)
+            if (e.deltaY !== 0) {
+                const vDir = e.deltaY < 0 ? -1 : 1;
+                const wheelEl = document.getElementById('m1');
+                const arrUp = document.getElementById('arr-up');
+                const arrDn = document.getElementById('arr-dn');
+                const vCard = document.getElementById('enc-v-card');
+
+                if (vDir === -1) {
+                    scrollUpCount++;
+                    document.getElementById('scr-up-cnt').innerText = scrollUpCount;
+                    wheelEl.classList.remove('scroll-down');
+                    wheelEl.classList.add('scroll-up');
+                    arrUp.setAttribute('fill', '#00e676');
+                    arrDn.setAttribute('fill', '#445061');
+                } else {
+                    scrollDnCount++;
+                    document.getElementById('scr-dn-cnt').innerText = scrollDnCount;
+                    wheelEl.classList.remove('scroll-up');
+                    wheelEl.classList.add('scroll-down');
+                    arrDn.setAttribute('fill', '#ff4081');
+                    arrUp.setAttribute('fill', '#445061');
+                }
+                if (vCard) vCard.classList.add('enc-active');
+
+                let vBounced = false;
+                if (lastVDir !== 0 && vDir !== lastVDir && vStreak >= 2 && (now - lastVTime) < 140) {
+                    scrollVGlitch++;
+                    vBounced = true;
+                    const gEl = document.getElementById('scr-v-glitch');
+                    gEl.innerText = `${scrollVGlitch} (BOUNCE!)`;
+                    gEl.className = 'badge-warn';
+                    vStreak = 0;
+                } else if (vDir === lastVDir) {
+                    vStreak++;
+                } else {
+                    vStreak = 1;
+                }
+
+                if (vBounced) {
+                    appendActivityLog('FAULT', 'V_WHEEL_BOUNCE', `Encoder vertikal berbalik arah mendadak (${vDir === -1 ? 'UP' : 'DOWN'}, dY=${Math.round(e.deltaY)})`, 'FAULT');
+                } else {
+                    appendActivityLog('SCROLL', 'V_WHEEL', `Vertical Scroll ${vDir === -1 ? '▲ UP' : '▼ DOWN'} (dY=${Math.round(e.deltaY)})`, 'OK');
+                }
+                updateDiagnosticVerdict();
+
+                lastVDir = vDir;
+                lastVTime = now;
+
+                clearTimeout(vResetTimer);
+                vResetTimer = setTimeout(() => {
+                    wheelEl.classList.remove('scroll-up', 'scroll-down');
+                    arrUp.setAttribute('fill', '#445061');
+                    arrDn.setAttribute('fill', '#445061');
+                    if (vCard) vCard.classList.remove('enc-active');
+                }, 150);
+            }
+
+            // 2. Horizontal Thumb Wheel / Tilt (deltaX)
+            if (e.deltaX !== 0) {
+                if (navLockEnabled) {
+                    e.preventDefault();
+                }
+
+                const hDir = e.deltaX < 0 ? -1 : 1;
+                const hCard = document.getElementById('enc-h-card');
+
+                if (hDir === -1) {
+                    scrollLtCount++;
+                    document.getElementById('scr-lt-cnt').innerText = scrollLtCount;
+                    document.getElementById('last-event-tag').innerText = 'H-SCROLL LEFT';
+                } else {
+                    scrollRtCount++;
+                    document.getElementById('scr-rt-cnt').innerText = scrollRtCount;
+                    document.getElementById('last-event-tag').innerText = 'H-SCROLL RIGHT';
+                }
+                if (hCard) hCard.classList.add('enc-active');
+
+                let hBounced = false;
+                if (lastHDir !== 0 && hDir !== lastHDir && hStreak >= 2 && (now - lastHTime) < 150) {
+                    scrollHGlitch++;
+                    hBounced = true;
+                    const hgEl = document.getElementById('scr-h-glitch');
+                    hgEl.innerText = `${scrollHGlitch} (BOUNCE!)`;
+                    hgEl.className = 'badge-warn';
+                    hStreak = 0;
+                } else if (hDir === lastHDir) {
+                    hStreak++;
+                } else {
+                    hStreak = 1;
+                }
+
+                if (hBounced) {
+                    appendActivityLog('FAULT', 'H_WHEEL_BOUNCE', `Thumb wheel horizontal berbalik arah mendadak (${hDir === -1 ? 'LEFT' : 'RIGHT'}, dX=${Math.round(e.deltaX)})`, 'FAULT');
+                } else {
+                    appendActivityLog('SCROLL', 'H_WHEEL', `Thumb Horizontal Scroll ${hDir === -1 ? '◀ LEFT' : '▶ RIGHT'} (dX=${Math.round(e.deltaX)})`, 'OK');
+                }
+                updateDiagnosticVerdict();
+
+                lastHDir = hDir;
+                lastHTime = now;
+
+                clearTimeout(hResetTimer);
+                hResetTimer = setTimeout(() => {
+                    if (hCard) hCard.classList.remove('enc-active');
+                }, 160);
+            }
+        }, { passive: false });
+
+        // =========================================
+        // 4. GLOBAL POLLING RATE, JITTER & VERDICT ENGINE
+        // =========================================
+        let lastHidTimestamp = 0;
+        let intervalsMs = [];
+        let graphHzHistory = [];
+        let peakHz = 0;
+        let latestAvgHz = 0;
+        let latestAvgDt = 0;
+        let latestJitterMs = 0;
+        let totalPackets = 0;
+        let lastLoggedTier = '';
+
+        const trajCanvas = document.getElementById('traj-canvas');
+        const trajCtx = trajCanvas.getContext('2d');
+        let virtX = 0;
+        let virtY = 0;
+        let lastVecX = 0;
+        let lastVecY = 0;
+        let rippleEvents = 0;
+        let moveSamples = 0;
+
+        function resizeCanvases() {
+            const pollCanvas = document.getElementById('poll-graph');
+            if (pollCanvas.parentElement) {
+                pollCanvas.width = pollCanvas.parentElement.clientWidth;
+            }
+            if (trajCanvas.parentElement) {
+                const prevW = trajCanvas.width;
+                trajCanvas.width = trajCanvas.parentElement.clientWidth;
+                if (prevW === 0) {
+                    virtX = trajCanvas.width / 2;
+                    virtY = trajCanvas.height / 2;
+                    drawTrajGrid();
+                }
+            }
+        }
+        window.addEventListener('resize', resizeCanvases);
+        resizeCanvases();
+
+        function drawTrajGrid() {
+            const w = trajCanvas.width;
+            const h = trajCanvas.height;
+            trajCtx.fillStyle = '#0c0c0c';
+            trajCtx.fillRect(0, 0, w, h);
+
+            trajCtx.strokeStyle = '#191919';
+            trajCtx.lineWidth = 1;
+            const step = 25;
+            for (let x = 0; x < w; x += step) {
+                trajCtx.beginPath(); trajCtx.moveTo(x, 0); trajCtx.lineTo(x, h); trajCtx.stroke();
+            }
+            for (let y = 0; y < h; y += step) {
+                trajCtx.beginPath(); trajCtx.moveTo(0, y); trajCtx.lineTo(w, y); trajCtx.stroke();
+            }
+
+            trajCtx.strokeStyle = '#2a2a2a';
+            trajCtx.beginPath();
+            trajCtx.moveTo(w / 2, 0); trajCtx.lineTo(w / 2, h);
+            trajCtx.moveTo(0, h / 2); trajCtx.lineTo(w, h / 2);
+            trajCtx.stroke();
+        }
+        drawTrajGrid();
+
+        function clearTrajectoryCanvas() {
+            virtX = trajCanvas.width / 2;
+            virtY = trajCanvas.height / 2;
+            rippleEvents = 0;
+            moveSamples = 0;
+            lastVecX = 0;
+            lastVecY = 0;
+            drawTrajGrid();
+            document.getElementById('spatial-jitter-readout').innerHTML = 'Spatial Ripple/Jitter: <b style="color:var(--c-green);">0.0% (Bersih)</b>';
+            updateDiagnosticVerdict();
+        }
+
+        function requestUnboundedLock() {
+            if (trajCanvas.requestPointerLock) {
+                trajCanvas.requestPointerLock();
+            }
+        }
+
+        document.addEventListener('pointerlockchange', () => {
+            const btn = document.getElementById('btn-ptr-lock');
+            if (document.pointerLockElement === trajCanvas) {
+                btn.innerText = '🔓 LOCK AKTIF (ESC KELUAR)';
+                btn.style.background = 'var(--c-green, #00e676)';
+                appendActivityLog('SYSTEM', 'PTR_LOCK', 'Raw Pointer Lock diaktifkan untuk pengujian sensor murni', 'INFO');
+            } else {
+                btn.innerText = '🔒 POINTER LOCK';
+                btn.style.background = 'var(--c-cyan, #00e5ff)';
+            }
+        });
+
+        function detectNominalPollingHz(avgHz) {
+            if (avgHz >= 6500) return 8000;
+            if (avgHz >= 3200) return 4000;
+            if (avgHz >= 1650) return 2000;
+            if (avgHz >= 820) return 1000;
+            if (avgHz >= 410) return 500;
+            if (avgHz >= 200) return 250;
+            return 125;
+        }
+
+        function classifyPollingTier(hz) {
+            if (hz >= 6500) return '8000 Hz (Ultra Esports)';
+            if (hz >= 3200) return '4000 Hz (High-Speed)';
+            if (hz >= 1650) return '2000 Hz (Pro Wireless)';
+            if (hz >= 820) return '1000 Hz (Standar Gaming)';
+            if (hz >= 410) return '500 Hz (Mid Polling)';
+            if (hz >= 200) return '250 Hz (Office/BT)';
+            return '125 Hz (Standar USB)';
+        }
+
+        function buildConclusionObject() {
+            const brand = document.getElementById('device-brand-input').value.trim() || 'Tidak disebutkan';
+            const connection = document.getElementById('device-conn-select').value;
+            const hasEnoughSamples = intervalsMs.length >= 15;
+            const nominalHz = hasEnoughSamples ? detectNominalPollingHz(latestAvgHz) : 0;
+
+            let pollingStability = 'MENUNGGU SAMPEL';
+            let pollingSummary = 'Menunggu sampel gerakan mouse (minimal 15 paket HID)...';
+
+            if (hasEnoughSamples) {
+                if (latestJitterMs <= 0.35) {
+                    pollingStability = 'OPTIMAL / SANGAT STABIL';
+                } else if (latestJitterMs <= 1.2) {
+                    pollingStability = 'NORMAL / TOLERANSI WAJAR';
+                } else {
+                    pollingStability = 'FLUKTUATIF / INTERFERENSI SINYAL';
+                }
+                pollingSummary = `Terdeteksi mode ~${nominalHz} Hz (Avg: ${latestAvgHz} Hz, Peak: ${peakHz} Hz, Interval: ${latestAvgDt.toFixed(2)} ms, Jitter σ: ${latestJitterMs.toFixed(2)} ms) — Status: ${pollingStability}.`;
+            }
+
+            const faultySwitches = [];
+            for (let b = 0; b <= 7; b++) {
+                if (btnStats[b].dblCount > 0) {
+                    faultySwitches.push(`${BUTTON_NAMES[b]} (${btnStats[b].dblCount}x chattering)`);
+                }
+            }
+            const ripplePct = moveSamples > 15 ? +((rippleEvents / moveSamples) * 100).toFixed(1) : 0;
+            const hwIssues = [...faultySwitches];
+            if (scrollVGlitch > 0) hwIssues.push(`Vertical Wheel Bounce (${scrollVGlitch}x)`);
+            if (scrollHGlitch > 0) hwIssues.push(`Horizontal Wheel Bounce (${scrollHGlitch}x)`);
+            if (ripplePct > 12) hwIssues.push(`Sensor Spatial Ripple Tinggi (${ripplePct}%)`);
+
+            const overallStatus = hwIssues.length > 0
+                ? 'FAULT'
+                : (hasEnoughSamples && latestJitterMs > 1.2 ? 'WARN' : 'PASS');
+
+            const hwSummary = hwIssues.length > 0
+                ? `TERDETEKSI ANOMALI: ${hwIssues.join(', ')}`
+                : `NORMAL / PASS (0 switch chattering, 0 wheel bounce, sensor ripple ${ripplePct}%)`;
+
+            return {
+                deviceBrand: brand,
+                connectionType: connection,
+                hasEnoughSamples,
+                nominalPollingHz: nominalHz,
+                measuredAvgHz: latestAvgHz,
+                measuredPeakHz: peakHz,
+                avgIntervalMs: +latestAvgDt.toFixed(3),
+                jitterStdDevMs: +latestJitterMs.toFixed(3),
+                pollingStability,
+                pollingSummary,
+                spatialRipplePercent: ripplePct,
+                overallStatus,
+                hwIssues,
+                hwSummary
+            };
+        }
+
+        function updateDiagnosticVerdict() {
+            const c = buildConclusionObject();
+            const box = document.getElementById('diagnostic-verdict-box');
+            const pText = document.getElementById('verdict-polling-text');
+            const hText = document.getElementById('verdict-hw-text');
+
+            pText.innerText = c.pollingSummary;
+            hText.innerText = c.hwSummary;
+
+            box.classList.remove('verdict-pass', 'verdict-warn', 'verdict-fail');
+            if (c.overallStatus === 'FAULT') {
+                box.classList.add('verdict-fail');
+                hText.style.color = 'var(--c-red)';
+            } else if (c.overallStatus === 'WARN') {
+                box.classList.add('verdict-warn');
+                hText.style.color = 'var(--c-orange)';
+            } else if (c.hasEnoughSamples) {
+                box.classList.add('verdict-pass');
+                hText.style.color = 'var(--c-green)';
+            } else {
+                hText.style.color = 'var(--c-green)';
+            }
+        }
+
+        function processPointerSample(ev, isLockedMode) {
+            const ts = ev.timeStamp;
+            totalPackets++;
+
+            if (lastHidTimestamp > 0) {
+                const dt = ts - lastHidTimestamp;
+                if (dt >= 0.08 && dt <= 150) {
+                    const instHz = 1000 / dt;
+                    intervalsMs.push(dt);
+                    if (intervalsMs.length > 120) intervalsMs.shift();
+
+                    graphHzHistory.push(instHz);
+                    if (graphHzHistory.length > 140) graphHzHistory.shift();
+
+                    const avgDt = intervalsMs.reduce((a, b) => a + b, 0) / intervalsMs.length;
+                    const avgHz = Math.round(1000 / avgDt);
+
+                    const variance = intervalsMs.reduce((acc, val) => acc + Math.pow(val - avgDt, 2), 0) / intervalsMs.length;
+                    const jitterMs = Math.sqrt(variance);
+
+                    latestAvgDt = avgDt;
+                    latestAvgHz = avgHz;
+                    latestJitterMs = jitterMs;
+
+                    if (avgHz > peakHz && intervalsMs.length >= 8) {
+                        peakHz = avgHz;
+                    }
+
+                    const tierStr = classifyPollingTier(avgHz);
+                    document.getElementById('hz-avg').innerText = `${avgHz} Hz`;
+                    document.getElementById('hz-tier').innerText = tierStr;
+                    document.getElementById('hz-peak').innerText = `${peakHz} Hz`;
+                    document.getElementById('dt-avg').innerText = `${avgDt.toFixed(2)} ms`;
+
+                    const jitEl = document.getElementById('dt-jitter');
+                    const jitStatus = document.getElementById('jitter-status');
+                    jitEl.innerText = `${jitterMs.toFixed(2)} ms`;
+                    if (jitterMs <= 0.35) {
+                        jitEl.style.color = 'var(--c-green, #00e676)';
+                        jitStatus.innerText = 'Sangat Stabil';
+                    } else if (jitterMs <= 1.2) {
+                        jitEl.style.color = 'var(--c-orange, #ff9100)';
+                        jitStatus.innerText = 'Toleransi Normal';
+                    } else {
+                        jitEl.style.color = 'var(--c-red, #ff1744)';
+                        jitStatus.innerText = 'Interferensi / Spike!';
+                    }
+
+                    document.getElementById('sample-count').innerText = `Sampel: ${totalPackets} paket`;
+
+                    if (intervalsMs.length >= 25 && tierStr !== lastLoggedTier) {
+                        lastLoggedTier = tierStr;
+                        appendActivityLog('SYSTEM', 'POLL_TIER', `Polling rate terkalibrasi pada ${tierStr} (Avg: ${avgHz}Hz, Jitter σ: ${jitterMs.toFixed(2)}ms)`, 'INFO');
+                    }
+
+                    if (totalPackets % 15 === 0) {
+                        updateDiagnosticVerdict();
+                    }
+                }
+            }
+            lastHidTimestamp = ts;
+
+            const w = trajCanvas.width;
+            const h = trajCanvas.height;
+            let nextX = virtX;
+            let nextY = virtY;
+
+            if (isLockedMode) {
+                nextX = (virtX + ev.movementX + w) % w;
+                nextY = (virtY + ev.movementY + h) % h;
+            } else {
+                const rect = trajCanvas.getBoundingClientRect();
+                if (
+                    ev.clientX >= rect.left && ev.clientX <= rect.right &&
+                    ev.clientY >= rect.top && ev.clientY <= rect.bottom
+                ) {
+                    nextX = ev.clientX - rect.left;
+                    nextY = ev.clientY - rect.top;
+                } else {
+                    nextX = Math.max(4, Math.min(w - 4, virtX + (ev.movementX || 0) * 0.45));
+                    nextY = Math.max(4, Math.min(h - 4, virtY + (ev.movementY || 0) * 0.45));
+                }
+            }
+
+            const dx = ev.movementX || (nextX - virtX);
+            const dy = ev.movementY || (nextY - virtY);
+
+            if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
+                moveSamples++;
+                if (
+                    (Math.abs(dx) <= 2 && Math.abs(lastVecX) <= 2 && dx * lastVecX < 0) ||
+                    (Math.abs(dy) <= 2 && Math.abs(lastVecY) <= 2 && dy * lastVecY < 0)
+                ) {
+                    rippleEvents++;
+                }
+                lastVecX = dx;
+                lastVecY = dy;
+
+                const ripplePct = moveSamples > 15 ? ((rippleEvents / moveSamples) * 100).toFixed(1) : '0.0';
+                const rColor = parseFloat(ripplePct) > 12 ? 'var(--c-red)' : (parseFloat(ripplePct) > 5 ? 'var(--c-orange)' : 'var(--c-green)');
+                const rLabel = parseFloat(ripplePct) > 12 ? 'Sensor Dirty/Noise!' : 'Bersih';
+                document.getElementById('spatial-jitter-readout').innerHTML =
+                    `Spatial Ripple/Jitter: <b style="color:${rColor};">${ripplePct}% (${rLabel})</b>`;
+            }
+
+            if (Math.abs(nextX - virtX) < w * 0.5 && Math.abs(nextY - virtY) < h * 0.5) {
+                trajCtx.strokeStyle = 'rgba(0, 229, 255, 0.45)';
+                trajCtx.lineWidth = 1.5;
+                trajCtx.beginPath();
+                trajCtx.moveTo(virtX, virtY);
+                trajCtx.lineTo(nextX, nextY);
+                trajCtx.stroke();
+
+                trajCtx.fillStyle = '#00e676';
+                trajCtx.fillRect(nextX - 1.5, nextY - 1.5, 3, 3);
+            }
+
+            virtX = nextX;
+            virtY = nextY;
+
+            document.getElementById('coords-readout').innerText =
+                `POS: X:${Math.round(ev.clientX)} Y:${Math.round(ev.clientY)} | dX:${dx} dY:${dy}`;
+        }
+
+        window.addEventListener('pointermove', e => {
+            if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
+            const isLocked = document.pointerLockElement === trajCanvas;
+            const events = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : [e];
+            if (events.length === 0) {
+                processPointerSample(e, isLocked);
+            } else {
+                for (let i = 0; i < events.length; i++) {
+                    processPointerSample(events[i], isLocked);
+                }
+            }
+        }, { passive: true });
+
+        function renderPollingGraph() {
+            const canvas = document.getElementById('poll-graph');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.fillStyle = '#0c0c0c';
+            ctx.fillRect(0, 0, w, h);
+
+            const maxScale = Math.max(1200, peakHz * 1.15);
+            const refs = [
+                { hz: 1000, label: '1000Hz', color: 'rgba(0, 230, 118, 0.25)' },
+                { hz: 500, label: '500Hz', color: 'rgba(0, 229, 255, 0.18)' },
+                { hz: 125, label: '125Hz', color: 'rgba(255, 255, 255, 0.12)' }
+            ];
+
+            ctx.font = '10px monospace';
+            refs.forEach(r => {
+                if (r.hz <= maxScale) {
+                    const y = h - (r.hz / maxScale) * (h - 18) - 8;
+                    ctx.strokeStyle = r.color;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#666';
+                    ctx.fillText(r.label, 6, y - 3);
+                }
+            });
+
+            if (graphHzHistory.length > 1) {
+                ctx.strokeStyle = '#00e5ff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                const stepX = w / (140 - 1);
+                for (let i = 0; i < graphHzHistory.length; i++) {
+                    const val = Math.min(maxScale, graphHzHistory[i]);
+                    const x = i * stepX;
+                    const y = h - (val / maxScale) * (h - 18) - 8;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(renderPollingGraph);
+        }
+        requestAnimationFrame(renderPollingGraph);
+
+        // =========================================
+        // 5. MULTI-TOUCH DIGITIZER & TOUCHPAD
+        // =========================================
+        const mtPanel = document.getElementById('mt-panel');
+        mtPanel.addEventListener('touchstart', handleMultiTouch, { passive: false });
+        mtPanel.addEventListener('touchmove', handleMultiTouch, { passive: false });
+        mtPanel.addEventListener('touchend', handleMultiTouch, { passive: false });
+        mtPanel.addEventListener('touchcancel', handleMultiTouch, { passive: false });
+
+        function handleMultiTouch(e) {
+            e.preventDefault();
+            const count = e.touches.length;
+            document.getElementById('touch-count-badge').innerText = `${count} JARI AKTIF`;
+
+            mtPanel.innerHTML = `<div class="mt-watermark">SENTUH / GESER JARI DI AREA INI (MULTI-TOUCH)</div>`;
+            const rect = mtPanel.getBoundingClientRect();
+
+            for (let i = 0; i < count; i++) {
                 const t = e.touches[i];
-                const rect = mt.getBoundingClientRect();
                 const d = document.createElement('div');
                 d.className = 'touch-point';
                 d.style.left = (t.clientX - rect.left) + 'px';
                 d.style.top = (t.clientY - rect.top) + 'px';
-                d.innerText = i+1;
-                mt.appendChild(d);
+                d.innerText = i + 1;
+                mtPanel.appendChild(d);
             }
+        }
+
+        // =========================================
+        // 6. EXPORT / DOWNLOAD REPORT SUITE (JSON, CSV, TXT)
+        // =========================================
+        function buildExportFilename(ext) {
+            const rawBrand = document.getElementById('device-brand-input').value.trim() || 'Mouse-Unit';
+            const cleanBrand = rawBrand.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'Mouse-Unit';
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+            return `GXDiag_${cleanBrand}_${stamp}.${ext}`;
+        }
+
+        function triggerFileDownload(content, mimeType, filename) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
+        function exportReportJSON() {
+            const conclusion = buildConclusionObject();
+            const switches = [];
+            for (let b = 0; b <= 7; b++) {
+                switches.push({
+                    buttonCode: b,
+                    label: BUTTON_NAMES[b],
+                    clickCount: btnStats[b].count,
+                    minIntervalMs: btnStats[b].minDiff === Infinity ? null : +btnStats[b].minDiff.toFixed(2),
+                    chatteringFaultCount: btnStats[b].dblCount,
+                    status: btnStats[b].dblCount > 0 ? 'FAULT' : 'OK'
+                });
+            }
+
+            const payload = {
+                tool: 'GXDiag - Mouse & Touchpad Hardware Lab',
+                exportedAt: new Date().toISOString(),
+                sessionStartedAt: sessionStartDate.toISOString(),
+                totalHidPacketsSampled: totalPackets,
+                deviceIdentity: {
+                    brandAndModel: conclusion.deviceBrand,
+                    connectionType: conclusion.connectionType,
+                    webHidDescriptor: detectedHidHardware
+                },
+                diagnosticConclusion: conclusion,
+                switchMatrix: switches,
+                scrollEncoders: {
+                    vertical: { upTicks: scrollUpCount, downTicks: scrollDnCount, bounceGlitches: scrollVGlitch },
+                    horizontalThumb: { leftTicks: scrollLtCount, rightTicks: scrollRtCount, bounceGlitches: scrollHGlitch }
+                },
+                activityLogs: activityLogs
+            };
+
+            triggerFileDownload(JSON.stringify(payload, null, 2), 'application/json;charset=utf-8', buildExportFilename('json'));
+            appendActivityLog('SYSTEM', 'EXPORT_JSON', 'Laporan diagnostik JSON berhasil diunduh', 'INFO');
+        }
+
+        function exportLogCSV() {
+            const c = buildConclusionObject();
+            const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+            const lines = [
+                ['# GXDIAG MOUSE DIAGNOSTIC REPORT', c.deviceBrand, c.connectionType, c.pollingSummary].map(esc).join(','),
+                ['# HARDWARE VERDICT', c.overallStatus, c.hwSummary, `Total Samples: ${totalPackets}`].map(esc).join(','),
+                '',
+                ['Seq', 'Timestamp_ISO', 'Clock_Time', 'Elapsed_ms', 'Category', 'Event_Code', 'Detail', 'Status'].map(esc).join(',')
+            ];
+
+            activityLogs.forEach(row => {
+                lines.push([
+                    row.seq,
+                    row.timestampIso,
+                    row.clockTime,
+                    row.elapsedMs,
+                    row.category,
+                    row.code,
+                    row.detail,
+                    row.status
+                ].map(esc).join(','));
+            });
+
+            const csvContent = '\uFEFF' + lines.join('\r\n');
+            triggerFileDownload(csvContent, 'text/csv;charset=utf-8', buildExportFilename('csv'));
+            appendActivityLog('SYSTEM', 'EXPORT_CSV', 'Log aktivitas CSV berhasil diunduh', 'INFO');
+        }
+
+        function exportSummaryTXT() {
+            const c = buildConclusionObject();
+            const lines = [
+                '====================================================================',
+                'GXDIAG - LAPORAN DIAGNOSTIK PERANGKAT KERAS MOUSE & TOUCHPAD',
+                '====================================================================',
+                `Waktu Export     : ${new Date().toLocaleString('id-ID')}`,
+                `Merk/Tipe Mouse  : ${c.deviceBrand}`,
+                `Koneksi          : ${c.connectionType}`,
+                detectedHidHardware.vendorId ? `USB HID ID       : ${detectedHidHardware.vendorId}:${detectedHidHardware.productId} (${detectedHidHardware.productName})` : null,
+                `Total Sampel HID : ${totalPackets} paket`,
+                '',
+                '--- [1] KESIMPULAN POLLING RATE & SINYAL ---------------------------',
+                `Nominal Tier     : ${c.hasEnoughSamples ? c.nominalPollingHz + ' Hz' : 'Belum terkalibrasi'}`,
+                `Rata-rata (Avg)  : ${c.measuredAvgHz} Hz (${c.avgIntervalMs} ms)`,
+                `Puncak (Peak)    : ${c.measuredPeakHz} Hz`,
+                `Jitter (StdDev)  : ${c.jitterStdDevMs} ms`,
+                `Kesimpulan       : ${c.pollingSummary}`,
+                '',
+                '--- [2] STATUS KESEHATAN HARDWARE ----------------------------------',
+                `Verdict Keseluruhan : [${c.overallStatus}] ${c.hwSummary}`,
+                '',
+                '--- [3] MATRIKS 8 TOMBOL (SWITCH CHATTERING < 80ms) ----------------'
+            ].filter(Boolean);
+
+            for (let b = 0; b <= 7; b++) {
+                const st = btnStats[b];
+                const minStr = st.minDiff === Infinity ? '-' : `${st.minDiff.toFixed(1)} ms`;
+                const statusStr = st.dblCount > 0 ? `FAULT (${st.dblCount}x)` : 'OK';
+                lines.push(`- ${BUTTON_NAMES[b].padEnd(18)} | Klik: ${String(st.count).padEnd(4)} | Min Δt: ${minStr.padEnd(9)} | ${statusStr}`);
+            }
+
+            lines.push('');
+            lines.push('--- [4] ENCODER RODA SCROLL ----------------------------------------');
+            lines.push(`- Vertical Wheel   : UP=${scrollUpCount}, DOWN=${scrollDnCount}, Bounce Glitch=${scrollVGlitch}`);
+            lines.push(`- Horizontal Thumb : LEFT=${scrollLtCount}, RIGHT=${scrollRtCount}, Bounce Glitch=${scrollHGlitch}`);
+            lines.push('');
+            lines.push(`--- [5] KRONOLOGI LOG AKTIVITAS (${activityLogs.length} EVENTS) -------------------`);
+
+            activityLogs.forEach(r => {
+                lines.push(`[${r.clockTime}] [${r.category.padEnd(6)}] [${r.status.padEnd(5)}] ${r.code}: ${r.detail}`);
+            });
+
+            lines.push('====================================================================');
+            triggerFileDownload(lines.join('\r\n'), 'text/plain;charset=utf-8', buildExportFilename('txt'));
+            appendActivityLog('SYSTEM', 'EXPORT_TXT', 'Laporan teknis TXT berhasil diunduh', 'INFO');
+        }
+
+        // =========================================
+        // 7. RESET ALL TELEMETRY
+        // =========================================
+        function resetAllMetrics() {
+            lastHidTimestamp = 0;
+            intervalsMs = [];
+            graphHzHistory = [];
+            peakHz = 0;
+            latestAvgHz = 0;
+            latestAvgDt = 0;
+            latestJitterMs = 0;
+            totalPackets = 0;
+            lastLoggedTier = '';
+
+            document.getElementById('hz-avg').innerText = '0 Hz';
+            document.getElementById('hz-tier').innerText = 'Standby';
+            document.getElementById('hz-peak').innerText = '0 Hz';
+            document.getElementById('dt-avg').innerText = '0.00 ms';
+            document.getElementById('dt-jitter').innerText = '0.00 ms';
+            document.getElementById('dt-jitter').style.color = 'var(--c-orange)';
+            document.getElementById('jitter-status').innerText = 'Varians waktu HID';
+            document.getElementById('sample-count').innerText = 'Sampel: 0 paket';
+            document.getElementById('raw-hid-btn').innerText = 'Btn:- | Mask:0x00';
+            document.getElementById('raw-hid-key').innerText = '-';
+
+            for (let b = 0; b <= 7; b++) {
+                btnStats[b] = { count: 0, lastDown: 0, currentDownAt: 0, minDiff: Infinity, dblCount: 0 };
+                document.getElementById(`cnt-${b}`).innerText = '0';
+                document.getElementById(`min-${b}`).innerText = '-';
+                const dblEl = document.getElementById(`dbl-${b}`);
+                dblEl.innerText = '0 (OK)';
+                dblEl.className = 'badge-ok';
+                setButtonVisualFeedback(b, false, false);
+            }
+
+            scrollUpCount = 0;
+            scrollDnCount = 0;
+            scrollVGlitch = 0;
+            lastVDir = 0;
+            vStreak = 0;
+            document.getElementById('scr-up-cnt').innerText = '0';
+            document.getElementById('scr-dn-cnt').innerText = '0';
+            const vgEl = document.getElementById('scr-v-glitch');
+            vgEl.innerText = '0 (OK)';
+            vgEl.className = 'badge-ok';
+
+            scrollLtCount = 0;
+            scrollRtCount = 0;
+            scrollHGlitch = 0;
+            lastHDir = 0;
+            hStreak = 0;
+            document.getElementById('scr-lt-cnt').innerText = '0';
+            document.getElementById('scr-rt-cnt').innerText = '0';
+            const hgEl = document.getElementById('scr-h-glitch');
+            hgEl.innerText = '0 (OK)';
+            hgEl.className = 'badge-ok';
+
+            clearTrajectoryCanvas();
+            clearActivityLogs();
+            updateDiagnosticVerdict();
+            document.getElementById('last-event-tag').innerText = 'RESET OK';
         }
     </script>
 </body>
