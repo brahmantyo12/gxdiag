@@ -2,363 +2,2734 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>GXDiag - Pro Controller Tester</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Pro Controller &amp; Deadzone Lab</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        /* LAYOUT UTAMA */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            background: var(--bg-dark, #121212);
+            color: #eee;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Header */
+        .mod-header {
+            width: 100%;
+            padding: 12px 18px;
+            background: #111;
+            border-bottom: 1px solid var(--border-color, #333);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .mod-header .back-btn { position: static; margin: 0; white-space: nowrap; }
+        .mod-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--c-cyan, #00e5ff);
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+        }
+        @media (max-width: 520px) {
+            .mod-title { font-size: 0.75rem; letter-spacing: 0.8px; }
+        }
+
+        .proto-badge {
+            font-family: monospace;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            background: rgba(0, 229, 255, 0.12);
+            color: var(--c-cyan, #00e5ff);
+            white-space: nowrap;
+        }
+
+        /* Main Layout */
         .main-grid {
-            display: grid; grid-template-columns: 1.4fr 0.6fr; gap: 20px;
-            width: 100%; max-width: 1280px; align-items: start;
-        }
-
-        /* --- SECTION 1: STANDARD CONTROLLER --- */
-        .gp-visual-wrapper {
-            position: relative; 
-            width: 560px; height: 380px; /* Sedikit diperbesar lagi */
+            width: 100%;
+            max-width: 1380px;
             margin: 0 auto;
-            background: linear-gradient(145deg, #252525, #151515);
-            border-radius: 90px 90px 160px 160px; 
-            border: 2px solid #444;
-            box-shadow: inset 0 0 40px #000;
+            padding: 18px;
+            display: grid;
+            grid-template-columns: 1.48fr 0.72fr;
+            gap: 20px;
+            align-items: start;
         }
-        
-        /* Tombol Umum */
-        .btn-gp {
-            position: absolute; display: flex; align-items: center; justify-content: center;
-            background: #333; color: #888; border: 2px solid #444; 
-            font-size: 10px; font-weight: bold; transition: 0.05s;
-            box-shadow: 0 4px 5px rgba(0,0,0,0.5);
-        }
-        .btn-gp.pressed { 
-            background: #00e5ff; color: #000; 
-            box-shadow: 0 0 15px #00e5ff; border-color: #fff; transform: scale(0.95); 
+        @media (max-width: 1080px) {
+            .main-grid { grid-template-columns: 1fr; }
         }
 
-        /* --- Triggers (LT/RT Visualizer) - DESAIN BARU --- */
-        .trigger-bar-container {
-            position: absolute; top: 15px; 
-            width: 100px; height: 18px; /* Lebih tebal & lebar */
-            background: #111; /* Warna track gelap */
-            border: 1px solid #555; 
+        .left-col, .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            width: 100%;
+        }
+
+        .panel-card {
+            width: 100%;
+            background: var(--bg-card, linear-gradient(145deg, #1e1e1e, #252525));
+            border: 1px solid var(--border-color, #333);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        /* =========================================
+           MULTI-PLAYER SLOT MATRIX (P1 - P4)
+           ========================================= */
+        .player-bar-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #111419;
+            border: 1px solid #2b313c;
+            border-radius: 11px;
+            padding: 10px;
+        }
+        .player-bar-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .player-bar-title {
+            font-family: monospace;
+            font-size: 0.67rem;
+            font-weight: 800;
+            color: #8a96a8;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .auto-focus-btn {
+            background: rgba(0, 230, 118, 0.14);
+            border: 1px solid #00e676;
+            color: #00e676;
+            font-family: monospace;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .auto-focus-btn.locked {
+            background: rgba(255, 214, 0, 0.14);
+            border-color: #ffd600;
+            color: #ffd600;
+        }
+
+        .player-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        @media (max-width: 680px) {
+            .player-slots-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .p-slot {
+            --p-color: #00e5ff;
+            background: #171b22;
+            border: 1px solid #2c3340;
+            border-radius: 9px;
+            padding: 8px 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+            position: relative;
+        }
+        .p-slot[data-slot="0"] { --p-color: #00e5ff; }
+        .p-slot[data-slot="1"] { --p-color: #ff4081; }
+        .p-slot[data-slot="2"] { --p-color: #00e676; }
+        .p-slot[data-slot="3"] { --p-color: #ffd600; }
+
+        .p-slot.connected {
+            border-color: #424d5e;
+            background: #1b2029;
+        }
+        .p-slot.focused {
+            border-color: var(--p-color);
+            box-shadow: inset 0 0 0 1px var(--p-color), 0 0 12px rgba(0, 229, 255, 0.18);
+        }
+        .p-slot.input-active {
+            background: #212936;
+            box-shadow: 0 0 14px var(--p-color);
+        }
+
+        .p-slot-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .p-badge {
+            font-family: monospace;
+            font-size: 0.72rem;
+            font-weight: 900;
+            color: #667385;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .p-slot.connected .p-badge {
+            color: var(--p-color);
+        }
+        .p-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #384150;
+        }
+        .p-slot.connected .p-dot {
+            background: var(--p-color);
+            box-shadow: 0 0 6px var(--p-color);
+        }
+
+        .p-act-pill {
+            font-family: monospace;
+            font-size: 0.58rem;
+            font-weight: 800;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: #232934;
+            color: #647185;
+            text-transform: uppercase;
+        }
+        .p-slot.input-active .p-act-pill {
+            background: var(--p-color);
+            color: #000;
+        }
+        .p-slot.focused:not(.input-active) .p-act-pill {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        .p-dev-name {
+            font-family: monospace;
+            font-size: 0.64rem;
+            color: #7c899e;
+            white-space: nowrap;
             overflow: hidden;
-            display: flex; align-items: center;
-            box-shadow: inset 0 0 5px #000;
+            text-overflow: ellipsis;
         }
-        
-        /* Bentuk melengkung mengikuti bahu controller */
-        .pos-lt-bar { left: 60px; border-radius: 10px 4px 4px 10px; } 
-        .pos-rt-bar { right: 60px; border-radius: 4px 10px 10px 4px; flex-direction: row-reverse; } 
-        
-        .trigger-fill { height: 100%; background: linear-gradient(90deg, #00e5ff, #0099cc); width: 0%; transition: width 0.05s; }
-        
-        /* Label Trigger (L / R) */
-        .trigger-val { 
-            position: absolute; top: 20px; /* Pindah ke bawah bar */
-            color: #666; font-size: 0.65rem; font-weight: bold; font-family: monospace; 
-            width: 100%; text-align: center;
+        .p-slot.connected .p-dev-name {
+            color: #cbd5e1;
         }
 
-        /* --- Shoulders (LB/RB) --- */
-        .gp-sh { width: 100px; height: 28px; border-radius: 8px; }
-        .pos-lb { top: 45px; left: 60px; } 
-        .pos-rb { top: 45px; right: 60px; }
-
-        /* --- D-Pad (Kiri) --- */
-        .gp-dpad { width: 32px; height: 32px; border-radius: 4px; }
-        .pos-du { top: 110px; left: 110px; } 
-        .pos-dd { top: 178px; left: 110px; } 
-        .pos-dl { top: 144px; left: 76px; } 
-        .pos-dr { top: 144px; left: 144px; }
-
-        /* --- Face Buttons (Kanan - ABXY) --- */
-        .gp-round { width: 40px; height: 40px; border-radius: 50%; }
-        .pos-y { top: 100px; right: 110px; } 
-        .pos-x { top: 135px; right: 145px; } 
-        .pos-b { top: 135px; right: 75px; }  
-        .pos-a { top: 170px; right: 110px; } 
-
-        /* --- Analog Sticks (L3/R3) --- */
-        .gp-stick { width: 60px; height: 60px; border-radius: 50%; border: 3px solid #555; background: #222; }
-        .gp-stick.pressed { background: #005577; border-color: #00e5ff; }
-        .pos-ls { top: 210px; left: 170px; } 
-        .pos-rs { top: 210px; right: 170px; }
-
-        /* --- Center Buttons --- */
-        .gp-small { width: 26px; height: 26px; border-radius: 50%; top: 120px; color: #aaa; font-size: 0.6rem;}
-        .pos-sel { left: 220px; } 
-        .pos-start { right: 220px; } 
-        .pos-home { left: 268px; top: 90px; width: 24px; height: 24px; font-size: 1rem;} 
-
-        /* --- PADDLES (P1-P4) SEJAJAR HORIZONTAL --- */
-        .gp-paddle { 
-            width: 40px; height: 30px; /* Bentuk lebih lebar */
-            border-radius: 6px; bottom: 30px; /* Paling bawah */
-            background: #1a1a1a; border-color: #333; 
+        /* Active Device Info Bar */
+        .top-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
         }
-        /* Urutan: P3 - P1 - [Tengah] - P2 - P4 */
-        .pos-p3 { left: 160px; } 
-        .pos-p1 { left: 210px; } 
-        
-        .pos-p2 { right: 210px; } 
-        .pos-p4 { right: 160px; }
-        
-        .paddle-label { position: absolute; bottom: 10px; width: 100%; text-align: center; color: #444; font-size: 0.7rem; letter-spacing: 1px; font-weight: bold; }
 
-        /* DATA MONITOR */
+        .gp-status-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .gp-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .active-player-chip {
+            font-family: monospace;
+            font-size: 0.68rem;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 5px;
+            background: #00e5ff;
+            color: #000;
+        }
+        #gp-name {
+            color: var(--c-cyan, #00e5ff);
+            font-weight: 800;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+        #gp-meta {
+            color: #888;
+            font-size: 0.68rem;
+            font-family: monospace;
+        }
+
+        /* Layout Mode Switcher Bar */
+        .layout-switcher {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            background: #121418;
+            border: 1px solid #2c313a;
+            border-radius: 9px;
+            padding: 6px 8px;
+        }
+        .mode-pill {
+            background: #1a1e24;
+            border: 1px solid #383f4a;
+            color: #9aa5b4;
+            font-family: monospace;
+            font-size: 0.66rem;
+            font-weight: 800;
+            padding: 5px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .mode-pill:hover { border-color: var(--c-cyan, #00e5ff); color: #fff; }
+        .mode-pill.active {
+            background: var(--c-cyan, #00e5ff);
+            border-color: #fff;
+            color: #000;
+        }
+
+        /* Wheel Sub-Controls Bar */
+        .wheel-controls-bar {
+            display: none;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            background: #11151c;
+            border: 1px solid #2b3545;
+            border-radius: 9px;
+            padding: 7px 10px;
+        }
+        .wheel-controls-bar.visible {
+            display: flex;
+        }
+        .wheel-ctrl-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .wheel-sub-btn {
+            background: #1a202b;
+            border: 1px solid #394456;
+            color: #9fb0c7;
+            font-family: monospace;
+            font-size: 0.64rem;
+            font-weight: 800;
+            padding: 4px 7px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .wheel-sub-btn.active {
+            background: #ff9100;
+            border-color: #fff;
+            color: #000;
+        }
+
+        .rumble-btn {
+            background: rgba(255, 64, 129, 0.16);
+            border: 1px solid #ff4081;
+            color: #ff4081;
+            padding: 6px 12px;
+            border-radius: 7px;
+            font-family: monospace;
+            font-size: 0.7rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .rumble-btn:hover { background: #ff4081; color: #fff; }
+
+        /* =========================================
+           ORTHOGRAPHIC DUAL-VIEW STAGE
+           ========================================= */
+        .gp-stage {
+            width: 100%;
+            background: radial-gradient(circle at 50% 52%, #1d232d 0%, #0d0f13 88%);
+            border: 1px solid #2e3540;
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .view-cad-bar {
+            width: 100%;
+            max-width: 570px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace;
+            font-size: 0.63rem;
+            font-weight: 800;
+            letter-spacing: 0.9px;
+            color: #6c788a;
+            text-transform: uppercase;
+        }
+        .view-cad-tag {
+            background: #141820;
+            border: 1px solid #2b323e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #8fa0b8;
+        }
+
+        .ortho-divider {
+            width: 100%;
+            max-width: 570px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #343d4d 20%, #343d4d 80%, transparent);
+            margin: 2px 0;
+        }
+
+        .gp-svg {
+            width: 100%;
+            max-width: 570px;
+            height: auto;
+            display: block;
+            overflow: visible;
+        }
+
+        /* Interactive SVG Button & Stick Classes */
+        .gp-btn-shape {
+            transition: fill 0.04s ease, stroke 0.04s ease, filter 0.04s ease;
+        }
+        .gp-btn-shape.pressed {
+            fill: #00e5ff !important;
+            stroke: #ffffff !important;
+            filter: drop-shadow(0 0 9px rgba(0, 229, 255, 0.9));
+        }
+        .gp-btn-lbl {
+            font-family: monospace;
+            font-weight: 800;
+            pointer-events: none;
+            transition: fill 0.04s ease;
+        }
+        .gp-btn-lbl.lit {
+            fill: #000000 !important;
+        }
+        .gp-glyph {
+            pointer-events: none;
+            transition: stroke 0.04s ease, fill 0.04s ease;
+        }
+        .gp-btn-shape.pressed + .gp-glyph {
+            stroke: #000000 !important;
+        }
+
+        .gp-stick-group {
+            transition: transform 0.02s linear;
+        }
+        .gp-stick-cap {
+            transition: fill 0.04s ease, stroke 0.04s ease, filter 0.04s ease;
+        }
+        .gp-stick-cap.active {
+            stroke: #00e5ff !important;
+            filter: drop-shadow(0 0 7px rgba(0, 229, 255, 0.65));
+        }
+        .gp-stick-cap.clicked {
+            fill: #00e5ff !important;
+            stroke: #ffffff !important;
+        }
+
+        /* Extra Back Paddles / Shifter Gears Strip (Btn 17..24) */
+        .paddles-strip {
+            width: 100%;
+            max-width: 570px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding-top: 4px;
+        }
+        .paddle-chip {
+            background: #13161b;
+            border: 1px solid #2f3640;
+            border-radius: 7px;
+            padding: 5px 6px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #6c7787;
+            transition: 0.05s;
+        }
+        .paddle-chip.pressed {
+            background: #00e5ff;
+            border-color: #fff;
+            color: #000;
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.7);
+        }
+
+        /* =========================================
+           TELEMETRY MONITOR
+           ========================================= */
         .monitor-panel {
-            margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
-            background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px dashed #444;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: #121418;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #2d333d;
         }
-        .mon-row { display: flex; justify-content: space-between; font-family: monospace; font-size: 0.85rem; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .mon-val { color: #00e5ff; font-weight: bold; }
+        @media (max-width: 600px) {
+            .monitor-panel { grid-template-columns: 1fr; }
+        }
+        .mon-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace;
+            font-size: 0.76rem;
+            color: #9aa5b4;
+            border-bottom: 1px solid #242932;
+            padding-bottom: 6px;
+        }
+        .mon-val { color: var(--c-cyan, #00e5ff); font-weight: 800; }
 
-        /* --- SECTION 2: SONY TOUCHPAD --- */
+        /* =========================================
+           DEADZONE, CIRCULARITY & SINGULARITY LAB
+           ========================================= */
+        .dz-lab-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .dz-lab-title {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--c-cyan, #00e5ff);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .dz-controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        .dz-slider-box {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: #12151b;
+            border: 1px solid #2d3440;
+            padding: 4px 10px;
+            border-radius: 7px;
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #cbd5e1;
+        }
+        .dz-slider-box input[type="range"] {
+            width: 82px;
+            accent-color: #00e5ff;
+            cursor: pointer;
+        }
+        .reset-trace-btn {
+            background: rgba(0, 229, 255, 0.14);
+            border: 1px solid #00e5ff;
+            color: #00e5ff;
+            padding: 5px 11px;
+            border-radius: 7px;
+            font-family: monospace;
+            font-size: 0.68rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .reset-trace-btn:hover { background: #00e5ff; color: #000; }
+
+        .sticks-lab-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 680px) {
+            .sticks-lab-grid { grid-template-columns: 1fr; }
+        }
+
+        .stick-scope-card {
+            background: #111419;
+            border: 1px solid #2b323e;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .scope-top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace;
+            font-size: 0.74rem;
+            font-weight: 800;
+        }
+        .scope-status-pill {
+            font-size: 0.62rem;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: rgba(0, 230, 118, 0.15);
+            color: #00e676;
+            border: 1px solid rgba(0, 230, 118, 0.4);
+        }
+        .scope-status-pill.warn {
+            background: rgba(255, 214, 0, 0.15);
+            color: #ffd600;
+            border-color: rgba(255, 214, 0, 0.45);
+        }
+        .scope-status-pill.fail {
+            background: rgba(255, 64, 129, 0.18);
+            color: #ff4081;
+            border-color: rgba(255, 64, 129, 0.5);
+        }
+
+        .polar-canvas {
+            width: 210px;
+            height: 210px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #181d26 0%, #0c0e12 100%);
+            border: 1px solid #353e4d;
+            display: block;
+        }
+
+        .scope-metrics {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-family: monospace;
+            font-size: 0.7rem;
+        }
+        .scope-m-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #252b36;
+            padding-bottom: 4px;
+            color: #8f9bb0;
+        }
+        .scope-m-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .scope-m-val { font-weight: 800; color: #e2e8f0; }
+
+        /* =========================================
+           RIGHT COLUMN: SIGNAL BENCH & TOUCHPAD
+           ========================================= */
+        .bench-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .bench-box {
+            background: #111419;
+            border: 1px solid #2b323e;
+            border-radius: 9px;
+            padding: 9px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-family: monospace;
+        }
+        .bench-lbl {
+            font-size: 0.62rem;
+            color: #7c899e;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+        .bench-num {
+            font-size: 0.92rem;
+            font-weight: 900;
+            color: #00e5ff;
+        }
+        .bench-sub {
+            font-size: 0.62rem;
+            color: #6b7688;
+        }
+
+        .trig-bar-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #111419;
+            border: 1px solid #2b323e;
+            border-radius: 9px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.68rem;
+        }
+        .trig-track {
+            width: 100%;
+            height: 8px;
+            background: #1b2029;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #2e3644;
+        }
+        .trig-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00e5ff, #00e676);
+            transition: width 0.03s linear;
+        }
+
+        /* --- SONY TOUCHPAD --- */
         .ds-wrapper {
-            background: #1e1e1e; border: 1px solid #333; border-radius: 15px; padding: 25px;
-            display: flex; flex-direction: column; align-items: center; height: 100%;
+            background: var(--bg-card, linear-gradient(145deg, #1e1e1e, #252525));
+            border: 1px solid var(--border-color, #333);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 11px;
         }
         .ds-touchpad {
-            width: 100%; height: 250px; background: #222; border: 2px solid #444;
-            border-radius: 15px; position: relative; overflow: hidden; margin: 20px 0;
+            width: 100%;
+            height: 195px;
+            background: #111418;
+            border: 2px solid #38414f;
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
             box-shadow: inset 0 0 30px #000;
         }
         .ds-finger {
-            position: absolute; width: 40px; height: 40px; border-radius: 50%;
-            transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 0.8rem; opacity: 0; transition: opacity 0.1s; pointer-events: none;
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-weight: 800;
+            font-size: 0.78rem;
+            opacity: 0;
+            transition: opacity 0.08s;
+            pointer-events: none;
         }
-        #f1 { background: #00e5ff; box-shadow: 0 0 20px #00e5ff; color: #000; }
-        #f2 { background: #ff4081; box-shadow: 0 0 20px #ff4081; color: #000; }
-        
-        .connect-btn { 
-            background: #00a2ff; color: #fff; border: none; padding: 12px 25px; 
-            border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        #f1 { background: #00e5ff; box-shadow: 0 0 18px #00e5ff; color: #000; }
+        #f2 { background: #ff4081; box-shadow: 0 0 18px #ff4081; color: #000; }
+
+        .connect-btn {
+            background: #00a2ff;
+            color: #fff;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 25px;
+            font-family: monospace;
+            font-size: 0.76rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
         }
         .connect-btn:hover { background: #fff; color: #00a2ff; box-shadow: 0 0 15px #00a2ff; }
-
-        @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
+        .connect-btn:disabled { background: #00e676; color: #000; cursor: default; box-shadow: none; }
     </style>
 </head>
 <body>
-    <a href="../../index.html" class="back-btn">← MENU</a>
-    <h2>Pro Controller & Deadzone Tester</h2>
+    <div class="mod-header">
+        <a href="../../index.html" class="back-btn">← MENU</a>
+        <span class="mod-title">PRO CONTROLLER &amp; DEADZONE LAB</span>
+        <span class="proto-badge" id="proto-badge">STANDBY</span>
+    </div>
 
     <div class="main-grid">
-        
-        <div class="panel">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <span id="gp-name" style="color:#00e5ff; font-weight:bold;">Connect Controller...</span>
-                <button onclick="testRumble()" style="background:#ff4081; border:none; color:white; padding:3px 10px; border-radius:4px; font-size:0.7rem; cursor:pointer;">TEST RUMBLE</button>
+        <!-- KOLOM KIRI: MULTI-PLAYER MATRIX, VISUALIZER & DEADZONE/SINGULARITY LAB -->
+        <div class="left-col">
+            <div class="panel-card">
+                <!-- Multi-Controller Player Slot Matrix (P1 - P4) -->
+                <div class="player-bar-wrap">
+                    <div class="player-bar-header">
+                        <span class="player-bar-title">MULTI-CONTROLLER INPUT MATRIX (SLOT P1 – P4)</span>
+                        <button type="button" class="auto-focus-btn" id="btn-auto-focus" onclick="toggleAutoFocus()">
+                            ⚡ AUTO-SWITCH INPUT: ON
+                        </button>
+                    </div>
+                    <div class="player-slots-grid">
+                        <div class="p-slot" id="slot-card-0" data-slot="0" onclick="selectPlayerSlot(0)">
+                            <div class="p-slot-top">
+                                <span class="p-badge"><span class="p-dot"></span>PLAYER 1</span>
+                                <span class="p-act-pill" id="slot-pill-0">EMPTY</span>
+                            </div>
+                            <div class="p-dev-name" id="slot-name-0">Tidak terhubung</div>
+                        </div>
+                        <div class="p-slot" id="slot-card-1" data-slot="1" onclick="selectPlayerSlot(1)">
+                            <div class="p-slot-top">
+                                <span class="p-badge"><span class="p-dot"></span>PLAYER 2</span>
+                                <span class="p-act-pill" id="slot-pill-1">EMPTY</span>
+                            </div>
+                            <div class="p-dev-name" id="slot-name-1">Tidak terhubung</div>
+                        </div>
+                        <div class="p-slot" id="slot-card-2" data-slot="2" onclick="selectPlayerSlot(2)">
+                            <div class="p-slot-top">
+                                <span class="p-badge"><span class="p-dot"></span>PLAYER 3</span>
+                                <span class="p-act-pill" id="slot-pill-2">EMPTY</span>
+                            </div>
+                            <div class="p-dev-name" id="slot-name-2">Tidak terhubung</div>
+                        </div>
+                        <div class="p-slot" id="slot-card-3" data-slot="3" onclick="selectPlayerSlot(3)">
+                            <div class="p-slot-top">
+                                <span class="p-badge"><span class="p-dot"></span>PLAYER 4</span>
+                                <span class="p-act-pill" id="slot-pill-3">EMPTY</span>
+                            </div>
+                            <div class="p-dev-name" id="slot-name-3">Tidak terhubung</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Controller Header -->
+                <div class="top-bar">
+                    <div class="gp-status-info">
+                        <div class="gp-name-row">
+                            <span class="active-player-chip" id="active-player-chip">P1 • SLOT #0</span>
+                            <span id="gp-name">Menunggu koneksi Gamepad / Wheel (Tekan tombol apa saja)...</span>
+                        </div>
+                        <span id="gp-meta">Mapping: - | Buttons: 0 | Axes: 0</span>
+                    </div>
+                    <button type="button" class="rumble-btn" onclick="testRumble()">📳 TEST RUMBLE / FFB</button>
+                </div>
+
+                <!-- Selector Layout Otomatis / Manual Override -->
+                <div class="layout-switcher">
+                    <span style="font-family:monospace; font-size:0.65rem; color:#777; font-weight:800; margin-right:2px;">LAYOUT:</span>
+                    <button type="button" class="mode-pill active" id="mode-auto" onclick="setLayoutPreference('auto')">AUTO DETECT</button>
+                    <button type="button" class="mode-pill" id="mode-xinput" onclick="setLayoutPreference('xinput')">XINPUT (XBOX)</button>
+                    <button type="button" class="mode-pill" id="mode-playstation" onclick="setLayoutPreference('playstation')">PLAYSTATION / DS</button>
+                    <button type="button" class="mode-pill" id="mode-nintendo" onclick="setLayoutPreference('nintendo')">NINTENDO SWITCH</button>
+                    <button type="button" class="mode-pill" id="mode-dinput" onclick="setLayoutPreference('dinput')">D-INPUT (CLASSIC)</button>
+                    <button type="button" class="mode-pill" id="mode-wheel" onclick="setLayoutPreference('wheel')">🏎️ RACING WHEEL</button>
+                </div>
+
+                <!-- Racing Wheel Calibration Bar -->
+                <div class="wheel-controls-bar" id="wheel-controls-bar">
+                    <div class="wheel-ctrl-group">
+                        <span style="font-family:monospace; font-size:0.63rem; color:#8fa0b8; font-weight:800;">LOCK ANGLE:</span>
+                        <button type="button" class="wheel-sub-btn" id="wdeg-270" onclick="setWheelMaxDeg(270)">270°</button>
+                        <button type="button" class="wheel-sub-btn" id="wdeg-360" onclick="setWheelMaxDeg(360)">360°</button>
+                        <button type="button" class="wheel-sub-btn" id="wdeg-540" onclick="setWheelMaxDeg(540)">540°</button>
+                        <button type="button" class="wheel-sub-btn active" id="wdeg-900" onclick="setWheelMaxDeg(900)">900°</button>
+                        <button type="button" class="wheel-sub-btn" id="wdeg-1080" onclick="setWheelMaxDeg(1080)">1080°</button>
+                    </div>
+                    <div class="wheel-ctrl-group">
+                        <span style="font-family:monospace; font-size:0.63rem; color:#8fa0b8; font-weight:800;">PEDALS:</span>
+                        <button type="button" class="wheel-sub-btn active" id="wped-auto" onclick="setWheelPedalMode('auto')">AUTO</button>
+                        <button type="button" class="wheel-sub-btn" id="wped-inverted" onclick="setWheelPedalMode('inverted')">D-INPUT INV (+1→-1)</button>
+                        <button type="button" class="wheel-sub-btn" id="wped-combined" onclick="setWheelPedalMode('combined')">COMBINED AXIS</button>
+                    </div>
+                </div>
+
+                <!-- Orthographic Stage -->
+                <div class="gp-stage">
+                    <div class="view-cad-bar">
+                        <span class="view-cad-tag" id="cad-top-tag">FRONT ELEVATION // SHOULDERS &amp; TRIGGERS</span>
+                        <span id="cad-front-spec">Z-AXIS DEPTH</span>
+                    </div>
+                    <div id="gp-front-mount" style="width:100%; display:flex; justify-content:center;"></div>
+
+                    <div class="ortho-divider"></div>
+
+                    <div class="view-cad-bar">
+                        <span class="view-cad-tag" id="cad-bot-tag">TOP-DOWN FACE // CHASSIS &amp; INPUT MATRIX</span>
+                        <span id="cad-face-spec">XY-AXIS SURFACE</span>
+                    </div>
+                    <div id="gp-face-mount" style="width:100%; display:flex; justify-content:center;"></div>
+
+                    <!-- Back Paddles / Extra HID Buttons / Shifter Gears (Btn 17 - 24) -->
+                    <div class="paddles-strip">
+                        <div class="paddle-chip" id="pad-17">B17 / SHARE</div>
+                        <div class="paddle-chip" id="pad-18">B18 / P1</div>
+                        <div class="paddle-chip" id="pad-19">B19 / P2</div>
+                        <div class="paddle-chip" id="pad-20">B20 / P3</div>
+                        <div class="paddle-chip" id="pad-21">B21 / DIAL+</div>
+                        <div class="paddle-chip" id="pad-22">B22 / DIAL-</div>
+                        <div class="paddle-chip" id="pad-23">B23 / ENT</div>
+                        <div class="paddle-chip" id="pad-24">B24 / REV</div>
+                    </div>
+                </div>
+
+                <!-- Telemetry Monitor -->
+                <div class="monitor-panel">
+                    <div class="mon-row">
+                        <span id="lbl-mon-ls">L-STICK (Axis 0,1)</span>
+                        <span class="mon-val" id="mon-ls">0.000, 0.000 (0%)</span>
+                    </div>
+                    <div class="mon-row">
+                        <span id="lbl-mon-rs">R-STICK (Axis 2,3)</span>
+                        <span class="mon-val" id="mon-rs">0.000, 0.000 (0%)</span>
+                    </div>
+                    <div class="mon-row">
+                        <span id="lbl-mon-lt">L-TRIGGER (LT / L2)</span>
+                        <span class="mon-val" id="mon-lt">0.000 (0%)</span>
+                    </div>
+                    <div class="mon-row">
+                        <span id="lbl-mon-rt">R-TRIGGER (RT / R2)</span>
+                        <span class="mon-val" id="mon-rt">0.000 (0%)</span>
+                    </div>
+                    <div class="mon-row" style="grid-column: 1 / -1; border-bottom: none; padding-bottom: 0;">
+                        <span>ACTIVE HID BUTTONS</span>
+                        <span class="mon-val" id="mon-active-btns" style="color: var(--c-green, #00e676);">NONE</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="gp-visual-wrapper">
-                <div class="trigger-bar-container pos-lt-bar">
-                    <div class="trigger-val" id="val-lt">L</div>
-                    <div class="trigger-fill" id="fill-lt"></div>
+            <!-- DEADZONE, CIRCULARITY & SINGULARITY DIAGNOSTICS LAB -->
+            <div class="panel-card">
+                <div class="dz-lab-header">
+                    <h3 class="dz-lab-title">🎯 Deadzone, Circularity &amp; Singularity Lab</h3>
+                    <div class="dz-controls-row">
+                        <div class="dz-slider-box">
+                            <span>INNER DZ:</span>
+                            <input type="range" id="dz-threshold-slider" min="0" max="30" step="1" value="5" oninput="updateDeadzoneThreshold(this.value)">
+                            <strong id="dz-threshold-val" style="color:#00e5ff;">5%</strong>
+                        </div>
+                        <button type="button" class="reset-trace-btn" onclick="resetStickDiagnostics()">↻ RESET TRACE</button>
+                    </div>
                 </div>
-                <div class="trigger-bar-container pos-rt-bar">
-                    <div class="trigger-val" id="val-rt">R</div>
-                    <div class="trigger-fill" id="fill-rt"></div>
+
+                <p style="margin:0; font-size:0.74rem; color:#8f9bb0; line-height:1.45;">
+                    Putar kedua analog stick menyusuri tepi lingkar penuh ($360^\circ$) untuk memetakan <strong>Circularity Error</strong> dan mendeteksi <strong>Axial Singularity / Cardinal Snapping</strong> pada sumbu $0^\circ, 90^\circ, 180^\circ, 270^\circ$.
+                </p>
+
+                <div class="sticks-lab-grid">
+                    <!-- LEFT STICK POLAR SCOPE -->
+                    <div class="stick-scope-card">
+                        <div class="scope-top-bar">
+                            <span style="color:#00e5ff;">LEFT STICK (AXIS 0, 1)</span>
+                            <span class="scope-status-pill" id="ls-status-pill">CENTER OK</span>
+                        </div>
+                        <canvas id="canvas-ls" class="polar-canvas" width="220" height="220"></canvas>
+                        <div class="scope-metrics">
+                            <div class="scope-m-row">
+                                <span>Circularity Avg Error:</span>
+                                <span class="scope-m-val" id="ls-circ-err">0.0% (0/72 sec)</span>
+                            </div>
+                            <div class="scope-m-row">
+                                <span>Axial Singularity / Snap:</span>
+                                <span class="scope-m-val" id="ls-singularity">0.0% (LINEAR)</span>
+                            </div>
+                            <div class="scope-m-row">
+                                <span>Resting Center Drift:</span>
+                                <span class="scope-m-val" id="ls-drift-val">0.000 (0.0%)</span>
+                            </div>
+                            <div class="scope-m-row">
+                                <span>Peak Vector Reach:</span>
+                                <span class="scope-m-val" id="ls-peak-val">0.000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT STICK POLAR SCOPE -->
+                    <div class="stick-scope-card">
+                        <div class="scope-top-bar">
+                            <span style="color:#ff4081;">RIGHT STICK (AXIS 2, 3)</span>
+                            <span class="scope-status-pill" id="rs-status-pill">CENTER OK</span>
+                        </div>
+                        <canvas id="canvas-rs" class="polar-canvas" width="220" height="220"></canvas>
+                        <div class="scope-metrics">
+                            <div class="scope-m-row">
+                                <span>Circularity Avg Error:</span>
+                                <span class="scope-m-val" id="rs-circ-err">0.0% (0/72 sec)</span>
+                            </div>
+                            <div class="scope-m-row">
+                                <span>Axial Singularity / Snap:</span>
+                                <span class="scope-m-val" id="rs-singularity">0.0% (LINEAR)</span>
+                            </div>
+                            <div class="scope-m-row">
+                                <span>Resting Center Drift:</span>
+                                <span class="scope-m-val" id="rs-drift-val">0.000 (0.0%)</span>
+                            </div>
+                            <div class="scope-m-row">
+                                <span>Peak Vector Reach:</span>
+                                <span class="scope-m-val" id="rs-peak-val">0.000</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="btn-gp gp-sh pos-lb" id="b4">LB</div>
-                <div class="btn-gp gp-sh pos-rb" id="b5">RB</div>
-
-                <div class="btn-gp gp-stick pos-ls" id="b10">L3</div>
-                <div class="btn-gp gp-stick pos-rs" id="b11">R3</div>
-
-                <div class="btn-gp gp-dpad pos-du" id="b12">▲</div>
-                <div class="btn-gp gp-dpad pos-dd" id="b13">▼</div>
-                <div class="btn-gp gp-dpad pos-dl" id="b14">◀</div>
-                <div class="btn-gp gp-dpad pos-dr" id="b15">▶</div>
-
-                <div class="btn-gp gp-round pos-y" id="b3" style="color:#eadd00">Y</div>
-                <div class="btn-gp gp-round pos-x" id="b2" style="color:#0088ff">X</div>
-                <div class="btn-gp gp-round pos-a" id="b0" style="color:#00ff88">A</div>
-                <div class="btn-gp gp-round pos-b" id="b1" style="color:#ff4040">B</div>
-
-                <div class="btn-gp gp-small pos-sel" id="b8">Sel</div>
-                <div class="btn-gp gp-small pos-start" id="b9">Sta</div>
-                <div class="btn-gp gp-small pos-home" id="b16">⌂</div>
-
-                <div class="btn-gp gp-paddle pos-p1" id="b17">P1</div>
-                <div class="btn-gp gp-paddle pos-p2" id="b18">P2</div>
-                <div class="btn-gp gp-paddle pos-p3" id="b19">P3</div>
-                <div class="btn-gp gp-paddle pos-p4" id="b20">P4</div>
-                
-                <div class="paddle-label">BACK PADDLES / EXTRA BUTTONS</div>
-            </div>
-
-            <div class="monitor-panel">
-                <div class="mon-row"><span>L-STICK (Axis 0,1)</span> <span class="mon-val" id="mon-ls">0.00, 0.00</span></div>
-                <div class="mon-row"><span>R-STICK (Axis 2,3)</span> <span class="mon-val" id="mon-rs">0.00, 0.00</span></div>
-                <div class="mon-row"><span>L-TRIGGER (Deadzone)</span> <span class="mon-val" id="mon-lt">0.00</span></div>
-                <div class="mon-row"><span>R-TRIGGER (Deadzone)</span> <span class="mon-val" id="mon-rt">0.00</span></div>
             </div>
         </div>
 
-        <div class="ds-wrapper">
-            <h3 style="margin-top:0; color:#00a2ff">Sony Touchpad Raw Data</h3>
-            <p style="font-size:0.8rem; color:#888; text-align:center;">
-                Requires USB Cable + Chrome/Edge.<br>Close Steam/DS4Windows to avoid conflicts.
-            </p>
-            <button class="connect-btn" id="ds-connect">🔌 CONNECT USB</button>
-            
-            <div class="ds-touchpad">
-                <div id="f1" class="ds-finger">1</div>
-                <div id="f2" class="ds-finger">2</div>
-                <div style="position:absolute; top:50%; width:100%; height:1px; background:#333;"></div>
-                <div style="position:absolute; left:50%; height:100%; width:1px; background:#333;"></div>
-            </div>
-            
-            <div style="width:100%; font-family:monospace; font-size:0.85rem;">
-                <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #444; padding:5px;">
-                    <span>Finger 1:</span> <span style="color:#00e5ff" id="ds-val-1">Inactive</span>
+        <!-- KOLOM KANAN: POLLING RATE BENCH, SWITCH BOUNCE & SONY TOUCHPAD -->
+        <div class="right-col">
+            <!-- POLLING RATE, JITTER & SWITCH BOUNCE BENCH -->
+            <div class="panel-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px;">
+                    <h3 style="margin:0; color:#00e676; font-size:0.88rem; letter-spacing:0.6px; text-transform:uppercase;">
+                        ⚡ Polling Rate &amp; Switch Bench
+                    </h3>
+                    <button type="button" class="reset-trace-btn" style="padding:3px 8px; font-size:0.64rem;" onclick="resetSignalBench()">RESET</button>
                 </div>
-                <div style="display:flex; justify-content:space-between; padding:5px;">
-                    <span>Finger 2:</span> <span style="color:#ff4081" id="ds-val-2">Inactive</span>
+
+                <div class="bench-grid">
+                    <div class="bench-box">
+                        <span class="bench-lbl">POLLING RATE</span>
+                        <span class="bench-num" id="bench-hz">0 Hz</span>
+                        <span class="bench-sub" id="bench-hz-peak">Peak: 0 Hz</span>
+                    </div>
+                    <div class="bench-box">
+                        <span class="bench-lbl">INTERVAL / JITTER</span>
+                        <span class="bench-num" id="bench-interval" style="color:#ffd600;">0.00 ms</span>
+                        <span class="bench-sub" id="bench-jitter">Jitter σ: 0.00 ms</span>
+                    </div>
+                    <div class="bench-box">
+                        <span class="bench-lbl">MIN HOLD (BOUNCE)</span>
+                        <span class="bench-num" id="bench-min-hold" style="color:#00e676;">-- ms</span>
+                        <span class="bench-sub" id="bench-chatter">Chatter (&lt;15ms): 0</span>
+                    </div>
+                    <div class="bench-box">
+                        <span class="bench-lbl">TOTAL ACTUATIONS</span>
+                        <span class="bench-num" id="bench-press-count" style="color:#ff4081;">0</span>
+                        <span class="bench-sub" id="bench-last-btn">Last: NONE</span>
+                    </div>
+                </div>
+
+                <!-- Trigger Linearity & Saturation Check -->
+                <div class="trig-bar-wrap">
+                    <div style="display:flex; justify-content:space-between; color:#9aa5b4;">
+                        <span>L-TRIGGER LINEARITY</span>
+                        <span id="bench-lt-max" style="color:#00e5ff; font-weight:800;">Max: 0.000</span>
+                    </div>
+                    <div class="trig-track"><div class="trig-fill" id="bench-lt-bar"></div></div>
+
+                    <div style="display:flex; justify-content:space-between; color:#9aa5b4; margin-top:4px;">
+                        <span>R-TRIGGER LINEARITY</span>
+                        <span id="bench-rt-max" style="color:#00e676; font-weight:800;">Max: 0.000</span>
+                    </div>
+                    <div class="trig-track"><div class="trig-fill" id="bench-rt-bar"></div></div>
+                </div>
+            </div>
+
+            <!-- SONY TOUCHPAD WEBHID RAW DATA -->
+            <div class="ds-wrapper">
+                <h3 style="margin:0; color:#00a2ff; font-size:0.92rem; letter-spacing:0.6px; text-transform:uppercase;">
+                    Sony Touchpad Raw Data
+                </h3>
+                <p style="font-size:0.74rem; color:#888; text-align:center; margin:0; line-height:1.45;">
+                    Mendukung DualShock 4 &amp; DualSense via WebHID.<br>
+                    Tutup Steam / DS4Windows agar akses HID tidak bentrok.
+                </p>
+                <button type="button" class="connect-btn" id="ds-connect">🔌 CONNECT SONY WEBHID</button>
+
+                <div class="ds-touchpad">
+                    <div id="f1" class="ds-finger">1</div>
+                    <div id="f2" class="ds-finger">2</div>
+                    <div style="position:absolute; top:50%; width:100%; height:1px; background:#2b323d;"></div>
+                    <div style="position:absolute; left:50%; height:100%; width:1px; background:#2b323d;"></div>
+                </div>
+
+                <div style="width:100%; font-family:monospace; font-size:0.76rem; display:flex; flex-direction:column; gap:6px;">
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #3a414d; padding-bottom:5px;">
+                        <span style="color:#999;">Device Model:</span>
+                        <span style="color:#fff; font-weight:bold;" id="ds-model-lbl">Not Connected</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #3a414d; padding-bottom:5px;">
+                        <span style="color:#999;">Finger 1:</span>
+                        <span style="color:#00e5ff; font-weight:bold;" id="ds-val-1">Inactive</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding-bottom:2px;">
+                        <span style="color:#999;">Finger 2:</span>
+                        <span style="color:#ff4081; font-weight:bold;" id="ds-val-2">Inactive</span>
+                    </div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // --- 1. STANDARD GAMEPAD LOGIC ---
-        let gpIndex = null;
-        window.addEventListener("gamepadconnected", e => {
-            gpIndex = e.gamepad.index;
-            document.getElementById('gp-name').innerText = "Connected: " + e.gamepad.id.substring(0, 20) + "...";
-            updateLoop();
-        });
-        window.addEventListener("gamepaddisconnected", e => {
-            gpIndex = null;
-            document.getElementById('gp-name').innerText = "Connect Controller...";
+        // =========================================
+        // 1. MULTI-CONTROLLER SLOT STATE & DETECTOR
+        // =========================================
+        let activeSlot = 0;
+        let autoFocusOnInput = true;
+        let layoutPref = 'auto';      // 'auto' | 'xinput' | 'playstation' | 'nintendo' | 'dinput' | 'wheel'
+        let activeRenderedProfile = '';
+        let trigPrefixL = 'LT';
+        let trigPrefixR = 'RT';
+
+        // Wheel specific settings
+        let wheelMaxDeg = 900;
+        let wheelPedalMode = 'auto';  // 'auto' | 'inverted' | 'combined'
+
+        // Resting axis snapshots per slot [0..3]
+        const slotAxisBaselines = [null, null, null, null];
+        const slotLastActiveTs = [0, 0, 0, 0];
+        const PLAYER_COLORS = ['#00e5ff', '#ff4081', '#00e676', '#ffd600'];
+
+        // =========================================
+        // 2. DEADZONE, CIRCULARITY & SINGULARITY STATE
+        // =========================================
+        let deadzonePct = 5; // Default 5% inner deadzone
+        const SECTOR_COUNT = 72; // 5 degrees per sector
+
+        function createStickDiagState() {
+            return {
+                sectors: new Float32Array(SECTOR_COUNT), // Peak radius per 5-deg slice
+                peakReach: 0,
+                restingDrift: 0,
+                cardinalSamples: 0,
+                snappedSamples: 0,
+                trail: [] // Recent {x, y} points for smooth vector trail
+            };
+        }
+
+        let diagLS = createStickDiagState();
+        let diagRS = createStickDiagState();
+
+        function updateDeadzoneThreshold(val) {
+            deadzonePct = parseInt(val, 10) || 0;
+            document.getElementById('dz-threshold-val').innerText = `${deadzonePct}%`;
+        }
+
+        function resetStickDiagnostics() {
+            diagLS = createStickDiagState();
+            diagRS = createStickDiagState();
+        }
+
+        // =========================================
+        // 3. POLLING RATE (HZ) & SWITCH BOUNCE BENCH
+        // =========================================
+        let prevTimestamp = 0;
+        const pollDeltas = [];
+        let peakHz = 0;
+        let totalActuations = 0;
+        let chatterEvents = 0;
+        let minHoldMs = Infinity;
+        let maxLtSeen = 0;
+        let maxRtSeen = 0;
+        const btnDownTs = new Float64Array(32);
+        const btnPrevState = new Uint8Array(32);
+
+        function resetSignalBench() {
+            prevTimestamp = 0;
+            pollDeltas.length = 0;
+            peakHz = 0;
+            totalActuations = 0;
+            chatterEvents = 0;
+            minHoldMs = Infinity;
+            maxLtSeen = 0;
+            maxRtSeen = 0;
+            btnDownTs.fill(0);
+            btnPrevState.fill(0);
+            document.getElementById('bench-hz').innerText = '0 Hz';
+            document.getElementById('bench-hz-peak').innerText = 'Peak: 0 Hz';
+            document.getElementById('bench-interval').innerText = '0.00 ms';
+            document.getElementById('bench-jitter').innerText = 'Jitter σ: 0.00 ms';
+            document.getElementById('bench-min-hold').innerText = '-- ms';
+            document.getElementById('bench-chatter').innerText = 'Chatter (<15ms): 0';
+            document.getElementById('bench-press-count').innerText = '0';
+            document.getElementById('bench-last-btn').innerText = 'Last: NONE';
+            document.getElementById('bench-lt-max').innerText = 'Max: 0.000';
+            document.getElementById('bench-rt-max').innerText = 'Max: 0.000';
+        }
+
+        function classifyGamepadProfile(gp) {
+            if (!gp) return 'xinput';
+            const id = (gp.id || '').toLowerCase();
+            const mapping = (gp.mapping || '').toLowerCase();
+
+            if (/wheel|g923|g29|g27|g25|driving force|thrustmaster|t300|t150|t248|t500|tx racing|fanatec|moza|simagic|pxn|hori racing|rwa|logitech.*racing/.test(id)) {
+                return 'wheel';
+            }
+            if (/054c|sony|dualshock|dualsense|playstation|ps4|ps5|wireless controller/.test(id)) {
+                return 'playstation';
+            }
+            if (/057e|nintendo|switch|pro controller|joy-con|snes/.test(id)) {
+                return 'nintendo';
+            }
+            if (/xinput|xbox|045e|360|one|series/.test(id)) {
+                return 'xinput';
+            }
+            if (mapping !== 'standard' || /dinput|generic|usb gamepad|twin|0810|0079|11ff|dual action|f310.*d/.test(id)) {
+                return 'dinput';
+            }
+            return 'xinput';
+        }
+
+        function toggleAutoFocus() {
+            autoFocusOnInput = !autoFocusOnInput;
+            const btn = document.getElementById('btn-auto-focus');
+            if (autoFocusOnInput) {
+                btn.innerText = '⚡ AUTO-SWITCH INPUT: ON';
+                btn.classList.remove('locked');
+            } else {
+                btn.innerText = `🔒 LOCKED TO PLAYER ${activeSlot + 1}`;
+                btn.classList.add('locked');
+            }
+        }
+
+        function selectPlayerSlot(slotIdx) {
+            activeSlot = slotIdx;
+            resetStickDiagnostics();
+            resetSignalBench();
+            if (!autoFocusOnInput) {
+                document.getElementById('btn-auto-focus').innerText = `🔒 LOCKED TO PLAYER ${activeSlot + 1}`;
+            }
+            syncHeaderAndLayout();
+        }
+
+        function setLayoutPreference(pref) {
+            layoutPref = pref;
+            ['auto', 'xinput', 'playstation', 'nintendo', 'dinput', 'wheel'].forEach(m => {
+                const btn = document.getElementById(`mode-${m}`);
+                if (btn) btn.classList.toggle('active', m === pref);
+            });
+            syncHeaderAndLayout();
+        }
+
+        function setWheelMaxDeg(deg) {
+            wheelMaxDeg = deg;
+            [270, 360, 540, 900, 1080].forEach(d => {
+                const el = document.getElementById(`wdeg-${d}`);
+                if (el) el.classList.toggle('active', d === deg);
+            });
+        }
+
+        function setWheelPedalMode(mode) {
+            wheelPedalMode = mode;
+            ['auto', 'inverted', 'combined'].forEach(m => {
+                const el = document.getElementById(`wped-${m}`);
+                if (el) el.classList.toggle('active', m === mode);
+            });
+        }
+
+        function getActiveGamepad() {
+            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+            if (pads[activeSlot]) return pads[activeSlot];
+            for (let i = 0; i < 4; i++) {
+                if (pads[i]) {
+                    activeSlot = i;
+                    return pads[i];
+                }
+            }
+            return null;
+        }
+
+        function syncHeaderAndLayout() {
+            const gp = getActiveGamepad();
+            const detected = gp ? classifyGamepadProfile(gp) : 'xinput';
+            const targetProfile = layoutPref === 'auto' ? detected : layoutPref;
+
+            const chip = document.getElementById('active-player-chip');
+            chip.innerText = `PLAYER ${activeSlot + 1} • SLOT #${activeSlot}`;
+            chip.style.background = PLAYER_COLORS[activeSlot] || '#00e5ff';
+
+            if (gp) {
+                document.getElementById('gp-name').innerText = gp.id;
+                document.getElementById('gp-meta').innerText =
+                    `Slot: P${activeSlot + 1} | Mapping: ${gp.mapping || 'non-standard'} | Buttons: ${gp.buttons.length} | Axes: ${gp.axes.length}`;
+            } else {
+                document.getElementById('gp-name').innerText = 'Menunggu koneksi Gamepad / Wheel (Tekan tombol apa saja)...';
+                document.getElementById('gp-meta').innerText = 'Slot: - | Mapping: - | Buttons: 0 | Axes: 0';
+            }
+
+            const wheelBar = document.getElementById('wheel-controls-bar');
+            wheelBar.classList.toggle('visible', targetProfile === 'wheel');
+
+            if (targetProfile !== activeRenderedProfile) {
+                activeRenderedProfile = targetProfile;
+                renderControllerViews(targetProfile);
+            }
+
+            const badge = document.getElementById('proto-badge');
+            const badgeLabels = {
+                xinput: `P${activeSlot + 1} • XINPUT (XBOX)`,
+                playstation: `P${activeSlot + 1} • PLAYSTATION`,
+                nintendo: `P${activeSlot + 1} • NINTENDO`,
+                dinput: `P${activeSlot + 1} • D-INPUT`,
+                wheel: `P${activeSlot + 1} • RACING WHEEL`
+            };
+            badge.innerText = gp ? (badgeLabels[targetProfile] || targetProfile.toUpperCase()) : 'STANDBY';
+
+            const metaMap = {
+                xinput: {
+                    topTag: 'FRONT ELEVATION // SHOULDERS & TRIGGERS',
+                    botTag: 'TOP-DOWN FACE // CHASSIS & INPUT MATRIX',
+                    front: 'USB-C + SYNC // ANALOG HALL TRIGGERS',
+                    face: 'ASYMMETRIC STICKS + HYBRID D-PAD',
+                    monLs: 'L-STICK (Axis 0,1)',
+                    monRs: 'R-STICK (Axis 2,3)',
+                    monL: 'L-TRIGGER (LT)',
+                    monR: 'R-TRIGGER (RT)',
+                    pL: 'LT', pR: 'RT'
+                },
+                playstation: {
+                    topTag: 'FRONT ELEVATION // SHOULDERS & TRIGGERS',
+                    botTag: 'TOP-DOWN FACE // CHASSIS & INPUT MATRIX',
+                    front: 'LIGHTBAR + USB-C // ADAPTIVE TRIGGERS',
+                    face: 'SYMMETRIC STICKS + CAPACITIVE TOUCHPAD',
+                    monLs: 'L-STICK (Axis 0,1)',
+                    monRs: 'R-STICK (Axis 2,3)',
+                    monL: 'L2 TRIGGER (Btn 6)',
+                    monR: 'R2 TRIGGER (Btn 7)',
+                    pL: 'L2', pR: 'R2'
+                },
+                nintendo: {
+                    topTag: 'FRONT ELEVATION // SHOULDERS & TRIGGERS',
+                    botTag: 'TOP-DOWN FACE // CHASSIS & INPUT MATRIX',
+                    front: 'USB-C + SYNC // DUAL-STAGE TRIGGERS',
+                    face: 'ASYMMETRIC STICKS + NINTENDO ABXY',
+                    monLs: 'L-STICK (Axis 0,1)',
+                    monRs: 'R-STICK (Axis 2,3)',
+                    monL: 'ZL TRIGGER (Btn 6)',
+                    monR: 'ZR TRIGGER (Btn 7)',
+                    pL: 'ZL', pR: 'ZR'
+                },
+                dinput: {
+                    topTag: 'FRONT ELEVATION // SHOULDERS & TRIGGERS',
+                    botTag: 'TOP-DOWN FACE // CHASSIS & INPUT MATRIX',
+                    front: 'WIRED COLLAR // DUAL SHOULDER DECK',
+                    face: 'DUAL-POD CLASSIC + POV HAT SUPPORT',
+                    monLs: 'L-STICK (Axis 0,1)',
+                    monRs: 'R-STICK (Axis 2,3)',
+                    monL: 'L2 SHOULDER (Btn 6)',
+                    monR: 'R2 SHOULDER (Btn 7)',
+                    pL: 'L2', pR: 'R2'
+                },
+                wheel: {
+                    topTag: 'PEDAL BOX ELEVATION // CLUTCH • BRAKE • THROTTLE',
+                    botTag: 'COCKPIT RIM // STEERING ROTATION & HUB MATRIX',
+                    front: '3-PEDAL TELEMETRY (AXIS / TRIGGER)',
+                    face: 'LIVE STEERING ANGLE + PADDLE SHIFTERS',
+                    monLs: 'STEERING ANGLE (Axis 0)',
+                    monRs: 'CLUTCH PEDAL (Axis / Aux)',
+                    monL: 'BRAKE PEDAL (LT / Axis)',
+                    monR: 'THROTTLE PEDAL (RT / Axis)',
+                    pL: 'BRK', pR: 'GAS'
+                }
+            };
+            const cfg = metaMap[targetProfile] || metaMap.xinput;
+            trigPrefixL = cfg.pL;
+            trigPrefixR = cfg.pR;
+            document.getElementById('cad-top-tag').innerText = cfg.topTag;
+            document.getElementById('cad-bot-tag').innerText = cfg.botTag;
+            document.getElementById('cad-front-spec').innerText = cfg.front;
+            document.getElementById('cad-face-spec').innerText = cfg.face;
+            document.getElementById('lbl-mon-ls').innerText = cfg.monLs;
+            document.getElementById('lbl-mon-rs').innerText = cfg.monRs;
+            document.getElementById('lbl-mon-lt').innerText = cfg.monL;
+            document.getElementById('lbl-mon-rt').innerText = cfg.monR;
+        }
+
+        // =========================================
+        // 4. ORTHOGRAPHIC SVG TEMPLATES
+        // =========================================
+        function renderControllerViews(profile) {
+            const frontMount = document.getElementById('gp-front-mount');
+            const faceMount = document.getElementById('gp-face-mount');
+
+            if (profile === 'wheel') {
+                frontMount.innerHTML = `
+                <svg class="gp-svg" viewBox="0 0 560 98" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="pedalBaseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#222731"/>
+                            <stop offset="100%" stop-color="#11141a"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="64" y="10" width="432" height="80" rx="12" fill="url(#pedalBaseGrad)" stroke="#3e4756" stroke-width="1.5"/>
+                    <line x1="82" y1="20" x2="82" y2="80" stroke="#2d3442" stroke-width="2" stroke-dasharray="4 4"/>
+                    <line x1="478" y1="20" x2="478" y2="80" stroke="#2d3442" stroke-width="2" stroke-dasharray="4 4"/>
+
+                    <rect x="112" y="18" width="84" height="64" rx="8" fill="#0d1015" stroke="#475569" stroke-width="1.4"/>
+                    <rect id="wheel-fill-clutch" x="112" y="82" width="84" height="0" rx="6" fill="#00e5ff"/>
+                    <line x1="124" y1="34" x2="184" y2="34" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="124" y1="50" x2="184" y2="50" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="124" y1="66" x2="184" y2="66" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <text id="wheel-txt-clutch" x="154" y="54" text-anchor="middle" font-family="monospace" font-size="10" font-weight="900" fill="#cbd5e1" pointer-events="none">CLUTCH 0%</text>
+
+                    <rect x="226" y="18" width="108" height="64" rx="8" fill="#0d1015" stroke="#475569" stroke-width="1.4"/>
+                    <rect id="wheel-fill-brake" x="226" y="82" width="108" height="0" rx="6" fill="#ff3b30"/>
+                    <line x1="242" y1="34" x2="318" y2="34" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="242" y1="50" x2="318" y2="50" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="242" y1="66" x2="318" y2="66" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <text id="wheel-txt-brake" x="280" y="54" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="900" fill="#cbd5e1" pointer-events="none">BRAKE 0%</text>
+
+                    <rect x="364" y="18" width="84" height="64" rx="8" fill="#0d1015" stroke="#475569" stroke-width="1.4"/>
+                    <rect id="wheel-fill-gas" x="364" y="82" width="84" height="0" rx="6" fill="#00e676"/>
+                    <line x1="376" y1="34" x2="436" y2="34" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="376" y1="50" x2="436" y2="50" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="376" y1="66" x2="436" y2="66" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2" stroke-linecap="round"/>
+                    <text id="wheel-txt-gas" x="406" y="54" text-anchor="middle" font-family="monospace" font-size="10" font-weight="900" fill="#cbd5e1" pointer-events="none">GAS 0%</text>
+                </svg>`;
+
+                faceMount.innerHTML = `
+                <svg class="gp-svg" viewBox="0 0 560 315" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="wheelBaseHousing" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#272d38"/>
+                            <stop offset="100%" stop-color="#13161d"/>
+                        </linearGradient>
+                        <linearGradient id="wheelRimLeather" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#353d4b"/>
+                            <stop offset="50%" stop-color="#1c2028"/>
+                            <stop offset="100%" stop-color="#11141a"/>
+                        </linearGradient>
+                    </defs>
+
+                    <rect x="205" y="14" width="150" height="58" rx="14" fill="url(#wheelBaseHousing)" stroke="#3e4756" stroke-width="1.4"/>
+                    <path d="M 140,158 A 140,140 0 0,1 420,158" fill="none" stroke="#2c3442" stroke-width="1.5" stroke-dasharray="4 6"/>
+                    <line x1="280" y1="12" x2="280" y2="24" stroke="#00e5ff" stroke-width="2"/>
+
+                    <g id="wheel-rim-group" style="transform-origin: 280px 158px; transform: rotate(0deg);">
+                        <path id="gp-b4" class="gp-btn-shape" d="M 164,116 L 194,116 L 194,174 L 164,166 C 158,164 156,158 156,150 L 156,130 C 156,122 158,116 164,116 Z"
+                              fill="#262c38" stroke="#5a677d" stroke-width="1.5"/>
+                        <text id="lbl-b4" class="gp-btn-lbl" x="174" y="149" text-anchor="middle" font-size="13" fill="#cbd5e1">-</text>
+
+                        <path id="gp-b5" class="gp-btn-shape" d="M 396,116 L 366,116 L 366,174 L 396,166 C 402,164 404,158 404,150 L 404,130 C 404,122 402,116 396,116 Z"
+                              fill="#262c38" stroke="#5a677d" stroke-width="1.5"/>
+                        <text id="lbl-b5" class="gp-btn-lbl" x="386" y="149" text-anchor="middle" font-size="13" fill="#cbd5e1">+</text>
+
+                        <path d="M 280,34 C 348,34 404,90 404,158 C 404,202 380,240 344,262 L 216,262 C 180,240 156,202 156,158 C 156,90 212,34 280,34 Z"
+                              fill="none" stroke="url(#wheelRimLeather)" stroke-width="24" stroke-linejoin="round"/>
+                        <path d="M 280,34 C 348,34 404,90 404,158 C 404,202 380,240 344,262 L 216,262 C 180,240 156,202 156,158 C 156,90 212,34 280,34 Z"
+                              fill="none" stroke="#556278" stroke-width="1.4" stroke-linejoin="round"/>
+
+                        <rect x="275" y="21" width="10" height="26" rx="2" fill="#00e5ff" stroke="#ffffff" stroke-width="0.8"/>
+
+                        <path d="M 168,144 L 228,132 L 332,132 L 392,144 L 386,178 L 324,186 L 304,254 L 256,254 L 236,186 L 174,178 Z"
+                              fill="#222833" stroke="#525f75" stroke-width="1.5" stroke-linejoin="round"/>
+
+                        <rect x="242" y="137" width="76" height="7" rx="3.5" fill="#0d1015" stroke="#3c4556" stroke-width="1"/>
+                        <circle id="rpm-led-1" cx="250" cy="140.5" r="2.2" fill="#26303d"/>
+                        <circle id="rpm-led-2" cx="262" cy="140.5" r="2.2" fill="#26303d"/>
+                        <circle id="rpm-led-3" cx="274" cy="140.5" r="2.2" fill="#26303d"/>
+                        <circle id="rpm-led-4" cx="286" cy="140.5" r="2.2" fill="#26303d"/>
+                        <circle id="rpm-led-5" cx="298" cy="140.5" r="2.2" fill="#26303d"/>
+                        <circle id="rpm-led-6" cx="310" cy="140.5" r="2.2" fill="#26303d"/>
+
+                        <path id="gp-b12" class="gp-btn-shape" d="M 198,143 L 210,143 L 210,153 L 198,153 Z" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+                        <path id="gp-b13" class="gp-btn-shape" d="M 198,167 L 210,167 L 210,177 L 198,177 Z" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+                        <path id="gp-b14" class="gp-btn-shape" d="M 186,154 L 196,154 L 196,166 L 186,166 Z" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+                        <path id="gp-b15" class="gp-btn-shape" d="M 212,154 L 222,154 L 222,166 L 212,166 Z" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+
+                        <circle id="gp-b3" class="gp-btn-shape" cx="356" cy="146" r="7.5" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                        <circle id="gp-b2" class="gp-btn-shape" cx="342" cy="160" r="7.5" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                        <circle id="gp-b1" class="gp-btn-shape" cx="370" cy="160" r="7.5" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                        <circle id="gp-b0" class="gp-btn-shape" cx="356" cy="174" r="7.5" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+
+                        <circle id="gp-b6" class="gp-btn-shape" cx="256" cy="196" r="7" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+                        <circle id="gp-b7" class="gp-btn-shape" cx="304" cy="196" r="7" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+
+                        <circle id="gp-b8" class="gp-btn-shape" cx="264" cy="215" r="6.5" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+                        <circle id="gp-b9" class="gp-btn-shape" cx="296" cy="215" r="6.5" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+
+                        <circle id="gp-b10" class="gp-btn-shape" cx="264" cy="233" r="6.5" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+                        <circle id="gp-b11" class="gp-btn-shape" cx="296" cy="233" r="6.5" fill="#181c23" stroke="#535f73" stroke-width="1.1"/>
+
+                        <circle id="gp-b16" class="gp-btn-shape" cx="280" cy="244" r="7.5" fill="#181c23" stroke="#00e5ff" stroke-width="1.2"/>
+                    </g>
+
+                    <circle cx="280" cy="164" r="28" fill="#10131a" stroke="#00e5ff" stroke-width="1.6"/>
+                    <text id="wheel-deg-readout" x="280" y="162" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="900" fill="#00e5ff">0.0°</text>
+                    <text id="wheel-dir-readout" x="280" y="174" text-anchor="middle" font-family="monospace" font-size="7.5" font-weight="800" fill="#8fa0b8">CENTER</text>
+                </svg>`;
+                return;
+            }
+
+            if (profile === 'playstation') {
+                frontMount.innerHTML = `
+                <svg class="gp-svg" viewBox="0 0 560 94" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="psFrontBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#2a313d"/>
+                            <stop offset="100%" stop-color="#13161d"/>
+                        </linearGradient>
+                        <clipPath id="clipTrigL">
+                            <path d="M 86,42 L 194,42 L 188,78 C 187,82 183,84 178,84 L 104,84 C 98,84 93,80 91,74 Z"/>
+                        </clipPath>
+                        <clipPath id="clipTrigR">
+                            <path d="M 366,42 L 474,42 L 469,74 C 467,80 462,84 456,84 L 382,84 C 377,84 373,82 372,78 Z"/>
+                        </clipPath>
+                    </defs>
+
+                    <path d="M 68,26 C 110,12 450,12 492,26 C 510,32 518,52 510,70 C 504,82 486,86 462,86 L 98,86 C 74,86 56,82 50,70 C 42,52 50,32 68,26 Z"
+                          fill="url(#psFrontBody)" stroke="#444e5e" stroke-width="1.4"/>
+
+                    <path d="M 68,26 C 78,22 86,21 92,21 L 84,78 C 68,78 55,75 50,70 C 42,52 50,32 68,26 Z" fill="#cbd5e1" fill-opacity="0.85"/>
+                    <path d="M 492,26 C 482,22 474,21 468,21 L 476,78 C 492,78 505,75 510,70 C 518,52 510,32 492,26 Z" fill="#cbd5e1" fill-opacity="0.85"/>
+
+                    <rect x="204" y="15" width="152" height="4.5" rx="2.2" fill="#00e5ff" opacity="0.85"/>
+                    <rect x="267" y="27" width="26" height="9" rx="4.5" fill="#0b0d11" stroke="#535f73" stroke-width="1.2"/>
+                    <rect x="272" y="30.5" width="16" height="2" rx="1" fill="#64748b"/>
+                    <text x="280" y="48" text-anchor="middle" font-family="monospace" font-size="7.5" font-weight="800" fill="#64748b">USB-C</text>
+
+                    <path id="gp-b4" class="gp-btn-shape" d="M 88,36 C 92,21 130,17 194,20 L 194,36 Z"
+                          fill="#28303d" stroke="#546178" stroke-width="1.3"/>
+                    <text id="lbl-b4" class="gp-btn-lbl" x="141" y="31" text-anchor="middle" font-size="10.5" fill="#e2e8f0">L1</text>
+
+                    <path id="gp-b5" class="gp-btn-shape" d="M 472,36 C 468,21 430,17 366,20 L 366,36 Z"
+                          fill="#28303d" stroke="#546178" stroke-width="1.3"/>
+                    <text id="lbl-b5" class="gp-btn-lbl" x="419" y="31" text-anchor="middle" font-size="10.5" fill="#e2e8f0">R1</text>
+
+                    <g clip-path="url(#clipTrigL)">
+                        <rect x="86" y="42" width="108" height="42" fill="#101318"/>
+                        <rect id="gp-fill-lt" data-max-h="42" x="86" y="42" width="108" height="0" fill="#00e5ff"/>
+                    </g>
+                    <path d="M 86,42 L 194,42 L 188,78 C 187,82 183,84 178,84 L 104,84 C 98,84 93,80 91,74 Z"
+                          fill="none" stroke="#546178" stroke-width="1.4"/>
+                    <text id="gp-txt-lt" x="140" y="67" text-anchor="middle" font-family="monospace" font-size="10" font-weight="800" fill="#cbd5e1" pointer-events="none">L2 0%</text>
+
+                    <g clip-path="url(#clipTrigR)">
+                        <rect x="366" y="42" width="108" height="42" fill="#101318"/>
+                        <rect id="gp-fill-rt" data-max-h="42" x="366" y="42" width="108" height="0" fill="#00e5ff"/>
+                    </g>
+                    <path d="M 366,42 L 474,42 L 469,74 C 467,80 462,84 456,84 L 382,84 C 377,84 373,82 372,78 Z"
+                          fill="none" stroke="#546178" stroke-width="1.4"/>
+                    <text id="gp-txt-rt" x="420" y="67" text-anchor="middle" font-family="monospace" font-size="10" font-weight="800" fill="#cbd5e1" pointer-events="none">R2 0%</text>
+                </svg>`;
+
+                faceMount.innerHTML = `
+                <svg class="gp-svg" viewBox="0 0 560 302" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="psShellGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#edf2f7"/>
+                            <stop offset="55%" stop-color="#cbd5e1"/>
+                            <stop offset="100%" stop-color="#94a3b8"/>
+                        </linearGradient>
+                        <linearGradient id="psCoreGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#252b36"/>
+                            <stop offset="100%" stop-color="#11141a"/>
+                        </linearGradient>
+                        <linearGradient id="psRim" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.7"/>
+                            <stop offset="100%" stop-color="#475569" stop-opacity="0.4"/>
+                        </linearGradient>
+                        <radialGradient id="psWell" cx="50%" cy="50%" r="50%">
+                            <stop offset="55%" stop-color="#0d1015"/>
+                            <stop offset="100%" stop-color="#1e242e"/>
+                        </radialGradient>
+                    </defs>
+
+                    <path d="M 108,16 C 168,10 392,10 452,16 C 484,20 504,52 516,120 L 532,228 C 538,268 514,296 482,296 C 454,296 436,272 416,228 C 398,190 358,176 280,176 C 202,176 162,190 144,228 C 124,272 106,296 78,296 C 46,296 22,268 28,228 L 44,120 C 56,52 76,20 108,16 Z"
+                          fill="url(#psCoreGrad)" stroke="#3e4756" stroke-width="1.6"/>
+
+                    <path d="M 106,16 C 138,13 174,12 196,12 L 210,108 C 194,130 176,160 166,188 C 154,200 148,216 142,232 C 124,272 106,296 78,296 C 46,296 22,268 28,228 L 44,120 C 56,52 76,20 106,16 Z"
+                          fill="url(#psShellGrad)" stroke="url(#psRim)" stroke-width="1.3"/>
+                    <path d="M 454,16 C 422,13 386,12 364,12 L 350,108 C 366,130 384,160 394,188 C 406,200 412,216 418,232 C 436,272 454,296 482,296 C 514,296 538,268 532,228 L 516,120 C 504,52 484,20 454,16 Z"
+                          fill="url(#psShellGrad)" stroke="url(#psRim)" stroke-width="1.3"/>
+
+                    <path d="M 196,12 L 210,108 C 194,130 176,160 166,188" fill="none" stroke="#00e5ff" stroke-opacity="0.35" stroke-width="1.4"/>
+                    <path d="M 364,12 L 350,108 C 366,130 384,160 394,188" fill="none" stroke="#00e5ff" stroke-opacity="0.35" stroke-width="1.4"/>
+
+                    <path id="gp-b17" class="gp-btn-shape"
+                          d="M 198,16 L 362,16 L 351,98 C 350,104 345,108 339,108 L 221,108 C 215,108 210,104 209,98 Z"
+                          fill="#1c212b" stroke="#00e5ff" stroke-width="1.6"/>
+                    <text x="280" y="99" text-anchor="middle" font-family="monospace" font-size="8" font-weight="800" fill="#5c6a7e" pointer-events="none">TOUCHPAD</text>
+                    <circle id="svg-tp-f1" cx="250" cy="62" r="7" fill="#00e5ff" opacity="0"/>
+                    <circle id="svg-tp-f2" cx="310" cy="62" r="7" fill="#ff4081" opacity="0"/>
+
+                    <rect id="gp-b8" class="gp-btn-shape" x="174" y="28" width="10" height="22" rx="5" transform="rotate(-8 179 39)" fill="#2b3240" stroke="#535f73" stroke-width="1.2"/>
+                    <rect id="gp-b9" class="gp-btn-shape" x="376" y="28" width="10" height="22" rx="5" transform="rotate(8 381 39)" fill="#2b3240" stroke="#535f73" stroke-width="1.2"/>
+
+                    <circle cx="126" cy="82" r="42" fill="#cbd5e1" fill-opacity="0.35" stroke="#94a3b8" stroke-width="1"/>
+                    <path id="gp-b12" class="gp-btn-shape" d="M 117,51 C 117,47 135,47 135,51 L 135,68 L 126,76 L 117,68 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                    <path id="gp-b13" class="gp-btn-shape" d="M 117,113 C 117,117 135,117 135,113 L 135,96 L 126,88 L 117,96 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                    <path id="gp-b14" class="gp-btn-shape" d="M 95,73 C 91,73 91,91 95,91 L 112,91 L 120,82 L 112,73 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                    <path id="gp-b15" class="gp-btn-shape" d="M 157,73 C 161,73 161,91 157,91 L 140,91 L 132,82 L 140,73 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+
+                    <circle cx="434" cy="82" r="46" fill="#cbd5e1" fill-opacity="0.35" stroke="#94a3b8" stroke-width="1"/>
+
+                    <circle id="gp-b3" class="gp-btn-shape" cx="434" cy="50" r="16.5" fill="#1e232c" stroke="#4f5b70" stroke-width="1.3"/>
+                    <polygon class="gp-glyph" points="434,41.5 442,55.5 426,55.5" fill="none" stroke="#00e676" stroke-width="2.1" stroke-linejoin="round"/>
+
+                    <circle id="gp-b2" class="gp-btn-shape" cx="400" cy="82" r="16.5" fill="#1e232c" stroke="#4f5b70" stroke-width="1.3"/>
+                    <rect class="gp-glyph" x="393.5" y="75.5" width="13" height="13" rx="1.2" fill="none" stroke="#ff66b2" stroke-width="2.1"/>
+
+                    <circle id="gp-b1" class="gp-btn-shape" cx="468" cy="82" r="16.5" fill="#1e232c" stroke="#4f5b70" stroke-width="1.3"/>
+                    <circle class="gp-glyph" cx="468" cy="82" r="7" fill="none" stroke="#ff5252" stroke-width="2.1"/>
+
+                    <circle id="gp-b0" class="gp-btn-shape" cx="434" cy="114" r="16.5" fill="#1e232c" stroke="#4f5b70" stroke-width="1.3"/>
+                    <path class="gp-glyph" d="M 428.5,108.5 L 439.5,119.5 M 439.5,108.5 L 428.5,119.5" stroke="#40c4ff" stroke-width="2.2" stroke-linecap="round"/>
+
+                    <circle cx="212" cy="142" r="35" fill="url(#psWell)" stroke="#3e4756" stroke-width="2"/>
+                    <g id="gp-ls-group" class="gp-stick-group">
+                        <circle id="gp-ls-cap" class="gp-stick-cap" cx="212" cy="142" r="22" fill="#282f3c" stroke="#64748b" stroke-width="2"/>
+                        <circle cx="212" cy="142" r="15" fill="none" stroke="#475569" stroke-width="1" pointer-events="none"/>
+                        <text x="212" y="146" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="800" fill="#cbd5e1" pointer-events="none">L3</text>
+                    </g>
+
+                    <circle cx="348" cy="142" r="35" fill="url(#psWell)" stroke="#3e4756" stroke-width="2"/>
+                    <g id="gp-rs-group" class="gp-stick-group">
+                        <circle id="gp-rs-cap" class="gp-stick-cap" cx="348" cy="142" r="22" fill="#282f3c" stroke="#64748b" stroke-width="2"/>
+                        <circle cx="348" cy="142" r="15" fill="none" stroke="#475569" stroke-width="1" pointer-events="none"/>
+                        <text x="348" y="146" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="800" fill="#cbd5e1" pointer-events="none">R3</text>
+                    </g>
+
+                    <circle id="gp-b16" class="gp-btn-shape" cx="280" cy="134" r="12.5" fill="#262c36" stroke="#535f73" stroke-width="1.3"/>
+                    <text id="lbl-b16" class="gp-btn-lbl" x="280" y="137" text-anchor="middle" font-size="8.5" fill="#cbd5e1">PS</text>
+
+                    <rect id="gp-b18" class="gp-btn-shape" x="272" y="156" width="16" height="6" rx="3" fill="#262c36" stroke="#535f73" stroke-width="1.1"/>
+                </svg>`;
+                return;
+            }
+
+            if (profile === 'nintendo') {
+                frontMount.innerHTML = `
+                <svg class="gp-svg" viewBox="0 0 560 94" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="nsFrontBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#2b313d"/>
+                            <stop offset="100%" stop-color="#14171f"/>
+                        </linearGradient>
+                        <clipPath id="clipTrigL">
+                            <path d="M 88,42 L 194,42 L 188,78 C 187,82 183,84 178,84 L 106,84 C 100,84 95,80 93,74 Z"/>
+                        </clipPath>
+                        <clipPath id="clipTrigR">
+                            <path d="M 366,42 L 472,42 L 467,74 C 465,80 460,84 454,84 L 382,84 C 377,84 373,82 372,78 Z"/>
+                        </clipPath>
+                    </defs>
+
+                    <path d="M 70,26 C 115,12 445,12 490,26 C 508,32 516,52 508,70 C 502,82 484,86 460,86 L 100,86 C 76,86 58,82 52,70 C 44,52 52,32 70,26 Z"
+                          fill="url(#nsFrontBody)" stroke="#444e5e" stroke-width="1.4"/>
+
+                    <path d="M 70,26 C 80,22 86,21 91,21 L 85,78 C 69,78 57,75 52,70 C 44,52 52,32 70,26 Z" fill="#ff3b30" fill-opacity="0.35"/>
+                    <path d="M 490,26 C 480,22 474,21 469,21 L 475,78 C 491,78 503,75 508,70 C 516,52 508,32 490,26 Z" fill="#00c7be" fill-opacity="0.35"/>
+
+                    <circle cx="242" cy="28" r="4.5" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                    <rect x="267" y="22" width="26" height="9" rx="4.5" fill="#0b0d11" stroke="#535f73" stroke-width="1.2"/>
+                    <rect x="272" y="25.5" width="16" height="2" rx="1" fill="#64748b"/>
+                    <text x="280" y="42" text-anchor="middle" font-family="monospace" font-size="7.5" font-weight="800" fill="#64748b">USB-C</text>
+
+                    <rect x="256" y="74" width="6" height="3" rx="1" fill="#00e676"/>
+                    <rect x="270" y="74" width="6" height="3" rx="1" fill="#2c3440"/>
+                    <rect x="284" y="74" width="6" height="3" rx="1" fill="#2c3440"/>
+                    <rect x="298" y="74" width="6" height="3" rx="1" fill="#2c3440"/>
+
+                    <path id="gp-b4" class="gp-btn-shape" d="M 88,36 C 92,21 130,17 194,20 L 194,36 Z"
+                          fill="#28303d" stroke="#546178" stroke-width="1.3"/>
+                    <text id="lbl-b4" class="gp-btn-lbl" x="141" y="31" text-anchor="middle" font-size="10.5" fill="#e2e8f0">L</text>
+
+                    <path id="gp-b5" class="gp-btn-shape" d="M 472,36 C 468,21 430,17 366,20 L 366,36 Z"
+                          fill="#28303d" stroke="#546178" stroke-width="1.3"/>
+                    <text id="lbl-b5" class="gp-btn-lbl" x="419" y="31" text-anchor="middle" font-size="10.5" fill="#e2e8f0">R</text>
+
+                    <g clip-path="url(#clipTrigL)">
+                        <rect x="88" y="42" width="106" height="42" fill="#101318"/>
+                        <rect id="gp-fill-lt" data-max-h="42" x="88" y="42" width="106" height="0" fill="#ff3b30"/>
+                    </g>
+                    <path d="M 88,42 L 194,42 L 188,78 C 187,82 183,84 178,84 L 106,84 C 100,84 95,80 93,74 Z"
+                          fill="none" stroke="#546178" stroke-width="1.4"/>
+                    <text id="gp-txt-lt" x="141" y="67" text-anchor="middle" font-family="monospace" font-size="10" font-weight="800" fill="#cbd5e1" pointer-events="none">ZL 0%</text>
+
+                    <g clip-path="url(#clipTrigR)">
+                        <rect x="366" y="42" width="106" height="42" fill="#101318"/>
+                        <rect id="gp-fill-rt" data-max-h="42" x="366" y="42" width="106" height="0" fill="#00c7be"/>
+                    </g>
+                    <path d="M 366,42 L 472,42 L 467,74 C 465,80 460,84 454,84 L 382,84 C 377,84 373,82 372,78 Z"
+                          fill="none" stroke="#546178" stroke-width="1.4"/>
+                    <text id="gp-txt-rt" x="419" y="67" text-anchor="middle" font-family="monospace" font-size="10" font-weight="800" fill="#cbd5e1" pointer-events="none">ZR 0%</text>
+                </svg>`;
+
+                faceMount.innerHTML = `
+                <svg class="gp-svg" viewBox="0 0 560 302" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="nsShellGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#2e3440"/>
+                            <stop offset="50%" stop-color="#1e222b"/>
+                            <stop offset="100%" stop-color="#13161c"/>
+                        </linearGradient>
+                        <linearGradient id="nsRim" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#64748b" stop-opacity="0.6"/>
+                            <stop offset="100%" stop-color="#1e293b" stop-opacity="0.2"/>
+                        </linearGradient>
+                        <radialGradient id="nsWell" cx="50%" cy="50%" r="50%">
+                            <stop offset="55%" stop-color="#0d1015"/>
+                            <stop offset="100%" stop-color="#1e242e"/>
+                        </radialGradient>
+                    </defs>
+
+                    <path d="M 112,14 C 172,8 388,8 448,14 C 484,18 506,52 518,122 L 532,228 C 538,266 514,294 482,294 C 454,294 436,270 416,226 C 398,188 358,174 280,174 C 202,174 162,188 144,226 C 124,270 106,294 78,294 C 46,294 22,266 28,228 L 42,122 C 54,52 76,18 112,14 Z"
+                          fill="url(#nsShellGrad)" stroke="url(#nsRim)" stroke-width="1.6"/>
+
+                    <path d="M 96,20 C 76,71 62,146 56,238" fill="none" stroke="#ff3b30" stroke-opacity="0.55" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M 464,20 C 484,71 498,146 504,238" fill="none" stroke="#00c7be" stroke-opacity="0.55" stroke-width="2.5" stroke-linecap="round"/>
+
+                    <circle cx="138" cy="78" r="35" fill="url(#nsWell)" stroke="#3e4756" stroke-width="2"/>
+                    <g id="gp-ls-group" class="gp-stick-group">
+                        <circle id="gp-ls-cap" class="gp-stick-cap" cx="138" cy="78" r="22" fill="#282f3c" stroke="#64748b" stroke-width="2"/>
+                        <circle cx="138" cy="78" r="15" fill="none" stroke="#475569" stroke-width="1" pointer-events="none"/>
+                        <text x="138" y="82" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="800" fill="#cbd5e1" pointer-events="none">LS</text>
+                    </g>
+
+                    <rect x="184" y="138" width="24" height="24" fill="#20252f"/>
+                    <path id="gp-b12" class="gp-btn-shape" d="M 184,118 C 184,114 208,114 208,118 L 208,138 L 184,138 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                    <path id="gp-b13" class="gp-btn-shape" d="M 184,182 C 184,186 208,186 208,182 L 208,162 L 184,162 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                    <path id="gp-b14" class="gp-btn-shape" d="M 164,138 C 160,138 160,162 164,162 L 184,162 L 184,138 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                    <path id="gp-b15" class="gp-btn-shape" d="M 228,138 C 232,138 232,162 228,162 L 208,162 L 208,138 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+
+                    <circle cx="422" cy="78" r="46" fill="#141820" fill-opacity="0.55" stroke="#343d4d" stroke-width="1.2"/>
+
+                    <circle id="gp-b3" class="gp-btn-shape" cx="422" cy="46" r="16.5" fill="#232832" stroke="#525e73" stroke-width="1.4"/>
+                    <text id="lbl-b3" class="gp-btn-lbl" x="422" y="51" text-anchor="middle" font-size="13" fill="#f8fafc">X</text>
+
+                    <circle id="gp-b2" class="gp-btn-shape" cx="388" cy="78" r="16.5" fill="#232832" stroke="#525e73" stroke-width="1.4"/>
+                    <text id="lbl-b2" class="gp-btn-lbl" x="388" y="83" text-anchor="middle" font-size="13" fill="#f8fafc">Y</text>
+
+                    <circle id="gp-b1" class="gp-btn-shape" cx="456" cy="78" r="16.5" fill="#232832" stroke="#525e73" stroke-width="1.4"/>
+                    <text id="lbl-b1" class="gp-btn-lbl" x="456" y="83" text-anchor="middle" font-size="13" fill="#f8fafc">A</text>
+
+                    <circle id="gp-b0" class="gp-btn-shape" cx="422" cy="110" r="16.5" fill="#232832" stroke="#525e73" stroke-width="1.4"/>
+                    <text id="lbl-b0" class="gp-btn-lbl" x="422" y="115" text-anchor="middle" font-size="13" fill="#f8fafc">B</text>
+
+                    <circle cx="364" cy="148" r="35" fill="url(#nsWell)" stroke="#3e4756" stroke-width="2"/>
+                    <g id="gp-rs-group" class="gp-stick-group">
+                        <circle id="gp-rs-cap" class="gp-stick-cap" cx="364" cy="148" r="22" fill="#282f3c" stroke="#64748b" stroke-width="2"/>
+                        <circle cx="364" cy="148" r="15" fill="none" stroke="#475569" stroke-width="1" pointer-events="none"/>
+                        <text x="364" y="152" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="800" fill="#cbd5e1" pointer-events="none">RS</text>
+                    </g>
+
+                    <circle id="gp-b8" class="gp-btn-shape" cx="224" cy="52" r="11" fill="#262c36" stroke="#535f73" stroke-width="1.3"/>
+                    <text id="lbl-b8" class="gp-btn-lbl" x="224" y="56" text-anchor="middle" font-size="13" fill="#cbd5e1">-</text>
+
+                    <circle id="gp-b9" class="gp-btn-shape" cx="336" cy="52" r="11" fill="#262c36" stroke="#535f73" stroke-width="1.3"/>
+                    <text id="lbl-b9" class="gp-btn-lbl" x="336" y="56" text-anchor="middle" font-size="13" fill="#cbd5e1">+</text>
+
+                    <rect id="gp-b17" class="gp-btn-shape" x="236" y="84" width="20" height="20" rx="4" fill="#262c36" stroke="#535f73" stroke-width="1.3"/>
+                    <circle class="gp-glyph" cx="246" cy="94" r="4.5" fill="none" stroke="#9aa5b4" stroke-width="1.3"/>
+
+                    <circle id="gp-b16" class="gp-btn-shape" cx="314" cy="94" r="12" fill="#262c36" stroke="#535f73" stroke-width="1.3"/>
+                    <text id="lbl-b16" class="gp-btn-lbl" x="314" y="98" text-anchor="middle" font-size="11" fill="#cbd5e1">⌂</text>
+                </svg>`;
+                return;
+            }
+
+            if (profile === 'dinput') {
+                frontMount.innerHTML = `
+                <svg class="gp-svg" viewBox="0 0 560 94" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="diFrontBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#383e4b"/>
+                            <stop offset="100%" stop-color="#1b1f27"/>
+                        </linearGradient>
+                        <clipPath id="clipTrigL">
+                            <rect x="92" y="46" width="98" height="34" rx="8"/>
+                        </clipPath>
+                        <clipPath id="clipTrigR">
+                            <rect x="370" y="46" width="98" height="34" rx="8"/>
+                        </clipPath>
+                    </defs>
+
+                    <path d="M 78,24 C 120,16 440,16 482,24 C 504,28 514,48 506,68 C 500,80 482,86 456,86 L 104,86 C 78,86 60,80 54,68 C 46,48 56,28 78,24 Z"
+                          fill="url(#diFrontBody)" stroke="#4f5869" stroke-width="1.4"/>
+
+                    <rect x="267" y="8" width="26" height="16" rx="4" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                    <line x1="273" y1="12" x2="287" y2="12" stroke="#475569" stroke-width="1.2"/>
+                    <line x1="273" y1="16" x2="287" y2="16" stroke="#475569" stroke-width="1.2"/>
+                    <text x="280" y="42" text-anchor="middle" font-family="monospace" font-size="7.5" font-weight="800" fill="#7c899c">USB-HID</text>
+
+                    <rect id="gp-b4" class="gp-btn-shape" x="92" y="18" width="98" height="22" rx="7"
+                          fill="#252b36" stroke="#546178" stroke-width="1.3"/>
+                    <text id="lbl-b4" class="gp-btn-lbl" x="141" y="33" text-anchor="middle" font-size="10.5" fill="#e2e8f0">L1</text>
+
+                    <rect id="gp-b5" class="gp-btn-shape" x="370" y="18" width="98" height="22" rx="7"
+                          fill="#252b36" stroke="#546178" stroke-width="1.3"/>
+                    <text id="lbl-b5" class="gp-btn-lbl" x="419" y="33" text-anchor="middle" font-size="10.5" fill="#e2e8f0">R1</text>
+
+                    <g clip-path="url(#clipTrigL)">
+                        <rect x="92" y="46" width="98" height="34" fill="#101318"/>
+                        <rect id="gp-fill-lt" data-max-h="34" x="92" y="46" width="98" height="0" fill="#00e5ff"/>
+                    </g>
+                    <rect x="92" y="46" width="98" height="34" rx="8" fill="none" stroke="#546178" stroke-width="1.4"/>
+                    <text id="gp-txt-lt" x="141" y="67" text-anchor="middle" font-family="monospace" font-size="10" font-weight="800" fill="#cbd5e1" pointer-events="none">L2 0%</text>
+
+                    <g clip-path="url(#clipTrigR)">
+                        <rect x="370" y="46" width="98" height="34" fill="#101318"/>
+                        <rect id="gp-fill-rt" data-max-h="34" x="370" y="46" width="98" height="0" fill="#00e5ff"/>
+                    </g>
+                    <rect x="370" y="46" width="98" height="34" rx="8" fill="none" stroke="#546178" stroke-width="1.4"/>
+                    <text id="gp-txt-rt" x="419" y="67" text-anchor="middle" font-family="monospace" font-size="10" font-weight="800" fill="#cbd5e1" pointer-events="none">R2 0%</text>
+                </svg>`;
+
+                faceMount.innerHTML = `
+                <svg class="gp-svg" viewBox="0 0 560 302" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="classicShell" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#3c424f"/>
+                            <stop offset="50%" stop-color="#272c36"/>
+                            <stop offset="100%" stop-color="#191d24"/>
+                        </linearGradient>
+                        <linearGradient id="classicRim" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#64748b" stop-opacity="0.65"/>
+                            <stop offset="100%" stop-color="#1e293b" stop-opacity="0.25"/>
+                        </linearGradient>
+                        <radialGradient id="classicWell" cx="50%" cy="50%" r="50%">
+                            <stop offset="55%" stop-color="#0d1015"/>
+                            <stop offset="100%" stop-color="#1e242e"/>
+                        </radialGradient>
+                    </defs>
+
+                    <path d="M 136,14 C 178,14 212,24 280,24 C 348,24 382,14 424,14 C 472,14 504,48 504,96 C 504,118 496,138 486,158 L 508,240 C 516,272 492,296 462,296 C 436,296 418,272 402,226 C 388,188 356,176 280,176 C 204,176 172,188 158,226 C 142,272 124,296 98,296 C 68,296 44,272 52,240 L 74,158 C 64,138 56,118 56,96 C 56,48 88,14 136,14 Z"
+                          fill="url(#classicShell)" stroke="url(#classicRim)" stroke-width="1.6"/>
+
+                    <circle cx="136" cy="90" r="54" fill="#1e232c" stroke="#454f61" stroke-width="1.3"/>
+                    <circle cx="424" cy="90" r="54" fill="#1e232c" stroke="#454f61" stroke-width="1.3"/>
+
+                    <rect x="124" y="78" width="24" height="24" fill="#181c23"/>
+                    <path id="gp-b12" class="gp-btn-shape" d="M 124,52 C 124,48 148,48 148,52 L 148,78 L 124,78 Z" fill="#181c23" stroke="#525e73" stroke-width="1.2"/>
+                    <path id="gp-b13" class="gp-btn-shape" d="M 124,128 C 124,132 148,132 148,128 L 148,102 L 124,102 Z" fill="#181c23" stroke="#525e73" stroke-width="1.2"/>
+                    <path id="gp-b14" class="gp-btn-shape" d="M 98,78 C 94,78 94,102 98,102 L 124,102 L 124,78 Z" fill="#181c23" stroke="#525e73" stroke-width="1.2"/>
+                    <path id="gp-b15" class="gp-btn-shape" d="M 174,78 C 178,78 178,102 174,102 L 148,102 L 148,78 Z" fill="#181c23" stroke="#525e73" stroke-width="1.2"/>
+
+                    <circle id="gp-b3" class="gp-btn-shape" cx="424" cy="54" r="16" fill="#181c23" stroke="#525e73" stroke-width="1.4"/>
+                    <text id="lbl-b3" class="gp-btn-lbl" x="424" y="59" text-anchor="middle" font-size="12" fill="#cbd5e1">1</text>
+
+                    <circle id="gp-b2" class="gp-btn-shape" cx="388" cy="90" r="16" fill="#181c23" stroke="#525e73" stroke-width="1.4"/>
+                    <text id="lbl-b2" class="gp-btn-lbl" x="388" y="95" text-anchor="middle" font-size="12" fill="#cbd5e1">4</text>
+
+                    <circle id="gp-b1" class="gp-btn-shape" cx="460" cy="90" r="16" fill="#181c23" stroke="#525e73" stroke-width="1.4"/>
+                    <text id="lbl-b1" class="gp-btn-lbl" x="460" y="95" text-anchor="middle" font-size="12" fill="#cbd5e1">2</text>
+
+                    <circle id="gp-b0" class="gp-btn-shape" cx="424" cy="126" r="16" fill="#181c23" stroke="#525e73" stroke-width="1.4"/>
+                    <text id="lbl-b0" class="gp-btn-lbl" x="424" y="131" text-anchor="middle" font-size="12" fill="#cbd5e1">3</text>
+
+                    <rect id="gp-b8" class="gp-btn-shape" x="228" y="86" width="34" height="13" rx="6.5" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                    <text x="245" y="79" text-anchor="middle" font-family="monospace" font-size="8" font-weight="800" fill="#94a3b8">SELECT</text>
+
+                    <path id="gp-b9" class="gp-btn-shape" d="M 300,86 L 328,92.5 L 300,99 C 298,99 298,86 300,86 Z" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                    <text x="314" y="79" text-anchor="middle" font-family="monospace" font-size="8" font-weight="800" fill="#94a3b8">START</text>
+
+                    <rect id="gp-b16" class="gp-btn-shape" x="263" y="118" width="34" height="14" rx="7" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                    <text id="lbl-b16" class="gp-btn-lbl" x="280" y="128" text-anchor="middle" font-size="8" fill="#00e676">MODE</text>
+
+                    <circle cx="212" cy="154" r="33" fill="url(#classicWell)" stroke="#3e4756" stroke-width="2"/>
+                    <g id="gp-ls-group" class="gp-stick-group">
+                        <circle id="gp-ls-cap" class="gp-stick-cap" cx="212" cy="154" r="21" fill="#282f3c" stroke="#64748b" stroke-width="2"/>
+                        <circle cx="212" cy="154" r="14" fill="none" stroke="#475569" stroke-width="1" pointer-events="none"/>
+                        <text x="212" y="158" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="800" fill="#cbd5e1" pointer-events="none">L3</text>
+                    </g>
+
+                    <circle cx="348" cy="154" r="33" fill="url(#classicWell)" stroke="#3e4756" stroke-width="2"/>
+                    <g id="gp-rs-group" class="gp-stick-group">
+                        <circle id="gp-rs-cap" class="gp-stick-cap" cx="348" cy="154" r="21" fill="#282f3c" stroke="#64748b" stroke-width="2"/>
+                        <circle cx="348" cy="154" r="14" fill="none" stroke="#475569" stroke-width="1" pointer-events="none"/>
+                        <text x="348" y="158" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="800" fill="#cbd5e1" pointer-events="none">R3</text>
+                    </g>
+                </svg>`;
+                return;
+            }
+
+            // DEFAULT: XINPUT / XBOX SERIES
+            frontMount.innerHTML = `
+            <svg class="gp-svg" viewBox="0 0 560 94" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="xbFrontBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#2c323e"/>
+                        <stop offset="100%" stop-color="#14171f"/>
+                    </linearGradient>
+                    <clipPath id="clipTrigL">
+                        <path d="M 88,43 L 194,43 L 188,78 C 187,82 183,84 178,84 L 106,84 C 100,84 95,80 93,74 Z"/>
+                    </clipPath>
+                    <clipPath id="clipTrigR">
+                        <path d="M 366,43 L 472,43 L 467,74 C 465,80 460,84 454,84 L 382,84 C 377,84 373,82 372,78 Z"/>
+                    </clipPath>
+                </defs>
+
+                <path d="M 68,26 C 115,11 445,11 492,26 C 510,32 518,52 510,70 C 504,82 486,86 462,86 L 98,86 C 74,86 56,82 50,70 C 42,52 50,32 68,26 Z"
+                      fill="url(#xbFrontBody)" stroke="#444e5e" stroke-width="1.4"/>
+
+                <rect x="264" y="21" width="26" height="9" rx="4.5" fill="#0b0d11" stroke="#535f73" stroke-width="1.2"/>
+                <rect x="269" y="24.5" width="16" height="2" rx="1" fill="#64748b"/>
+                <circle cx="303" cy="25.5" r="4.5" fill="#181c23" stroke="#535f73" stroke-width="1.2"/>
+                <text x="280" y="42" text-anchor="middle" font-family="monospace" font-size="7.5" font-weight="800" fill="#64748b">USB-C / SYNC</text>
+
+                <path id="gp-b4" class="gp-btn-shape" d="M 86,37 C 91,21 132,16 196,19 L 196,37 Z"
+                      fill="#28303d" stroke="#546178" stroke-width="1.3"/>
+                <text id="lbl-b4" class="gp-btn-lbl" x="141" y="31" text-anchor="middle" font-size="10.5" fill="#e2e8f0">LB</text>
+
+                <path id="gp-b5" class="gp-btn-shape" d="M 474,37 C 469,21 428,16 364,19 L 364,37 Z"
+                      fill="#28303d" stroke="#546178" stroke-width="1.3"/>
+                <text id="lbl-b5" class="gp-btn-lbl" x="419" y="31" text-anchor="middle" font-size="10.5" fill="#e2e8f0">RB</text>
+
+                <g clip-path="url(#clipTrigL)">
+                    <rect x="88" y="43" width="106" height="41" fill="#101318"/>
+                    <rect id="gp-fill-lt" data-max-h="41" x="88" y="43" width="106" height="0" fill="#00e676"/>
+                </g>
+                <path d="M 88,43 L 194,43 L 188,78 C 187,82 183,84 178,84 L 106,84 C 100,84 95,80 93,74 Z"
+                      fill="none" stroke="#546178" stroke-width="1.4"/>
+                <text id="gp-txt-lt" x="141" y="67" text-anchor="middle" font-family="monospace" font-size="10" font-weight="800" fill="#cbd5e1" pointer-events="none">LT 0%</text>
+
+                <g clip-path="url(#clipTrigR)">
+                    <rect x="366" y="43" width="106" height="41" fill="#101318"/>
+                    <rect id="gp-fill-rt" data-max-h="41" x="366" y="43" width="106" height="0" fill="#00e676"/>
+                </g>
+                <path d="M 366,43 L 472,43 L 467,74 C 465,80 460,84 454,84 L 382,84 C 377,84 373,82 372,78 Z"
+                      fill="none" stroke="#546178" stroke-width="1.4"/>
+                <text id="gp-txt-rt" x="419" y="67" text-anchor="middle" font-family="monospace" font-size="10" font-weight="800" fill="#cbd5e1" pointer-events="none">RT 0%</text>
+            </svg>`;
+
+            faceMount.innerHTML = `
+            <svg class="gp-svg" viewBox="0 0 560 302" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="xboxShellGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#2f3542"/>
+                        <stop offset="50%" stop-color="#1e232c"/>
+                        <stop offset="100%" stop-color="#13161d"/>
+                    </linearGradient>
+                    <linearGradient id="xboxRim" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#64748b" stop-opacity="0.65"/>
+                        <stop offset="100%" stop-color="#1e293b" stop-opacity="0.25"/>
+                    </linearGradient>
+                    <radialGradient id="xboxWell" cx="50%" cy="50%" r="50%">
+                        <stop offset="55%" stop-color="#0d1015"/>
+                        <stop offset="100%" stop-color="#1e242e"/>
+                    </radialGradient>
+                </defs>
+
+                <path d="M 106,14 C 168,6 392,6 454,14 C 488,18 510,52 520,124 L 534,230 C 540,268 514,296 482,296 C 454,296 434,272 414,226 C 396,186 356,172 280,172 C 204,172 164,186 146,226 C 126,272 106,296 78,296 C 46,296 20,268 26,230 L 40,124 C 50,52 72,18 106,14 Z"
+                      fill="url(#xboxShellGrad)" stroke="url(#xboxRim)" stroke-width="1.6"/>
+
+                <circle cx="138" cy="78" r="35" fill="url(#xboxWell)" stroke="#3e4756" stroke-width="2"/>
+                <g id="gp-ls-group" class="gp-stick-group">
+                    <circle id="gp-ls-cap" class="gp-stick-cap" cx="138" cy="78" r="22" fill="#282f3c" stroke="#64748b" stroke-width="2"/>
+                    <circle cx="138" cy="78" r="15" fill="none" stroke="#475569" stroke-width="1" pointer-events="none"/>
+                    <text x="138" y="82" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="800" fill="#cbd5e1" pointer-events="none">LS</text>
+                </g>
+
+                <circle cx="196" cy="150" r="34" fill="#141820" stroke="#363f4f" stroke-width="1.3"/>
+                <rect x="185" y="139" width="22" height="22" fill="#232832"/>
+                <path id="gp-b12" class="gp-btn-shape" d="M 185,121 C 185,118 207,118 207,121 L 207,139 L 185,139 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                <path id="gp-b13" class="gp-btn-shape" d="M 185,179 C 185,182 207,182 207,179 L 207,161 L 185,161 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                <path id="gp-b14" class="gp-btn-shape" d="M 167,139 C 164,139 164,161 167,161 L 185,161 L 185,139 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+                <path id="gp-b15" class="gp-btn-shape" d="M 225,139 C 228,139 228,161 225,161 L 207,161 L 207,139 Z" fill="#232832" stroke="#4f5b70" stroke-width="1.2"/>
+
+                <circle cx="422" cy="78" r="46" fill="#141820" fill-opacity="0.55" stroke="#343d4d" stroke-width="1.2"/>
+
+                <circle id="gp-b3" class="gp-btn-shape" cx="422" cy="46" r="16.5" fill="#20252f" stroke="#525e73" stroke-width="1.4"/>
+                <text id="lbl-b3" class="gp-btn-lbl" x="422" y="51" text-anchor="middle" font-size="13" fill="#ffd600">Y</text>
+
+                <circle id="gp-b2" class="gp-btn-shape" cx="388" cy="78" r="16.5" fill="#20252f" stroke="#525e73" stroke-width="1.4"/>
+                <text id="lbl-b2" class="gp-btn-lbl" x="388" y="83" text-anchor="middle" font-size="13" fill="#29b6f6">X</text>
+
+                <circle id="gp-b1" class="gp-btn-shape" cx="456" cy="78" r="16.5" fill="#20252f" stroke="#525e73" stroke-width="1.4"/>
+                <text id="lbl-b1" class="gp-btn-lbl" x="456" y="83" text-anchor="middle" font-size="13" fill="#ff5252">B</text>
+
+                <circle id="gp-b0" class="gp-btn-shape" cx="422" cy="110" r="16.5" fill="#20252f" stroke="#525e73" stroke-width="1.4"/>
+                <text id="lbl-b0" class="gp-btn-lbl" x="422" y="115" text-anchor="middle" font-size="13" fill="#00e676">A</text>
+
+                <circle cx="364" cy="148" r="35" fill="url(#xboxWell)" stroke="#3e4756" stroke-width="2"/>
+                <g id="gp-rs-group" class="gp-stick-group">
+                    <circle id="gp-rs-cap" class="gp-stick-cap" cx="364" cy="148" r="22" fill="#282f3c" stroke="#64748b" stroke-width="2"/>
+                    <circle cx="364" cy="148" r="15" fill="none" stroke="#475569" stroke-width="1" pointer-events="none"/>
+                    <text x="364" y="152" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="800" fill="#cbd5e1" pointer-events="none">RS</text>
+                </g>
+
+                <circle id="gp-b16" class="gp-btn-shape" cx="280" cy="46" r="15.5" fill="#20252f" stroke="#00e676" stroke-width="1.5"/>
+                <path class="gp-glyph" d="M 273,40 C 277,44 283,49 287,53 M 287,40 C 283,44 277,49 273,53" stroke="#00e676" stroke-width="2.2" stroke-linecap="round"/>
+
+                <circle id="gp-b8" class="gp-btn-shape" cx="236" cy="84" r="11" fill="#262c36" stroke="#535f73" stroke-width="1.3"/>
+                <text id="lbl-b8" class="gp-btn-lbl" x="236" y="88" text-anchor="middle" font-size="10" fill="#cbd5e1">⧉</text>
+
+                <circle id="gp-b9" class="gp-btn-shape" cx="324" cy="84" r="11" fill="#262c36" stroke="#535f73" stroke-width="1.3"/>
+                <text id="lbl-b9" class="gp-btn-lbl" x="324" y="88" text-anchor="middle" font-size="10" fill="#cbd5e1">☰</text>
+
+                <rect id="gp-b17" class="gp-btn-shape" x="270" y="104" width="20" height="12" rx="6" fill="#262c36" stroke="#535f73" stroke-width="1.2"/>
+                <path class="gp-glyph" d="M 280,113 L 280,107 M 277,109.5 L 280,107 L 283,109.5" fill="none" stroke="#cbd5e1" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>`;
+        }
+
+        syncHeaderAndLayout();
+
+        // =========================================
+        // 5. HIGH-FREQUENCY SAMPLER (1000Hz)
+        //    Polling Rate, Bounce, Circularity & Singularity
+        // =========================================
+        function recordStickSample(diag, x, y) {
+            const mag = Math.hypot(x, y);
+            if (mag > diag.peakReach) diag.peakReach = mag;
+
+            // Keep short live trajectory trail
+            diag.trail.push({ x, y });
+            if (diag.trail.length > 48) diag.trail.shift();
+
+            // 1. Resting center drift check (when stick is near center)
+            if (mag < 0.30) {
+                diag.restingDrift = mag;
+            }
+
+            // 2. Outer ring circularity bucket (72 sectors x 5 deg)
+            if (mag > 0.38) {
+                const rad = Math.atan2(y, x);
+                const normAngle = (rad + Math.PI) / (2 * Math.PI); // 0..1
+                const sector = Math.min(SECTOR_COUNT - 1, Math.floor(normAngle * SECTOR_COUNT));
+                if (mag > diag.sectors[sector]) {
+                    diag.sectors[sector] = mag;
+                }
+            }
+
+            // 3. Axial Singularity / Cardinal Snapping detection (near 0, 90, 180, 270 deg)
+            if (mag > 0.25) {
+                const deg = Math.abs(Math.atan2(y, x) * (180 / Math.PI)); // 0..180
+                const distToCardinal = Math.min(
+                    deg,
+                    Math.abs(deg - 90),
+                    Math.abs(deg - 180)
+                );
+                // Inside ±6° cone around any cardinal axis
+                if (distToCardinal <= 6.0) {
+                    diag.cardinalSamples++;
+                    // Firmware clamps orthogonal axis to exact zero or micro-zero (< 0.0015)
+                    if (Math.abs(x) < 0.0015 || Math.abs(y) < 0.0015) {
+                        diag.snappedSamples++;
+                    }
+                }
+            }
+        }
+
+        function highFreqSample() {
+            const gp = getActiveGamepad();
+            if (!gp) return;
+
+            const now = performance.now();
+
+            // 1. Hardware timestamp delta (Polling Rate & Jitter)
+            if (gp.timestamp && gp.timestamp !== prevTimestamp) {
+                if (prevTimestamp > 0) {
+                    const dt = gp.timestamp - prevTimestamp;
+                    if (dt > 0.2 && dt < 200) {
+                        pollDeltas.push(dt);
+                        if (pollDeltas.length > 120) pollDeltas.shift();
+                    }
+                }
+                prevTimestamp = gp.timestamp;
+            }
+
+            // 2. Switch Bounce / Chatter & Actuation counter
+            const maxBtns = Math.min(gp.buttons.length, 32);
+            for (let b = 0; b < maxBtns; b++) {
+                const isPressed = gp.buttons[b].pressed ? 1 : 0;
+                if (isPressed && !btnPrevState[b]) {
+                    // Rising edge
+                    totalActuations++;
+                    btnDownTs[b] = now;
+                    document.getElementById('bench-last-btn').innerText = `Last: B${b}`;
+                } else if (!isPressed && btnPrevState[b]) {
+                    // Falling edge
+                    const holdDur = now - btnDownTs[b];
+                    if (holdDur > 0.5 && holdDur < minHoldMs) {
+                        minHoldMs = holdDur;
+                    }
+                    if (holdDur > 0.5 && holdDur < 15.0) {
+                        chatterEvents++;
+                    }
+                }
+                btnPrevState[b] = isPressed;
+            }
+
+            // 3. Trigger peak saturation tracking
+            const ltVal = gp.buttons[6] ? gp.buttons[6].value : 0;
+            const rtVal = gp.buttons[7] ? gp.buttons[7].value : 0;
+            if (ltVal > maxLtSeen) maxLtSeen = ltVal;
+            if (rtVal > maxRtSeen) maxRtSeen = rtVal;
+
+            // 4. Stick samples for Circularity & Singularity
+            recordStickSample(diagLS, gp.axes[0] || 0, gp.axes[1] || 0);
+            recordStickSample(diagRS, gp.axes[2] || 0, gp.axes[3] || 0);
+        }
+
+        // 1ms sampler so polling rate measurement is never capped by 60Hz VSync
+        setInterval(highFreqSample, 1);
+
+        // =========================================
+        // 6. POLAR CANVAS RENDERER (DEADZONE + SINGULARITY)
+        // =========================================
+        function renderPolarScope(canvasId, diag, curX, curY, accentColor, prefix) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const unitR = 76; // Radius representing 1.000 ideal stick edge
+
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. Outer Overshoot Zone Ring (1.25x)
+            ctx.beginPath();
+            ctx.arc(cx, cy, unitR * 1.25, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // 2. Ideal Unit Circle (R = 1.0)
+            ctx.beginPath();
+            ctx.arc(cx, cy, unitR, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+
+            // 3. Cardinal Crosshairs & ±6° Singularity Cones
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - unitR * 1.28, cy);
+            ctx.lineTo(cx + unitR * 1.28, cy);
+            ctx.moveTo(cx, cy - unitR * 1.28);
+            ctx.lineTo(cx, cy + unitR * 1.28);
+            ctx.stroke();
+
+            // Diagonal 45° reference lines
+            ctx.setLineDash([3, 4]);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            const d45 = unitR * 0.9;
+            ctx.beginPath();
+            ctx.moveTo(cx - d45, cy - d45);
+            ctx.lineTo(cx + d45, cy + d45);
+            ctx.moveTo(cx + d45, cy - d45);
+            ctx.lineTo(cx - d45, cy + d45);
+            ctx.stroke();
+            ctx.restore();
+
+            // 4. Inner Deadzone Circle (Configurable %)
+            const dzRadius = (deadzonePct / 100) * unitR;
+            if (dzRadius > 0) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, dzRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 214, 0, 0.12)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 214, 0, 0.65)';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+            }
+
+            // 5. 72-Sector Circularity Polygon Mesh & Error Calculation
+            let errorSum = 0;
+            let activeSectors = 0;
+
+            for (let i = 0; i < SECTOR_COUNT; i++) {
+                const rVal = diag.sectors[i];
+                if (rVal > 0.38) {
+                    activeSectors++;
+                    errorSum += Math.abs(rVal - 1.0);
+
+                    const a0 = (i / SECTOR_COUNT) * Math.PI * 2 - Math.PI;
+                    const a1 = ((i + 1) / SECTOR_COUNT) * Math.PI * 2 - Math.PI;
+                    const drawR = Math.min(unitR * 1.35, rVal * unitR);
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy);
+                    ctx.arc(cx, cy, drawR, a0, a1);
+                    ctx.closePath();
+
+                    const secErr = Math.abs(rVal - 1.0);
+                    if (secErr <= 0.08) {
+                        ctx.fillStyle = 'rgba(0, 230, 118, 0.22)';
+                    } else if (secErr <= 0.18) {
+                        ctx.fillStyle = 'rgba(255, 214, 0, 0.25)';
+                    } else {
+                        ctx.fillStyle = 'rgba(255, 64, 129, 0.28)';
+                    }
+                    ctx.fill();
+
+                    // Outer perimeter arc stroke
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, drawR, a0, a1);
+                    ctx.strokeStyle = secErr <= 0.08 ? '#00e676' : (secErr <= 0.18 ? '#ffd600' : '#ff4081');
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            // 6. Live Motion Trail
+            if (diag.trail.length > 1) {
+                ctx.beginPath();
+                for (let t = 0; t < diag.trail.length; t++) {
+                    const px = cx + diag.trail[t].x * unitR;
+                    const py = cy + diag.trail[t].y * unitR;
+                    if (t === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.strokeStyle = accentColor;
+                ctx.globalAlpha = 0.45;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            }
+
+            // 7. Live Stick Vector Line & Dot
+            const dotX = cx + curX * unitR;
+            const dotY = cy + curY * unitR;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(dotX, dotY);
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 8. Update Numeric Telemetry Readouts
+            const avgCircErr = activeSectors > 0 ? (errorSum / activeSectors) * 100 : 0;
+            const singPct = diag.cardinalSamples > 5
+                ? (diag.snappedSamples / diag.cardinalSamples) * 100
+                : 0;
+            const driftPct = diag.restingDrift * 100;
+            const isDrifting = driftPct > deadzonePct;
+
+            document.getElementById(`${prefix}-circ-err`).innerText =
+                `${avgCircErr.toFixed(1)}% (${activeSectors}/72 sec)`;
+
+            const singEl = document.getElementById(`${prefix}-singularity`);
+            if (diag.cardinalSamples <= 5) {
+                singEl.innerText = '0.0% (SWEEP AXES)';
+                singEl.style.color = '#9aa5b4';
+            } else if (singPct > 25) {
+                singEl.innerText = `${singPct.toFixed(1)}% (AXIAL SNAP)`;
+                singEl.style.color = '#ff4081';
+            } else if (singPct > 2) {
+                singEl.innerText = `${singPct.toFixed(1)}% (LIGHT SNAP)`;
+                singEl.style.color = '#ffd600';
+            } else {
+                singEl.innerText = `${singPct.toFixed(1)}% (RAW LINEAR)`;
+                singEl.style.color = '#00e676';
+            }
+
+            const driftEl = document.getElementById(`${prefix}-drift-val`);
+            driftEl.innerText = `${diag.restingDrift.toFixed(3)} (${driftPct.toFixed(1)}%)`;
+            driftEl.style.color = isDrifting ? '#ff4081' : '#00e676';
+
+            document.getElementById(`${prefix}-peak-val`).innerText = diag.peakReach.toFixed(3);
+
+            const pillEl = document.getElementById(`${prefix}-status-pill`);
+            if (isDrifting) {
+                pillEl.innerText = 'DRIFT > DZ!';
+                pillEl.className = 'scope-status-pill fail';
+            } else if (singPct > 25) {
+                pillEl.innerText = 'AXIAL LOCK';
+                pillEl.className = 'scope-status-pill warn';
+            } else {
+                pillEl.innerText = 'CENTER OK';
+                pillEl.className = 'scope-status-pill';
+            }
+        }
+
+        // =========================================
+        // 7. MULTI-SLOT POLLING & 60FPS RENDER LOOP
+        // =========================================
+        window.addEventListener('gamepadconnected', e => {
+            const idx = e.gamepad.index;
+            if (idx >= 0 && idx < 4) {
+                slotAxisBaselines[idx] = Array.from(e.gamepad.axes);
+            }
+            if (!getActiveGamepad() || activeSlot === idx) {
+                activeSlot = idx;
+            }
+            syncHeaderAndLayout();
         });
 
+        window.addEventListener('gamepaddisconnected', e => {
+            const idx = e.gamepad.index;
+            if (idx >= 0 && idx < 4) {
+                slotAxisBaselines[idx] = null;
+                slotLastActiveTs[idx] = 0;
+            }
+            syncHeaderAndLayout();
+        });
+
+        function detectSlotActivity(gp, slotIdx) {
+            if (!gp) return false;
+            for (let b = 0; b < gp.buttons.length; b++) {
+                if (gp.buttons[b].pressed || gp.buttons[b].value > 0.15) {
+                    return true;
+                }
+            }
+            if (!slotAxisBaselines[slotIdx] || slotAxisBaselines[slotIdx].length !== gp.axes.length) {
+                slotAxisBaselines[slotIdx] = Array.from(gp.axes);
+                return false;
+            }
+            const base = slotAxisBaselines[slotIdx];
+            for (let a = 0; a < gp.axes.length; a++) {
+                if (gp.axes[a] > 1.1 || base[a] > 1.1) continue;
+                if (Math.abs(gp.axes[a] - base[a]) > 0.18) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function extractWheelPedals(gp, slotIdx) {
+            const base = slotAxisBaselines[slotIdx] || [];
+            let gas = 0;
+            let brake = 0;
+            let clutch = 0;
+
+            if (wheelPedalMode === 'inverted') {
+                if (gp.axes.length > 2) gas = Math.max(0, Math.min(1, (1 - gp.axes[2]) / 2));
+                if (gp.axes.length > 5) brake = Math.max(0, Math.min(1, (1 - gp.axes[5]) / 2));
+                else if (gp.axes.length > 1) brake = Math.max(0, Math.min(1, (1 - gp.axes[1]) / 2));
+                if (gp.axes.length > 1 && gp.axes.length > 5) {
+                    clutch = Math.max(0, Math.min(1, (1 - gp.axes[1]) / 2));
+                }
+            } else if (wheelPedalMode === 'combined') {
+                const ax = gp.axes.length > 2 ? gp.axes[2] : (gp.axes[1] || 0);
+                if (ax < -0.04) gas = Math.min(1, Math.abs(ax));
+                if (ax > 0.04) brake = Math.min(1, ax);
+            } else {
+                const btnGas = gp.buttons[7] ? gp.buttons[7].value : 0;
+                const btnBrk = gp.buttons[6] ? gp.buttons[6].value : 0;
+
+                if (btnGas > 0.01 || btnBrk > 0.01) {
+                    gas = btnGas;
+                    brake = btnBrk;
+                } else {
+                    if (gp.axes.length > 2 && base[2] !== undefined) {
+                        const d2 = Math.abs(gp.axes[2] - base[2]);
+                        if (d2 > 0.03) gas = Math.min(1, base[2] > 0.5 ? d2 / 2 : d2);
+                    }
+                    if (gp.axes.length > 5 && base[5] !== undefined) {
+                        const d5 = Math.abs(gp.axes[5] - base[5]);
+                        if (d5 > 0.03) brake = Math.min(1, base[5] > 0.5 ? d5 / 2 : d5);
+                    } else if (gp.axes.length > 1 && base[1] !== undefined) {
+                        const d1 = Math.abs(gp.axes[1] - base[1]);
+                        if (d1 > 0.03) brake = Math.min(1, base[1] > 0.5 ? d1 / 2 : d1);
+                    }
+                }
+                if (gp.axes.length > 6 && base[6] !== undefined) {
+                    const d6 = Math.abs(gp.axes[6] - base[6]);
+                    if (d6 > 0.03) clutch = Math.min(1, base[6] > 0.5 ? d6 / 2 : d6);
+                } else if (gp.axes.length > 1 && base[1] !== undefined && (btnBrk > 0.01 || gp.axes.length > 5)) {
+                    const d1 = Math.abs(gp.axes[1] - base[1]);
+                    if (d1 > 0.03) clutch = Math.min(1, base[1] > 0.5 ? d1 / 2 : d1);
+                }
+            }
+
+            return { gas, brake, clutch };
+        }
+
         function updateLoop() {
-            if(gpIndex === null) return;
-            const gp = navigator.getGamepads()[gpIndex];
-            if(gp) {
-                // BUTTONS (0 - 20)
-                // Note: Standard only goes to 16. 17-20 are typically Paddles on supported devices/browsers.
-                for (let i = 0; i < gp.buttons.length; i++) {
-                    const el = document.getElementById('b' + i);
-                    if (el) {
-                        if (gp.buttons[i].pressed) el.classList.add('pressed');
-                        else el.classList.remove('pressed');
+            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+            const now = performance.now();
+            let newlyActiveSlot = -1;
+
+            // 1. Scan P1 - P4 slots
+            for (let s = 0; s < 4; s++) {
+                const pad = pads[s];
+                const cardEl = document.getElementById(`slot-card-${s}`);
+                const pillEl = document.getElementById(`slot-pill-${s}`);
+                const nameEl = document.getElementById(`slot-name-${s}`);
+
+                if (pad) {
+                    cardEl.classList.add('connected');
+                    const prof = classifyGamepadProfile(pad).toUpperCase();
+                    const cleanName = pad.id.replace(/\s*\(STANDARD GAMEPAD.*?\)/i, '').trim();
+                    nameEl.innerText = `[${prof}] ${cleanName}`;
+
+                    const isInputNow = detectSlotActivity(pad, s);
+                    if (isInputNow) {
+                        slotLastActiveTs[s] = now;
+                        if (newlyActiveSlot === -1) newlyActiveSlot = s;
+                    }
+
+                    const isRecentlyActive = (now - slotLastActiveTs[s]) < 260;
+                    cardEl.classList.toggle('input-active', isRecentlyActive);
+
+                    if (isRecentlyActive) {
+                        pillEl.innerText = 'INPUT!';
+                    } else if (s === activeSlot) {
+                        pillEl.innerText = 'ACTIVE';
+                    } else {
+                        pillEl.innerText = 'READY';
+                    }
+                } else {
+                    cardEl.classList.remove('connected', 'input-active');
+                    pillEl.innerText = 'EMPTY';
+                    nameEl.innerText = 'Tidak terhubung';
+                    slotAxisBaselines[s] = null;
+                }
+            }
+
+            if (autoFocusOnInput && newlyActiveSlot !== -1 && newlyActiveSlot !== activeSlot) {
+                activeSlot = newlyActiveSlot;
+                resetStickDiagnostics();
+                resetSignalBench();
+                syncHeaderAndLayout();
+            }
+
+            for (let s = 0; s < 4; s++) {
+                const cardEl = document.getElementById(`slot-card-${s}`);
+                cardEl.classList.toggle('focused', s === activeSlot && !!pads[s]);
+            }
+
+            // 2. Render Focused Controller Input
+            const gp = getActiveGamepad();
+            if (!gp) {
+                renderPolarScope('canvas-ls', diagLS, 0, 0, '#00e5ff', 'ls');
+                renderPolarScope('canvas-rs', diagRS, 0, 0, '#ff4081', 'rs');
+                requestAnimationFrame(updateLoop);
+                return;
+            }
+
+            const activeBtnLabels = [];
+
+            for (let i = 0; i < gp.buttons.length; i++) {
+                const pressed = gp.buttons[i].pressed;
+                if (pressed) activeBtnLabels.push(`B${i}`);
+
+                const shapeEl = document.getElementById('gp-b' + i);
+                const lblEl = document.getElementById('lbl-b' + i);
+                if (shapeEl) shapeEl.classList.toggle('pressed', pressed);
+                if (lblEl) lblEl.classList.toggle('lit', pressed);
+
+                const padChip = document.getElementById('pad-' + i);
+                if (padChip) padChip.classList.toggle('pressed', pressed);
+            }
+
+            // D-Input POV Hat Switch Fallback on Axes[9]
+            if (gp.axes.length > 9) {
+                const hat = gp.axes[9];
+                if (hat >= -1.05 && hat <= 1.05) {
+                    const hatUp = Math.abs(hat - (-1.0)) < 0.15 || Math.abs(hat - (-0.71)) < 0.15 || Math.abs(hat - 1.0) < 0.15;
+                    const hatRt = Math.abs(hat - (-0.71)) < 0.15 || Math.abs(hat - (-0.43)) < 0.15 || Math.abs(hat - (-0.14)) < 0.15;
+                    const hatDn = Math.abs(hat - (-0.14)) < 0.15 || Math.abs(hat - 0.14) < 0.15 || Math.abs(hat - 0.43) < 0.15;
+                    const hatLt = Math.abs(hat - 0.43) < 0.15 || Math.abs(hat - 0.71) < 0.15 || Math.abs(hat - 1.0) < 0.15;
+
+                    const d12 = document.getElementById('gp-b12');
+                    const d13 = document.getElementById('gp-b13');
+                    const d14 = document.getElementById('gp-b14');
+                    const d15 = document.getElementById('gp-b15');
+                    if (d12 && hatUp) { d12.classList.add('pressed'); activeBtnLabels.push('HAT-U'); }
+                    if (d13 && hatDn) { d13.classList.add('pressed'); activeBtnLabels.push('HAT-D'); }
+                    if (d14 && hatLt) { d14.classList.add('pressed'); activeBtnLabels.push('HAT-L'); }
+                    if (d15 && hatRt) { d15.classList.add('pressed'); activeBtnLabels.push('HAT-R'); }
+                }
+            }
+
+            const lx = gp.axes[0] || 0;
+            const ly = gp.axes[1] || 0;
+            const rx = gp.axes[2] || 0;
+            const ry = gp.axes[3] || 0;
+
+            const ltVal = gp.buttons[6] ? gp.buttons[6].value : 0;
+            const rtVal = gp.buttons[7] ? gp.buttons[7].value : 0;
+
+            if (activeRenderedProfile === 'wheel') {
+                const angleDeg = lx * (wheelMaxDeg / 2);
+                const wheelGroup = document.getElementById('wheel-rim-group');
+                if (wheelGroup) {
+                    wheelGroup.style.transform = `rotate(${angleDeg.toFixed(1)}deg)`;
+                }
+
+                const degReadout = document.getElementById('wheel-deg-readout');
+                const dirReadout = document.getElementById('wheel-dir-readout');
+                if (degReadout) {
+                    degReadout.textContent = `${angleDeg > 0 ? '+' : ''}${angleDeg.toFixed(1)}°`;
+                }
+                if (dirReadout) {
+                    if (Math.abs(angleDeg) < 2.0) dirReadout.textContent = 'CENTER';
+                    else dirReadout.textContent = angleDeg < 0 ? '◀ LEFT' : 'RIGHT ▶';
+                }
+
+                const { gas, brake, clutch } = extractWheelPedals(gp, activeSlot);
+                const gasPct = Math.round(gas * 100);
+                const brkPct = Math.round(brake * 100);
+                const cltPct = Math.round(clutch * 100);
+
+                const fillGas = document.getElementById('wheel-fill-gas');
+                const fillBrk = document.getElementById('wheel-fill-brake');
+                const fillClt = document.getElementById('wheel-fill-clutch');
+                const txtGas = document.getElementById('wheel-txt-gas');
+                const txtBrk = document.getElementById('wheel-txt-brake');
+                const txtClt = document.getElementById('wheel-txt-clutch');
+
+                if (fillGas) {
+                    const h = gas * 64;
+                    fillGas.setAttribute('height', h.toFixed(1));
+                    fillGas.setAttribute('y', (82 - h).toFixed(1));
+                }
+                if (fillBrk) {
+                    const h = brake * 64;
+                    fillBrk.setAttribute('height', h.toFixed(1));
+                    fillBrk.setAttribute('y', (82 - h).toFixed(1));
+                }
+                if (fillClt) {
+                    const h = clutch * 64;
+                    fillClt.setAttribute('height', h.toFixed(1));
+                    fillClt.setAttribute('y', (82 - h).toFixed(1));
+                }
+
+                if (txtGas) {
+                    txtGas.textContent = `GAS ${gasPct}%`;
+                    txtGas.setAttribute('fill', gasPct > 55 ? '#000' : '#cbd5e1');
+                }
+                if (txtBrk) {
+                    txtBrk.textContent = `BRAKE ${brkPct}%`;
+                    txtBrk.setAttribute('fill', brkPct > 55 ? '#fff' : '#cbd5e1');
+                }
+                if (txtClt) {
+                    txtClt.textContent = `CLUTCH ${cltPct}%`;
+                    txtClt.setAttribute('fill', cltPct > 55 ? '#000' : '#cbd5e1');
+                }
+
+                const ledColors = ['#00e676', '#00e676', '#ffd600', '#ffd600', '#ff3b30', '#ff3b30'];
+                for (let l = 1; l <= 6; l++) {
+                    const led = document.getElementById(`rpm-led-${l}`);
+                    if (led) {
+                        const threshold = (l / 6) * 0.92;
+                        led.setAttribute('fill', gas >= threshold ? ledColors[l - 1] : '#26303d');
                     }
                 }
 
-                // TRIGGERS (Analog Handling - Axis vs Button Value)
-                // HTML5 Gamepad API maps Triggers to buttons[6] and buttons[7]
-                // Their 'value' property holds the float (0.0 - 1.0)
-                const ltVal = gp.buttons[6].value;
-                const rtVal = gp.buttons[7].value;
+                document.getElementById('mon-ls').innerText = `${angleDeg > 0 ? '+' : ''}${angleDeg.toFixed(1)}° (${lx.toFixed(3)})`;
+                document.getElementById('mon-rs').innerText = `Clutch: ${clutch.toFixed(3)} (${cltPct}%)`;
+                document.getElementById('mon-lt').innerText = `${brake.toFixed(3)} (${brkPct}%)`;
+                document.getElementById('mon-rt').innerText = `${gas.toFixed(3)} (${gasPct}%)`;
+            } else {
+                const ltPct = Math.round(ltVal * 100);
+                const rtPct = Math.round(rtVal * 100);
 
-                document.getElementById('fill-lt').style.height = (ltVal * 100) + '%';
-                document.getElementById('fill-rt').style.height = (rtVal * 100) + '%';
-                
-                document.getElementById('mon-lt').innerText = ltVal.toFixed(3);
-                document.getElementById('mon-rt').innerText = rtVal.toFixed(3);
+                const fillLt = document.getElementById('gp-fill-lt');
+                const fillRt = document.getElementById('gp-fill-rt');
+                const txtLt = document.getElementById('gp-txt-lt');
+                const txtRt = document.getElementById('gp-txt-rt');
 
-                // STICKS (Axes)
-                const lx = gp.axes[0], ly = gp.axes[1];
-                const rx = gp.axes[2], ry = gp.axes[3];
+                if (fillLt) {
+                    const maxH = parseFloat(fillLt.getAttribute('data-max-h')) || 41;
+                    fillLt.setAttribute('height', (ltVal * maxH).toFixed(1));
+                }
+                if (fillRt) {
+                    const maxH = parseFloat(fillRt.getAttribute('data-max-h')) || 41;
+                    fillRt.setAttribute('height', (rtVal * maxH).toFixed(1));
+                }
+                if (txtLt) {
+                    txtLt.textContent = `${trigPrefixL} ${ltPct}%`;
+                    txtLt.setAttribute('fill', ltPct > 55 ? '#000000' : '#cbd5e1');
+                }
+                if (txtRt) {
+                    txtRt.textContent = `${trigPrefixR} ${rtPct}%`;
+                    txtRt.setAttribute('fill', rtPct > 55 ? '#000000' : '#cbd5e1');
+                }
 
-                // Visual Stick Movement
-                const lsEl = document.getElementById('b10');
-                const rsEl = document.getElementById('b11');
-                
-                // Add pressed class if stick moved significantly (Deadzone visual)
-                if(Math.abs(lx)>0.2 || Math.abs(ly)>0.2) lsEl.classList.add('pressed'); else if(!gp.buttons[10].pressed) lsEl.classList.remove('pressed');
-                if(Math.abs(rx)>0.2 || Math.abs(ry)>0.2) rsEl.classList.add('pressed'); else if(!gp.buttons[11].pressed) rsEl.classList.remove('pressed');
+                document.getElementById('mon-lt').innerText = `${ltVal.toFixed(3)} (${ltPct}%)`;
+                document.getElementById('mon-rt').innerText = `${rtVal.toFixed(3)} (${rtPct}%)`;
 
-                // Monitor Values
-                document.getElementById('mon-ls').innerText = `${lx.toFixed(3)}, ${ly.toFixed(3)}`;
-                document.getElementById('mon-rs').innerText = `${rx.toFixed(3)}, ${ry.toFixed(3)}`;
+                const lMag = Math.min(1, Math.hypot(lx, ly));
+                const rMag = Math.min(1, Math.hypot(rx, ry));
 
-                requestAnimationFrame(updateLoop);
+                const lsGroup = document.getElementById('gp-ls-group');
+                const rsGroup = document.getElementById('gp-rs-group');
+                const lsCap = document.getElementById('gp-ls-cap');
+                const rsCap = document.getElementById('gp-rs-cap');
+
+                if (lsGroup) {
+                    lsGroup.style.transform = `translate(${(lx * 13).toFixed(1)}px, ${(ly * 13).toFixed(1)}px)`;
+                }
+                if (lsCap) {
+                    lsCap.classList.toggle('active', lMag > (deadzonePct / 100));
+                    lsCap.classList.toggle('clicked', !!(gp.buttons[10] && gp.buttons[10].pressed));
+                }
+
+                if (rsGroup) {
+                    rsGroup.style.transform = `translate(${(rx * 13).toFixed(1)}px, ${(ry * 13).toFixed(1)}px)`;
+                }
+                if (rsCap) {
+                    rsCap.classList.toggle('active', rMag > (deadzonePct / 100));
+                    rsCap.classList.toggle('clicked', !!(gp.buttons[11] && gp.buttons[11].pressed));
+                }
+
+                document.getElementById('mon-ls').innerText = `${lx.toFixed(3)}, ${ly.toFixed(3)} (${Math.round(lMag * 100)}%)`;
+                document.getElementById('mon-rs').innerText = `${rx.toFixed(3)}, ${ry.toFixed(3)} (${Math.round(rMag * 100)}%)`;
             }
+
+            document.getElementById('mon-active-btns').innerText = activeBtnLabels.length > 0 ? activeBtnLabels.join(', ') : 'NONE';
+
+            // 3. Render Polar Deadzone, Circularity & Singularity Canvases
+            renderPolarScope('canvas-ls', diagLS, lx, ly, '#00e5ff', 'ls');
+            renderPolarScope('canvas-rs', diagRS, rx, ry, '#ff4081', 'rs');
+
+            // 4. Render Polling Rate, Jitter & Trigger Linearity Bench
+            if (pollDeltas.length > 4) {
+                const avgDt = pollDeltas.reduce((a, b) => a + b, 0) / pollDeltas.length;
+                const variance = pollDeltas.reduce((acc, d) => acc + Math.pow(d - avgDt, 2), 0) / pollDeltas.length;
+                const jitter = Math.sqrt(variance);
+                const hz = Math.round(1000 / avgDt);
+                if (hz > peakHz && hz <= 2000) peakHz = hz;
+
+                document.getElementById('bench-hz').innerText = `${hz} Hz`;
+                document.getElementById('bench-hz-peak').innerText = `Peak: ${peakHz} Hz`;
+                document.getElementById('bench-interval').innerText = `${avgDt.toFixed(2)} ms`;
+                document.getElementById('bench-jitter').innerText = `Jitter σ: ${jitter.toFixed(2)} ms`;
+            }
+
+            document.getElementById('bench-press-count').innerText = totalActuations;
+            document.getElementById('bench-min-hold').innerText =
+                isFinite(minHoldMs) ? `${minHoldMs.toFixed(1)} ms` : '-- ms';
+            document.getElementById('bench-chatter').innerText = `Chatter (<15ms): ${chatterEvents}`;
+
+            document.getElementById('bench-lt-bar').style.width = `${(ltVal * 100).toFixed(1)}%`;
+            document.getElementById('bench-rt-bar').style.width = `${(rtVal * 100).toFixed(1)}%`;
+            document.getElementById('bench-lt-max').innerText = `Max: ${maxLtSeen.toFixed(3)}`;
+            document.getElementById('bench-rt-max').innerText = `Max: ${maxRtSeen.toFixed(3)}`;
+
+            requestAnimationFrame(updateLoop);
         }
+
+        requestAnimationFrame(updateLoop);
 
         function testRumble() {
-            if(gpIndex === null) return;
-            const gp = navigator.getGamepads()[gpIndex];
-            if(gp && gp.vibrationActuator) {
-                gp.vibrationActuator.playEffect("dual-rumble", {
-                    startDelay: 0, duration: 500, weakMagnitude: 1.0, strongMagnitude: 1.0
+            const gp = getActiveGamepad();
+            if (!gp) {
+                alert('Hubungkan controller terlebih dahulu sebelum menguji getaran.');
+                return;
+            }
+            if (gp.vibrationActuator) {
+                gp.vibrationActuator.playEffect('dual-rumble', {
+                    startDelay: 0,
+                    duration: 500,
+                    weakMagnitude: 1.0,
+                    strongMagnitude: 1.0
                 });
             } else {
-                alert("Vibration not supported by Browser or Device.");
+                alert(`Vibration Actuator tidak didukung oleh browser atau mode driver pada Player ${activeSlot + 1}.`);
             }
         }
 
-        // --- 2. SONY DUALSHOCK WEBHID LOGIC ---
+        // =========================================
+        // 8. SONY DS4 & DUALSENSE WEBHID TOUCHPAD
+        // =========================================
         const dsBtn = document.getElementById('ds-connect');
-        const f1 = document.getElementById('f1'), f2 = document.getElementById('f2');
-        const v1 = document.getElementById('ds-val-1'), v2 = document.getElementById('ds-val-2');
+        const f1 = document.getElementById('f1');
+        const f2 = document.getElementById('f2');
+        const v1 = document.getElementById('ds-val-1');
+        const v2 = document.getElementById('ds-val-2');
 
         dsBtn.addEventListener('click', async () => {
-            if (!navigator.hid) { alert("WebHID not supported. Use Chrome/Edge desktop."); return; }
-            
+            if (!navigator.hid) {
+                alert('WebHID tidak didukung. Gunakan Chrome atau Edge desktop.');
+                return;
+            }
+
             try {
-                // Filter for Sony (0x054C)
                 const devices = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x054C }] });
                 if (devices.length === 0) return;
 
                 const device = devices[0];
-                await device.open();
-                dsBtn.innerText = "CONNECTED";
+                if (!device.opened) {
+                    await device.open();
+                }
+
+                const pid = device.productId;
+                const isDualSense = (pid === 0x0CE6 || pid === 0x0DF2);
+                const maxResX = 1920;
+                const maxResY = isDualSense ? 1080 : 940;
+
+                document.getElementById('ds-model-lbl').innerText =
+                    `${device.productName || (isDualSense ? 'DualSense' : 'DualShock 4')} (0x${pid.toString(16).toUpperCase()})`;
+
+                if (layoutPref === 'auto' && activeRenderedProfile !== 'playstation') {
+                    renderControllerViews('playstation');
+                    activeRenderedProfile = 'playstation';
+                }
+
+                dsBtn.innerText = '✔ CONNECTED';
                 dsBtn.disabled = true;
 
                 device.addEventListener('inputreport', event => {
                     const data = new Uint8Array(event.data.buffer);
-                    
-                    // DS4 usually starts touchpad data at byte 35 (Report ID 0x01/0x11)
-                    // DualSense might vary slightly, but this is the standard HID offset
-                    let offset = 35;
+                    const repId = event.reportId;
 
-                    // --- Finger 1 ---
-                    // Packet info: [Counter+ID] [X-Low] [X-High+Y-High] [Y-Low]
-                    const f1Info = data[offset];
-                    const f1Active = !(f1Info & 0x80); // 7th bit 0 = Active
-
-                    if (f1Active) {
-                        const x = ((data[offset+2] & 0x0F) << 8) | data[offset+1];
-                        const y = (data[offset+3] << 4) | ((data[offset+2] & 0xF0) >> 4);
-                        
-                        // Map to CSS (DS4 Resolution ~1920x940)
-                        f1.style.left = (x / 1920 * 100) + '%';
-                        f1.style.top = (y / 940 * 100) + '%';
-                        f1.style.opacity = 1;
-                        v1.innerText = `X:${x} Y:${y}`;
-                    } else {
-                        f1.style.opacity = 0;
-                        v1.innerText = "Inactive";
+                    let offset = 34; // DS4 USB (Report 0x01)
+                    if (isDualSense) {
+                        offset = (repId === 0x31) ? 33 : 32; // DualSense BT (0x31) vs USB (0x01)
+                    } else if (repId === 0x11) {
+                        offset = 36; // DS4 Bluetooth (0x11)
                     }
 
-                    // --- Finger 2 ---
-                    // Offset + 4 bytes
-                    const f2Info = data[offset+4];
+                    if (data.length <= offset + 7) return;
+
+                    const f1Info = data[offset];
+                    const f1Active = !(f1Info & 0x80);
+                    const svgF1 = document.getElementById('svg-tp-f1');
+
+                    if (f1Active) {
+                        const x = ((data[offset + 2] & 0x0F) << 8) | data[offset + 1];
+                        const y = (data[offset + 3] << 4) | ((data[offset + 2] & 0xF0) >> 4);
+                        const pctX = Math.max(0, Math.min(100, (x / maxResX) * 100));
+                        const pctY = Math.max(0, Math.min(100, (y / maxResY) * 100));
+
+                        f1.style.left = pctX + '%';
+                        f1.style.top = pctY + '%';
+                        f1.style.opacity = 1;
+                        v1.innerText = `X:${x} Y:${y}`;
+
+                        if (svgF1) {
+                            svgF1.setAttribute('cx', (208 + (pctX / 100) * 144).toFixed(1));
+                            svgF1.setAttribute('cy', (22 + (pctY / 100) * 78).toFixed(1));
+                            svgF1.setAttribute('opacity', '0.95');
+                        }
+                    } else {
+                        f1.style.opacity = 0;
+                        v1.innerText = 'Inactive';
+                        if (svgF1) svgF1.setAttribute('opacity', '0');
+                    }
+
+                    const f2Info = data[offset + 4];
                     const f2Active = !(f2Info & 0x80);
+                    const svgF2 = document.getElementById('svg-tp-f2');
 
                     if (f2Active) {
-                        const x = ((data[offset+6] & 0x0F) << 8) | data[offset+5];
-                        const y = (data[offset+7] << 4) | ((data[offset+6] & 0xF0) >> 4);
-                        
-                        f2.style.left = (x / 1920 * 100) + '%';
-                        f2.style.top = (y / 940 * 100) + '%';
+                        const x = ((data[offset + 6] & 0x0F) << 8) | data[offset + 5];
+                        const y = (data[offset + 7] << 4) | ((data[offset + 6] & 0xF0) >> 4);
+                        const pctX = Math.max(0, Math.min(100, (x / maxResX) * 100));
+                        const pctY = Math.max(0, Math.min(100, (y / maxResY) * 100));
+
+                        f2.style.left = pctX + '%';
+                        f2.style.top = pctY + '%';
                         f2.style.opacity = 1;
                         v2.innerText = `X:${x} Y:${y}`;
+
+                        if (svgF2) {
+                            svgF2.setAttribute('cx', (208 + (pctX / 100) * 144).toFixed(1));
+                            svgF2.setAttribute('cy', (22 + (pctY / 100) * 78).toFixed(1));
+                            svgF2.setAttribute('opacity', '0.95');
+                        }
                     } else {
                         f2.style.opacity = 0;
-                        v2.innerText = "Inactive";
+                        v2.innerText = 'Inactive';
+                        if (svgF2) svgF2.setAttribute('opacity', '0');
                     }
                 });
 
             } catch (err) {
-                alert("Connection Failed: " + err.message);
+                alert('Koneksi WebHID gagal: ' + err.message);
             }
         });
     </script>
