@@ -3,238 +3,976 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GXDiag - Screen & Cam</title>
+    <title>GXDiag - Display & Optics Lab</title>
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        body { 
-            background: #000; color: #fff; height: 100vh; overflow: hidden; 
-            display: flex; flex-direction: column; font-family: sans-serif;
-            margin: 0; padding: 0; touch-action: none;
+        * { box-sizing: border-box; }
+        body {
+            background: #0b0b0b; color: #eee; min-height: 100vh;
+            display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 0;
         }
-        
+
         /* HEADER */
-        .mod-header { 
-            padding: 15px 20px; background: #111; border-bottom: 1px solid #333; 
-            display: flex; justify-content: space-between; align-items: center; z-index: 50; flex-shrink: 0;
+        .mod-header {
+            padding: 12px 20px; background: #121212; border-bottom: 1px solid #2b2b2b;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 50; flex-shrink: 0; gap: 10px; flex-wrap: wrap;
         }
-        .back-btn { text-decoration: none; color: #fff; font-weight: bold; font-size: 0.9rem; }
-        
-        .main-container { 
-            flex-grow: 1; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; position: relative; z-index: 10;
-            width: 100%; overflow-y: auto; padding: 20px;
-        }
-        
-        /* FPS COUNTER */
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .back-btn { text-decoration: none; color: #999; font-weight: 700; font-size: 0.88rem; transition: 0.2s; }
+        .back-btn:hover { color: #fff; }
+        .mod-title { font-size: 1rem; font-weight: 800; letter-spacing: 1.5px; color: #00e5ff; text-transform: uppercase; }
+
         .fps-box {
-            position: absolute; top: 10px; right: 10px;
-            background: rgba(0,0,0,0.7); border: 1px solid #00ff88;
-            padding: 5px 10px; border-radius: 8px; font-family: monospace;
-            color: #00ff88; font-weight: bold; z-index: 60; font-size: 0.8rem;
+            background: rgba(0, 255, 136, 0.08); border: 1px solid rgba(0, 255, 136, 0.4);
+            padding: 4px 10px; border-radius: 6px; font-family: monospace;
+            color: #00ff88; font-weight: 800; font-size: 0.8rem;
         }
 
-        /* MENU GRID (RESPONSIVE) */
-        .btn-grid { 
-            display: grid; grid-template-columns: 1fr; gap: 15px; 
-            width: 100%; max-width: 400px; z-index: 5; 
+        /* MAIN HUB CONTAINER */
+        .main-container {
+            flex-grow: 1; width: 100%; max-width: 1280px; margin: 0 auto;
+            padding: 18px; display: flex; flex-direction: column;
         }
-        .test-btn { 
-            padding: 20px; background: #1a1a1a; border: 1px solid #333; color: #ccc; 
-            border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px;
-            text-align: left; transition: 0.2s; width: 100%;
-        }
-        .test-btn:hover, .test-btn:active { background: #222; border-color: #00e5ff; color: #fff; transform: scale(0.98); }
-        .btn-icon { font-size: 1.8rem; }
 
-        /* --- 1. DEAD PIXEL OVERLAY --- */
-        #color-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: none; cursor: pointer; }
-        .dp-hint {
+        .section-heading {
+            font-size: 0.74rem; font-family: monospace; font-weight: 800;
+            color: #888; text-transform: uppercase; letter-spacing: 1.2px;
+            margin: 6px 0 12px 0; display: flex; align-items: center; gap: 8px;
+        }
+        .section-heading::after {
+            content: ""; flex: 1; height: 1px; background: #242424;
+        }
+
+        /* MENU GRID */
+        .btn-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px; width: 100%; margin-bottom: 22px;
+        }
+        .test-btn {
+            padding: 15px 16px; background: #161616; border: 1px solid #2c2c2c; color: #ccc;
+            border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 14px;
+            text-align: left; transition: 0.18s; width: 100%;
+        }
+        .test-btn:hover { background: #1e1e1e; border-color: #00e5ff; color: #fff; transform: translateY(-1px); }
+        .test-btn.cam-featured { border-color: rgba(0, 229, 255, 0.45); background: linear-gradient(135deg, #161b1e, #141414); }
+        .test-btn.cam-featured:hover { border-color: #00ff88; }
+        .test-btn.warn-card:hover { border-color: #ff4081; }
+        .btn-icon { font-size: 1.65rem; flex-shrink: 0; }
+        .btn-title { font-weight: 700; color: #fff; font-size: 0.92rem; margin-bottom: 2px; }
+        .btn-sub { font-size: 0.74rem; color: #888; line-height: 1.3; }
+
+        /* FULLSCREEN OVERLAY SHARED */
+        .fs-overlay {
+            position: fixed; inset: 0; z-index: 100; display: none;
+            background: #000; user-select: none;
+        }
+        .fs-hud {
+            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+            background: rgba(12, 12, 12, 0.88); border: 1px solid #333;
+            padding: 8px 14px; border-radius: 99px; display: flex; align-items: center;
+            gap: 10px; z-index: 120; font-family: monospace; font-size: 0.76rem;
+            backdrop-filter: blur(6px); flex-wrap: wrap; justify-content: center;
+            max-width: 95vw;
+        }
+        .hud-btn {
+            background: #222; border: 1px solid #444; color: #eee;
+            padding: 5px 11px; border-radius: 99px; cursor: pointer;
+            font-family: monospace; font-size: 0.73rem; font-weight: 700;
+        }
+        .hud-btn:hover { border-color: #00e5ff; color: #00e5ff; }
+        .hud-btn.active { background: #00e5ff; color: #000; border-color: #00e5ff; }
+        .hud-btn.exit { background: #2b141a; border-color: #ff4081; color: #ff4081; }
+
+        /* --- 1. DEAD PIXEL & UNIFORMITY OVERLAY --- */
+        #color-overlay { cursor: pointer; }
+        .dp-center-tag {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: rgba(255,255,255,0.5); font-size: 1rem; pointer-events: none; text-align: center;
+            background: rgba(0, 0, 0, 0.65); border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 18px; border-radius: 8px; font-family: monospace;
+            color: #fff; font-size: 0.85rem; pointer-events: none; text-align: center;
         }
 
-        /* --- 2. PIXEL REPAIR OVERLAY --- */
-        #repair-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 90; display: none; background: #000; }
-        canvas { display: block; width: 100%; height: 100%; }
-        
-        /* Repair Controls */
+        /* --- 2. CALIBRATION, GHOSTING & PATTERN CANVAS --- */
+        #diag-canvas { width: 100%; height: 100%; display: block; }
+
+        /* --- 3. PIXEL REPAIR OVERLAY --- */
+        #repair-layer { z-index: 105; }
+        #repair-canvas { width: 100%; height: 100%; display: block; }
         .repair-ui {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 15px; background: rgba(0,0,0,0.8); padding: 15px; 
-            border-radius: 40px; border: 1px solid #333; z-index: 100;
+            position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 12px; background: rgba(10,10,10,0.88); padding: 10px 16px;
+            border-radius: 40px; border: 1px solid #333; z-index: 120;
         }
         .mode-btn {
-            background: #222; border: 1px solid #444; color: #fff; width: 50px; height: 50px;
-            border-radius: 50%; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+            background: #222; border: 1px solid #444; color: #fff; width: 44px; height: 44px;
+            border-radius: 50%; cursor: pointer; font-size: 1.25rem;
+            display: flex; align-items: center; justify-content: center;
         }
-        .mode-btn.active { background: #00e5ff; color: #000; box-shadow: 0 0 15px #00e5ff; }
-        .close-repair { background: #ff4081 !important; color: #fff !important; }
+        .mode-btn.active { background: #00e5ff; color: #000; border-color: #00e5ff; }
+        .close-repair { background: #ff4081 !important; border-color: #ff4081 !important; color: #fff !important; }
 
-        /* --- 3. GRID TOUCH TEST (XIAOMI STYLE) --- */
-        #grid-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 95; display: none; background: #000;
-        }
-        #grid-container {
-            display: grid; width: 100%; height: 100%;
-        }
-        .grid-cell {
-            border: 1px solid #333; background: #111; transition: background 0.1s;
-        }
+        /* --- 4. GRID TOUCH TEST --- */
+        #grid-overlay { touch-action: none; }
+        #grid-container { display: grid; width: 100%; height: 100%; }
+        .grid-cell { border: 1px solid #262626; background: #0f0f0f; transition: background 0.08s; }
         .grid-cell.touched { background: #00ff88; border-color: #00cc6a; }
         .grid-ui {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            text-align: center; pointer-events: none; z-index: 100;
+            text-align: center; background: rgba(0,0,0,0.88); padding: 24px 32px;
+            border-radius: 14px; border: 1px solid #00ff88; z-index: 120;
         }
-        .grid-ui button { pointer-events: auto; margin-top: 10px; padding: 8px 20px; border-radius: 20px; border: none; background: #fff; color: #000; font-weight: bold; }
+        .grid-ui button {
+            margin-top: 12px; padding: 8px 22px; border-radius: 20px;
+            border: none; background: #00ff88; color: #000; font-weight: 800; cursor: pointer;
+        }
 
         /* WARNING MODAL */
         .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200;
-            display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
         }
-        .agree-btn { margin-top: 20px; background: #ff4081; color: #fff; border: none; padding: 12px 30px; font-weight: bold; border-radius: 30px; cursor: pointer; width: 100%; max-width: 200px; }
+        .agree-btn {
+            margin-top: 18px; background: #ff4081; color: #fff; border: none;
+            padding: 11px 28px; font-weight: 800; border-radius: 30px; cursor: pointer;
+            width: 100%; max-width: 220px;
+        }
 
-        /* --- 4. WEBCAM --- */
-        #cam-container { display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; justify-content: center;}
-        #cam-feed { width: 100%; max-height: 70vh; object-fit: contain; background: #000; transform: scaleX(-1); }
-        .cam-info-box {
-            background: rgba(20,20,20,0.9); padding: 15px; border-radius: 10px; border: 1px solid #333;
-            margin-top: 15px; text-align: center; width: 100%; max-width: 400px;
+        /* --- 5. ADVANCED WEBCAM LAB --- */
+        #cam-workspace {
+            display: none; grid-template-columns: 1fr 410px; gap: 18px;
+            width: 100%; align-items: start;
         }
-        .stop-cam-btn { margin-top: 10px; background: #ff1744; color: #fff; border: none; padding: 10px 30px; border-radius: 20px; cursor: pointer; font-weight: bold;}
+        @media (max-width: 980px) {
+            #cam-workspace { grid-template-columns: 1fr; }
+        }
+
+        .cam-stage {
+            background: #141414; border: 1px solid #2b2b2b; border-radius: 12px;
+            padding: 14px; display: flex; flex-direction: column; gap: 12px;
+        }
+
+        .cam-viewport {
+            position: relative; width: 100%; background: #050505;
+            border-radius: 8px; overflow: hidden; display: flex;
+            align-items: center; justify-content: center; min-height: 290px;
+            border: 1px solid #222;
+        }
+        #cam-feed {
+            width: 100%; max-height: 56vh; object-fit: contain; display: block;
+            transform: scaleX(-1);
+        }
+        #cam-feed.unmirrored { transform: scaleX(1); }
+        #cam-feed.fx-gray { filter: grayscale(100%) contrast(120%); }
+        #cam-feed.fx-edge { filter: contrast(260%) brightness(95%) grayscale(100%); }
+        #cam-feed.fx-invert { filter: invert(100%); }
+
+        /* Center ROI box for Beautify/ISP Analyzer */
+        .cam-roi-box {
+            position: absolute; width: 34%; height: 42%;
+            border: 1px dashed rgba(255, 145, 0, 0.55);
+            border-radius: 8px; pointer-events: none; display: none;
+        }
+        .cam-roi-box::after {
+            content: "ISP / SKIN ROI"; position: absolute; top: -16px; left: 4px;
+            font-family: monospace; font-size: 0.62rem; color: #ff9100;
+            background: rgba(0,0,0,0.75); padding: 1px 5px; border-radius: 3px;
+        }
+
+        /* Optical Grid Overlays */
+        .cam-grid-thirds {
+            position: absolute; inset: 0; pointer-events: none; display: none;
+            background-image:
+                linear-gradient(to right, rgba(0, 229, 255, 0.35) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 229, 255, 0.35) 1px, transparent 1px);
+            background-size: 33.333% 33.333%;
+        }
+        .cam-grid-cross {
+            position: absolute; inset: 0; pointer-events: none; display: none;
+        }
+        .cam-grid-cross::before {
+            content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 1px; background: rgba(255, 145, 0, 0.65);
+        }
+        .cam-grid-cross::after {
+            content: ""; position: absolute; top: 50%; left: 0; right: 0;
+            height: 1px; background: rgba(255, 145, 0, 0.65);
+        }
+
+        .cam-osd {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0, 0, 0, 0.8); border: 1px solid #333;
+            padding: 6px 10px; border-radius: 6px; font-family: monospace;
+            font-size: 0.72rem; color: #00ff88; pointer-events: none; line-height: 1.45;
+        }
+
+        .cam-telemetry-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+        }
+        @media (max-width: 600px) { .cam-telemetry-grid { grid-template-columns: repeat(2, 1fr); } }
+        .tele-card {
+            background: #0f0f0f; border: 1px solid #262626; border-radius: 8px;
+            padding: 8px 10px; text-align: center;
+        }
+        .tele-lbl { font-size: 0.62rem; color: #777; text-transform: uppercase; font-family: monospace; }
+        .tele-val { font-size: 0.82rem; font-weight: 800; color: #eee; font-family: monospace; margin-top: 2px; }
+        .tele-val.accent { color: #00e5ff; }
+        .tele-val.good { color: #00ff88; }
+
+        .cam-toolbar {
+            display: flex; gap: 7px; flex-wrap: wrap; justify-content: space-between; align-items: center;
+        }
+        .cam-btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .c-btn {
+            background: #202020; border: 1px solid #383838; color: #ddd;
+            padding: 6px 10px; border-radius: 6px; font-size: 0.73rem;
+            font-family: monospace; font-weight: 700; cursor: pointer; transition: 0.15s;
+        }
+        .c-btn:hover { border-color: #00e5ff; color: #fff; }
+        .c-btn.active { background: rgba(0, 229, 255, 0.16); border-color: #00e5ff; color: #00e5ff; }
+        .c-btn.snap { background: rgba(0, 255, 136, 0.14); border-color: #00ff88; color: #00ff88; }
+        .c-btn.danger { background: #2b141a; border-color: #ff4081; color: #ff4081; }
+
+        .cam-alert {
+            display: none; background: rgba(255, 64, 129, 0.12); border: 1px solid #ff4081;
+            color: #ff80ab; padding: 9px 12px; border-radius: 7px;
+            font-family: monospace; font-size: 0.75rem; line-height: 1.4;
+        }
+
+        /* HARDWARE DATASHEET & ISP FORENSICS CARD */
+        .datasheet-box {
+            background: #0f0f0f; border: 1px solid #292929; border-radius: 10px;
+            padding: 13px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .ds-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #222; padding-bottom: 8px; gap: 8px; flex-wrap: wrap;
+        }
+        .ds-title {
+            font-family: monospace; font-size: 0.78rem; font-weight: 800;
+            color: #00e5ff; letter-spacing: 0.8px; text-transform: uppercase;
+        }
+        .ds-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+        }
+        @media (max-width: 680px) { .ds-grid { grid-template-columns: 1fr; } }
+
+        .ds-item {
+            background: #151515; border: 1px solid #252525; border-radius: 7px;
+            padding: 8px 10px; display: flex; justify-content: space-between;
+            align-items: center; gap: 8px; font-family: monospace; font-size: 0.73rem;
+        }
+        .ds-key { color: #aaa; }
+        .ds-badge {
+            padding: 2px 7px; border-radius: 4px; font-weight: 800;
+            font-size: 0.67rem; text-transform: uppercase; white-space: nowrap;
+        }
+        .b-yes { background: rgba(0, 255, 136, 0.14); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.4); }
+        .b-no { background: rgba(140, 140, 140, 0.12); color: #888; border: 1px solid #333; }
+        .b-warn { background: rgba(255, 145, 0, 0.16); color: #ffab40; border: 1px solid rgba(255, 145, 0, 0.45); }
+        .b-alert { background: rgba(255, 64, 129, 0.16); color: #ff80ab; border: 1px solid rgba(255, 64, 129, 0.5); }
+
+        .isp-forensic-panel {
+            background: #131313; border: 1px solid #272727; border-radius: 8px;
+            padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .isp-row {
+            display: flex; flex-direction: column; gap: 4px; font-family: monospace; font-size: 0.72rem;
+        }
+        .isp-row-top { display: flex; justify-content: space-between; align-items: center; color: #ccc; }
+        .isp-bar-bg { width: 100%; height: 6px; background: #222; border-radius: 4px; overflow: hidden; }
+        .isp-bar-fill { height: 100%; width: 0%; background: #00ff88; transition: width 0.25s, background 0.25s; }
+        .isp-verdict {
+            font-family: monospace; font-size: 0.73rem; line-height: 1.45;
+            padding: 8px 10px; border-radius: 6px; background: #0c0c0c; border: 1px solid #242424;
+            color: #bbb;
+        }
+
+        /* Right Panel: Camera Format & UVC Hardware Controls */
+        .cam-panel {
+            background: #141414; border: 1px solid #2b2b2b; border-radius: 12px;
+            padding: 15px; display: flex; flex-direction: column; gap: 13px;
+            max-height: calc(100vh - 95px); overflow-y: auto;
+        }
+        .p-group { border-bottom: 1px solid #232323; padding-bottom: 12px; }
+        .p-group:last-child { border-bottom: none; padding-bottom: 0; }
+        .p-label {
+            display: block; font-size: 0.68rem; color: #888; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 6px; font-family: monospace;
+        }
+        select.cam-sel {
+            width: 100%; background: #1e1e1e; border: 1px solid #3a3a3a; color: #fff;
+            padding: 7px 9px; border-radius: 6px; font-size: 0.8rem; font-family: monospace;
+        }
+        select.cam-sel:focus { outline: none; border-color: #00e5ff; }
+
+        .res-fps-row { display: grid; grid-template-columns: 1.35fr 1fr; gap: 7px; }
+        .mode-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 8px; gap: 8px; font-size: 0.73rem; font-family: monospace; color: #bbb;
+        }
+
+        .uvc-list { display: flex; flex-direction: column; gap: 10px; }
+        .uvc-item {
+            background: #101010; border: 1px solid #242424; border-radius: 7px; padding: 8px 10px;
+        }
+        .uvc-head {
+            display: flex; justify-content: space-between; align-items: center;
+            font-family: monospace; font-size: 0.72rem; color: #ccc; margin-bottom: 5px;
+        }
+        .uvc-head span:last-child { color: #ff9100; font-weight: 700; }
+        input[type=range].uvc-slider { width: 100%; accent-color: #00e5ff; cursor: pointer; margin: 0; }
+        .uvc-empty {
+            font-family: monospace; font-size: 0.73rem; color: #666;
+            background: #101010; border: 1px dashed #2a2a2a; padding: 10px; border-radius: 7px;
+        }
     </style>
 </head>
 <body>
 
     <div class="modal" id="warning-modal">
-        <div style="font-size:3rem; margin-bottom:10px;">⚠️</div>
-        <h2 style="color:#ff4081; margin:0;">EPILEPSY WARNING</h2>
-        <p style="color:#ccc; line-height:1.5; font-size:0.9rem; max-width:400px; margin-top:10px;">
-            Fitur Repair menggunakan pola <b>kedip cepat (strobe)</b> dan noise statis. 
-            Jangan gunakan jika Anda memiliki riwayat epilepsi atau sensitif terhadap cahaya.
+        <div style="font-size:2.8rem; margin-bottom:8px;">⚠️</div>
+        <h2 style="color:#ff4081; margin:0; font-size:1.2rem;">PHOTOSENSITIVE / EPILEPSY WARNING</h2>
+        <p style="color:#ccc; line-height:1.5; font-size:0.86rem; max-width:420px; margin-top:10px;">
+            Fitur Pixel Repair menggunakan pola <b>strobe frekuensi tinggi</b> dan random noise cepat.
+            Hentikan segera jika mata lelah atau memiliki riwayat epilepsi fotosensitif.
         </p>
-        <button class="agree-btn" onclick="confirmRepair()">SAYA MENGERTI</button>
-        <button class="agree-btn" style="background:transparent; border:1px solid #555; margin-top:10px;" onclick="closeModal()">BATAL</button>
+        <button class="agree-btn" onclick="confirmRepair()">SAYA MENGERTI &amp; LANJUT</button>
+        <button class="agree-btn" style="background:transparent; border:1px solid #555; margin-top:8px;" onclick="closeModal()">BATAL</button>
     </div>
 
     <div class="mod-header">
-        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
-        <div style="font-size:0.9rem; color:#888;">DISPLAY & CAM</div>
+        <div class="header-left">
+            <a href="../../index.html" class="back-btn">← DASHBOARD</a>
+            <div class="mod-title">Display &amp; Optics Lab</div>
+        </div>
+        <div class="fps-box" id="fps-display">DISPLAY: -- Hz</div>
     </div>
-
-    <div class="fps-box" id="fps-display">FPS: --</div>
 
     <div class="main-container">
-        <div class="btn-grid" id="menu-grid">
-            <button class="test-btn" onclick="startDeadPixel()">
-                <span class="btn-icon">🖥️</span>
-                <div>
-                    <div style="font-weight:bold; color:#fff;">Dead Pixel Test</div>
-                    <div style="font-size:0.75rem;">Cek warna layar solid</div>
-                </div>
-            </button>
-            <button class="test-btn" onclick="initGrid()">
-                <span class="btn-icon">👆</span>
-                <div>
-                    <div style="font-weight:bold; color:#fff;">Grid Touch Test</div>
-                    <div style="font-size:0.75rem;">Cek respon layar sentuh</div>
-                </div>
-            </button>
-            <button class="test-btn" onclick="showWarning()">
-                <span class="btn-icon">🛠️</span>
-                <div>
-                    <div style="font-weight:bold; color:#fff;">Pixel Repair</div>
-                    <div style="font-size:0.75rem;">Perbaiki burn-in & stuck pixel</div>
-                </div>
-            </button>
-            <button class="test-btn" onclick="startWebcam()">
-                <span class="btn-icon">📸</span>
-                <div>
-                    <div style="font-weight:bold; color:#fff;">Webcam Check</div>
-                    <div style="font-size:0.75rem;">Tes kamera & resolusi</div>
-                </div>
-            </button>
-        </div>
-
-        <div id="cam-container">
-            <video id="cam-feed" autoplay playsinline></video>
-            <div class="cam-info-box">
-                <div id="cam-res" style="color:#fff; font-weight:bold;">Resolution: -</div>
-                <div id="cam-fps" style="color:#888; font-size:0.8rem; margin-top:5px;">FrameRate: -</div>
+        <!-- HUB MENU -->
+        <div id="hub-menu">
+            <div class="section-heading">📷 Camera, Sensor &amp; UVC Optics Lab</div>
+            <div class="btn-grid">
+                <button class="test-btn cam-featured" onclick="openWebcamLab()">
+                    <span class="btn-icon">📸</span>
+                    <div>
+                        <div class="btn-title">Advanced Webcam &amp; Sensor Lab</div>
+                        <div class="btn-sub">Datasheet UVC, Deteksi Beautify/Pink-Tint Tersembunyi, Resolusi vs FPS &amp; UVC Controls</div>
+                    </div>
+                </button>
             </div>
-            <button class="stop-cam-btn" onclick="stopWebcam()">STOP CAMERA</button>
+
+            <div class="section-heading">🖥️ Panel, Color, Motion &amp; Touch Diagnostics</div>
+            <div class="btn-grid">
+                <button class="test-btn" onclick="startColorSuite('deadpixel')">
+                    <span class="btn-icon">🟥</span>
+                    <div>
+                        <div class="btn-title">Dead &amp; Stuck Pixel</div>
+                        <div class="btn-sub">Inspeksi subpiksel R, G, B, C, M, Y, Putih &amp; Hitam penuh</div>
+                    </div>
+                </button>
+
+                <button class="test-btn" onclick="startColorSuite('uniformity')">
+                    <span class="btn-icon">🌑</span>
+                    <div>
+                        <div class="btn-title">IPS Bleed &amp; OLED Banding</div>
+                        <div class="btn-sub">Uji kebocoran backlight (0% Black) &amp; keseragaman abu-abu 3%–25%</div>
+                    </div>
+                </button>
+
+                <button class="test-btn" onclick="startPatternSuite('gradient')">
+                    <span class="btn-icon">🌈</span>
+                    <div>
+                        <div class="btn-title">Contrast, Clipping &amp; Bit-Depth</div>
+                        <div class="btn-sub">Tangga 21-step gamma, near-black/white &amp; gradien 8-bit/FRC</div>
+                    </div>
+                </button>
+
+                <button class="test-btn" onclick="startPatternSuite('ghosting')">
+                    <span class="btn-icon">🛸</span>
+                    <div>
+                        <div class="btn-title">Motion Ghosting &amp; Overdrive</div>
+                        <div class="btn-sub">Uji response time GtG, trailing &amp; inverse ghosting berbasis refresh rate</div>
+                    </div>
+                </button>
+
+                <button class="test-btn" onclick="startPatternSuite('sharpness')">
+                    <span class="btn-icon">📐</span>
+                    <div>
+                        <div class="btn-title">Sharpness &amp; Subpixel Grid</div>
+                        <div class="btn-sub">Pola 1px checkerboard, geometri rasio &amp; uji kejernihan teks</div>
+                    </div>
+                </button>
+
+                <button class="test-btn" onclick="initGrid()">
+                    <span class="btn-icon">👆</span>
+                    <div>
+                        <div class="btn-title">Digitizer Grid Touch</div>
+                        <div class="btn-sub">Deteksi dead-zone layar sentuh multi-touch</div>
+                    </div>
+                </button>
+
+                <button class="test-btn warn-card" onclick="showWarning()">
+                    <span class="btn-icon">🛠️</span>
+                    <div>
+                        <div class="btn-title">Stuck Pixel &amp; Burn-In Repair</div>
+                        <div class="btn-sub">Stimulasi pergantian tegangan piksel cepat (Noise / RGB / B&amp;W)</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- WEBCAM LAB WORKSPACE -->
+        <div id="cam-workspace">
+            <div class="cam-stage">
+                <div class="cam-viewport">
+                    <video id="cam-feed" autoplay playsinline muted></video>
+                    <div class="cam-roi-box" id="cam-roi-box"></div>
+                    <div class="cam-grid-thirds" id="cam-grid-thirds"></div>
+                    <div class="cam-grid-cross" id="cam-grid-cross"></div>
+                    <div class="cam-osd" id="cam-osd">INITIALIZING SENSOR...</div>
+                </div>
+
+                <div class="cam-alert" id="cam-alert"></div>
+
+                <div class="cam-telemetry-grid">
+                    <div class="tele-card">
+                        <div class="tele-lbl">Active Resolution</div>
+                        <div class="tele-val accent" id="tele-res">-</div>
+                    </div>
+                    <div class="tele-card">
+                        <div class="tele-lbl">Measured Sensor FPS</div>
+                        <div class="tele-val good" id="tele-real-fps">-- FPS</div>
+                    </div>
+                    <div class="tele-card">
+                        <div class="tele-lbl">Driver Reported FPS</div>
+                        <div class="tele-val" id="tele-driver-fps">-- Hz</div>
+                    </div>
+                    <div class="tele-card">
+                        <div class="tele-lbl">Aspect / Megapixel</div>
+                        <div class="tele-val" id="tele-frametime">-</div>
+                    </div>
+                </div>
+
+                <div class="cam-toolbar">
+                    <div class="cam-btn-group">
+                        <button type="button" class="c-btn active" id="btn-cam-mirror" onclick="toggleCamMirror()">⇄ Mirror</button>
+                        <button type="button" class="c-btn" id="btn-cam-grid" onclick="cycleCamGrid()">⊞ Grid: Off</button>
+                        <button type="button" class="c-btn" id="btn-cam-roi" onclick="toggleRoiOverlay()">🎯 ISP ROI</button>
+                        <button type="button" class="c-btn" id="btn-cam-filter" onclick="cycleCamFilter()">🎛️ Preview FX: None</button>
+                    </div>
+                    <div class="cam-btn-group">
+                        <button type="button" class="c-btn snap" onclick="captureCamSnapshot()">📷 Capture PNG</button>
+                        <button type="button" class="c-btn danger" onclick="closeWebcamLab()">⏹ Tutup Kamera</button>
+                    </div>
+                </div>
+
+                <!-- HARDWARE DATASHEET & HIDDEN ISP / BEAUTIFY ANALYZER -->
+                <div class="datasheet-box">
+                    <div class="ds-header">
+                        <div class="ds-title">📋 Hardware Capability Datasheet &amp; Hidden ISP Audit</div>
+                        <button type="button" class="c-btn" style="padding:4px 9px; font-size:0.68rem;" onclick="copyCameraDatasheet()">📋 Copy Spec JSON</button>
+                    </div>
+
+                    <div id="ds-device-meta" style="font-family:monospace; font-size:0.72rem; color:#999; line-height:1.45;">
+                        Menunggu pembacaan descriptor USB/UVC...
+                    </div>
+
+                    <div class="ds-grid" id="ds-capabilities-grid"></div>
+
+                    <!-- LIVE PIXEL FORENSICS FOR HIDDEN BEAUTIFY / COLOR CORRECTION -->
+                    <div class="isp-forensic-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-family:monospace; font-size:0.73rem; font-weight:800; color:#ff9100;">🔬 LIVE ISP &amp; HIDDEN BEAUTIFY DETECTOR (Frame Pixel Audit)</span>
+                            <span id="isp-live-badge" class="ds-badge b-no">SCANNING...</span>
+                        </div>
+
+                        <div class="isp-row">
+                            <div class="isp-row-top">
+                                <span>Micro-Texture Sharpness (Deteksi Skin-Smoothing / Blur Halus)</span>
+                                <span id="isp-sharp-val">--</span>
+                            </div>
+                            <div class="isp-bar-bg"><div class="isp-bar-fill" id="isp-sharp-bar"></div></div>
+                        </div>
+
+                        <div class="isp-row">
+                            <div class="isp-row-top">
+                                <span>Pink / Magenta Skin &amp; Lip-Tint Bias (Efek Bibir Pink / Whitening)</span>
+                                <span id="isp-pink-val">--</span>
+                            </div>
+                            <div class="isp-bar-bg"><div class="isp-bar-fill" id="isp-pink-bar"></div></div>
+                        </div>
+
+                        <div class="isp-row">
+                            <div class="isp-row-top">
+                                <span>Chroma Saturation &amp; Color Cast (Agresivitas Auto Color Correction)</span>
+                                <span id="isp-sat-val">--</span>
+                            </div>
+                            <div class="isp-bar-bg"><div class="isp-bar-fill" id="isp-sat-bar"></div></div>
+                        </div>
+
+                        <div class="isp-verdict" id="isp-verdict-text">
+                            Menganalisis sinyal mentah dari sensor kamera... Arahkan kamera ke wajah atau objek bertekstur dengan cahaya cukup untuk audit ISP.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT CONTROL PANEL -->
+            <div class="cam-panel">
+                <div class="p-group">
+                    <label class="p-label">1. Perangkat Kamera (Video Input)</label>
+                    <div style="display:flex; gap:6px;">
+                        <select id="cam-device-select" class="cam-sel" onchange="applyCamStreamConfig()"></select>
+                        <button type="button" class="c-btn" onclick="refreshCameraDevices()" title="Scan ulang kamera">↻</button>
+                    </div>
+                </div>
+
+                <div class="p-group">
+                    <label class="p-label">2. Resolusi &amp; Target Frame Rate (FPS)</label>
+                    <div class="res-fps-row">
+                        <select id="cam-res-select" class="cam-sel" onchange="applyCamStreamConfig()">
+                            <option value="auto" selected>Auto / Native Max</option>
+                            <option value="3840x2160">3840×2160 (4K UHD)</option>
+                            <option value="2560x1440">2560×1440 (2K QHD)</option>
+                            <option value="1920x1080">1920×1080 (1080p FHD)</option>
+                            <option value="1280x720">1280×720 (720p HD)</option>
+                            <option value="854x480">854×480 (480p FWVGA)</option>
+                            <option value="640x480">640×480 (480p VGA)</option>
+                            <option value="640x360">640×360 (360p nHD)</option>
+                        </select>
+                        <select id="cam-fps-select" class="cam-sel" onchange="applyCamStreamConfig()">
+                            <option value="auto" selected>FPS: Auto/Max</option>
+                            <option value="60">60 FPS</option>
+                            <option value="30">30 FPS</option>
+                            <option value="24">24 FPS</option>
+                            <option value="15">15 FPS</option>
+                        </select>
+                    </div>
+
+                    <div class="mode-row">
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#ccc;">
+                            <input type="checkbox" id="cam-strict-mode" onchange="applyCamStreamConfig()" style="accent-color:#ff9100;">
+                            Strict Mode (Tolak jika HW tidak support)
+                        </label>
+                        <button type="button" class="c-btn" style="padding:4px 8px; font-size:0.68rem;" onclick="probeCameraMatrix()">🔍 Scan Mode</button>
+                    </div>
+                    <div id="probe-result-box" style="display:none; margin-top:8px; background:#0e0e0e; border:1px solid #262626; border-radius:6px; padding:8px; font-family:monospace; font-size:0.7rem; color:#aaa; line-height:1.45;"></div>
+                </div>
+
+                <div class="p-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <label class="p-label" style="margin:0;">3. Kontrol Hardware UVC / ISP</label>
+                        <button type="button" class="c-btn" style="padding:3px 8px; font-size:0.66rem;" onclick="resetHardwareUvc()">↺ Reset HW</button>
+                    </div>
+                    <div class="uvc-list" id="uvc-controls-list">
+                        <div class="uvc-empty">Menunggu stream kamera aktif...</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="color-overlay" onclick="nextColor()">
-        <div class="dp-hint" id="dp-hint">TAP TO CHANGE COLOR</div>
+    <!-- 1. SOLID COLOR & UNIFORMITY OVERLAY -->
+    <div id="color-overlay" class="fs-overlay" onclick="stepColorSuite(1)">
+        <div class="dp-center-tag" id="dp-hint"></div>
+        <div class="fs-hud" onclick="event.stopPropagation()">
+            <button type="button" class="hud-btn" onclick="stepColorSuite(-1)">◀ Prev</button>
+            <span id="color-hud-label" style="color:#00e5ff; font-weight:800;">RED (1/8)</span>
+            <button type="button" class="hud-btn" onclick="stepColorSuite(1)">Next ▶</button>
+            <button type="button" class="hud-btn exit" onclick="closeColorSuite()">✕ Keluar</button>
+        </div>
     </div>
-    
-    <div id="repair-layer">
+
+    <!-- 2. CALIBRATION, GHOSTING & SHARPNESS OVERLAY -->
+    <div id="pattern-overlay" class="fs-overlay">
+        <canvas id="diag-canvas"></canvas>
+        <div class="fs-hud" id="pattern-hud"></div>
+    </div>
+
+    <!-- 3. PIXEL REPAIR OVERLAY -->
+    <div id="repair-layer" class="fs-overlay">
         <canvas id="repair-canvas"></canvas>
         <div class="repair-ui">
-            <button class="mode-btn active" onclick="setRepairMode('noise')">📺</button>
-            <button class="mode-btn" onclick="setRepairMode('rgb')">🌈</button>
-            <button class="mode-btn" onclick="setRepairMode('bw')">⚪</button>
-            <button class="mode-btn close-repair" onclick="stopRepair()">✖</button>
+            <button type="button" class="mode-btn active" onclick="setRepairMode('noise', this)" title="Static Noise">📺</button>
+            <button type="button" class="mode-btn" onclick="setRepairMode('rgb', this)" title="RGB Cycle">🌈</button>
+            <button type="button" class="mode-btn" onclick="setRepairMode('bw', this)" title="Black/White Flash">⚪</button>
+            <button type="button" class="mode-btn close-repair" onclick="stopRepair()" title="Stop">✖</button>
         </div>
     </div>
 
-    <div id="grid-overlay">
+    <!-- 4. GRID TOUCH TEST -->
+    <div id="grid-overlay" class="fs-overlay">
         <div id="grid-container"></div>
         <div class="grid-ui" id="grid-success" style="display:none;">
-            <div style="font-size:3rem;">✅</div>
-            <div style="font-weight:bold; font-size:1.2rem; margin-top:10px;">PASS!</div>
-            <div style="color:#888; font-size:0.9rem;">Digitizer Normal</div>
-            <button onclick="stopGrid()">CLOSE</button>
+            <div style="font-size:2.6rem;">✅</div>
+            <div style="font-weight:800; font-size:1.15rem; color:#00ff88; margin-top:6px;">DIGITIZER PASS!</div>
+            <div style="color:#aaa; font-size:0.82rem; margin-top:3px;">Semua sel layar sentuh merespons normal</div>
+            <button type="button" onclick="stopGrid()">SELESAI</button>
         </div>
-        <div style="position:absolute; top:20px; left:0; width:100%; text-align:center; pointer-events:none; z-index:90;">
-            <span style="background:rgba(0,0,0,0.7); padding:5px 10px; border-radius:5px; font-size:0.8rem;">Usap semua kotak</span>
+        <div style="position:absolute; top:16px; left:50%; transform:translateX(-50%); pointer-events:none; z-index:110;">
+            <span style="background:rgba(0,0,0,0.8); border:1px solid #333; padding:5px 12px; border-radius:6px; font-size:0.78rem; font-family:monospace;">Usap seluruh kotak hingga hijau</span>
         </div>
-        <button onclick="stopGrid()" style="position:absolute; top:20px; right:20px; background:#ff1744; border:none; color:#fff; width:30px; height:30px; border-radius:50%; font-weight:bold; z-index:100;">✕</button>
+        <button type="button" onclick="stopGrid()" style="position:absolute; top:14px; right:16px; background:#ff1744; border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-weight:bold; cursor:pointer; z-index:115;">✕</button>
     </div>
 
     <script>
-        // --- GLOBAL FPS LOGIC ---
+        // =========================================
+        // GLOBAL DISPLAY REFRESH RATE MONITOR (Hz)
+        // =========================================
         let lastLoop = performance.now();
-        let frames = 0;
-        function countFPS() { 
-            let now = performance.now();
-            frames++;
+        let displayFrames = 0;
+        let measuredDisplayHz = 60;
+
+        function countDisplayHz() {
+            const now = performance.now();
+            displayFrames++;
             if (now - lastLoop >= 1000) {
-                document.getElementById('fps-display').innerText = frames + " Hz";
-                frames = 0;
+                measuredDisplayHz = displayFrames;
+                document.getElementById('fps-display').innerText = `DISPLAY: ${displayFrames} Hz`;
+                displayFrames = 0;
                 lastLoop = now;
             }
-            requestAnimationFrame(countFPS);
+            requestAnimationFrame(countDisplayHz);
         }
-        countFPS();
+        countDisplayHz();
 
-        // --- 1. DEAD PIXEL LOGIC ---
-        const overlay = document.getElementById('color-overlay');
-        const colors = ['red', 'green', 'blue', 'white', 'black', 'gray'];
-        let colorIdx = 0;
-
-        function startDeadPixel() {
-            colorIdx = 0;
-            overlay.style.backgroundColor = colors[colorIdx];
-            overlay.style.display = 'block';
-            document.getElementById('dp-hint').style.display = 'block';
-            setTimeout(() => document.getElementById('dp-hint').style.display = 'none', 2000);
-            if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(e=>{});
+        function enterFsSafe() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
         }
-
-        function nextColor() {
-            colorIdx++;
-            if (colorIdx >= colors.length) {
-                overlay.style.display = 'none';
-                if(document.exitFullscreen) document.exitFullscreen().catch(e=>{});
-            } else {
-                overlay.style.backgroundColor = colors[colorIdx];
+        function exitFsSafe() {
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
             }
         }
 
-        // --- 2. PIXEL REPAIR LOGIC ---
+        // =========================================
+        // 1. DEAD PIXEL & UNIFORMITY SUITE
+        // =========================================
+        const colorSuites = {
+            deadpixel: [
+                { name: 'PURE RED (255,0,0)', bg: '#ff0000' },
+                { name: 'PURE GREEN (0,255,0)', bg: '#00ff00' },
+                { name: 'PURE BLUE (0,0,255)', bg: '#0000ff' },
+                { name: 'CYAN (0,255,255)', bg: '#00ffff' },
+                { name: 'MAGENTA (255,0,255)', bg: '#ff00ff' },
+                { name: 'YELLOW (255,255,0)', bg: '#ffff00' },
+                { name: 'PURE WHITE (255,255,255)', bg: '#ffffff' },
+                { name: 'PURE BLACK (0,0,0)', bg: '#000000' }
+            ],
+            uniformity: [
+                { name: '0% BLACK (IPS Backlight Bleed)', bg: '#000000' },
+                { name: '3% NEAR-BLACK (OLED Vignette)', bg: '#080808' },
+                { name: '5% DARK GRAY (OLED Banding)', bg: '#0d0d0d' },
+                { name: '10% DARK GRAY (Uniformity)', bg: '#1a1a1a' },
+                { name: '15% CHARCOAL GRAY', bg: '#262626' },
+                { name: '25% LOW-MID GRAY', bg: '#404040' },
+                { name: '50% NEUTRAL GRAY (Dirty Screen)', bg: '#808080' }
+            ]
+        };
+
+        let activeColorList = [];
+        let colorIdx = 0;
+        let hintTimer = null;
+
+        function startColorSuite(suiteKey) {
+            activeColorList = colorSuites[suiteKey] || colorSuites.deadpixel;
+            colorIdx = 0;
+            const ov = document.getElementById('color-overlay');
+            ov.style.display = 'block';
+            renderColorStep(true);
+            enterFsSafe();
+        }
+
+        function renderColorStep(showCenterBanner = false) {
+            const item = activeColorList[colorIdx];
+            const ov = document.getElementById('color-overlay');
+            ov.style.backgroundColor = item.bg;
+            document.getElementById('color-hud-label').innerText = `${item.name} (${colorIdx + 1}/${activeColorList.length})`;
+
+            const hint = document.getElementById('dp-hint');
+            if (showCenterBanner) {
+                hint.innerHTML = `<b>${item.name}</b><br><span style="font-size:0.74rem; color:#ccc;">Tap layar / tekan Panah Kanan untuk lanjut</span>`;
+                hint.style.display = 'block';
+                clearTimeout(hintTimer);
+                hintTimer = setTimeout(() => { hint.style.display = 'none'; }, 1800);
+            }
+        }
+
+        function stepColorSuite(delta) {
+            colorIdx += delta;
+            if (colorIdx < 0) colorIdx = activeColorList.length - 1;
+            if (colorIdx >= activeColorList.length) {
+                closeColorSuite();
+                return;
+            }
+            renderColorStep(false);
+        }
+
+        function closeColorSuite() {
+            document.getElementById('color-overlay').style.display = 'none';
+            exitFsSafe();
+        }
+
+        // =========================================
+        // 2. CALIBRATION, MOTION GHOSTING & SHARPNESS SUITE
+        // =========================================
+        const patternOverlay = document.getElementById('pattern-overlay');
+        const diagCanvas = document.getElementById('diag-canvas');
+        const diagCtx = diagCanvas.getContext('2d');
+        let activePatternMode = null;
+        let ghostingSpeed = 480;
+        let ghostingBg = '#1e242b';
+        let ghostingX = 0;
+        let lastPatternTs = 0;
+
+        function startPatternSuite(mode) {
+            activePatternMode = mode;
+            patternOverlay.style.display = 'block';
+            diagCanvas.width = window.innerWidth;
+            diagCanvas.height = window.innerHeight;
+            buildPatternHud();
+            enterFsSafe();
+
+            if (mode === 'ghosting') {
+                ghostingX = 0;
+                lastPatternTs = performance.now();
+                requestAnimationFrame(loopGhostingTest);
+            } else if (mode === 'gradient') {
+                drawCalibrationPattern();
+            } else if (mode === 'sharpness') {
+                drawSharpnessPattern();
+            }
+        }
+
+        function closePatternSuite() {
+            activePatternMode = null;
+            patternOverlay.style.display = 'none';
+            exitFsSafe();
+        }
+
+        function buildPatternHud() {
+            const hud = document.getElementById('pattern-hud');
+            if (activePatternMode === 'ghosting') {
+                hud.innerHTML = `
+                    <span style="color:#00ff88; font-weight:800;">SYNC: ${measuredDisplayHz} Hz</span>
+                    <button type="button" class="hud-btn ${ghostingSpeed===240?'active':''}" onclick="setGhostSpeed(240)">240 px/s</button>
+                    <button type="button" class="hud-btn ${ghostingSpeed===480?'active':''}" onclick="setGhostSpeed(480)">480 px/s</button>
+                    <button type="button" class="hud-btn ${ghostingSpeed===960?'active':''}" onclick="setGhostSpeed(960)">960 px/s</button>
+                    <button type="button" class="hud-btn" onclick="cycleGhostBg()">BG Theme</button>
+                    <button type="button" class="hud-btn exit" onclick="closePatternSuite()">✕ Keluar</button>
+                `;
+            } else {
+                const label = activePatternMode === 'gradient' ? 'CONTRAST, CLIPPING & BIT-DEPTH' : 'SHARPNESS & SUBPIXEL GRID';
+                hud.innerHTML = `
+                    <span style="color:#00e5ff; font-weight:800;">${label}</span>
+                    <button type="button" class="hud-btn exit" onclick="closePatternSuite()">✕ Keluar</button>
+                `;
+            }
+        }
+
+        function setGhostSpeed(spd) {
+            ghostingSpeed = spd;
+            buildPatternHud();
+        }
+
+        function cycleGhostBg() {
+            const bgs = ['#1e242b', '#0a0a0a', '#4a5568'];
+            const idx = (bgs.indexOf(ghostingBg) + 1) % bgs.length;
+            ghostingBg = bgs[idx];
+        }
+
+        function loopGhostingTest(now) {
+            if (activePatternMode !== 'ghosting') return;
+            const dt = Math.min(0.05, (now - lastPatternTs) / 1000);
+            lastPatternTs = now;
+
+            const w = diagCanvas.width;
+            const h = diagCanvas.height;
+            ghostingX = (ghostingX + ghostingSpeed * dt) % (w + 140);
+
+            diagCtx.fillStyle = ghostingBg;
+            diagCtx.fillRect(0, 0, w, h);
+
+            diagCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+            diagCtx.lineWidth = 1;
+            for (let x = 0; x < w; x += 80) {
+                diagCtx.beginPath();
+                diagCtx.moveTo(x, 0);
+                diagCtx.lineTo(x, h);
+                diagCtx.stroke();
+            }
+
+            const tracks = [
+                { y: h * 0.25, color: '#ffffff', accent: '#00e5ff', label: 'HIGH-CONTRAST WHITE TRAIL' },
+                { y: h * 0.48, color: '#00ff88', accent: '#ff9100', label: 'MID-TONE OVERDRIVE CHECK' },
+                { y: h * 0.71, color: '#111111', accent: '#ff4081', label: 'DARK-TRANSITION SMEAR (VA/OLED)' }
+            ];
+
+            tracks.forEach((tr) => {
+                const bx = ghostingX - 70;
+                const by = tr.y - 26;
+                diagCtx.fillStyle = tr.color;
+                diagCtx.fillRect(bx, by, 64, 52);
+
+                diagCtx.fillStyle = tr.accent;
+                diagCtx.fillRect(bx + 26, by, 12, 52);
+
+                diagCtx.fillStyle = (Math.floor(now / 16) % 2 === 0) ? '#00ff88' : '#ff4081';
+                diagCtx.fillRect(bx + 4, by + 4, 8, 8);
+
+                diagCtx.fillStyle = 'rgba(255,255,255,0.45)';
+                diagCtx.font = '11px monospace';
+                diagCtx.fillText(tr.label, 20, by - 8);
+            });
+
+            requestAnimationFrame(loopGhostingTest);
+        }
+
+        function drawCalibrationPattern() {
+            const w = diagCanvas.width;
+            const h = diagCanvas.height;
+            diagCtx.fillStyle = '#000';
+            diagCtx.fillRect(0, 0, w, h);
+
+            const stepH = Math.floor(h * 0.16);
+            const stepW = w / 21;
+            for (let i = 0; i < 21; i++) {
+                const v = Math.round((i / 20) * 255);
+                diagCtx.fillStyle = `rgb(${v},${v},${v})`;
+                diagCtx.fillRect(i * stepW, 0, Math.ceil(stepW), stepH);
+                diagCtx.fillStyle = v > 128 ? '#000' : '#fff';
+                diagCtx.font = '10px monospace';
+                diagCtx.fillText(`${Math.round((i / 20) * 100)}%`, i * stepW + 4, 16);
+            }
+
+            const grads = [
+                { y: stepH + 10, c: [1, 1, 1], name: '8-BIT GRAYSCALE RAMP (Cek Color Banding)' },
+                { y: stepH * 2 + 16, c: [1, 0, 0], name: 'RED CHANNEL RAMP' },
+                { y: stepH * 3 + 22, c: [0, 1, 0], name: 'GREEN CHANNEL RAMP' },
+                { y: stepH * 4 + 28, c: [0, 0, 1], name: 'BLUE CHANNEL RAMP' }
+            ];
+
+            grads.forEach(g => {
+                const grd = diagCtx.createLinearGradient(0, 0, w, 0);
+                grd.addColorStop(0, '#000000');
+                grd.addColorStop(1, `rgb(${g.c[0]*255},${g.c[1]*255},${g.c[2]*255})`);
+                diagCtx.fillStyle = grd;
+                diagCtx.fillRect(0, g.y, w, stepH * 0.72);
+                diagCtx.fillStyle = 'rgba(255,255,255,0.7)';
+                diagCtx.font = '11px monospace';
+                diagCtx.fillText(g.name, 12, g.y + 16);
+            });
+
+            const boxY = stepH * 5 + 36;
+            const boxH = Math.max(55, h - boxY - 75);
+            const halfW = w * 0.5;
+
+            diagCtx.fillStyle = '#000';
+            diagCtx.fillRect(0, boxY, halfW, boxH);
+            diagCtx.fillStyle = '#fff';
+            diagCtx.fillRect(halfW, boxY, halfW, boxH);
+
+            for (let b = 1; b <= 8; b++) {
+                const lum = Math.round((b / 100) * 255);
+                const bw = (halfW - 40) / 8;
+                const bx = 20 + (b - 1) * bw;
+                diagCtx.fillStyle = `rgb(${lum},${lum},${lum})`;
+                diagCtx.fillRect(bx + 3, boxY + 24, bw - 6, boxH - 34);
+                diagCtx.fillStyle = '#777';
+                diagCtx.font = '10px monospace';
+                diagCtx.fillText(`${b}%`, bx + 6, boxY + 16);
+            }
+
+            for (let wt = 92; wt <= 99; wt++) {
+                const lum = Math.round((wt / 100) * 255);
+                const bw = (halfW - 40) / 8;
+                const bx = halfW + 20 + (wt - 92) * bw;
+                diagCtx.fillStyle = `rgb(${lum},${lum},${lum})`;
+                diagCtx.fillRect(bx + 3, boxY + 24, bw - 6, boxH - 34);
+                diagCtx.fillStyle = '#444';
+                diagCtx.font = '10px monospace';
+                diagCtx.fillText(`${wt}%`, bx + 5, boxY + 16);
+            }
+        }
+
+        function drawSharpnessPattern() {
+            const w = diagCanvas.width;
+            const h = diagCanvas.height;
+            diagCtx.fillStyle = '#141414';
+            diagCtx.fillRect(0, 0, w, h);
+
+            diagCtx.strokeStyle = '#333';
+            diagCtx.lineWidth = 1;
+            for (let x = 0; x < w; x += 32) {
+                diagCtx.beginPath(); diagCtx.moveTo(x + 0.5, 0); diagCtx.lineTo(x + 0.5, h); diagCtx.stroke();
+            }
+            for (let y = 0; y < h; y += 32) {
+                diagCtx.beginPath(); diagCtx.moveTo(0, y + 0.5); diagCtx.lineTo(w, y + 0.5); diagCtx.stroke();
+            }
+
+            const cx = w * 0.5, cy = h * 0.5;
+            const rad = Math.min(w, h) * 0.34;
+            diagCtx.strokeStyle = '#00e5ff';
+            diagCtx.lineWidth = 2;
+            diagCtx.beginPath();
+            diagCtx.arc(cx, cy, rad, 0, Math.PI * 2);
+            diagCtx.stroke();
+
+            diagCtx.strokeStyle = '#ff9100';
+            diagCtx.beginPath();
+            diagCtx.moveTo(cx - rad - 20, cy); diagCtx.lineTo(cx + rad + 20, cy);
+            diagCtx.moveTo(cx, cy - rad - 20); diagCtx.lineTo(cx, cy + rad + 20);
+            diagCtx.stroke();
+
+            const drawChecker = (ox, oy, size) => {
+                const img = diagCtx.createImageData(size, size);
+                for (let py = 0; py < size; py++) {
+                    for (let px = 0; px < size; px++) {
+                        const idx = (py * size + px) * 4;
+                        const val = ((px + py) % 2 === 0) ? 255 : 0;
+                        img.data[idx] = val; img.data[idx + 1] = val; img.data[idx + 2] = val; img.data[idx + 3] = 255;
+                    }
+                }
+                diagCtx.putImageData(img, ox, oy);
+            };
+            drawChecker(24, 24, 96);
+            drawChecker(w - 120, 24, 96);
+
+            diagCtx.fillStyle = '#000';
+            diagCtx.fillRect(cx - 190, cy - 52, 380, 104);
+            diagCtx.strokeStyle = '#444';
+            diagCtx.strokeRect(cx - 190, cy - 52, 380, 104);
+
+            diagCtx.fillStyle = '#ffffff';
+            diagCtx.font = 'bold 15px monospace';
+            diagCtx.textAlign = 'center';
+            diagCtx.fillText(`NATIVE VIEWPORT: ${w} × ${h} (DPR ${window.devicePixelRatio || 1}x)`, cx, cy - 22);
+            diagCtx.font = '12px sans-serif';
+            diagCtx.fillText('The quick brown fox jumps over the lazy dog 0123456789', cx, cy + 4);
+            diagCtx.fillStyle = '#00ff88';
+            diagCtx.font = '10px monospace';
+            diagCtx.fillText('1px Sharpness & RGB/BGR Subpixel ClearType Inspection', cx, cy + 28);
+            diagCtx.textAlign = 'left';
+        }
+
+        window.addEventListener('resize', () => {
+            if (activePatternMode === 'gradient' || activePatternMode === 'sharpness') {
+                diagCanvas.width = window.innerWidth;
+                diagCanvas.height = window.innerHeight;
+                if (activePatternMode === 'gradient') drawCalibrationPattern();
+                else drawSharpnessPattern();
+            }
+        });
+
+        // =========================================
+        // 3. PIXEL REPAIR LOGIC
+        // =========================================
         const repairLayer = document.getElementById('repair-layer');
         const canvas = document.getElementById('repair-canvas');
         const ctx = canvas.getContext('2d');
@@ -244,26 +982,26 @@
 
         function showWarning() { document.getElementById('warning-modal').style.display = 'flex'; }
         function closeModal() { document.getElementById('warning-modal').style.display = 'none'; }
-        
+
         function confirmRepair() {
             closeModal();
             repairLayer.style.display = 'block';
             resizeCanvas();
             repairRunning = true;
             repairLoop();
-            if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(e=>{});
+            enterFsSafe();
         }
 
         function stopRepair() {
             repairRunning = false;
             repairLayer.style.display = 'none';
-            if(document.exitFullscreen) document.exitFullscreen().catch(e=>{});
+            exitFsSafe();
         }
 
-        function setRepairMode(m) {
+        function setRepairMode(m, btnEl) {
             repairMode = m;
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if (btnEl) btnEl.classList.add('active');
         }
 
         function resizeCanvas() {
@@ -273,8 +1011,7 @@
         window.addEventListener('resize', resizeCanvas);
 
         function repairLoop() {
-            if(!repairRunning) return;
-
+            if (!repairRunning) return;
             if (repairMode === 'noise') {
                 const idata = ctx.createImageData(width, height);
                 const buffer32 = new Uint32Array(idata.data.buffer);
@@ -293,7 +1030,9 @@
             requestAnimationFrame(repairLoop);
         }
 
-        // --- 3. GRID TOUCH LOGIC (NEW) ---
+        // =========================================
+        // 4. DIGITIZER GRID TOUCH TEST
+        // =========================================
         const gridOverlay = document.getElementById('grid-overlay');
         const gridContainer = document.getElementById('grid-container');
         let totalCells = 0, touchedCells = 0;
@@ -303,82 +1042,739 @@
             gridContainer.innerHTML = '';
             document.getElementById('grid-success').style.display = 'none';
             touchedCells = 0;
-            
-            // Grid Calculation
-            const cols = 9; 
-            const rows = Math.floor(window.innerHeight / (window.innerWidth / cols));
+
+            const cols = window.innerWidth > window.innerHeight ? 16 : 9;
+            const rows = Math.max(6, Math.floor(window.innerHeight / (window.innerWidth / cols)));
             gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
             totalCells = cols * rows;
 
-            for(let i=0; i<totalCells; i++) {
+            for (let i = 0; i < totalCells; i++) {
                 const div = document.createElement('div');
                 div.className = 'grid-cell';
                 gridContainer.appendChild(div);
             }
-
-            if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(e=>{});
+            enterFsSafe();
         }
 
-        function handleMove(e) {
+        function handleTouchGrid(e) {
             e.preventDefault();
             const points = e.touches ? e.touches : [e];
-            for(let i=0; i<points.length; i++) {
-                const touch = points[i];
-                const el = document.elementFromPoint(touch.clientX, touch.clientY);
-                if(el && el.classList.contains('grid-cell') && !el.classList.contains('touched')) {
+            for (let i = 0; i < points.length; i++) {
+                const pt = points[i];
+                const el = document.elementFromPoint(pt.clientX, pt.clientY);
+                if (el && el.classList.contains('grid-cell') && !el.classList.contains('touched')) {
                     el.classList.add('touched');
                     touchedCells++;
-                    if(touchedCells >= totalCells) {
+                    if (touchedCells >= totalCells) {
                         document.getElementById('grid-success').style.display = 'block';
-                        if(navigator.vibrate) navigator.vibrate(200);
+                        if (navigator.vibrate) navigator.vibrate(180);
                     }
                 }
             }
         }
 
-        gridContainer.addEventListener('touchmove', handleMove, {passive: false});
-        gridContainer.addEventListener('mousemove', (e) => { if(e.buttons === 1) handleMove(e); });
+        gridContainer.addEventListener('touchmove', handleTouchGrid, { passive: false });
+        gridContainer.addEventListener('touchstart', handleTouchGrid, { passive: false });
+        gridContainer.addEventListener('mousemove', (e) => { if (e.buttons === 1) handleTouchGrid(e); });
+        gridContainer.addEventListener('mousedown', handleTouchGrid);
 
         function stopGrid() {
             gridOverlay.style.display = 'none';
-            if(document.exitFullscreen) document.exitFullscreen().catch(e=>{});
+            exitFsSafe();
         }
 
-        // --- 4. WEBCAM LOGIC ---
-        let streamRef = null;
-        async function startWebcam() {
-            const container = document.getElementById('cam-container');
-            const menu = document.getElementById('menu-grid');
-            const video = document.getElementById('cam-feed');
-            
-            menu.style.display = 'none';
-            container.style.display = 'flex';
-            
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 4096 }, height: { ideal: 2160 } } 
-                });
-                streamRef = stream;
-                video.srcObject = stream;
-                
-                const track = stream.getVideoTracks()[0];
-                const settings = track.getSettings();
-                document.getElementById('cam-res').innerText = `Resolution: ${settings.width} x ${settings.height}`;
-                document.getElementById('cam-fps').innerText = `FPS: ${settings.frameRate || 'N/A'}`;
-            } catch (err) {
-                alert("Camera Access Denied or Not Available");
-                stopWebcam();
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('color-overlay').style.display === 'block') {
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); stepColorSuite(1); }
+                else if (e.key === 'ArrowLeft') { e.preventDefault(); stepColorSuite(-1); }
+                else if (e.key === 'Escape') { closeColorSuite(); }
+            } else if (activePatternMode) {
+                if (e.key === 'Escape') closePatternSuite();
+            } else if (repairRunning) {
+                if (e.key === 'Escape') stopRepair();
+            } else if (gridOverlay.style.display === 'block') {
+                if (e.key === 'Escape') stopGrid();
             }
+        });
+
+        // =========================================
+        // 5. ADVANCED WEBCAM, DATASHEET & ISP FORENSICS LAB
+        // =========================================
+        let streamRef = null;
+        let activeVideoTrack = null;
+        let camGridMode = 0;
+        let camFilterMode = 0;
+        let camMirror = true;
+        let camRoiVisible = false;
+        let camFpsLoopActive = false;
+        let ispAnalyzerTimer = null;
+        let latestDatasheetReport = {};
+
+        const ispSampleCanvas = document.createElement('canvas');
+        ispSampleCanvas.width = 160;
+        ispSampleCanvas.height = 120;
+        const ispSampleCtx = ispSampleCanvas.getContext('2d', { willReadFrequently: true });
+
+        async function openWebcamLab() {
+            document.getElementById('hub-menu').style.display = 'none';
+            document.getElementById('cam-workspace').style.display = 'grid';
+            await refreshCameraDevices();
+            await applyCamStreamConfig();
         }
 
-        function stopWebcam() {
+        function closeWebcamLab() {
+            camFpsLoopActive = false;
+            if (ispAnalyzerTimer) {
+                clearInterval(ispAnalyzerTimer);
+                ispAnalyzerTimer = null;
+            }
             if (streamRef) {
                 streamRef.getTracks().forEach(track => track.stop());
                 streamRef = null;
+                activeVideoTrack = null;
             }
-            document.getElementById('cam-container').style.display = 'none';
-            document.getElementById('menu-grid').style.display = 'grid';
+            document.getElementById('cam-feed').srcObject = null;
+            document.getElementById('cam-workspace').style.display = 'none';
+            document.getElementById('hub-menu').style.display = 'block';
+            document.getElementById('cam-alert').style.display = 'none';
+            document.getElementById('probe-result-box').style.display = 'none';
+        }
+
+        async function refreshCameraDevices() {
+            const sel = document.getElementById('cam-device-select');
+            const prevVal = sel.value;
+            try {
+                let devices = await navigator.mediaDevices.enumerateDevices();
+                let cams = devices.filter(d => d.kind === 'videoinput');
+                if (cams.length > 0 && !cams[0].label) {
+                    const tmp = await navigator.mediaDevices.getUserMedia({ video: true });
+                    tmp.getTracks().forEach(t => t.stop());
+                    devices = await navigator.mediaDevices.enumerateDevices();
+                    cams = devices.filter(d => d.kind === 'videoinput');
+                }
+
+                sel.innerHTML = '';
+                cams.forEach((cam, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = cam.deviceId;
+                    opt.text = cam.label || `Camera #${idx + 1} (${cam.deviceId.slice(0, 6)})`;
+                    sel.appendChild(opt);
+                });
+                if (prevVal && [...sel.options].some(o => o.value === prevVal)) {
+                    sel.value = prevVal;
+                }
+            } catch (e) {
+                sel.innerHTML = '<option value="">Default Camera</option>';
+            }
+        }
+
+        navigator.mediaDevices?.addEventListener?.('devicechange', refreshCameraDevices);
+
+        function buildVideoConstraints() {
+            const deviceId = document.getElementById('cam-device-select').value;
+            const resVal = document.getElementById('cam-res-select').value;
+            const fpsVal = document.getElementById('cam-fps-select').value;
+            const strict = document.getElementById('cam-strict-mode').checked;
+
+            const videoConstraints = {};
+            if (deviceId) {
+                videoConstraints.deviceId = { exact: deviceId };
+            }
+
+            if (resVal === 'auto') {
+                videoConstraints.width = { ideal: 3840 };
+                videoConstraints.height = { ideal: 2160 };
+            } else {
+                const [w, h] = resVal.split('x').map(Number);
+                videoConstraints.width = strict ? { exact: w } : { ideal: w };
+                videoConstraints.height = strict ? { exact: h } : { ideal: h };
+            }
+
+            if (fpsVal === 'auto') {
+                videoConstraints.frameRate = { ideal: 60 };
+            } else {
+                const f = Number(fpsVal);
+                videoConstraints.frameRate = strict ? { exact: f } : { ideal: f };
+            }
+
+            return videoConstraints;
+        }
+
+        async function applyCamStreamConfig() {
+            const alertBox = document.getElementById('cam-alert');
+            alertBox.style.display = 'none';
+
+            camFpsLoopActive = false;
+            if (ispAnalyzerTimer) {
+                clearInterval(ispAnalyzerTimer);
+                ispAnalyzerTimer = null;
+            }
+            if (streamRef) {
+                streamRef.getTracks().forEach(t => t.stop());
+                streamRef = null;
+                activeVideoTrack = null;
+            }
+
+            const videoEl = document.getElementById('cam-feed');
+            const constraints = buildVideoConstraints();
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: constraints, audio: false });
+                streamRef = stream;
+                activeVideoTrack = stream.getVideoTracks()[0];
+                videoEl.srcObject = stream;
+
+                await new Promise(res => {
+                    if (videoEl.readyState >= 1) res();
+                    else videoEl.onloadedmetadata = () => res();
+                });
+
+                updateCamTelemetry();
+                buildHardwareDatasheet(activeVideoTrack);
+                renderHardwareUvcControls(activeVideoTrack);
+                startSensorFpsCounter(videoEl);
+                startIspForensicAnalyzer(videoEl);
+            } catch (err) {
+                const strict = document.getElementById('cam-strict-mode').checked;
+                const resLabel = document.getElementById('cam-res-select').value;
+                const fpsLabel = document.getElementById('cam-fps-select').value;
+                alertBox.style.display = 'block';
+                alertBox.innerHTML = strict
+                    ? `⚠️ <b>Strict Mode Rejected (${err.name}):</b> Kamera/driver menolak kombinasi <b>${resLabel} @ ${fpsLabel} FPS</b> (${err.constraint || 'hardware limit'}). Matikan Strict Mode atau pilih kombinasi lain.`
+                    : `⚠️ <b>Gagal Mengakses Kamera (${err.name}):</b> ${err.message}`;
+                document.getElementById('cam-osd').innerText = 'STREAM REJECTED / OFFLINE';
+            }
+        }
+
+        function updateCamTelemetry() {
+            if (!activeVideoTrack) return;
+            const s = activeVideoTrack.getSettings();
+            const w = s.width || document.getElementById('cam-feed').videoWidth || 0;
+            const h = s.height || document.getElementById('cam-feed').videoHeight || 0;
+            const drvFps = s.frameRate ? Number(s.frameRate).toFixed(1) : 'N/A';
+
+            const gcd = (a, b) => b ? gcd(b, a % b) : a;
+            const d = (w && h) ? gcd(w, h) : 1;
+            const ar = (w && h) ? `${w / d}:${h / d}` : '-';
+
+            document.getElementById('tele-res').innerText = `${w} × ${h}`;
+            document.getElementById('tele-driver-fps').innerText = `${drvFps} Hz`;
+            document.getElementById('tele-frametime').innerText = `${ar} • ${(w * h / 1e6).toFixed(2)} MP`;
+        }
+
+        // =========================================
+        // HARDWARE CAPABILITY DATASHEET BUILDER
+        // =========================================
+        function buildHardwareDatasheet(track) {
+            const metaEl = document.getElementById('ds-device-meta');
+            const gridEl = document.getElementById('ds-capabilities-grid');
+
+            const label = track.label || 'Unknown UVC Video Device';
+            const vidPidMatch = label.match(/\(([0-9a-fA-F]{4}):([0-9a-fA-F]{4})\)/);
+            const vidPidStr = vidPidMatch ? `${vidPidMatch[1].toUpperCase()}:${vidPidMatch[2].toUpperCase()}` : 'Hidden by OS/Browser';
+
+            const caps = typeof track.getCapabilities === 'function' ? track.getCapabilities() : {};
+            const settings = typeof track.getSettings === 'function' ? track.getSettings() : {};
+
+            const maxW = caps.width?.max || settings.width || '-';
+            const maxH = caps.height?.max || settings.height || '-';
+            const maxFps = caps.frameRate?.max ? `${Math.round(caps.frameRate.max)} FPS` : (settings.frameRate ? `${Math.round(settings.frameRate)} FPS` : '-');
+
+            // Detect virtual/OEM beautify camera drivers by name
+            const virtualKeywords = /(obs|snap|manycam|youcam|droidcam|iriun|epoccam|nvidia broadcast|xsplit|logi capture|camo|prisma|beauty)/i;
+            const isVirtualOrOem = virtualKeywords.test(label);
+
+            metaEl.innerHTML =
+                `<div><b>Device Name:</b> <span style="color:#fff;">${label}</span></div>` +
+                `<div><b>USB VID:PID:</b> <span style="color:#00e5ff;">${vidPidStr}</span> &nbsp;|&nbsp; ` +
+                `<b>Driver Max Cap:</b> <span style="color:#00ff88;">${maxW}×${maxH} @ ${maxFps}</span> &nbsp;|&nbsp; ` +
+                `<b>Pipeline Type:</b> <span style="color:${isVirtualOrOem ? '#ff9100' : '#00ff88'};">${isVirtualOrOem ? 'Virtual / OEM Software ISP' : 'Direct Hardware UVC'}</span></div>`;
+
+            const hasAF = Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous');
+            const hasMF = (Array.isArray(caps.focusMode) && caps.focusMode.includes('manual')) || (caps.focusDistance && caps.focusDistance.max > caps.focusDistance.min);
+            const hasAE = Array.isArray(caps.exposureMode) && caps.exposureMode.length > 0;
+            const hasAWB = Array.isArray(caps.whiteBalanceMode) && caps.whiteBalanceMode.length > 0;
+            const hasKelvin = caps.colorTemperature && caps.colorTemperature.max > caps.colorTemperature.min;
+
+            const colorKeys = ['brightness', 'contrast', 'saturation', 'sharpness'].filter(k => caps[k] && caps[k].max > caps[k].min);
+            const hasColorCorrection = colorKeys.length > 0;
+            const hasZoom = caps.zoom && caps.zoom.max > caps.zoom.min;
+            const hasTorch = Boolean(caps.torch);
+
+            const rows = [
+                {
+                    key: 'Auto Focus (AF)',
+                    badge: hasAF ? 'SUPPORTED' : (hasMF ? 'MANUAL ONLY' : 'FIXED FOCUS'),
+                    cls: hasAF ? 'b-yes' : (hasMF ? 'b-warn' : 'b-no')
+                },
+                {
+                    key: 'Manual Focus Distance',
+                    badge: hasMF ? `${caps.focusDistance?.min ?? 0}–${caps.focusDistance?.max ?? '∞'}` : 'NOT SUPPORTED',
+                    cls: hasMF ? 'b-yes' : 'b-no'
+                },
+                {
+                    key: 'Auto Exposure (AE)',
+                    badge: hasAE ? caps.exposureMode.join('/').toUpperCase() : 'FIRMWARE LOCKED',
+                    cls: hasAE ? 'b-yes' : 'b-no'
+                },
+                {
+                    key: 'Auto White Balance (AWB)',
+                    badge: hasAWB ? caps.whiteBalanceMode.join('/').toUpperCase() : 'FIRMWARE LOCKED',
+                    cls: hasAWB ? 'b-yes' : 'b-no'
+                },
+                {
+                    key: 'Kelvin Temp Control',
+                    badge: hasKelvin ? `${caps.colorTemperature.min}K–${caps.colorTemperature.max}K` : 'NOT EXPOSED',
+                    cls: hasKelvin ? 'b-yes' : 'b-no'
+                },
+                {
+                    key: 'Color Correction (UVC ISP)',
+                    badge: hasColorCorrection ? `${colorKeys.length}/4 CHANNELS` : 'LOCKED BY ISP',
+                    cls: hasColorCorrection ? 'b-yes' : 'b-warn'
+                },
+                {
+                    key: 'Optical / Digital Zoom',
+                    badge: hasZoom ? `${caps.zoom.min}x–${caps.zoom.max}x` : '1.0x FIXED',
+                    cls: hasZoom ? 'b-yes' : 'b-no'
+                },
+                {
+                    key: 'UVC Beautify Flag',
+                    badge: isVirtualOrOem ? 'OEM FILTER DRIVER' : 'NO UVC TAG (AUDIT BELOW)',
+                    cls: isVirtualOrOem ? 'b-alert' : 'b-warn'
+                }
+            ];
+
+            gridEl.innerHTML = rows.map(r => `
+                <div class="ds-item">
+                    <span class="ds-key">${r.key}</span>
+                    <span class="ds-badge ${r.cls}">${r.badge}</span>
+                </div>
+            `).join('');
+
+            latestDatasheetReport = {
+                timestamp: new Date().toISOString(),
+                deviceLabel: label,
+                usbVidPid: vidPidStr,
+                capabilities: caps,
+                activeSettings: settings,
+                summary: {
+                    autoFocus: hasAF,
+                    manualFocus: hasMF,
+                    autoExposure: hasAE,
+                    autoWhiteBalance: hasAWB,
+                    kelvinControl: hasKelvin,
+                    uvcColorControls: colorKeys,
+                    zoom: hasZoom,
+                    torch: hasTorch,
+                    virtualOrOemDriver: isVirtualOrOem
+                }
+            };
+        }
+
+        function copyCameraDatasheet() {
+            const payload = JSON.stringify(latestDatasheetReport, null, 2);
+            navigator.clipboard?.writeText(payload).then(() => {
+                alert('Datasheet JSON kamera & hasil audit ISP berhasil disalin ke clipboard!');
+            }).catch(() => {
+                prompt('Salin JSON Datasheet di bawah ini:', payload);
+            });
+        }
+
+        // =========================================
+        // REAL-TIME ISP & HIDDEN BEAUTIFY FORENSICS
+        // =========================================
+        function startIspForensicAnalyzer(videoEl) {
+            if (ispAnalyzerTimer) clearInterval(ispAnalyzerTimer);
+
+            ispAnalyzerTimer = setInterval(() => {
+                if (!videoEl.videoWidth || !videoEl.videoHeight || videoEl.paused) return;
+
+                const w = ispSampleCanvas.width;
+                const h = ispSampleCanvas.height;
+                ispSampleCtx.drawImage(videoEl, 0, 0, w, h);
+                const img = ispSampleCtx.getImageData(0, 0, w, h).data;
+
+                // Focus on center ROI (x: 30%..70%, y: 25%..75%) where face/subject usually sits
+                const x0 = Math.floor(w * 0.30), x1 = Math.floor(w * 0.70);
+                const y0 = Math.floor(h * 0.25), y1 = Math.floor(h * 0.75);
+
+                let lumSum = 0;
+                let lumSqSum = 0;
+                let laplacianSum = 0;
+                let pixelCount = 0;
+
+                let pinkBiasCount = 0;
+                let satSum = 0;
+
+                const getLum = (px, py) => {
+                    const i = (py * w + px) * 4;
+                    return 0.299 * img[i] + 0.587 * img[i + 1] + 0.114 * img[i + 2];
+                };
+
+                for (let y = y0; y < y1; y++) {
+                    for (let x = x0; x < x1; x++) {
+                        const idx = (y * w + x) * 4;
+                        const r = img[idx];
+                        const g = img[idx + 1];
+                        const b = img[idx + 2];
+
+                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                        lumSum += lum;
+                        lumSqSum += lum * lum;
+
+                        // 4-neighbor Laplacian high-frequency micro-detail score
+                        const lap = Math.abs(
+                            4 * lum -
+                            getLum(x - 1, y) -
+                            getLum(x + 1, y) -
+                            getLum(x, y - 1) -
+                            getLum(x, y + 1)
+                        );
+                        laplacianSum += lap;
+
+                        // Saturation (HSV)
+                        const maxC = Math.max(r, g, b);
+                        const minC = Math.min(r, g, b);
+                        const sat = maxC > 0 ? (maxC - minC) / maxC : 0;
+                        satSum += sat;
+
+                        // Pink/Magenta skin & lipstick shift:
+                        // Natural skin has R > G > B with G noticeably higher than B.
+                        // Fake beautify/lipstick pushes B close to or above G while R stays high (pink/magenta cast).
+                        if (lum > 55 && lum < 235 && r > g + 14 && (b >= g - 4)) {
+                            pinkBiasCount++;
+                        }
+
+                        pixelCount++;
+                    }
+                }
+
+                if (pixelCount === 0) return;
+
+                const meanLum = lumSum / pixelCount;
+                const macroContrast = Math.sqrt(Math.max(0, (lumSqSum / pixelCount) - (meanLum * meanLum)));
+                const microDetail = laplacianSum / pixelCount;
+                const avgSatPct = (satSum / pixelCount) * 100;
+                const pinkRatioPct = (pinkBiasCount / pixelCount) * 100;
+
+                // Ratio of micro-detail vs macro-contrast:
+                // Low microDetail despite decent macroContrast = bilateral/skin smoothing filter!
+                const detailRatio = macroContrast > 8 ? (microDetail / macroContrast) : 0.25;
+                const sharpnessScore = Math.min(100, Math.round(detailRatio * 260));
+                const pinkScore = Math.min(100, Math.round(pinkRatioPct * 2.2));
+                const satScore = Math.min(100, Math.round(avgSatPct * 1.4));
+
+                // Update bars
+                const sharpBar = document.getElementById('isp-sharp-bar');
+                const pinkBar = document.getElementById('isp-pink-bar');
+                const satBar = document.getElementById('isp-sat-bar');
+
+                sharpBar.style.width = `${sharpnessScore}%`;
+                sharpBar.style.background = sharpnessScore < 28 ? '#ff4081' : (sharpnessScore < 45 ? '#ff9100' : '#00ff88');
+                document.getElementById('isp-sharp-val').innerText = `${sharpnessScore}/100 (${sharpnessScore < 28 ? 'SMOOTHED / SOFT' : 'NATURAL DETAIL'})`;
+
+                pinkBar.style.width = `${pinkScore}%`;
+                pinkBar.style.background = pinkScore > 45 ? '#ff4081' : (pinkScore > 24 ? '#ff9100' : '#00ff88');
+                document.getElementById('isp-pink-val').innerText = `${pinkRatioPct.toFixed(1)}% (${pinkScore > 45 ? 'HIGH PINK/LIP SHIFT' : 'NEUTRAL'})`;
+
+                satBar.style.width = `${satScore}%`;
+                satBar.style.background = satScore > 65 ? '#ff9100' : '#00e5ff';
+                document.getElementById('isp-sat-val').innerText = `${avgSatPct.toFixed(1)}%`;
+
+                // Verdict synthesis
+                const badge = document.getElementById('isp-live-badge');
+                const verdictEl = document.getElementById('isp-verdict-text');
+                const flags = [];
+
+                if (sharpnessScore < 28 && macroContrast > 18) {
+                    flags.push('Skin-Smoothing / Bilateral Blur terdeteksi (tekstur halus tidak wajar dibanding kontras tepi)');
+                }
+                if (pinkScore > 42) {
+                    flags.push('Pergeseran Pink/Magenta kuat pada midtone (indikasi auto-whitening + pink lip-tint firmware)');
+                }
+                if (avgSatPct > 55) {
+                    flags.push('Saturasi warna tinggi (ISP Color Boost aktif)');
+                }
+
+                if (flags.length >= 2) {
+                    badge.className = 'ds-badge b-alert';
+                    badge.innerText = 'BEAUTIFY / ISP FILTER DETECTED';
+                    verdictEl.innerHTML = `<span style="color:#ff80ab; font-weight:bold;">⚠️ Terindikasi Pemrosesan Beautify/Color Aktif:</span> ${flags.join('; ')}.`;
+                } else if (flags.length === 1) {
+                    badge.className = 'ds-badge b-warn';
+                    badge.innerText = 'MILD ISP PROCESSING';
+                    verdictEl.innerHTML = `<span style="color:#ffab40; font-weight:bold;">ℹ️ Catatan ISP:</span> ${flags[0]}.`;
+                } else {
+                    badge.className = 'ds-badge b-yes';
+                    badge.innerText = 'RAW / NATURAL SIGNAL';
+                    verdictEl.innerHTML = `<span style="color:#00ff88; font-weight:bold;">✔ Sinyal Natural:</span> Tidak terdeteksi smoothing wajah agresif ataupun pergeseran pink/lipstik buatan pada area ROI.`;
+                }
+
+                latestDatasheetReport.liveIspForensics = {
+                    sharpnessScore,
+                    pinkTintRatioPct: Number(pinkRatioPct.toFixed(2)),
+                    avgSaturationPct: Number(avgSatPct.toFixed(2)),
+                    flags
+                };
+            }, 650);
+        }
+
+        function startSensorFpsCounter(videoEl) {
+            camFpsLoopActive = true;
+            let count = 0;
+            let lastTs = performance.now();
+
+            const updateReadout = (realFps) => {
+                const s = activeVideoTrack?.getSettings() || {};
+                const w = s.width || videoEl.videoWidth || 0;
+                const h = s.height || videoEl.videoHeight || 0;
+                const ms = realFps > 0 ? (1000 / realFps).toFixed(1) : '--';
+                document.getElementById('tele-real-fps').innerText = `${realFps.toFixed(1)} FPS`;
+                document.getElementById('cam-osd').innerHTML =
+                    `SENSOR: ${w}×${h} | REAL: <b>${realFps.toFixed(1)} FPS</b> (${ms}ms)<br>` +
+                    `DRIVER: ${s.frameRate ? Number(s.frameRate).toFixed(1) + ' Hz' : 'N/A'} | ${activeVideoTrack?.label || 'UVC'}`;
+            };
+
+            if ('requestVideoFrameCallback' in videoEl) {
+                const onFrame = (now) => {
+                    if (!camFpsLoopActive) return;
+                    count++;
+                    if (now - lastTs >= 1000) {
+                        const fps = (count * 1000) / (now - lastTs);
+                        updateReadout(fps);
+                        count = 0;
+                        lastTs = now;
+                    }
+                    videoEl.requestVideoFrameCallback(onFrame);
+                };
+                videoEl.requestVideoFrameCallback(onFrame);
+            } else {
+                let lastDecoded = videoEl.webkitDecodedFrameCount || 0;
+                const timer = setInterval(() => {
+                    if (!camFpsLoopActive) { clearInterval(timer); return; }
+                    const cur = videoEl.webkitDecodedFrameCount || 0;
+                    const fps = cur - lastDecoded;
+                    lastDecoded = cur;
+                    updateReadout(fps);
+                }, 1000);
+            }
+        }
+
+        async function probeCameraMatrix() {
+            const box = document.getElementById('probe-result-box');
+            box.style.display = 'block';
+            box.innerHTML = '⏳ Memindai matriks kemampuan hardware (4K/2K/1080p/720p × 60/30 FPS)...';
+
+            const deviceId = document.getElementById('cam-device-select').value;
+            const matrix = [
+                { label: '4K (3840×2160)', w: 3840, h: 2160, fps: 60 },
+                { label: '4K (3840×2160)', w: 3840, h: 2160, fps: 30 },
+                { label: '2K (2560×1440)', w: 2560, h: 1440, fps: 60 },
+                { label: '2K (2560×1440)', w: 2560, h: 1440, fps: 30 },
+                { label: 'FHD (1920×1080)', w: 1920, h: 1080, fps: 60 },
+                { label: 'FHD (1920×1080)', w: 1920, h: 1080, fps: 30 },
+                { label: 'HD (1280×720)', w: 1280, h: 720, fps: 60 },
+                { label: 'HD (1280×720)', w: 1280, h: 720, fps: 30 }
+            ];
+
+            camFpsLoopActive = false;
+            if (streamRef) {
+                streamRef.getTracks().forEach(t => t.stop());
+                streamRef = null;
+            }
+
+            const results = [];
+            for (const m of matrix) {
+                try {
+                    const testStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            deviceId: deviceId ? { exact: deviceId } : undefined,
+                            width: { exact: m.w },
+                            height: { exact: m.h },
+                            frameRate: { exact: m.fps }
+                        },
+                        audio: false
+                    });
+                    const tr = testStream.getVideoTracks()[0];
+                    const st = tr.getSettings();
+                    tr.stop();
+                    results.push(`<span style="color:#00ff88;">✔ ${m.label} @ ${m.fps} FPS</span> (Driver: ${Math.round(st.frameRate || m.fps)}Hz)`);
+                } catch (_) {
+                    results.push(`<span style="color:#666;">✖ ${m.label} @ ${m.fps} FPS</span>`);
+                }
+            }
+
+            box.innerHTML = `<div style="color:#00e5ff; font-weight:800; margin-bottom:4px;">HASIL STRICT HARDWARE PROBE:</div>` + results.join('<br>');
+            await applyCamStreamConfig();
+        }
+
+        function renderHardwareUvcControls(track) {
+            const container = document.getElementById('uvc-controls-list');
+            if (!track || typeof track.getCapabilities !== 'function') {
+                container.innerHTML = '<div class="uvc-empty">Browser tidak mendukung pembacaan UVC getCapabilities().</div>';
+                return;
+            }
+
+            const caps = track.getCapabilities();
+            const settings = track.getSettings();
+            let html = '';
+
+            const modeSpecs = [
+                { key: 'focusMode', label: 'Focus Mode' },
+                { key: 'exposureMode', label: 'Exposure Mode' },
+                { key: 'whiteBalanceMode', label: 'White Balance Mode' }
+            ];
+
+            modeSpecs.forEach(m => {
+                if (Array.isArray(caps[m.key]) && caps[m.key].length > 0) {
+                    const opts = caps[m.key].map(val =>
+                        `<option value="${val}" ${settings[m.key] === val ? 'selected' : ''}>${val.toUpperCase()}</option>`
+                    ).join('');
+                    html += `
+                        <div class="uvc-item">
+                            <div class="uvc-head"><span>${m.label}</span><span>${settings[m.key] || '-'}</span></div>
+                            <select class="cam-sel" style="padding:5px 7px; font-size:0.74rem;" onchange="applyUvcConstraint('${m.key}', this.value, false)">
+                                ${opts}
+                            </select>
+                        </div>
+                    `;
+                }
+            });
+
+            const rangeSpecs = [
+                { key: 'focusDistance', label: 'Manual Focus Distance' },
+                { key: 'exposureTime', label: 'Shutter / Exposure Time' },
+                { key: 'exposureCompensation', label: 'Exposure Compensation (EV)' },
+                { key: 'colorTemperature', label: 'WB Color Temp (Kelvin)' },
+                { key: 'brightness', label: 'Brightness' },
+                { key: 'contrast', label: 'Contrast' },
+                { key: 'saturation', label: 'Saturation' },
+                { key: 'sharpness', label: 'Sharpness' },
+                { key: 'zoom', label: 'Optical / Digital Zoom' }
+            ];
+
+            rangeSpecs.forEach(r => {
+                const cap = caps[r.key];
+                if (cap && typeof cap === 'object' && typeof cap.min === 'number' && typeof cap.max === 'number' && cap.max > cap.min) {
+                    const cur = typeof settings[r.key] === 'number' ? settings[r.key] : cap.min;
+                    const step = cap.step || ((cap.max - cap.min) / 100);
+                    html += `
+                        <div class="uvc-item">
+                            <div class="uvc-head">
+                                <span>${r.label}</span>
+                                <span id="uvc-val-${r.key}">${Number(cur).toFixed(step < 1 ? 2 : 0)}</span>
+                            </div>
+                            <input type="range" class="uvc-slider"
+                                min="${cap.min}" max="${cap.max}" step="${step}" value="${cur}"
+                                oninput="applyUvcConstraint('${r.key}', parseFloat(this.value), true)">
+                        </div>
+                    `;
+                }
+            });
+
+            if (caps.torch) {
+                html += `
+                    <div class="uvc-item" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-family:monospace; font-size:0.74rem;">LED Torch / Flash</span>
+                        <input type="checkbox" ${settings.torch ? 'checked' : ''} onchange="applyUvcConstraint('torch', this.checked, false)" style="accent-color:#ffea00;">
+                    </div>
+                `;
+            }
+
+            if (!html) {
+                html = '<div class="uvc-empty">Driver kamera ini tidak mengekspos kontrol UVC manual (Focus/Exposure/ISP dikunci otomatis oleh firmware).</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        async function applyUvcConstraint(key, val, isNumeric) {
+            if (!activeVideoTrack) return;
+            if (isNumeric) {
+                const valEl = document.getElementById(`uvc-val-${key}`);
+                if (valEl) valEl.innerText = Number(val).toFixed(val % 1 !== 0 ? 2 : 0);
+            }
+
+            try {
+                const adv = {};
+                if (key === 'focusDistance') adv.focusMode = 'manual';
+                if (key === 'exposureTime') adv.exposureMode = 'manual';
+                if (key === 'colorTemperature') adv.whiteBalanceMode = 'manual';
+                adv[key] = val;
+
+                await activeVideoTrack.applyConstraints({ advanced: [adv] });
+                buildHardwareDatasheet(activeVideoTrack);
+                if (!isNumeric) renderHardwareUvcControls(activeVideoTrack);
+            } catch (err) {
+                const alertBox = document.getElementById('cam-alert');
+                alertBox.style.display = 'block';
+                alertBox.innerText = `⚠️ Parameter UVC [${key}] ditolak driver: ${err.message}`;
+            }
+        }
+
+        async function resetHardwareUvc() {
+            if (!activeVideoTrack) return;
+            await applyCamStreamConfig();
+        }
+
+        function toggleCamMirror() {
+            camMirror = !camMirror;
+            document.getElementById('cam-feed').classList.toggle('unmirrored', !camMirror);
+            document.getElementById('btn-cam-mirror').classList.toggle('active', camMirror);
+        }
+
+        function toggleRoiOverlay() {
+            camRoiVisible = !camRoiVisible;
+            document.getElementById('cam-roi-box').style.display = camRoiVisible ? 'block' : 'none';
+            document.getElementById('btn-cam-roi').classList.toggle('active', camRoiVisible);
+        }
+
+        function cycleCamGrid() {
+            camGridMode = (camGridMode + 1) % 3;
+            const labels = ['Grid: Off', 'Grid: 3×3', 'Grid: Cross'];
+            const btn = document.getElementById('btn-cam-grid');
+            btn.innerText = `⊞ ${labels[camGridMode]}`;
+            btn.classList.toggle('active', camGridMode > 0);
+            document.getElementById('cam-grid-thirds').style.display = camGridMode === 1 ? 'block' : 'none';
+            document.getElementById('cam-grid-cross').style.display = camGridMode === 2 ? 'block' : 'none';
+        }
+
+        function cycleCamFilter() {
+            camFilterMode = (camFilterMode + 1) % 4;
+            const video = document.getElementById('cam-feed');
+            video.classList.remove('fx-gray', 'fx-edge', 'fx-invert');
+            const labels = ['Preview FX: None', 'Preview FX: B&W', 'Preview FX: Edge Peak', 'Preview FX: Invert'];
+            if (camFilterMode === 1) video.classList.add('fx-gray');
+            if (camFilterMode === 2) video.classList.add('fx-edge');
+            if (camFilterMode === 3) video.classList.add('fx-invert');
+
+            const btn = document.getElementById('btn-cam-filter');
+            btn.innerText = `🎛️ ${labels[camFilterMode]}`;
+            btn.classList.toggle('active', camFilterMode > 0);
+        }
+
+        function captureCamSnapshot() {
+            const video = document.getElementById('cam-feed');
+            if (!video.videoWidth || !video.videoHeight) return;
+            const snapCanvas = document.createElement('canvas');
+            snapCanvas.width = video.videoWidth;
+            snapCanvas.height = video.videoHeight;
+            const sCtx = snapCanvas.getContext('2d');
+            if (camMirror) {
+                sCtx.translate(snapCanvas.width, 0);
+                sCtx.scale(-1, 1);
+            }
+            sCtx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height);
+
+            snapCanvas.toBlob((blob) => {
+                if (!blob) return;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `gxdiag-cam-${snapCanvas.width}x${snapCanvas.height}-${Date.now()}.png`;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+            }, 'image/png');
         }
     </script>
 </body>
