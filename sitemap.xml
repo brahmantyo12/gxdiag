@@ -1,18 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-   
+
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/</loc>
       <lastmod>2026-11-25</lastmod>
       <priority>1.0</priority>
    </url>
 
-   <!-- Network & Connectivity -->
+   <!-- 1. Featured Modules -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/gx-link/index.html</loc>
       <lastmod>2025-02-01</lastmod>
       <priority>0.9</priority>
    </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/keyboard/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+
+   <!-- 2. Input & Peripherals -->
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/mouse/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/gamepad/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/typing/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/reflex/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+
+   <!-- 3. Display, Audio & System Hardware -->
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/screen-cam/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/audio/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/specs/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/benchmark/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/sensors/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+
+   <!-- 4. Network & Connectivity -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/network/index.html</loc>
       <priority>0.8</priority>
@@ -30,80 +76,20 @@
       <priority>0.8</priority>
    </url>
 
-   <!-- Input & Peripherals -->
+   <!-- 5. Media & Creative Production Studio -->
    <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/keyboard/index.html</loc>
-      <priority>0.8</priority>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/video-studio/index.html</loc>
+      <lastmod>2026-11-25</lastmod>
+      <priority>0.85</priority>
    </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/typing/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/mouse/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/gamepad/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-
-   <!-- Audio, Video & Voice -->
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/audio/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/screen-cam/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/voice-studio/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-
-   <!-- System & Hardware Diagnostics -->
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/sensors/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/specs/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/benchmark/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-
-   <!-- Utilities & Security -->
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/reflex/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/gameid/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/emergency/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/translator/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/password-gen/index.html</loc>
-      <lastmod>2025-02-08</lastmod>
-      <priority>0.8</priority>
-   </url>
-
-   <!-- Media, Compression & Generators -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/image-studio/index.html</loc>
       <lastmod>2026-11-25</lastmod>
       <priority>0.85</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/voice-studio/index.html</loc>
+      <priority>0.8</priority>
    </url>
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/file-compress/index.html</loc>
@@ -118,12 +104,31 @@
       <loc>https://gxdiag.brahmantyo12.my.id/modules/pricelist-generator/index.html</loc>
       <priority>0.8</priority>
    </url>
+
+   <!-- 6. Forensics, Security & Utilities -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/meta-detect/index.html</loc>
       <priority>0.8</priority>
    </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/password-gen/index.html</loc>
+      <lastmod>2025-02-08</lastmod>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/translator/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/gameid/index.html</loc>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/emergency/index.html</loc>
+      <priority>0.8</priority>
+   </url>
 
-   <!-- Special Modules -->
+   <!-- 7. Special Modules -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/islamic-path/index.html</loc>
       <lastmod>2025-02-08</lastmod>
