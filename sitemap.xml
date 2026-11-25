@@ -3,10 +3,11 @@
    
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/</loc>
-      <lastmod>2025-02-08</lastmod>
+      <lastmod>2026-11-25</lastmod>
       <priority>1.0</priority>
    </url>
 
+   <!-- Network & Connectivity -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/gx-link/index.html</loc>
       <lastmod>2025-02-01</lastmod>
@@ -29,6 +30,7 @@
       <priority>0.8</priority>
    </url>
 
+   <!-- Input & Peripherals -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/keyboard/index.html</loc>
       <priority>0.8</priority>
@@ -46,6 +48,7 @@
       <priority>0.8</priority>
    </url>
 
+   <!-- Audio, Video & Voice -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/audio/index.html</loc>
       <priority>0.8</priority>
@@ -59,6 +62,7 @@
       <priority>0.8</priority>
    </url>
 
+   <!-- System & Hardware Diagnostics -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/sensors/index.html</loc>
       <priority>0.8</priority>
@@ -72,6 +76,7 @@
       <priority>0.8</priority>
    </url>
 
+   <!-- Utilities & Security -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/reflex/index.html</loc>
       <priority>0.8</priority>
@@ -94,13 +99,11 @@
       <priority>0.8</priority>
    </url>
 
+   <!-- Media, Compression & Generators -->
    <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/img-converter/index.html</loc>
-      <priority>0.8</priority>
-   </url>
-   <url>
-      <loc>https://gxdiag.brahmantyo12.my.id/modules/img-resizer/index.html</loc>
-      <priority>0.8</priority>
+      <loc>https://gxdiag.brahmantyo12.my.id/modules/image-studio/index.html</loc>
+      <lastmod>2026-11-25</lastmod>
+      <priority>0.85</priority>
    </url>
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/file-compress/index.html</loc>
@@ -120,6 +123,7 @@
       <priority>0.8</priority>
    </url>
 
+   <!-- Special Modules -->
    <url>
       <loc>https://gxdiag.brahmantyo12.my.id/modules/islamic-path/index.html</loc>
       <lastmod>2025-02-08</lastmod>
