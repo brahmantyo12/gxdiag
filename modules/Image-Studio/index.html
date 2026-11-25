@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Image Converter & Resizer Studio</title>
+    <meta name="theme-color" content="#1a1a1a">
+
+    <link rel="stylesheet" href="../../css/style.css">
+
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #111; color: #eee; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 1140px; margin: 0 auto; }
+
+        /* Header */
+        .module-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; border-bottom: 1px solid #333; padding-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .back-btn { text-decoration: none; color: #888; font-size: 1rem; transition: 0.2s; font-weight: 600; }
+        .back-btn:hover { color: #fff; }
+        .module-title { font-size: 1.35rem; font-weight: 800; color: #ff9100; text-transform: uppercase; letter-spacing: 2px; }
+        .badge-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .engine-badge { font-size: 0.7rem; font-family: monospace; background: #1a1a1a; border: 1px solid #333; color: #00e5ff; padding: 5px 9px; border-radius: 6px; }
+
+        /* Main Grid */
+        .converter-grid { display: grid; grid-template-columns: 1fr 360px; gap: 20px; align-items: start; }
+        @media (max-width: 900px) { .converter-grid { grid-template-columns: 1fr; } }
+
+        /* Drop Zone & Interactive Crop Stage */
+        .drop-zone {
+            background: #1a1a1a; border: 2px dashed #444; border-radius: 14px;
+            padding: 20px; text-align: center; transition: 0.25s; cursor: pointer;
+            margin-bottom: 12px; position: relative; min-height: 260px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .drop-zone.has-file { cursor: default; border-style: solid; border-color: #2e2e2e; }
+        .drop-zone:not(.has-file):hover { border-color: #ff9100; background: rgba(255, 145, 0, 0.04); }
+        .drop-zone.active { border-color: #00e5ff !important; background: rgba(0, 229, 255, 0.05) !important; }
+
+        .preview-wrap { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+        .dz-content { pointer-events: none; }
+
+        /* Crop Stage & Draggable Box */
+        .crop-stage {
+            position: relative;
+            display: inline-block;
+            line-height: 0;
+            user-select: none;
+            touch-action: none;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.65);
+            background: repeating-conic-gradient(#222 0% 25%, #181818 0% 50%) 50% / 16px 16px;
+        }
+        .preview-img {
+            display: block;
+            max-width: 100%;
+            max-height: 340px;
+            pointer-events: none;
+        }
+        .crop-box {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border: 1.5px solid #ff9100;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+            cursor: move;
+            z-index: 5;
+        }
+        .crop-box.full-frame {
+            border-color: rgba(255, 145, 0, 0.45);
+            box-shadow: none;
+        }
+        /* Rule of Thirds Grid */
+        .crop-grid {
+            position: absolute; inset: 0; pointer-events: none;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.22) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.22) 1px, transparent 1px);
+            background-size: 33.333% 33.333%;
+            opacity: 0.65;
+        }
+        /* Corner Resize Handles */
+        .crop-handle {
+            position: absolute;
+            width: 12px; height: 12px;
+            background: #ff9100;
+            border: 1.5px solid #111;
+            border-radius: 2px;
+            z-index: 6;
+        }
+        .crop-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
+        .crop-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
+        .crop-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+        .crop-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+        .preview-toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; gap: 8px; flex-wrap: wrap;
+        }
+        .preview-caption { font-size: 0.76rem; color: #aaa; font-family: monospace; }
+        .preview-tools { display: flex; gap: 6px; }
+
+        .meta-bar { display: flex; justify-content: space-between; font-size: 0.76rem; color: #777; font-family: monospace; margin-bottom: 16px; padding: 0 4px; }
+
+        /* Batch Queue Panel */
+        .queue-panel { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 16px; }
+        .queue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #2a2a2a; }
+        .queue-title { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #ccc; }
+        .queue-actions { display: flex; gap: 8px; }
+        .btn-mini { background: #252525; border: 1px solid #3a3a3a; color: #ccc; font-size: 0.72rem; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-mini:hover { border-color: #ff9100; color: #fff; }
+        .btn-mini.danger:hover { border-color: #ff4081; color: #ff4081; }
+
+        .queue-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .queue-empty { text-align: center; color: #555; font-size: 0.82rem; padding: 24px 0; font-family: monospace; }
+
+        .q-item {
+            display: grid; grid-template-columns: 42px 1fr auto auto; gap: 10px; align-items: center;
+            background: #141414; border: 1px solid #2b2b2b; border-radius: 8px; padding: 8px 10px;
+            cursor: pointer; transition: 0.15s;
+        }
+        .q-item:hover { border-color: #555; }
+        .q-item.selected { border-color: #ff9100; background: rgba(255, 145, 0, 0.06); }
+        .q-thumb { width: 42px; height: 42px; border-radius: 5px; object-fit: cover; background: #222; }
+        .q-info { min-width: 0; }
+        .q-name { font-size: 0.84rem; font-weight: 600; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .q-sub { font-size: 0.72rem; color: #888; font-family: monospace; margin-top: 2px; }
+        .q-status { font-size: 0.7rem; font-family: monospace; font-weight: 700; padding: 3px 7px; border-radius: 4px; background: #222; color: #888; }
+        .q-status.done { background: rgba(0, 230, 118, 0.12); color: #00e676; }
+        .q-status.proc { background: rgba(0, 229, 255, 0.12); color: #00e5ff; }
+        .q-status.err { background: rgba(255, 64, 129, 0.12); color: #ff4081; }
+        .q-del { background: none; border: none; color: #666; font-size: 1rem; cursor: pointer; padding: 4px 6px; }
+        .q-del:hover { color: #ff4081; }
+
+        /* Controls Panel & Mode Tabs */
+        .control-panel { background: #1a1a1a; border: 1px solid #333; padding: 18px; border-radius: 12px; }
+        .mode-tabs {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+            background: #121212; padding: 5px; border-radius: 9px; border: 1px solid #2b2b2b;
+            margin-bottom: 16px;
+        }
+        .mode-tab {
+            background: transparent; border: none; color: #888; padding: 8px 6px;
+            border-radius: 6px; font-size: 0.72rem; font-weight: 800; font-family: monospace;
+            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: 0.2s;
+        }
+        .mode-tab:hover { color: #eee; }
+        .mode-tab.active { background: #ff9100; color: #000; box-shadow: 0 2px 8px rgba(255, 145, 0, 0.3); }
+
+        .mode-banner {
+            background: #14171c; border: 1px solid #26303d; border-radius: 7px;
+            padding: 8px 10px; font-size: 0.72rem; font-family: monospace; color: #8fa0b8;
+            margin-bottom: 15px; line-height: 1.4;
+        }
+
+        .control-group { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #262626; }
+        .control-group:last-of-type { border-bottom: none; padding-bottom: 0; }
+        label { display: block; font-size: 0.72rem; color: #888; margin-bottom: 7px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+
+        select, input[type=number] {
+            width: 100%; background: #222; border: 1px solid #444; color: #fff;
+            padding: 9px 10px; border-radius: 6px; font-size: 0.88rem;
+        }
+        select:focus, input[type=number]:focus { outline: none; border-color: #ff9100; }
+
+        /* Resize & Aspect Ratio Controls */
+        .dim-grid { display: grid; grid-template-columns: 1fr 34px 1fr; gap: 6px; align-items: center; margin-top: 8px; }
+        .btn-lock {
+            background: #222; border: 1px solid #444; color: #ff9100; height: 36px; border-radius: 6px;
+            cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-lock.unlocked { color: #666; }
+        .sub-hint { font-size: 0.71rem; color: #777; margin-top: 6px; font-family: monospace; line-height: 1.35; }
+        .sub-hint.accent { color: #00e676; }
+
+        /* Range Slider */
+        input[type=range] { width: 100%; accent-color: #ff9100; cursor: pointer; }
+        .range-row { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 0.78rem; }
+        .range-hint { color: #666; }
+        .range-val { color: #ff9100; font-weight: bold; font-family: monospace; }
+
+        /* Stats */
+        .stats-box {
+            background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px;
+            margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .stat-val { font-size: 0.86rem; font-weight: bold; color: #eee; font-family: monospace; }
+        .sv-new { color: #00ff88; }
+        .sv-warn { color: #ff9100; }
+
+        /* Action Buttons */
+        .btn-stack { display: flex; flex-direction: column; gap: 10px; }
+        .btn-main {
+            background: linear-gradient(135deg, #ff9100, #ffea00); color: #000;
+            width: 100%; padding: 13px; border: none; border-radius: 8px;
+            font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-main:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 18px rgba(255, 145, 0, 0.35); }
+        .btn-main:disabled { background: #333; color: #777; cursor: not-allowed; }
+
+        .btn-zip {
+            background: #162429; border: 1px solid #00e5ff; color: #00e5ff;
+            width: 100%; padding: 11px; border-radius: 8px;
+            font-weight: 800; font-size: 0.84rem; cursor: pointer; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-zip:hover:not(:disabled) { background: rgba(0, 229, 255, 0.15); }
+        .btn-zip:disabled { border-color: #333; color: #555; background: #181818; cursor: not-allowed; }
+
+        .progress-wrap { width: 100%; height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-top: 10px; display: none; }
+        .progress-fill { height: 100%; width: 0%; background: #00e5ff; transition: width 0.15s; }
+        .status-msg { text-align: center; margin-top: 8px; font-size: 0.74rem; font-family: monospace; min-height: 16px; word-break: break-word; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="module-header">
+            <div class="header-left">
+                <a href="../../index.html" class="back-btn">⬅ Dashboard</a>
+                <div class="module-title" id="module-title">Image Studio</div>
+            </div>
+            <div class="badge-row">
+                <div class="engine-badge" id="avif-badge">AVIF: STANDBY</div>
+                <div class="engine-badge" id="jxl-badge">JXL: STANDBY</div>
+                <div class="engine-badge">ZIP: PURE BINARY</div>
+            </div>
+        </div>
+
+        <div class="converter-grid">
+
+            <!-- Left Column: Interactive Crop Stage + Batch Queue -->
+            <div>
+                <div class="drop-zone" id="drop-zone" onclick="onDropZoneClick(event)">
+                    <div class="dz-content" id="dz-text">
+                        <div style="font-size: 2.8rem; margin-bottom: 10px;">🖼️</div>
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #ccc;">Click or Drop Multiple Images</div>
+                        <div style="color: #666; font-size: 0.82rem; margin-top: 6px;">JPG, PNG, WEBP, AVIF, JXL, BMP, ICO, SVG, GIF</div>
+                    </div>
+
+                    <div class="preview-wrap" id="preview-wrap" onclick="event.stopPropagation()">
+                        <div class="crop-stage" id="crop-stage">
+                            <img id="preview-img" class="preview-img" alt="Preview" draggable="false">
+                            <div class="crop-box full-frame" id="crop-box" data-action="move">
+                                <div class="crop-grid"></div>
+                                <div class="crop-handle nw" data-action="nw"></div>
+                                <div class="crop-handle ne" data-action="ne"></div>
+                                <div class="crop-handle sw" data-action="sw"></div>
+                                <div class="crop-handle se" data-action="se"></div>
+                            </div>
+                        </div>
+
+                        <div class="preview-toolbar">
+                            <div class="preview-caption" id="preview-caption">-</div>
+                            <div class="preview-tools">
+                                <button type="button" class="btn-mini" onclick="resetSelectedCrop()" title="Kembalikan posisi crop ke tengah">↺ Reset Crop</button>
+                                <button type="button" class="btn-mini" onclick="document.getElementById('file-input').click()">📂 Ganti / Tambah</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="file" id="file-input" multiple accept="image/*,.jxl,.ico,.avif,.webp,.svg" style="display: none;">
+                </div>
+
+                <div class="meta-bar">
+                    <span>🔒 100% Local RAM/CPU • Drag kotak oranye untuk atur crop</span>
+                    <span id="img-dimensions">Target Output: -</span>
+                </div>
+
+                <!-- Batch Queue -->
+                <div class="queue-panel">
+                    <div class="queue-header">
+                        <div class="queue-title" id="queue-title">Batch Queue (0 Files)</div>
+                        <div class="queue-actions">
+                            <button class="btn-mini" onclick="document.getElementById('file-input').click()">+ Add Files</button>
+                            <button class="btn-mini danger" onclick="clearQueue()">Clear All</button>
+                        </div>
+                    </div>
+                    <div class="queue-list" id="queue-list">
+                        <div class="queue-empty">Belum ada file dalam antrean.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Controls -->
+            <div class="control-panel">
+
+                <!-- 3-Mode Tab Switcher -->
+                <div class="mode-tabs">
+                    <button type="button" class="mode-tab active" id="tab-convert" onclick="setStudioMode('convert')">🔄 Convert</button>
+                    <button type="button" class="mode-tab" id="tab-resize" onclick="setStudioMode('resize')">📐 Resize</button>
+                    <button type="button" class="mode-tab" id="tab-pro" onclick="setStudioMode('pro')">⚡ Pro / All</button>
+                </div>
+
+                <div class="mode-banner" id="mode-banner">
+                    Mode Konversi &amp; Kompresi: Ubah format ekstensi atau perkecil ukuran file tanpa mengubah dimensi piksel.
+                </div>
+
+                <!-- GROUP: Format & Compression (Visible in CONVERT & PRO) -->
+                <div id="section-convert-controls">
+                    <div class="control-group">
+                        <label>Target Format</label>
+                        <select id="format-select" onchange="onSettingsChanged()">
+                            <option value="keep">Keep Original Format (Auto-Detect)</option>
+                            <optgroup label="Next-Gen & Web (Lossless + Lossy)">
+                                <option value="image/webp" selected>WEBP (VP8 / VP8L Lossless)</option>
+                                <option value="image/avif">AVIF (AV1 • WASM Codec)</option>
+                                <option value="image/jxl">JXL (JPEG XL • WASM Codec)</option>
+                            </optgroup>
+                            <optgroup label="Standard & Lossless">
+                                <option value="image/png">PNG (Metadata Strip / Palette)</option>
+                                <option value="image/jpeg">JPG (Universal Standard)</option>
+                            </optgroup>
+                            <optgroup label="Windows & Raw Binary">
+                                <option value="image/x-icon">ICO (Windows Icon ≤256px)</option>
+                                <option value="image/bmp">BMP (32-bit Raw Bitmap)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Compression Mode</label>
+                        <select id="compress-mode" onchange="onSettingsChanged()">
+                            <option value="lossless" selected>Lossless (100% Bit-Exact Pixels)</option>
+                            <option value="smart">Visually Lossless (Smart Optimize)</option>
+                            <option value="lossy">Standard Lossy (Custom Slider)</option>
+                        </select>
+                        <div class="sub-hint accent" id="compress-hint">
+                            Bit-exact tanpa penurunan kualitas (rekomendasi: WEBP / JXL / AVIF).
+                        </div>
+                    </div>
+
+                    <div class="control-group" id="quality-group">
+                        <label>Quality / Compression Level</label>
+                        <input type="range" id="quality" min="0.1" max="1.0" step="0.05" value="1.0" oninput="onSettingsChanged()">
+                        <div class="range-row">
+                            <span class="range-hint" id="quality-mode">Bit-Exact</span>
+                            <span class="range-val" id="quality-val">100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GROUP: Resize & Interactive Aspect Ratio Crop (Visible in RESIZE & PRO) -->
+                <div id="section-resize-controls" style="display: none;">
+                    <div class="control-group">
+                        <label>Aspect Ratio Preset (Draggable Crop)</label>
+                        <select id="aspect-select" onchange="onAspectChanged()">
+                            <option value="free" selected>Free Ratio (Full / Custom Drag)</option>
+                            <option value="1:1">1:1 — Square (Avatar / Icon / IG)</option>
+                            <option value="16:9">16:9 — Widescreen (HD / Thumbnail)</option>
+                            <option value="9:16">9:16 — Vertical (Story / Reels)</option>
+                            <option value="4:3">4:3 — Standard Display</option>
+                            <option value="3:2">3:2 — DSLR Photo</option>
+                            <option value="21:9">21:9 — Ultrawide Banner</option>
+                        </select>
+                        <div class="sub-hint">Geser atau tarik sudut kotak crop langsung di preview kiri.</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Resolution Resize</label>
+                        <select id="resize-mode" onchange="onResizeModeChanged()">
+                            <option value="original" selected>Original Crop Size (100%)</option>
+                            <option value="scale">Scale Percentage (%)</option>
+                            <option value="max">Max Longest Side (Fit Box)</option>
+                            <option value="custom">Custom Pixels (W × H)</option>
+                        </select>
+
+                        <div id="resize-scale-box" style="display:none; margin-top:8px;">
+                            <select id="scale-percent" onchange="onSettingsChanged()">
+                                <option value="25">25% (Quarter Size)</option>
+                                <option value="50" selected>50% (Half Size)</option>
+                                <option value="75">75%</option>
+                                <option value="150">150% (Upscale)</option>
+                                <option value="200">200% (2x Upscale)</option>
+                            </select>
+                        </div>
+
+                        <div id="resize-max-box" style="display:none; margin-top:8px;">
+                            <input type="number" id="max-side" value="1920" min="16" max="16384" placeholder="Max px (e.g. 1920)" oninput="onSettingsChanged()">
+                            <div class="sub-hint">Membatasi sisi terpanjang tanpa distorsi</div>
+                        </div>
+
+                        <div id="resize-custom-box" style="display:none;">
+                            <div class="dim-grid">
+                                <input type="number" id="custom-w" min="1" max="16384" placeholder="Width" oninput="onCustomDimInput('w')">
+                                <button type="button" class="btn-lock" id="btn-lock-ratio" title="Lock Aspect Ratio" onclick="toggleAspectLock()">🔒</button>
+                                <input type="number" id="custom-h" min="1" max="16384" placeholder="Height" oninput="onCustomDimInput('h')">
+                            </div>
+                            <div class="sub-hint" id="lock-hint">Aspect ratio terkunci</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telemetry Stats -->
+                <div class="stats-box">
+                    <div class="stat-item">
+                        <div class="stat-label">Selected Original</div>
+                        <div class="stat-val" id="size-original">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Output Est.</div>
+                        <div class="stat-val sv-new" id="size-output">-</div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="btn-stack">
+                    <button class="btn-main" id="btn-convert-single" onclick="downloadSelectedSingle()" disabled>
+                        <span>⬇ Download Selected</span>
+                    </button>
+                    <button class="btn-zip" id="btn-convert-zip" onclick="batchConvertAndZip()" disabled>
+                        <span>📦 Batch Process & Export ZIP</span>
+                    </button>
+                </div>
+
+                <div class="progress-wrap" id="progress-wrap">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="status-msg" class="status-msg"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <canvas id="hidden-canvas" style="display: none;"></canvas>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewWrap = document.getElementById('preview-wrap');
+        const previewImg = document.getElementById('preview-img');
+        const previewCaption = document.getElementById('preview-caption');
+        const dzText = document.getElementById('dz-text');
+        const cropStage = document.getElementById('crop-stage');
+        const cropBox = document.getElementById('crop-box');
+        const canvas = document.getElementById('hidden-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        const btnSingle = document.getElementById('btn-convert-single');
+        const btnZip = document.getElementById('btn-convert-zip');
+        const statusMsg = document.getElementById('status-msg');
+        const progressWrap = document.getElementById('progress-wrap');
+        const progressFill = document.getElementById('progress-fill');
+
+        let studioMode = 'convert';
+        let queue = []; // each item has crop: { x: 0, y: 0, w: 1, h: 1 } (normalized 0..1)
+        let selectedIndex = -1;
+        let lockAspect = true;
+        let previewTimer = null;
+        let jxlModule = null;
+        let avifModule = null;
+
+        // Interactive Crop Drag State
+        let dragState = null;
+
+        // =========================================
+        // 1. INTERACTIVE POINTER CROP ENGINE
+        // =========================================
+        cropBox.addEventListener('pointerdown', (e) => {
+            if (selectedIndex === -1 || !queue[selectedIndex]) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const action = e.target.dataset.action || 'move';
+            const rect = cropStage.getBoundingClientRect();
+            const item = queue[selectedIndex];
+
+            dragState = {
+                action,
+                pointerId: e.pointerId,
+                startX: e.clientX,
+                startY: e.clientY,
+                stageW: rect.width,
+                stageH: rect.height,
+                origCrop: { ...item.crop }
+            };
+
+            cropBox.setPointerCapture(e.pointerId);
+        });
+
+        cropBox.addEventListener('pointermove', (e) => {
+            if (!dragState || e.pointerId !== dragState.pointerId) return;
+            if (selectedIndex === -1 || !queue[selectedIndex]) return;
+
+            const item = queue[selectedIndex];
+            const dxNorm = (e.clientX - dragState.startX) / dragState.stageW;
+            const dyNorm = (e.clientY - dragState.startY) / dragState.stageH;
+            const orig = dragState.origCrop;
+
+            if (dragState.action === 'move') {
+                item.crop.x = clamp(orig.x + dxNorm, 0, 1 - orig.w);
+                item.crop.y = clamp(orig.y + dyNorm, 0, 1 - orig.h);
+            } else {
+                resizeCropBox(item, orig, dragState.action, dxNorm, dyNorm);
+            }
+
+            item.outBlob = null;
+            item.outSizeText = '';
+            item.status = 'READY';
+            updateCropBoxOverlay();
+            scheduleSelectedPreview();
+        });
+
+        cropBox.addEventListener('pointerup', (e) => {
+            if (dragState && e.pointerId === dragState.pointerId) {
+                cropBox.releasePointerCapture(e.pointerId);
+                dragState = null;
+                renderQueueUI();
+            }
+        });
+
+        cropBox.addEventListener('pointercancel', () => {
+            dragState = null;
+        });
+
+        function getActiveTargetRatio() {
+            const aspectPreset = document.getElementById('aspect-select').value;
+            if (aspectPreset !== 'free') return parseAspectPreset(aspectPreset);
+
+            const resizeMode = document.getElementById('resize-mode').value;
+            if (resizeMode === 'custom' && !lockAspect) {
+                const cw = parseInt(document.getElementById('custom-w').value);
+                const ch = parseInt(document.getElementById('custom-h').value);
+                if (cw > 0 && ch > 0) return cw / ch;
+            }
+            return null; // null = free aspect ratio
+        }
+
+        function resizeCropBox(item, orig, corner, dxNorm, dyNorm) {
+            const imgW = item.width;
+            const imgH = item.height;
+            const minPx = 24;
+
+            // Convert normalized orig box to image pixel coordinates
+            let left = orig.x * imgW;
+            let top = orig.y * imgH;
+            let right = (orig.x + orig.w) * imgW;
+            let bottom = (orig.y + orig.h) * imgH;
+
+            const dxPx = dxNorm * imgW;
+            const dyPx = dyNorm * imgH;
+
+            const lockedRatio = getActiveTargetRatio();
+
+            if (!lockedRatio) {
+                // Free-form resize
+                if (corner.includes('w')) left = clamp(left + dxPx, 0, right - minPx);
+                if (corner.includes('e')) right = clamp(right + dxPx, left + minPx, imgW);
+                if (corner.includes('n')) top = clamp(top + dyPx, 0, bottom - minPx);
+                if (corner.includes('s')) bottom = clamp(bottom + dyPx, top + minPx, imgH);
+            } else {
+                // Aspect-locked resize anchored at the opposite corner
+                const anchorX = corner.includes('w') ? right : left;
+                const anchorY = corner.includes('n') ? bottom : top;
+
+                let proposedW = corner.includes('w') ? (anchorX - (left + dxPx)) : ((right + dxPx) - anchorX);
+                proposedW = Math.max(minPx, proposedW);
+                let proposedH = proposedW / lockedRatio;
+
+                // Clamp within image bounds from anchor
+                const maxW = corner.includes('w') ? anchorX : (imgW - anchorX);
+                const maxH = corner.includes('n') ? anchorY : (imgH - anchorY);
+
+                if (proposedW > maxW) {
+                    proposedW = maxW;
+                    proposedH = proposedW / lockedRatio;
+                }
+                if (proposedH > maxH) {
+                    proposedH = maxH;
+                    proposedW = proposedH * lockedRatio;
+                }
+
+                if (corner.includes('w')) {
+                    left = anchorX - proposedW;
+                    right = anchorX;
+                } else {
+                    left = anchorX;
+                    right = anchorX + proposedW;
+                }
+
+                if (corner.includes('n')) {
+                    top = anchorY - proposedH;
+                    bottom = anchorY;
+                } else {
+                    top = anchorY;
+                    bottom = anchorY + proposedH;
+                }
+            }
+
+            item.crop = {
+                x: clamp(left / imgW, 0, 1),
+                y: clamp(top / imgH, 0, 1),
+                w: clamp((right - left) / imgW, minPx / imgW, 1),
+                h: clamp((bottom - top) / imgH, minPx / imgH, 1)
+            };
+        }
+
+        function computeDefaultCropForRatio(imgW, imgH, targetRatio) {
+            if (!targetRatio) return { x: 0, y: 0, w: 1, h: 1 };
+            const srcRatio = imgW / imgH;
+            if (Math.abs(srcRatio - targetRatio) < 0.001) return { x: 0, y: 0, w: 1, h: 1 };
+
+            let w = 1, h = 1;
+            if (srcRatio > targetRatio) {
+                w = (imgH * targetRatio) / imgW;
+                h = 1;
+            } else {
+                w = 1;
+                h = (imgW / targetRatio) / imgH;
+            }
+            return {
+                x: (1 - w) / 2,
+                y: (1 - h) / 2,
+                w,
+                h
+            };
+        }
+
+        function updateCropBoxOverlay() {
+            if (selectedIndex === -1 || !queue[selectedIndex]) return;
+            const item = queue[selectedIndex];
+            const c = item.crop;
+
+            cropBox.style.left = (c.x * 100) + '%';
+            cropBox.style.top = (c.y * 100) + '%';
+            cropBox.style.width = (c.w * 100) + '%';
+            cropBox.style.height = (c.h * 100) + '%';
+
+            const isFull = c.x < 0.002 && c.y < 0.002 && c.w > 0.998 && c.h > 0.998;
+            cropBox.classList.toggle('full-frame', isFull);
+
+            const cropW = Math.max(1, Math.round(c.w * item.width));
+            const cropH = Math.max(1, Math.round(c.h * item.height));
+            const cropX = Math.round(c.x * item.width);
+            const cropY = Math.round(c.y * item.height);
+
+            previewCaption.innerText = isFull
+                ? `${item.file.name} (${item.width} × ${item.height} px • Full Frame)`
+                : `${item.file.name} • Crop: ${cropW} × ${cropH} px (X:${cropX}, Y:${cropY})`;
+        }
+
+        function resetSelectedCrop() {
+            if (selectedIndex === -1 || !queue[selectedIndex]) return;
+            const item = queue[selectedIndex];
+            item.crop = computeDefaultCropForRatio(item.width, item.height, getActiveTargetRatio());
+            item.outBlob = null;
+            item.outSizeText = '';
+            item.status = 'READY';
+            updateCropBoxOverlay();
+            renderQueueUI();
+            scheduleSelectedPreview();
+        }
+
+        function clamp(val, min, max) {
+            return Math.min(Math.max(val, min), max);
+        }
+
+        // =========================================
+        // 2. STUDIO MODE TAB & URL ROUTING
+        // =========================================
+        function setStudioMode(mode) {
+            studioMode = mode;
+
+            ['convert', 'resize', 'pro'].forEach(m => {
+                document.getElementById(`tab-${m}`).classList.toggle('active', m === mode);
+            });
+
+            const secConvert = document.getElementById('section-convert-controls');
+            const secResize = document.getElementById('section-resize-controls');
+            const banner = document.getElementById('mode-banner');
+            const titleEl = document.getElementById('module-title');
+            const formatSel = document.getElementById('format-select');
+            const compressSel = document.getElementById('compress-mode');
+
+            if (mode === 'convert') {
+                titleEl.innerText = 'Image Converter & Compressor';
+                secConvert.style.display = 'block';
+                secResize.style.display = 'none';
+                banner.innerText = 'Mode Konversi & Kompresi: Ubah format ekstensi atau perkecil ukuran file tanpa mengubah dimensi piksel.';
+
+                document.getElementById('aspect-select').value = 'free';
+                document.getElementById('resize-mode').value = 'original';
+                onResizeModeChanged(true);
+                queue.forEach(item => { item.crop = { x: 0, y: 0, w: 1, h: 1 }; });
+
+                if (formatSel.value === 'keep') {
+                    formatSel.value = 'image/webp';
+                }
+            } else if (mode === 'resize') {
+                titleEl.innerText = 'Image Resizer & Cropper';
+                secConvert.style.display = 'none';
+                secResize.style.display = 'block';
+                banner.innerText = 'Mode Resize & Crop: Geser area crop di preview & atur resolusi dengan mempertahankan format asli file.';
+
+                formatSel.value = 'keep';
+                compressSel.value = 'smart';
+
+                const resizeSel = document.getElementById('resize-mode');
+                if (resizeSel.value === 'original') {
+                    resizeSel.value = 'scale';
+                    onResizeModeChanged(true);
+                }
+            } else {
+                titleEl.innerText = 'Image Studio (Pro)';
+                secConvert.style.display = 'block';
+                secResize.style.display = 'block';
+                banner.innerText = 'Mode Studio Penuh: Gabungkan konversi format, kompresi lossless/lossy, interactive crop, dan resize sekaligus.';
+            }
+
+            updateCropBoxOverlay();
+            onSettingsChanged();
+        }
+
+        function onDropZoneClick(e) {
+            if (queue.length === 0) {
+                fileInput.click();
+            }
+        }
+
+        // Drag & Drop Multi-File
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            if (e.dataTransfer.files.length) addFilesToQueue(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) addFilesToQueue(e.target.files);
+            fileInput.value = '';
+        });
+
+        function setStatus(text, color = '#00ff88') {
+            statusMsg.style.color = color;
+            statusMsg.innerText = text;
+        }
+
+        // Local-first WASM Codec Loader (JXL & AVIF)
+        async function loadWasmCodec(type) {
+            if (type === 'jxl' && jxlModule) return jxlModule;
+            if (type === 'avif' && avifModule) return avifModule;
+
+            const badge = document.getElementById(`${type}-badge`);
+            const localPath = `../../libs/${type}/index.js`;
+            const cdnPath = `https://esm.sh/@jsquash/${type}@1.3.0`;
+
+            setStatus(`⏳ Memuat ${type.toUpperCase()} WASM Codec...`, '#00e5ff');
+            try {
+                const mod = await import(localPath);
+                badge.innerText = `${type.toUpperCase()}: LOCAL WASM`;
+                setStatus(`✓ ${type.toUpperCase()} Local WASM siap`, '#00ff88');
+                if (type === 'jxl') jxlModule = mod; else avifModule = mod;
+                return mod;
+            } catch (_) {
+                try {
+                    const mod = await import(cdnPath);
+                    badge.innerText = `${type.toUpperCase()}: CDN WASM`;
+                    setStatus(`✓ ${type.toUpperCase()} WASM siap (CDN)`, '#00ff88');
+                    if (type === 'jxl') jxlModule = mod; else avifModule = mod;
+                    return mod;
+                } catch (err) {
+                    badge.innerText = `${type.toUpperCase()}: ERROR`;
+                    throw new Error(`Codec ${type.toUpperCase()} gagal dimuat. Pastikan koneksi aktif atau salin @jsquash/${type} ke ../../libs/${type}/`);
+                }
+            }
+        }
+
+        async function addFilesToQueue(fileList) {
+            const files = Array.from(fileList);
+            const activeRatio = getActiveTargetRatio();
+
+            for (const file of files) {
+                const lower = file.name.toLowerCase();
+                const isJxl = lower.endsWith('.jxl') || file.type === 'image/jxl';
+                const isAvif = lower.endsWith('.avif') || file.type === 'image/avif';
+                if (!file.type.startsWith('image/') && !isJxl && !isAvif) continue;
+
+                try {
+                    const loaded = await decodeFileToImage(file, isJxl, isAvif);
+                    queue.push({
+                        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+                        file,
+                        img: loaded.img,
+                        width: loaded.width,
+                        height: loaded.height,
+                        displayUrl: loaded.displayUrl,
+                        crop: computeDefaultCropForRatio(loaded.width, loaded.height, activeRatio),
+                        status: 'READY',
+                        outBlob: null,
+                        outSizeText: ''
+                    });
+                } catch (err) {
+                    setStatus(`✖ Gagal baca ${file.name}: ${err.message}`, '#ff4081');
+                }
+            }
+
+            if (queue.length > 0 && selectedIndex === -1) {
+                selectQueueItem(0);
+            } else {
+                renderQueueUI();
+                updateButtonsState();
+            }
+        }
+
+        async function decodeFileToImage(file, isJxl, isAvif) {
+            if (isJxl) {
+                const jxl = await loadWasmCodec('jxl');
+                const imageData = await jxl.decode(await file.arrayBuffer());
+                return imageDataToLoadedObj(imageData);
+            }
+
+            const dataUrl = await new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = (e) => resolve(e.target.result);
+                r.onerror = reject;
+                r.readAsDataURL(file);
+            });
+
+            try {
+                return await loadHtmlImage(dataUrl);
+            } catch (err) {
+                if (isAvif) {
+                    const avif = await loadWasmCodec('avif');
+                    const imageData = await avif.decode(await file.arrayBuffer());
+                    return imageDataToLoadedObj(imageData);
+                }
+                throw err;
+            }
+        }
+
+        function imageDataToLoadedObj(imageData) {
+            const tmp = document.createElement('canvas');
+            tmp.width = imageData.width;
+            tmp.height = imageData.height;
+            tmp.getContext('2d').putImageData(imageData, 0, 0);
+            return loadHtmlImage(tmp.toDataURL('image/png'));
+        }
+
+        function loadHtmlImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve({
+                    img,
+                    width: img.naturalWidth || img.width,
+                    height: img.naturalHeight || img.height,
+                    displayUrl: url
+                });
+                img.onerror = () => reject(new Error('Format tidak didukung atau file rusak'));
+                img.src = url;
+            });
+        }
+
+        function selectQueueItem(index) {
+            if (index < 0 || index >= queue.length) return;
+            selectedIndex = index;
+            const item = queue[index];
+
+            dropZone.classList.add('has-file');
+            dzText.style.display = 'none';
+            previewWrap.style.display = 'flex';
+            previewImg.src = item.displayUrl;
+            document.getElementById('size-original').innerText = formatBytes(item.file.size);
+
+            const wInput = document.getElementById('custom-w');
+            const hInput = document.getElementById('custom-h');
+            if (!wInput.value) wInput.value = Math.round(item.crop.w * item.width);
+            if (!hInput.value) hInput.value = Math.round(item.crop.h * item.height);
+
+            updateCropBoxOverlay();
+            renderQueueUI();
+            updateButtonsState();
+            scheduleSelectedPreview();
+        }
+
+        function removeQueueItem(e, index) {
+            e.stopPropagation();
+            queue.splice(index, 1);
+            if (queue.length === 0) return clearQueue();
+            if (selectedIndex >= queue.length) selectedIndex = queue.length - 1;
+            selectQueueItem(selectedIndex);
+        }
+
+        function clearQueue() {
+            queue = [];
+            selectedIndex = -1;
+            dropZone.classList.remove('has-file');
+            previewWrap.style.display = 'none';
+            dzText.style.display = 'block';
+            document.getElementById('size-original').innerText = '-';
+            document.getElementById('size-output').innerText = '-';
+            document.getElementById('img-dimensions').innerText = 'Target Output: -';
+            progressWrap.style.display = 'none';
+            setStatus('');
+            renderQueueUI();
+            updateButtonsState();
+        }
+
+        function renderQueueUI() {
+            const listEl = document.getElementById('queue-list');
+            document.getElementById('queue-title').innerText = `Batch Queue (${queue.length} ${queue.length === 1 ? 'File' : 'Files'})`;
+
+            if (queue.length === 0) {
+                listEl.innerHTML = '<div class="queue-empty">Belum ada file dalam antrean.</div>';
+                return;
+            }
+
+            listEl.innerHTML = queue.map((item, idx) => {
+                const selClass = idx === selectedIndex ? 'selected' : '';
+                let badgeClass = '';
+                if (item.status === 'DONE') badgeClass = 'done';
+                else if (item.status === 'PROCESSING') badgeClass = 'proc';
+                else if (item.status === 'ERROR') badgeClass = 'err';
+
+                const target = resolveItemTarget(item);
+                const cw = Math.round(item.crop.w * item.width);
+                const ch = Math.round(item.crop.h * item.height);
+                const sizeInfo = item.outSizeText
+                    ? `${formatBytes(item.file.size)} → ${item.outSizeText} [.${target.ext}]`
+                    : `${cw}×${ch} • ${formatBytes(item.file.size)}`;
+
+                return `
+                    <div class="q-item ${selClass}" onclick="selectQueueItem(${idx})">
+                        <img class="q-thumb" src="${item.displayUrl}" alt="">
+                        <div class="q-info">
+                            <div class="q-name">${escapeHtml(item.file.name)}</div>
+                            <div class="q-sub">${sizeInfo}</div>
+                        </div>
+                        <div class="q-status ${badgeClass}">${item.status}</div>
+                        <button class="q-del" title="Hapus" onclick="removeQueueItem(event, ${idx})">✕</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateButtonsState() {
+            const hasItems = queue.length > 0;
+            btnSingle.disabled = !hasItems || selectedIndex === -1;
+            btnZip.disabled = !hasItems;
+            btnZip.innerHTML = queue.length > 1
+                ? `<span>📦 Process All (${queue.length}) & Export ZIP</span>`
+                : `<span>📦 Process & Export ZIP</span>`;
+        }
+
+        function resolveItemTarget(item) {
+            const selectedFormat = document.getElementById('format-select').value;
+            const extMap = {
+                'image/jpeg': 'jpg',
+                'image/png': 'png',
+                'image/webp': 'webp',
+                'image/avif': 'avif',
+                'image/jxl': 'jxl',
+                'image/bmp': 'bmp',
+                'image/x-icon': 'ico'
+            };
+
+            if (selectedFormat !== 'keep') {
+                return { mime: selectedFormat, ext: extMap[selectedFormat] || 'png' };
+            }
+
+            const nameLower = item.file.name.toLowerCase();
+            const typeLower = (item.file.type || '').toLowerCase();
+
+            if (nameLower.endsWith('.jpg') || nameLower.endsWith('.jpeg') || typeLower === 'image/jpeg') {
+                return { mime: 'image/jpeg', ext: 'jpg' };
+            }
+            if (nameLower.endsWith('.webp') || typeLower === 'image/webp') {
+                return { mime: 'image/webp', ext: 'webp' };
+            }
+            if (nameLower.endsWith('.avif') || typeLower === 'image/avif') {
+                return { mime: 'image/avif', ext: 'avif' };
+            }
+            if (nameLower.endsWith('.jxl') || typeLower === 'image/jxl') {
+                return { mime: 'image/jxl', ext: 'jxl' };
+            }
+            if (nameLower.endsWith('.bmp') || typeLower === 'image/bmp') {
+                return { mime: 'image/bmp', ext: 'bmp' };
+            }
+            if (nameLower.endsWith('.ico') || typeLower === 'image/x-icon' || typeLower === 'image/vnd.microsoft.icon') {
+                return { mime: 'image/x-icon', ext: 'ico' };
+            }
+            return { mime: 'image/png', ext: 'png' };
+        }
+
+        function onSettingsChanged() {
+            const format = document.getElementById('format-select').value;
+            const mode = document.getElementById('compress-mode').value;
+            const qualitySlider = document.getElementById('quality');
+            const qualityGroup = document.getElementById('quality-group');
+            const qualityMode = document.getElementById('quality-mode');
+            const qualityVal = document.getElementById('quality-val');
+            const compressHint = document.getElementById('compress-hint');
+
+            const isRawFormat = (format === 'image/bmp' || format === 'image/x-icon');
+
+            if (isRawFormat) {
+                qualityGroup.style.opacity = '0.45';
+                qualityGroup.style.pointerEvents = 'none';
+                qualityMode.innerText = format === 'image/x-icon' ? 'Auto-Scale ≤256px' : 'Uncompressed';
+                qualityVal.innerText = '100%';
+                compressHint.innerText = 'Format biner mentah tanpa kompresi lossy.';
+            } else if (mode === 'lossless') {
+                qualitySlider.value = '1.0';
+                qualityGroup.style.opacity = '0.5';
+                qualityGroup.style.pointerEvents = 'none';
+                qualityMode.innerText = '100% Bit-Exact';
+                qualityVal.innerText = 'LOSSLESS';
+
+                if (format === 'image/jpeg') {
+                    compressHint.innerText = 'JPG tidak mendukung lossless murni; dikunci ke kualitas maksimal 100%.';
+                } else if (format === 'image/png') {
+                    compressHint.innerText = 'PNG Lossless + strip metadata EXIF/ICC berlebih.';
+                } else {
+                    compressHint.innerText = 'Kompresi lossless matematis: piksel 100% identik, ukuran lebih efisien dari PNG.';
+                }
+            } else if (mode === 'smart') {
+                qualityGroup.style.opacity = '0.5';
+                qualityGroup.style.pointerEvents = 'none';
+                qualityMode.innerText = 'Visually Lossless';
+                qualityVal.innerText = 'AUTO';
+                compressHint.innerText = format === 'image/png'
+                    ? 'PNG Indexed Palette Optimizer: pangkas noise warna tak kasat mata (-50% s/d -75% ukuran).'
+                    : 'High-precision compression (94%) tanpa degradasi detail yang terlihat mata.';
+            } else {
+                qualityGroup.style.opacity = '1';
+                qualityGroup.style.pointerEvents = 'auto';
+                const pct = Math.round(parseFloat(qualitySlider.value) * 100);
+                qualityMode.innerText = format === 'image/png' ? 'PNG Palette Level' : 'Lossy Quality';
+                qualityVal.innerText = pct + '%';
+                compressHint.innerText = format === 'image/png'
+                    ? 'Mengatur jumlah warna palet PNG untuk menekan ukuran file.'
+                    : 'Atur rasio kompresi sesuai kebutuhan ukuran file.';
+            }
+
+            queue.forEach(item => { item.outBlob = null; item.outSizeText = ''; item.status = 'READY'; });
+            renderQueueUI();
+            scheduleSelectedPreview();
+        }
+
+        function onAspectChanged() {
+            const activeRatio = getActiveTargetRatio();
+            queue.forEach(item => {
+                item.crop = computeDefaultCropForRatio(item.width, item.height, activeRatio);
+            });
+
+            if (activeRatio && selectedIndex !== -1) {
+                const wInput = document.getElementById('custom-w');
+                const hInput = document.getElementById('custom-h');
+                const w = parseInt(wInput.value) || Math.round(queue[selectedIndex].crop.w * queue[selectedIndex].width);
+                wInput.value = w;
+                hInput.value = Math.max(1, Math.round(w / activeRatio));
+            }
+
+            updateCropBoxOverlay();
+            onSettingsChanged();
+        }
+
+        function onResizeModeChanged(skipTrigger = false) {
+            const mode = document.getElementById('resize-mode').value;
+            document.getElementById('resize-scale-box').style.display = mode === 'scale' ? 'block' : 'none';
+            document.getElementById('resize-max-box').style.display = mode === 'max' ? 'block' : 'none';
+            document.getElementById('resize-custom-box').style.display = mode === 'custom' ? 'block' : 'none';
+
+            if (mode === 'custom' && selectedIndex !== -1) {
+                const item = queue[selectedIndex];
+                const cropW = Math.round(item.crop.w * item.width);
+                const cropH = Math.round(item.crop.h * item.height);
+                const ratio = getActiveTargetRatio() || (cropW / cropH);
+                document.getElementById('custom-w').value = cropW;
+                document.getElementById('custom-h').value = Math.max(1, Math.round(cropW / ratio));
+            }
+            if (!skipTrigger) onSettingsChanged();
+        }
+
+        function toggleAspectLock() {
+            lockAspect = !lockAspect;
+            const btn = document.getElementById('btn-lock-ratio');
+            const hint = document.getElementById('lock-hint');
+            btn.innerText = lockAspect ? '🔒' : '🔓';
+            btn.classList.toggle('unlocked', !lockAspect);
+            hint.innerText = lockAspect ? 'Aspect ratio terkunci' : 'Rasio bebas (Sesuaikan kotak crop)';
+
+            const activeRatio = getActiveTargetRatio();
+            if (activeRatio) {
+                queue.forEach(item => {
+                    item.crop = computeDefaultCropForRatio(item.width, item.height, activeRatio);
+                });
+                updateCropBoxOverlay();
+            }
+            onSettingsChanged();
+        }
+
+        function onCustomDimInput(changedAxis) {
+            if (selectedIndex === -1) return;
+            const item = queue[selectedIndex];
+            const preset = document.getElementById('aspect-select').value;
+            const wInput = document.getElementById('custom-w');
+            const hInput = document.getElementById('custom-h');
+
+            if (lockAspect || preset !== 'free') {
+                const cropW = Math.round(item.crop.w * item.width);
+                const cropH = Math.round(item.crop.h * item.height);
+                const ratio = preset === 'free' ? (cropW / cropH) : parseAspectPreset(preset);
+                if (changedAxis === 'w') {
+                    const w = parseInt(wInput.value) || 1;
+                    hInput.value = Math.max(1, Math.round(w / ratio));
+                } else {
+                    const h = parseInt(hInput.value) || 1;
+                    wInput.value = Math.max(1, Math.round(h * ratio));
+                }
+            } else {
+                // Unlocked custom dimensions update the crop box ratio dynamically
+                const cw = parseInt(wInput.value) || 1;
+                const ch = parseInt(hInput.value) || 1;
+                item.crop = computeDefaultCropForRatio(item.width, item.height, cw / ch);
+                updateCropBoxOverlay();
+            }
+            onSettingsChanged();
+        }
+
+        function parseAspectPreset(preset) {
+            const [rw, rh] = preset.split(':').map(Number);
+            return rw / rh;
+        }
+
+        function computeTransformGeometry(item, targetMime) {
+            const resizeMode = document.getElementById('resize-mode').value;
+            const customW = Math.max(1, parseInt(document.getElementById('custom-w').value) || item.width);
+            const customH = Math.max(1, parseInt(document.getElementById('custom-h').value) || item.height);
+
+            // 1. Source region directly from interactive crop state
+            const sx = Math.round(item.crop.x * item.width);
+            const sy = Math.round(item.crop.y * item.height);
+            const sWidth = Math.max(1, Math.round(item.crop.w * item.width));
+            const sHeight = Math.max(1, Math.round(item.crop.h * item.height));
+
+            // 2. Output Dimensions
+            let outW = sWidth;
+            let outH = sHeight;
+
+            if (resizeMode === 'scale') {
+                const scale = (parseFloat(document.getElementById('scale-percent').value) || 100) / 100;
+                outW = Math.max(1, Math.round(sWidth * scale));
+                outH = Math.max(1, Math.round(sHeight * scale));
+            } else if (resizeMode === 'max') {
+                const maxSide = Math.max(16, parseInt(document.getElementById('max-side').value) || 1920);
+                const factor = Math.min(1, maxSide / Math.max(sWidth, sHeight));
+                outW = Math.max(1, Math.round(sWidth * factor));
+                outH = Math.max(1, Math.round(sHeight * factor));
+            } else if (resizeMode === 'custom') {
+                const lockedRatio = getActiveTargetRatio();
+                if (lockedRatio) {
+                    outW = customW;
+                    outH = Math.max(1, Math.round(customW / lockedRatio));
+                } else if (lockAspect) {
+                    const factor = customW / sWidth;
+                    outW = customW;
+                    outH = Math.max(1, Math.round(sHeight * factor));
+                } else {
+                    outW = customW;
+                    outH = customH;
+                }
+            }
+
+            if (targetMime === 'image/x-icon' && (outW > 256 || outH > 256)) {
+                const icoScale = 256 / Math.max(outW, outH);
+                outW = Math.max(1, Math.round(outW * icoScale));
+                outH = Math.max(1, Math.round(outH * icoScale));
+            }
+
+            return { sx, sy, sWidth, sHeight, outW, outH };
+        }
+
+        function scheduleSelectedPreview() {
+            if (selectedIndex === -1 || !queue[selectedIndex]) return;
+            clearTimeout(previewTimer);
+            previewTimer = setTimeout(async () => {
+                const item = queue[selectedIndex];
+                const target = resolveItemTarget(item);
+                const geom = computeTransformGeometry(item, target.mime);
+                document.getElementById('img-dimensions').innerText = `Target Output: ${geom.outW} × ${geom.outH} px (.${target.ext})`;
+
+                const outEl = document.getElementById('size-output');
+                outEl.innerText = 'Calc...';
+                try {
+                    const blob = await convertSingleItem(item);
+                    item.outBlob = blob;
+                    item.outSizeText = formatBytes(blob.size);
+                    item.status = 'DONE';
+
+                    const diffPct = Math.round(((blob.size - item.file.size) / item.file.size) * 100);
+                    const sign = diffPct > 0 ? '+' : '';
+                    outEl.className = diffPct <= 0 ? 'stat-val sv-new' : 'stat-val sv-warn';
+                    outEl.innerText = `${formatBytes(blob.size)} (${sign}${diffPct}%)`;
+                    renderQueueUI();
+                } catch (err) {
+                    item.status = 'ERROR';
+                    outEl.className = 'stat-val sv-warn';
+                    outEl.innerText = 'Error';
+                    setStatus(`✖ ${err.message}`, '#ff4081');
+                    renderQueueUI();
+                }
+            }, 140);
+        }
+
+        function applySmartPngQuantization(imageData, levels = 64) {
+            const d = imageData.data;
+            const step = 255 / (levels - 1);
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i + 3] === 0) continue;
+                d[i]     = Math.round(Math.round(d[i] / step) * step);
+                d[i + 1] = Math.round(Math.round(d[i + 1] / step) * step);
+                d[i + 2] = Math.round(Math.round(d[i + 2] / step) * step);
+            }
+            return imageData;
+        }
+
+        async function convertSingleItem(item) {
+            const target = resolveItemTarget(item);
+            const format = target.mime;
+            const compressMode = document.getElementById('compress-mode').value;
+            const sliderQuality = parseFloat(document.getElementById('quality').value);
+            const { sx, sy, sWidth, sHeight, outW, outH } = computeTransformGeometry(item, format);
+
+            const isLossless = compressMode === 'lossless';
+            const effectiveQuality = isLossless ? 1.0 : (compressMode === 'smart' ? 0.94 : sliderQuality);
+
+            canvas.width = outW;
+            canvas.height = outH;
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            if (format === 'image/jpeg') {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, outW, outH);
+            } else {
+                ctx.clearRect(0, 0, outW, outH);
+            }
+
+            ctx.drawImage(item.img, sx, sy, sWidth, sHeight, 0, 0, outW, outH);
+
+            if (format === 'image/bmp') {
+                return encodeTrueBMP(ctx.getImageData(0, 0, outW, outH));
+            }
+            if (format === 'image/x-icon') {
+                return await encodeWindowsICO(canvas);
+            }
+            if (format === 'image/jxl') {
+                const jxl = await loadWasmCodec('jxl');
+                const imgData = ctx.getImageData(0, 0, outW, outH);
+                const opts = isLossless
+                    ? { lossless: true, effort: 7 }
+                    : { quality: Math.round(effectiveQuality * 100), lossless: false };
+                const jxlBuffer = await jxl.encode(imgData, opts);
+                return new Blob([jxlBuffer], { type: 'image/jxl' });
+            }
+            if (format === 'image/avif') {
+                const avif = await loadWasmCodec('avif');
+                const imgData = ctx.getImageData(0, 0, outW, outH);
+                const opts = isLossless
+                    ? { lossless: true, speed: 6 }
+                    : { quality: Math.round(effectiveQuality * 100), lossless: false, speed: 6 };
+                const avifBuffer = await avif.encode(imgData, opts);
+                return new Blob([avifBuffer], { type: 'image/avif' });
+            }
+            if (format === 'image/png' && !isLossless) {
+                const imgData = ctx.getImageData(0, 0, outW, outH);
+                const levels = compressMode === 'smart' ? 64 : Math.max(8, Math.round(sliderQuality * 64));
+                ctx.putImageData(applySmartPngQuantization(imgData, levels), 0, 0);
+            }
+
+            return await canvasToBlobAsync(canvas, format, effectiveQuality);
+        }
+
+        function getOutputSuffix() {
+            if (studioMode === 'resize') return 'resized';
+            return document.getElementById('compress-mode').value === 'lossless' ? 'lossless' : 'gxdiag';
+        }
+
+        async function downloadSelectedSingle() {
+            if (selectedIndex === -1 || !queue[selectedIndex]) return;
+            const item = queue[selectedIndex];
+            btnSingle.disabled = true;
+            try {
+                const blob = item.outBlob || await convertSingleItem(item);
+                item.outBlob = blob;
+                item.outSizeText = formatBytes(blob.size);
+                item.status = 'DONE';
+                renderQueueUI();
+
+                const target = resolveItemTarget(item);
+                const baseName = item.file.name.replace(/\.[^/.]+$/, '') || 'image';
+                const fileName = `${baseName}-${getOutputSuffix()}.${target.ext}`;
+                triggerDownloadBlob(blob, fileName);
+                setStatus(`✓ Downloaded ${fileName}`, '#00ff88');
+            } catch (err) {
+                setStatus(`✖ ${err.message}`, '#ff4081');
+            } finally {
+                btnSingle.disabled = false;
+            }
+        }
+
+        async function batchConvertAndZip() {
+            if (queue.length === 0) return;
+
+            btnSingle.disabled = true;
+            btnZip.disabled = true;
+            progressWrap.style.display = 'block';
+            progressFill.style.width = '0%';
+
+            const suffix = getOutputSuffix();
+            const zipEntries = [];
+            const usedNames = new Set();
+
+            for (let i = 0; i < queue.length; i++) {
+                const item = queue[i];
+                item.status = 'PROCESSING';
+                renderQueueUI();
+                setStatus(`⏳ Processing ${i + 1}/${queue.length}: ${item.file.name}`, '#00e5ff');
+
+                try {
+                    const blob = item.outBlob || await convertSingleItem(item);
+                    item.outBlob = blob;
+                    item.outSizeText = formatBytes(blob.size);
+                    item.status = 'DONE';
+
+                    const target = resolveItemTarget(item);
+                    const baseName = item.file.name.replace(/\.[^/.]+$/, '') || `image_${i + 1}`;
+                    let finalName = `${baseName}-${suffix}.${target.ext}`;
+                    let counter = 1;
+                    while (usedNames.has(finalName.toLowerCase())) {
+                        finalName = `${baseName}-${suffix}_${counter}.${target.ext}`;
+                        counter++;
+                    }
+                    usedNames.add(finalName.toLowerCase());
+
+                    const bytes = new Uint8Array(await blob.arrayBuffer());
+                    zipEntries.push({ name: finalName, data: bytes });
+                } catch (err) {
+                    item.status = 'ERROR';
+                }
+
+                progressFill.style.width = `${Math.round(((i + 1) / queue.length) * 100)}%`;
+                renderQueueUI();
+            }
+
+            if (zipEntries.length > 0) {
+                setStatus('📦 Building ZIP archive in RAM...', '#00e5ff');
+                const zipBlob = buildUncompressedZip(zipEntries);
+                const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                const zipName = `GXDiag-Studio-${stamp}.zip`;
+                triggerDownloadBlob(zipBlob, zipName);
+                setStatus(`✓ Exported ${zipEntries.length} files to ${zipName} (${formatBytes(zipBlob.size)})`, '#00ff88');
+            } else {
+                setStatus('✖ Tidak ada file yang berhasil diproses.', '#ff4081');
+            }
+
+            updateButtonsState();
+        }
+
+        function triggerDownloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }
+
+        function canvasToBlobAsync(targetCanvas, mime, quality) {
+            return new Promise((resolve, reject) => {
+                targetCanvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('Gagal membuat blob gambar.'));
+                }, mime, quality);
+            });
+        }
+
+        // True 32-bit BGRA Windows BMP Encoder
+        function encodeTrueBMP(imageData) {
+            const { width, height, data } = imageData;
+            const pixelBytes = width * height * 4;
+            const fileSize = 54 + pixelBytes;
+            const buffer = new ArrayBuffer(fileSize);
+            const view = new DataView(buffer);
+
+            view.setUint8(0, 0x42);
+            view.setUint8(1, 0x4D);
+            view.setUint32(2, fileSize, true);
+            view.setUint32(10, 54, true);
+
+            view.setUint32(14, 40, true);
+            view.setInt32(18, width, true);
+            view.setInt32(22, -height, true);
+            view.setUint16(26, 1, true);
+            view.setUint16(28, 32, true);
+            view.setUint32(34, pixelBytes, true);
+
+            const outPixels = new Uint8Array(buffer, 54);
+            for (let i = 0; i < data.length; i += 4) {
+                outPixels[i]     = data[i + 2];
+                outPixels[i + 1] = data[i + 1];
+                outPixels[i + 2] = data[i];
+                outPixels[i + 3] = data[i + 3];
+            }
+            return new Blob([buffer], { type: 'image/bmp' });
+        }
+
+        // True Windows ICO Encoder (PNG-in-ICO)
+        async function encodeWindowsICO(sourceCanvas) {
+            const w = sourceCanvas.width;
+            const h = sourceCanvas.height;
+            const pngBlob = await canvasToBlobAsync(sourceCanvas, 'image/png', 1.0);
+            const pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
+
+            const buffer = new ArrayBuffer(22 + pngBytes.byteLength);
+            const view = new DataView(buffer);
+
+            view.setUint16(0, 0, true);
+            view.setUint16(2, 1, true);
+            view.setUint16(4, 1, true);
+
+            view.setUint8(6, w === 256 ? 0 : w);
+            view.setUint8(7, h === 256 ? 0 : h);
+            view.setUint8(8, 0);
+            view.setUint8(9, 0);
+            view.setUint16(10, 1, true);
+            view.setUint16(12, 32, true);
+            view.setUint32(14, pngBytes.byteLength, true);
+            view.setUint32(18, 22, true);
+
+            new Uint8Array(buffer, 22).set(pngBytes);
+            return new Blob([buffer], { type: 'image/x-icon' });
+        }
+
+        // Zero-Dependency Pure JS ZIP Builder (PKWARE STORE + CRC32)
+        const CRC32_TABLE = (() => {
+            const table = new Uint32Array(256);
+            for (let i = 0; i < 256; i++) {
+                let c = i;
+                for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                table[i] = c >>> 0;
+            }
+            return table;
+        })();
+
+        function computeCrc32(bytes) {
+            let crc = 0xFFFFFFFF;
+            for (let i = 0; i < bytes.length; i++) {
+                crc = CRC32_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+            }
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        function buildUncompressedZip(entries) {
+            const encoder = new TextEncoder();
+            const fileRecords = [];
+            let offset = 0;
+
+            for (const entry of entries) {
+                const nameBytes = encoder.encode(entry.name);
+                const crc = computeCrc32(entry.data);
+                const size = entry.data.length;
+
+                const localHeader = new ArrayBuffer(30 + nameBytes.length);
+                const lv = new DataView(localHeader);
+                lv.setUint32(0, 0x04034b50, true);
+                lv.setUint16(4, 20, true);
+                lv.setUint16(6, 0x0800, true);
+                lv.setUint16(8, 0, true);
+                lv.setUint16(10, 0, true);
+                lv.setUint16(12, 0x0021, true);
+                lv.setUint32(14, crc, true);
+                lv.setUint32(18, size, true);
+                lv.setUint32(22, size, true);
+                lv.setUint16(26, nameBytes.length, true);
+                lv.setUint16(28, 0, true);
+                new Uint8Array(localHeader, 30).set(nameBytes);
+
+                fileRecords.push({
+                    nameBytes,
+                    crc,
+                    size,
+                    offset,
+                    localHeader: new Uint8Array(localHeader),
+                    data: entry.data
+                });
+
+                offset += localHeader.byteLength + size;
+            }
+
+            const centralDirStart = offset;
+            const centralParts = [];
+            let centralDirSize = 0;
+
+            for (const rec of fileRecords) {
+                const cdHeader = new ArrayBuffer(46 + rec.nameBytes.length);
+                const cv = new DataView(cdHeader);
+                cv.setUint32(0, 0x02014b50, true);
+                cv.setUint16(4, 20, true);
+                cv.setUint16(6, 20, true);
+                cv.setUint16(8, 0x0800, true);
+                cv.setUint16(10, 0, true);
+                cv.setUint16(12, 0, true);
+                cv.setUint16(14, 0x0021, true);
+                cv.setUint32(16, rec.crc, true);
+                cv.setUint32(20, rec.size, true);
+                cv.setUint32(24, rec.size, true);
+                cv.setUint16(28, rec.nameBytes.length, true);
+                cv.setUint16(30, 0, true);
+                cv.setUint16(32, 0, true);
+                cv.setUint16(34, 0, true);
+                cv.setUint16(36, 0, true);
+                cv.setUint32(38, 0, true);
+                cv.setUint32(42, rec.offset, true);
+                new Uint8Array(cdHeader, 46).set(rec.nameBytes);
+
+                centralParts.push(new Uint8Array(cdHeader));
+                centralDirSize += cdHeader.byteLength;
+            }
+
+            const eocd = new ArrayBuffer(22);
+            const ev = new DataView(eocd);
+            ev.setUint32(0, 0x06054b50, true);
+            ev.setUint16(4, 0, true);
+            ev.setUint16(6, 0, true);
+            ev.setUint16(8, fileRecords.length, true);
+            ev.setUint16(10, fileRecords.length, true);
+            ev.setUint32(12, centralDirSize, true);
+            ev.setUint32(16, centralDirStart, true);
+            ev.setUint16(20, 0, true);
+
+            const blobParts = [];
+            for (const rec of fileRecords) blobParts.push(rec.localHeader, rec.data);
+            for (const cd of centralParts) blobParts.push(cd);
+            blobParts.push(new Uint8Array(eocd));
+
+            return new Blob(blobParts, { type: 'application/zip' });
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        }
+
+        // Boot: Read ?mode= parameter from URL (convert | resize | pro)
+        (function initFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const reqMode = (params.get('mode') || '').toLowerCase();
+            if (['convert', 'resize', 'pro'].includes(reqMode)) {
+                setStudioMode(reqMode);
+            } else {
+                setStudioMode('convert');
+            }
+        })();
+    </script>
+</body>
+</html>
