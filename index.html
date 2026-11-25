@@ -126,8 +126,7 @@
         <a href="modules/password-gen/index.html" class="card theme-tool"><div class="icon">🔐</div><div class="title">PassGen</div><div class="desc">Secure Password Maker</div></a>
         <a href="modules/emergency/index.html" class="card theme-alert"><div class="icon">🆘</div><div class="title">Emergency</div><div class="desc">SOS Flash & Morse Tool</div></a>
 
-        <a href="modules/img-converter/index.html" class="card theme-media"><div class="icon">🖼️</div><div class="title">Img Convert</div><div class="desc">JPG, PNG, WEBP Tool</div></a>
-        <a href="modules/img-resizer/index.html" class="card theme-media"><div class="icon">📏</div><div class="title">Img Resizer</div><div class="desc">Scale & 2x Resolution</div></a>
+        <a href="modules/image-studio/index.html" class="card theme-media"><div class="icon">🖼️</div><div class="title">Image Studio</div><div class="desc">Convert, Crop & Resize</div></a>
         
         <a href="modules/file-compress/index.html" class="card theme-sys">
             <div class="icon">🗜️</div>
@@ -159,7 +158,7 @@
     </div>
 
     <footer>
-        &copy; 2025 Project GXDiag. All Systems Operational.
+        &copy; 2026 Project GXDiag. All Systems Operational.
     </footer>
 
     <script>
@@ -213,43 +212,104 @@
             }, () => { document.getElementById('loc-name').innerText = "Loc Denied"; });
         }
 
-        // --- 3. STEAM SALES ---
+        // --- 3. STEAM SALES (2026–2027 + AUTO-FALLBACK) ---
+        // Steam sales always begin & end at 10:00 AM Pacific Time (PT / 01:00 WIB next day)
         const steamSales = [
-            { name: "Winter Sale", start: new Date("2025-12-19"), end: new Date("2026-01-02") },
-            { name: "Spring Sale", start: new Date("2026-03-14"), end: new Date("2026-03-21") },
-            { name: "Summer Sale", start: new Date("2026-06-25"), end: new Date("2026-07-09") },
-            { name: "Autumn Sale", start: new Date("2026-11-25"), end: new Date("2026-12-02") },
-            { name: "Winter Sale", start: new Date("2026-12-19"), end: new Date("2027-01-02") }
+            // 2026 Major Seasonal Sales (Autumn Sale moved to early October by Valve)
+            { name: "Spring Sale 2026", start: new Date("2026-03-19T10:00:00-07:00"), end: new Date("2026-03-26T10:00:00-07:00") },
+            { name: "Summer Sale 2026", start: new Date("2026-06-25T10:00:00-07:00"), end: new Date("2026-07-09T10:00:00-07:00") },
+            { name: "Autumn Sale 2026", start: new Date("2026-10-01T10:00:00-07:00"), end: new Date("2026-10-08T10:00:00-07:00") },
+            { name: "Winter Sale 2026", start: new Date("2026-12-17T10:00:00-08:00"), end: new Date("2027-01-04T10:00:00-08:00") },
+
+            // 2027 Major Seasonal Sales (Thursday-to-Thursday Steamworks Cycle)
+            { name: "Spring Sale 2027", start: new Date("2027-03-18T10:00:00-07:00"), end: new Date("2027-03-25T10:00:00-07:00") },
+            { name: "Summer Sale 2027", start: new Date("2027-06-24T10:00:00-07:00"), end: new Date("2027-07-08T10:00:00-07:00") },
+            { name: "Autumn Sale 2027", start: new Date("2027-09-30T10:00:00-07:00"), end: new Date("2027-10-07T10:00:00-07:00") },
+            { name: "Winter Sale 2027", start: new Date("2027-12-16T10:00:00-08:00"), end: new Date("2028-01-03T10:00:00-08:00") }
         ];
 
+        // Dynamic yearly generator so the widget never expires after 2027
+        function getNthThursdayOfMonth(year, monthIndex, nth) {
+            const firstDay = new Date(Date.UTC(year, monthIndex, 1)).getUTCDay();
+            const offset = (4 - firstDay + 7) % 7; // 4 = Thursday
+            const day = 1 + offset + (nth - 1) * 7;
+            return day;
+        }
+
+        function buildPerpetualSales(startYear) {
+            const generated = [];
+            for (let y = startYear; y <= startYear + 1; y++) {
+                const springDay = getNthThursdayOfMonth(y, 2, 3);  // 3rd Thu of Mar
+                const summerDay = getNthThursdayOfMonth(y, 5, 4);  // 4th Thu of Jun
+                const autumnDay = getNthThursdayOfMonth(y, 9, 1);  // 1st Thu of Oct
+                const winterDay = getNthThursdayOfMonth(y, 11, 3); // 3rd Thu of Dec
+
+                const springStart = new Date(Date.UTC(y, 2, springDay, 17, 0, 0));
+                const summerStart = new Date(Date.UTC(y, 5, summerDay, 17, 0, 0));
+                const autumnStart = new Date(Date.UTC(y, 9, autumnDay, 17, 0, 0));
+                const winterStart = new Date(Date.UTC(y, 11, winterDay, 18, 0, 0));
+
+                generated.push(
+                    { name: `Spring Sale ${y}`, start: springStart, end: new Date(springStart.getTime() + 7 * 86400000) },
+                    { name: `Summer Sale ${y}`, start: summerStart, end: new Date(summerStart.getTime() + 14 * 86400000) },
+                    { name: `Autumn Sale ${y}`, start: autumnStart, end: new Date(autumnStart.getTime() + 7 * 86400000) },
+                    { name: `Winter Sale ${y}`, start: winterStart, end: new Date(winterStart.getTime() + 18 * 86400000) }
+                );
+            }
+            return generated;
+        }
+
+        function formatSaleDuration(ms) {
+            const totalHours = Math.max(1, Math.floor(ms / 3600000));
+            const days = Math.floor(totalHours / 24);
+            const hours = totalHours % 24;
+            return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+        }
+
         function renderSteamInfo() {
-            const today = new Date();
-            let activeSale = null, nextSale = null, futureSales = [];
-            steamSales.forEach(s => {
-                if (today >= s.start && today <= s.end) activeSale = s;
-                else if (today < s.start) { if(!nextSale) nextSale = s; else futureSales.push(s); }
-            });
-            const target = activeSale || nextSale;
-            if(target) {
-                document.getElementById('sale-name').innerText = target.name;
-                const diff = activeSale ? (activeSale.end - today) : (nextSale.start - today);
-                const days = Math.floor(diff / 86400000);
-                if(activeSale) {
-                    document.getElementById('sale-countdown').innerText = `ENDS ${days}d`;
-                    document.getElementById('steam-status-label').style.color = "#00ff88";
-                    document.getElementById('steam-status-label').innerText = "🔴 LIVE NOW";
-                    document.getElementById('sale-name').classList.add('sale-live');
-                } else {
-                    document.getElementById('sale-countdown').innerText = `${days} Days`;
-                    document.getElementById('steam-status-label').innerText = "UPCOMING EVENT";
+            const now = new Date();
+            const schedule = [...steamSales, ...buildPerpetualSales(2028)];
+
+            let activeSale = null;
+            let nextSale = null;
+            const futureSales = [];
+
+            for (const s of schedule) {
+                if (now >= s.start && now < s.end) {
+                    activeSale = s;
+                } else if (now < s.start) {
+                    if (!nextSale) nextSale = s;
+                    else if (futureSales.length < 4) futureSales.push(s);
                 }
             }
+
+            const statusLabel = document.getElementById('steam-status-label');
+            const saleNameEl = document.getElementById('sale-name');
+            const countdownEl = document.getElementById('sale-countdown');
+
+            if (activeSale) {
+                saleNameEl.innerText = activeSale.name;
+                saleNameEl.classList.add('sale-live');
+                statusLabel.style.color = "#00ff88";
+                statusLabel.innerText = "🔴 LIVE NOW";
+                countdownEl.innerText = `ENDS ${formatSaleDuration(activeSale.end - now)}`;
+            } else if (nextSale) {
+                saleNameEl.innerText = nextSale.name;
+                saleNameEl.classList.remove('sale-live');
+                statusLabel.style.color = "";
+                statusLabel.innerText = "NEXT MAJOR SALE";
+                countdownEl.innerText = formatSaleDuration(nextSale.start - now);
+            }
+
             let roadmapHtml = "";
-            futureSales.forEach(s => roadmapHtml += `<div class="roadmap-item"><span>${s.name}</span><span>${s.start.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>`);
-            if(futureSales.length === 0) roadmapHtml = "<div style='color:#555; font-size:0.8rem; text-align:center;'>See you in 2026!</div>";
-            document.getElementById('steam-roadmap-list').innerHTML = roadmapHtml;
+            futureSales.forEach(s => {
+                const dateLabel = s.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                roadmapHtml += `<div class="roadmap-item"><span>${s.name}</span><span>${dateLabel}</span></div>`;
+            });
+            document.getElementById('steam-roadmap-list').innerHTML = roadmapHtml || "<div style='color:#555; font-size:0.8rem; text-align:center;'>No data</div>";
         }
         renderSteamInfo();
+        setInterval(renderSteamInfo, 60000);
 
         // --- 4. CALENDAR LOGIC ---
         async function fetchHolidays() {
