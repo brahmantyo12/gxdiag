@@ -1,0 +1,3330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GXDiag - Hybrid CPU+GPU Video Studio</title>
+    <meta name="theme-color" content="#1a1a1a">
+
+    <link rel="stylesheet" href="../../css/style.css">
+
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #111; color: #eee; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 1240px; margin: 0 auto; }
+
+        /* Header */
+        .module-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 1px solid #333; padding-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .back-btn { text-decoration: none; color: #888; font-size: 1rem; transition: 0.2s; font-weight: 600; }
+        .back-btn:hover { color: #fff; }
+        .module-title { font-size: 1.35rem; font-weight: 800; color: #ff9100; text-transform: uppercase; letter-spacing: 2px; }
+        .badge-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .engine-badge { font-size: 0.7rem; font-family: monospace; background: #1a1a1a; border: 1px solid #333; color: #00e5ff; padding: 5px 9px; border-radius: 6px; }
+        .engine-badge.gpu { color: #00ff88; border-color: rgba(0, 255, 136, 0.3); }
+        .engine-badge.perf { color: #ffea00; border-color: rgba(255, 234, 0, 0.3); }
+
+        /* Main Layout */
+        .studio-grid { display: grid; grid-template-columns: 1fr 410px; gap: 20px; align-items: start; }
+        @media (max-width: 980px) { .studio-grid { grid-template-columns: 1fr; } }
+
+        /* Video Dropzone & Staging Card */
+        .stage-card {
+            background: #1a1a1a; border: 2px dashed #444; border-radius: 14px;
+            padding: 16px; transition: 0.25s; margin-bottom: 12px;
+        }
+        .stage-card.has-video { border-style: solid; border-color: #2b2b2b; }
+        .stage-card.dragover { border-color: #00e5ff; background: rgba(0, 229, 255, 0.04); }
+
+        .drop-placeholder {
+            min-height: 320px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; cursor: pointer;
+        }
+        .drop-placeholder:hover { color: #ff9100; }
+
+        /* File Staging / Hold Queue Box */
+        .staging-box {
+            display: none; min-height: 320px; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            background: #131313; border: 1px solid #2e2e2e; border-radius: 10px;
+            padding: 22px; gap: 12px;
+        }
+        .staging-file-card {
+            background: #1b1b1b; border: 1px solid #333; border-radius: 8px;
+            padding: 12px 16px; width: 100%; max-width: 490px; text-align: left;
+            font-family: monospace; font-size: 0.78rem;
+        }
+        .staging-name { color: #fff; font-weight: 800; font-size: 0.86rem; word-break: break-all; margin-bottom: 4px; }
+        .staging-meta { color: #888; }
+        .staging-opts {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; max-width: 490px; background: #181818; border: 1px solid #2b2b2b;
+            padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; color: #ccc;
+            gap: 8px; flex-wrap: wrap;
+        }
+        .staging-actions {
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 490px;
+        }
+        .btn-stage-start {
+            flex: 1; min-width: 180px; background: linear-gradient(135deg, #00e5ff, #00ff88);
+            color: #000; border: none; padding: 11px 14px; border-radius: 8px;
+            font-weight: 800; font-size: 0.82rem; cursor: pointer; text-transform: uppercase;
+        }
+        .btn-stage-start:disabled { background: #333; color: #777; cursor: not-allowed; }
+        .btn-stage-hold {
+            background: #242424; border: 1px solid #444; color: #ddd;
+            padding: 11px 14px; border-radius: 8px; font-weight: 700;
+            font-size: 0.8rem; cursor: pointer;
+        }
+        .btn-stage-hold:hover { border-color: #ff9100; color: #ff9100; }
+        .btn-stage-abort {
+            background: #2b141a; border: 1px solid #ff4081; color: #ff4081;
+            padding: 11px 14px; border-radius: 8px; font-weight: 800;
+            font-size: 0.8rem; cursor: pointer; display: none;
+        }
+
+        .load-progress-box {
+            width: 100%; max-width: 490px; display: none; flex-direction: column; gap: 6px;
+        }
+        .load-bar-track {
+            width: 100%; height: 8px; background: #222; border-radius: 99px; overflow: hidden;
+            border: 1px solid #333;
+        }
+        .load-bar-fill {
+            height: 100%; width: 0%; background: linear-gradient(90deg, #ff9100, #00e5ff);
+            transition: width 0.15s ease-out;
+        }
+        .load-step-text {
+            font-family: monospace; font-size: 0.74rem; color: #00e5ff;
+            display: flex; justify-content: space-between;
+        }
+
+        .video-workspace { display: none; flex-direction: column; gap: 12px; }
+
+        .canvas-viewport {
+            position: relative; width: 100%; background: #080808;
+            border-radius: 10px; overflow: hidden; display: flex;
+            align-items: center; justify-content: center;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.75);
+            user-select: none; touch-action: none; min-height: 270px;
+        }
+        #display-canvas {
+            max-width: 100%; max-height: 440px; width: auto; height: auto; display: block;
+        }
+
+        /* Magnetic Center Snap Crosshairs */
+        .snap-guide-v, .snap-guide-h {
+            position: absolute; pointer-events: none; z-index: 6; display: none;
+        }
+        .snap-guide-v {
+            top: 0; bottom: 0; left: 50%; width: 1px;
+            background: rgba(0, 229, 255, 0.85); box-shadow: 0 0 6px #00e5ff;
+        }
+        .snap-guide-h {
+            left: 0; right: 0; top: 50%; height: 1px;
+            background: rgba(0, 229, 255, 0.85); box-shadow: 0 0 6px #00e5ff;
+        }
+
+        /* Social 9:16 Safe Zone Overlay */
+        .safe-zone-overlay {
+            position: absolute; pointer-events: none; z-index: 6; display: none;
+            border-top: 14% solid rgba(255, 64, 129, 0.16);
+            border-bottom: 20% solid rgba(255, 64, 129, 0.16);
+            border-right: 14% solid rgba(255, 64, 129, 0.12);
+        }
+        .safe-zone-tag {
+            position: absolute; bottom: 4px; left: 6px;
+            font-family: monospace; font-size: 0.62rem; color: #ff4081;
+            background: rgba(0,0,0,0.75); padding: 2px 5px; border-radius: 3px;
+        }
+
+        /* Interactive Crop Overlay Box */
+        .crop-box {
+            position: absolute;
+            border: 2px solid #ff9100;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.62);
+            cursor: move;
+            display: none;
+            z-index: 7;
+            transition: border-color 0.12s;
+        }
+        .crop-box.snapped { border-color: #00e5ff; }
+        .crop-grid {
+            position: absolute; inset: 0; pointer-events: none;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.22) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.22) 1px, transparent 1px);
+            background-size: 33.333% 33.333%;
+        }
+        .crop-badge {
+            position: absolute; top: 6px; left: 6px;
+            background: rgba(0, 0, 0, 0.8); color: #ff9100;
+            border: 1px solid rgba(255, 145, 0, 0.5);
+            font-family: monospace; font-size: 0.65rem; font-weight: 800;
+            padding: 2px 6px; border-radius: 4px; pointer-events: none;
+        }
+        .crop-handle {
+            position: absolute; width: 14px; height: 14px;
+            background: #ff9100; border: 2px solid #111; border-radius: 3px;
+            z-index: 8;
+        }
+        .crop-handle.nw { top: -7px; left: -7px; cursor: nwse-resize; }
+        .crop-handle.ne { top: -7px; right: -7px; cursor: nesw-resize; }
+        .crop-handle.sw { bottom: -7px; left: -7px; cursor: nesw-resize; }
+        .crop-handle.se { bottom: -7px; right: -7px; cursor: nwse-resize; }
+
+        /* Interactive Before/After Split Divider */
+        .split-line {
+            position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
+            background: #00e5ff; box-shadow: 0 0 10px rgba(0,0,0,0.9);
+            cursor: ew-resize; z-index: 10; display: none;
+        }
+        .split-handle {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #00e5ff; color: #000; font-size: 0.66rem; font-weight: 900;
+            font-family: monospace; padding: 4px 7px; border-radius: 99px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.8); white-space: nowrap;
+        }
+        .split-labels {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: none; justify-content: space-between; pointer-events: none; z-index: 9;
+        }
+        .split-tag {
+            background: rgba(0, 0, 0, 0.72); border: 1px solid #333;
+            color: #ddd; font-size: 0.66rem; font-family: monospace;
+            padding: 3px 7px; border-radius: 4px;
+        }
+        .split-tag.after { border-color: #00e5ff; color: #00e5ff; }
+
+        /* Transport Controls */
+        .transport-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #121212; border: 1px solid #2a2a2a; border-radius: 8px;
+            padding: 8px 10px; gap: 6px; flex-wrap: wrap;
+        }
+        .transport-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+        .btn-t {
+            background: #222; border: 1px solid #383838; color: #eee;
+            padding: 5px 9px; border-radius: 6px; font-size: 0.74rem;
+            font-weight: 700; cursor: pointer; font-family: monospace; transition: 0.15s;
+        }
+        .btn-t:hover { border-color: #ff9100; color: #ff9100; }
+        .btn-t.active { background: #ff9100; color: #000; border-color: #ff9100; }
+        .btn-t.hold-raw:active { background: #00e5ff; color: #000; border-color: #00e5ff; }
+        .timecode { font-family: monospace; font-size: 0.78rem; color: #00e5ff; font-weight: 700; }
+
+        /* Cut & Trim Timeline Panel */
+        .timeline-panel {
+            background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 14px;
+        }
+        .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+        .tl-title { font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #ccc; }
+        .tl-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+
+        .timeline-track {
+            position: relative; height: 54px; background: #101010;
+            border: 1px solid #333; border-radius: 8px; cursor: pointer;
+            overflow: hidden; user-select: none; touch-action: none;
+        }
+        #waveform-canvas { width: 100%; height: 100%; display: block; opacity: 0.55; }
+
+        .tl-hover-tip {
+            position: absolute; top: 4px; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.88); border: 1px solid #444;
+            color: #fff; font-family: monospace; font-size: 0.65rem;
+            padding: 2px 5px; border-radius: 4px; pointer-events: none;
+            display: none; z-index: 9;
+        }
+        .tl-hover-line {
+            position: absolute; top: 0; bottom: 0; width: 1px;
+            background: rgba(255, 255, 255, 0.35); pointer-events: none;
+            display: none; z-index: 7;
+        }
+
+        .trim-range {
+            position: absolute; top: 0; bottom: 0; left: 0%; width: 100%;
+            background: rgba(255, 145, 0, 0.14);
+            border-top: 2px solid #ff9100; border-bottom: 2px solid #ff9100;
+            pointer-events: none;
+        }
+        .trim-handle {
+            position: absolute; top: 0; bottom: 0; width: 13px;
+            background: #ff9100; cursor: ew-resize; z-index: 6;
+            display: flex; align-items: center; justify-content: center;
+            color: #000; font-weight: 900; font-size: 0.65rem;
+        }
+        .trim-handle.in { left: 0%; border-radius: 4px 0 0 4px; }
+        .trim-handle.out { right: 0%; border-radius: 0 4px 4px 0; }
+
+        .playhead {
+            position: absolute; top: 0; bottom: 0; left: 0%; width: 2px;
+            background: #00e5ff; z-index: 8; pointer-events: none;
+            box-shadow: 0 0 8px #00e5ff;
+        }
+
+        .tl-meta {
+            display: flex; justify-content: space-between; font-size: 0.71rem;
+            font-family: monospace; color: #888; margin-top: 8px; flex-wrap: wrap; gap: 6px;
+        }
+
+        /* Multi-Cut Segments List */
+        .segments-list {
+            margin-top: 10px; display: flex; flex-direction: column; gap: 5px;
+            max-height: 135px; overflow-y: auto;
+        }
+        .seg-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #131313; border: 1px solid #2a2a2a; border-radius: 6px;
+            padding: 6px 10px; font-family: monospace; font-size: 0.73rem; cursor: pointer;
+            transition: 0.15s;
+        }
+        .seg-item:hover { border-color: #555; }
+        .seg-item.active { border-color: #ff9100; background: rgba(255, 145, 0, 0.08); }
+        .seg-del { background: none; border: none; color: #666; cursor: pointer; font-size: 0.9rem; }
+        .seg-del:hover { color: #ff4081; }
+
+        /* Right Control Panel */
+        .control-panel { background: #1a1a1a; border: 1px solid #333; padding: 16px; border-radius: 12px; }
+        .mode-tabs {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+            background: #121212; padding: 4px; border-radius: 9px; border: 1px solid #2b2b2b;
+            margin-bottom: 14px;
+        }
+        .mode-tab {
+            background: transparent; border: none; color: #888; padding: 7px 2px;
+            border-radius: 6px; font-size: 0.66rem; font-weight: 800; font-family: monospace;
+            text-transform: uppercase; cursor: pointer; transition: 0.2s;
+        }
+        .mode-tab:hover { color: #eee; }
+        .mode-tab.active { background: #ff9100; color: #000; }
+
+        .control-group { margin-bottom: 13px; padding-bottom: 13px; border-bottom: 1px solid #262626; }
+        .control-group:last-of-type { border-bottom: none; padding-bottom: 0; }
+        label { display: block; font-size: 0.69rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.9px; font-weight: 700; }
+
+        select, input[type=number], input[type=text] {
+            width: 100%; background: #222; border: 1px solid #444; color: #fff;
+            padding: 7px 9px; border-radius: 6px; font-size: 0.82rem;
+        }
+        select:focus, input:focus { outline: none; border-color: #ff9100; }
+
+        .pill-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .pill-btn {
+            background: #222; border: 1px solid #3a3a3a; color: #ccc;
+            padding: 6px 4px; border-radius: 6px; font-size: 0.72rem;
+            font-family: monospace; font-weight: 700; cursor: pointer; text-align: center;
+            transition: 0.15s;
+        }
+        .pill-btn:hover { border-color: #ff9100; color: #fff; }
+        .pill-btn.active { background: rgba(255, 145, 0, 0.16); border-color: #ff9100; color: #ff9100; }
+
+        /* Watermark Template Grid & Anchor Matrix */
+        .wm-tpl-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px;
+        }
+        .wm-tpl-btn {
+            background: #181818; border: 1px solid #333; color: #bbb;
+            padding: 6px 2px; border-radius: 6px; font-size: 0.64rem;
+            font-family: monospace; font-weight: 700; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            transition: 0.15s;
+        }
+        .wm-tpl-btn:hover { border-color: #ff9100; color: #fff; }
+        .wm-tpl-btn.active { background: rgba(0, 229, 255, 0.14); border-color: #00e5ff; color: #00e5ff; }
+        .wm-tpl-icon { width: 18px; height: 18px; object-fit: contain; display: block; }
+
+        .wm-upload-bar {
+            display: flex; align-items: center; gap: 6px; background: #141414;
+            border: 1px dashed #3d3d3d; border-radius: 6px; padding: 6px 8px;
+        }
+        .wm-custom-thumb {
+            width: 24px; height: 24px; object-fit: contain; background: #0a0a0a;
+            border: 1px solid #333; border-radius: 4px; display: none;
+        }
+
+        .anchor-matrix-wrap {
+            display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: center;
+        }
+        .anchor-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+            background: #121212; padding: 5px; border-radius: 7px; border: 1px solid #2e2e2e;
+        }
+        .anchor-cell {
+            height: 24px; background: #222; border: 1px solid #363636; border-radius: 4px;
+            color: #888; font-size: 0.65rem; cursor: pointer; font-family: monospace;
+            display: flex; align-items: center; justify-content: center; transition: 0.15s;
+        }
+        .anchor-cell:hover { border-color: #ff9100; color: #fff; }
+        .anchor-cell.active { background: #ff9100; color: #000; border-color: #ff9100; font-weight: 900; }
+
+        .slider-row { margin-bottom: 9px; }
+        .slider-head { display: flex; justify-content: space-between; font-size: 0.72rem; font-family: monospace; margin-bottom: 3px; color: #bbb; }
+        .slider-head span:last-child { color: #ff9100; font-weight: 700; }
+        input[type=range] { width: 100%; accent-color: #ff9100; cursor: pointer; margin: 0; }
+
+        .sub-hint { font-size: 0.69rem; color: #777; margin-top: 5px; font-family: monospace; line-height: 1.35; }
+
+        /* Telemetry Stats */
+        .stats-box {
+            background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px;
+            margin-bottom: 13px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.63rem; color: #666; text-transform: uppercase; margin-bottom: 2px; }
+        .stat-val { font-size: 0.78rem; font-weight: bold; color: #eee; font-family: monospace; }
+        .sv-new { color: #00ff88; }
+
+        /* Export Button & Progress */
+        .btn-main {
+            background: linear-gradient(135deg, #ff9100, #ffea00); color: #000;
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-main:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 18px rgba(255, 145, 0, 0.35); }
+        .btn-main:disabled { background: #333; color: #777; cursor: not-allowed; }
+
+        .btn-cancel {
+            background: #2b141a; border: 1px solid #ff4081; color: #ff4081;
+            width: 100%; padding: 9px; border-radius: 8px; margin-top: 8px;
+            font-weight: 800; font-size: 0.78rem; cursor: pointer; display: none;
+            text-transform: uppercase;
+        }
+
+        .progress-wrap { width: 100%; height: 5px; background: #222; border-radius: 3px; overflow: hidden; margin-top: 10px; display: none; }
+        .progress-fill { height: 100%; width: 0%; background: #00e5ff; transition: width 0.1s; }
+        .status-msg { text-align: center; margin-top: 8px; font-size: 0.72rem; font-family: monospace; min-height: 16px; color: #00ff88; word-break: break-word; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="module-header">
+            <div class="header-left">
+                <a href="../../index.html" class="back-btn">⬅ Dashboard</a>
+                <div class="module-title">Video Studio</div>
+            </div>
+            <div class="badge-row">
+                <div class="engine-badge gpu" id="gpu-badge">GPU SHADER: INIT...</div>
+                <div class="engine-badge perf" id="perf-badge">CPU: 0.0ms | GPU: 0.0ms</div>
+                <div class="engine-badge" id="codec-badge">ENCODER: CHECKING...</div>
+                <div class="engine-badge" id="mux-badge">MUXER: STANDBY</div>
+            </div>
+        </div>
+
+        <div class="studio-grid">
+
+            <!-- Left Column: Hybrid Viewport + Staging + Cut Timeline -->
+            <div>
+                <div class="stage-card" id="stage-card">
+                    <!-- 1. Initial Dropzone -->
+                    <div class="drop-placeholder" id="drop-placeholder" onclick="document.getElementById('video-input').click()">
+                        <div style="font-size: 2.8rem; margin-bottom: 10px;">🎬</div>
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #ccc;">Click or Drop Video File</div>
+                        <div style="color: #666; font-size: 0.8rem; margin-top: 6px;">MP4, WEBM, MOV, MKV • Hybrid CPU Geometry + GPU Pixel Shader Engine</div>
+                    </div>
+
+                    <!-- 2. Staging / Hold Panel -->
+                    <div class="staging-box" id="staging-box">
+                        <div style="font-size: 2rem;">⏸️</div>
+                        <div style="font-weight: 800; color: #ff9100; letter-spacing: 1px; text-transform: uppercase; font-size: 0.9rem;">
+                            File Siap di Antrean (Ditahan Sebelum Masuk Pipeline)
+                        </div>
+
+                        <div class="staging-file-card">
+                            <div class="staging-name" id="stg-filename">-</div>
+                            <div class="staging-meta" id="stg-filemeta">-</div>
+                        </div>
+
+                        <div class="staging-opts">
+                            <label style="display:flex; align-items:center; gap:7px; margin:0; text-transform:none; letter-spacing:0; font-size:0.76rem; color:#ddd; cursor:pointer;">
+                                <input type="checkbox" id="chk-decode-audio" checked style="accent-color:#ff9100;">
+                                Dekode Trek Audio &amp; Waveform (Matikan agar hemat RAM pada file besar)
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; margin:0; text-transform:none; letter-spacing:0; font-size:0.74rem; color:#999; cursor:pointer;">
+                                <input type="checkbox" id="chk-auto-load" style="accent-color:#00e5ff;">
+                                Auto-start lain kali
+                            </label>
+                        </div>
+
+                        <div class="load-progress-box" id="load-progress-box">
+                            <div class="load-step-text">
+                                <span id="load-step-label">Menunggu perintah mulai...</span>
+                                <span id="load-step-pct">0%</span>
+                            </div>
+                            <div class="load-bar-track">
+                                <div class="load-bar-fill" id="load-bar-fill"></div>
+                            </div>
+                        </div>
+
+                        <div class="staging-actions">
+                            <button type="button" class="btn-stage-start" id="btn-stage-start" onclick="startGpuLoadPipeline()">
+                                ⚡ Mulai Muat ke Studio
+                            </button>
+                            <button type="button" class="btn-stage-abort" id="btn-stage-abort" onclick="abortGpuLoadPipeline()">
+                                ⏹ Tahan / Batalkan
+                            </button>
+                            <button type="button" class="btn-stage-hold" id="btn-stage-change" onclick="document.getElementById('video-input').click()">
+                                📂 Ganti File
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3. Active Hybrid Video Workspace -->
+                    <div class="video-workspace" id="video-workspace">
+                        <div class="canvas-viewport" id="canvas-viewport">
+                            <canvas id="display-canvas"></canvas>
+
+                            <!-- Magnetic Center Snap Crosshairs -->
+                            <div class="snap-guide-v" id="snap-v"></div>
+                            <div class="snap-guide-h" id="snap-h"></div>
+
+                            <!-- 9:16 Social Safe Zone -->
+                            <div class="safe-zone-overlay" id="safe-zone-overlay">
+                                <span class="safe-zone-tag">9:16 UI SAFE ZONE</span>
+                            </div>
+
+                            <!-- Draggable Crop Frame -->
+                            <div class="crop-box" id="crop-box">
+                                <div class="crop-grid"></div>
+                                <div class="crop-badge" id="crop-badge">9:16</div>
+                                <div class="crop-handle nw" data-dir="nw"></div>
+                                <div class="crop-handle ne" data-dir="ne"></div>
+                                <div class="crop-handle sw" data-dir="sw"></div>
+                                <div class="crop-handle se" data-dir="se"></div>
+                            </div>
+
+                            <!-- Split Compare Line -->
+                            <div class="split-labels" id="split-labels">
+                                <span class="split-tag">RAW INPUT</span>
+                                <span class="split-tag after">ENHANCED</span>
+                            </div>
+                            <div class="split-line" id="split-line">
+                                <div class="split-handle">◀▶</div>
+                            </div>
+                        </div>
+
+                        <div class="transport-bar">
+                            <div class="transport-group">
+                                <button type="button" class="btn-t" id="btn-play" onclick="togglePlay()">▶ Play</button>
+                                <button type="button" class="btn-t" onclick="stepFrame(-1)" title="Mundur 1 Frame (←)">⏮ -1f</button>
+                                <button type="button" class="btn-t" onclick="stepFrame(1)" title="Maju 1 Frame (→)">⏭ +1f</button>
+                                <button type="button" class="btn-t" id="btn-mute" onclick="toggleMute()">🔊</button>
+                            </div>
+                            <div class="timecode" id="timecode-display">00:00.00 / 00:00.00</div>
+                            <div class="transport-group">
+                                <button type="button" class="btn-t hold-raw" onpointerdown="setHoldRaw(true)" onpointerup="setHoldRaw(false)" onpointerleave="setHoldRaw(false)" title="Tahan untuk melihat video mentah">👁 Hold Raw</button>
+                                <button type="button" class="btn-t" id="btn-preview-crop" onclick="togglePreviewCropped()" title="Pratinjau Hasil Akhir Crop">⛶ Crop View</button>
+                                <button type="button" class="btn-t" id="btn-split" onclick="toggleSplitCompare()">◫ Split</button>
+                                <button type="button" class="btn-t" onclick="releaseGpuAndChangeFile()">📂 Ganti</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="file" id="video-input" accept="video/*,.mkv,.mov,.webm,.mp4" style="display: none;">
+                </div>
+
+                <!-- Cut & Trim Timeline -->
+                <div class="timeline-panel" id="timeline-panel" style="opacity: 0.45; pointer-events: none;">
+                    <div class="tl-header">
+                        <div class="tl-title">✂️ Cut &amp; Multi-Clip Timeline</div>
+                        <div class="tl-actions">
+                            <button type="button" class="btn-t" onclick="setInPointAtPlayhead()" title="Shortcut: I">[ Set IN</button>
+                            <button type="button" class="btn-t" onclick="setOutPointAtPlayhead()" title="Shortcut: O">Set OUT ]</button>
+                            <button type="button" class="btn-t" onclick="splitAtPlayhead()" title="Belah klip di posisi playhead (Shortcut: S)">✂ Split Here</button>
+                            <button type="button" class="btn-t" onclick="addCutSegment()">+ Klip Baru</button>
+                            <button type="button" class="btn-t" onclick="resetTimeline()">↺ Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="timeline-track" id="timeline-track">
+                        <canvas id="waveform-canvas"></canvas>
+                        <div class="tl-hover-line" id="tl-hover-line"></div>
+                        <div class="tl-hover-tip" id="tl-hover-tip">00:00.00</div>
+                        <div class="trim-range" id="trim-range"></div>
+                        <div class="trim-handle in" id="handle-in" data-handle="in">┃</div>
+                        <div class="trim-handle out" id="handle-out" data-handle="out">┃</div>
+                        <div class="playhead" id="playhead"></div>
+                    </div>
+
+                    <div class="tl-meta">
+                        <span id="tl-in-out">Active Range: 00:00.00 → 00:00.00</span>
+                        <span id="tl-total-dur">Output Duration: 00:00.00 (1 Clip)</span>
+                    </div>
+
+                    <div class="segments-list" id="segments-list"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Studio Controls -->
+            <div class="control-panel">
+                <div class="mode-tabs">
+                    <button type="button" class="mode-tab active" id="tab-crop" onclick="setStudioTab('crop')">📐 Crop/Edit</button>
+                    <button type="button" class="mode-tab" id="tab-wm" onclick="setStudioTab('wm')">🏷️ Watermark</button>
+                    <button type="button" class="mode-tab" id="tab-time" onclick="setStudioTab('time')">⏱️ Speed/FX</button>
+                    <button type="button" class="mode-tab" id="tab-enhance" onclick="setStudioTab('enhance')">✨ Upscale</button>
+                    <button type="button" class="mode-tab" id="tab-export" onclick="setStudioTab('export')" style="grid-column: span 4;">📦 Export &amp; Bitrate Settings</button>
+                </div>
+
+                <!-- TAB 1: Crop, Aspect Ratio & Transform -->
+                <div id="sec-crop">
+                    <div class="control-group">
+                        <label>Aspect Ratio &amp; Reframe (CPU Geometry Engine)</label>
+                        <div class="pill-grid" id="ratio-pills">
+                            <button type="button" class="pill-btn active" data-ratio="orig" onclick="setAspectPreset('orig', this)">Original</button>
+                            <button type="button" class="pill-btn" data-ratio="9:16" onclick="setAspectPreset('9:16', this)">9:16 Vertical</button>
+                            <button type="button" class="pill-btn" data-ratio="4:5" onclick="setAspectPreset('4:5', this)">4:5 Feed</button>
+                            <button type="button" class="pill-btn" data-ratio="1:1" onclick="setAspectPreset('1:1', this)">1:1 Square</button>
+                            <button type="button" class="pill-btn" data-ratio="16:9" onclick="setAspectPreset('16:9', this)">16:9 Wide</button>
+                            <button type="button" class="pill-btn" data-ratio="free" onclick="setAspectPreset('free', this)">Free Crop</button>
+                        </div>
+
+                        <div style="margin-top: 9px; display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center;">
+                            <select id="framing-mode" onchange="onFramingModeChange()">
+                                <option value="crop" selected>Crop Fill (CPU Pixel Cut)</option>
+                                <option value="blurpad">Blur Pad (Fit Utuh + Latar Blur)</option>
+                            </select>
+                            <button type="button" class="btn-t" onclick="centerCropBox()" title="Pusatkan Area Crop">⌖ Center</button>
+                            <button type="button" class="btn-t" id="btn-safezone" onclick="toggleSafeZone()" title="Tampilkan Batas Aman Reels/TikTok">📱 Safe</button>
+                        </div>
+                        <div class="sub-hint" id="crop-info-hint">Geser kotak oranye (otomatis snap ke tengah) atau tarik sudutnya.</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Rotate &amp; Mirror (CPU 2D Matrix)</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                            <button type="button" class="btn-t" onclick="rotateVideo(-1)">↺ -90°</button>
+                            <button type="button" class="btn-t" onclick="rotateVideo(1)">↻ +90°</button>
+                            <button type="button" class="btn-t" id="btn-fliph" onclick="toggleFlip('h')">⇄ Flip H</button>
+                            <button type="button" class="btn-t" id="btn-flipv" onclick="toggleFlip('v')">⇅ Flip V</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Brand & Watermark Studio (Logo Templates + Upload + Relative Layout + Drag) -->
+                <div id="sec-wm" style="display: none;">
+                    <div class="control-group">
+                        <label>1. Pilih Template Ikon atau Unggah Logo</label>
+                        <div class="wm-tpl-grid" id="wm-tpl-grid">
+                            <button type="button" class="wm-tpl-btn active" data-tpl="none" onclick="selectWatermarkTemplate('none', this)">
+                                <span style="font-size:14px; line-height:18px;">🚫</span>
+                                <span>None</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" data-tpl="yt" onclick="selectWatermarkTemplate('yt', this)">
+                                <img class="wm-tpl-icon" id="ico-yt" alt="YT">
+                                <span>YouTube</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" data-tpl="tiktok" onclick="selectWatermarkTemplate('tiktok', this)">
+                                <img class="wm-tpl-icon" id="ico-tiktok" alt="TikTok">
+                                <span>TikTok</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" data-tpl="fb" onclick="selectWatermarkTemplate('fb', this)">
+                                <img class="wm-tpl-icon" id="ico-fb" alt="FB">
+                                <span>Facebook</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" data-tpl="ig" onclick="selectWatermarkTemplate('ig', this)">
+                                <img class="wm-tpl-icon" id="ico-ig" alt="IG">
+                                <span>Instagram</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" data-tpl="x" onclick="selectWatermarkTemplate('x', this)">
+                                <img class="wm-tpl-icon" id="ico-x" alt="X">
+                                <span>X / Twt</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" data-tpl="twitch" onclick="selectWatermarkTemplate('twitch', this)">
+                                <img class="wm-tpl-icon" id="ico-twitch" alt="Twitch">
+                                <span>Twitch</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" data-tpl="discord" onclick="selectWatermarkTemplate('discord', this)">
+                                <img class="wm-tpl-icon" id="ico-discord" alt="Discord">
+                                <span>Discord</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" data-tpl="wa" onclick="selectWatermarkTemplate('wa', this)">
+                                <img class="wm-tpl-icon" id="ico-wa" alt="WA">
+                                <span>WhatsApp</span>
+                            </button>
+                            <button type="button" class="wm-tpl-btn" id="btn-tpl-custom" data-tpl="custom" onclick="document.getElementById('wm-logo-input').click()">
+                                <span style="font-size:14px; line-height:18px;">🖼️</span>
+                                <span>Upload</span>
+                            </button>
+                        </div>
+
+                        <div class="wm-upload-bar">
+                            <img id="wm-custom-thumb" class="wm-custom-thumb" alt="Logo">
+                            <span id="wm-logo-status" style="flex:1; font-size:0.71rem; font-family:monospace; color:#999; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                Tanpa logo (Hanya teks)
+                            </span>
+                            <button type="button" class="btn-t" style="padding:3px 7px; font-size:0.68rem;" onclick="document.getElementById('wm-logo-input').click()">📂 Pilih File</button>
+                            <button type="button" class="btn-t" id="btn-clear-logo" style="padding:3px 7px; font-size:0.68rem; display:none; color:#ff4081;" onclick="clearWatermarkLogo()">✕</button>
+                        </div>
+                        <input type="file" id="wm-logo-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;">
+                    </div>
+
+                    <div class="control-group">
+                        <label>2. Teks &amp; Susunan Logo terhadap Teks</label>
+                        <input type="text" id="wm-text" placeholder="Ketik nama channel / handle / brand (misal: @NamaChannel)..." oninput="onWatermarkSettingChange()">
+
+                        <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 7px; margin-top: 8px;">
+                            <div>
+                                <label style="font-size:0.62rem; margin-bottom:3px;">Posisi Logo vs Teks</label>
+                                <select id="wm-layout" onchange="onWatermarkSettingChange()">
+                                    <option value="left" selected>◧ Logo di Kiri Teks</option>
+                                    <option value="right">◨ Logo di Kanan Teks</option>
+                                    <option value="top">⊤ Logo di Atas Teks</option>
+                                    <option value="bottom">⊥ Logo di Bawah Teks</option>
+                                    <option value="logo-only">◈ Hanya Logo (Tanpa Teks)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.62rem; margin-bottom:3px;">Gaya Latar Badge</label>
+                                <select id="wm-bg" onchange="onWatermarkSettingChange()">
+                                    <option value="none" selected>Shadow Saja</option>
+                                    <option value="dark">Dark Glass Pill</option>
+                                    <option value="light">Light Glass Pill</option>
+                                    <option value="accent">Amber Pill</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px;">
+                            <div>
+                                <label style="font-size:0.62rem; margin-bottom:3px;">Warna Teks</label>
+                                <select id="wm-color" onchange="onWatermarkSettingChange()">
+                                    <option value="#ffffff" selected>White (#FFFFFF)</option>
+                                    <option value="#ff9100">Amber Orange</option>
+                                    <option value="#00e5ff">Cyan</option>
+                                    <option value="#ffea00">Yellow</option>
+                                    <option value="#111111">Dark Black</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.62rem; margin-bottom:3px;">Ketebalan Font</label>
+                                <select id="wm-weight" onchange="onWatermarkSettingChange()">
+                                    <option value="800" selected>Bold (800)</option>
+                                    <option value="600">Semi-Bold (600)</option>
+                                    <option value="400">Regular (400)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>3. Posisi di Video (Klik Grid atau Geser di Preview)</label>
+                        <div class="anchor-matrix-wrap">
+                            <div class="anchor-grid" id="wm-anchor-grid">
+                                <button type="button" class="anchor-cell" data-ax="0" data-ay="0" onclick="setWatermarkAnchor(0, 0, this)" title="Top Left">↖</button>
+                                <button type="button" class="anchor-cell" data-ax="0.5" data-ay="0" onclick="setWatermarkAnchor(0.5, 0, this)" title="Top Center">↑</button>
+                                <button type="button" class="anchor-cell" data-ax="1" data-ay="0" onclick="setWatermarkAnchor(1, 0, this)" title="Top Right">↗</button>
+                                <button type="button" class="anchor-cell" data-ax="0" data-ay="0.5" onclick="setWatermarkAnchor(0, 0.5, this)" title="Middle Left">←</button>
+                                <button type="button" class="anchor-cell" data-ax="0.5" data-ay="0.5" onclick="setWatermarkAnchor(0.5, 0.5, this)" title="Center">⌖</button>
+                                <button type="button" class="anchor-cell" data-ax="1" data-ay="0.5" onclick="setWatermarkAnchor(1, 0.5, this)" title="Middle Right">→</button>
+                                <button type="button" class="anchor-cell" data-ax="0" data-ay="1" onclick="setWatermarkAnchor(0, 1, this)" title="Bottom Left">↙</button>
+                                <button type="button" class="anchor-cell" data-ax="0.5" data-ay="1" onclick="setWatermarkAnchor(0.5, 1, this)" title="Bottom Center">↓</button>
+                                <button type="button" class="anchor-cell active" data-ax="1" data-ay="1" onclick="setWatermarkAnchor(1, 1, this)" title="Bottom Right">↘</button>
+                            </div>
+                            <div>
+                                <div class="slider-row" style="margin-bottom:6px;">
+                                    <div class="slider-head"><span>Posisi X</span><span id="val-wm-x">100%</span></div>
+                                    <input type="range" id="wm-pos-x" min="0" max="1" step="0.01" value="1" oninput="onWatermarkPosSlider()">
+                                </div>
+                                <div class="slider-row" style="margin-bottom:0;">
+                                    <div class="slider-head"><span>Posisi Y</span><span id="val-wm-y">100%</span></div>
+                                    <input type="range" id="wm-pos-y" min="0" max="1" step="0.01" value="1" oninput="onWatermarkPosSlider()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px;">
+                            <div class="slider-row" style="margin-bottom:0;">
+                                <div class="slider-head"><span>Ukuran</span><span id="val-wm-scale">100%</span></div>
+                                <input type="range" id="wm-scale" min="0.5" max="2.5" step="0.05" value="1.0" oninput="onWatermarkSettingChange()">
+                            </div>
+                            <div class="slider-row" style="margin-bottom:0;">
+                                <div class="slider-head"><span>Jarak</span><span id="val-wm-gap">35%</span></div>
+                                <input type="range" id="wm-gap" min="0.05" max="1.2" step="0.05" value="0.35" oninput="onWatermarkSettingChange()">
+                            </div>
+                            <div class="slider-row" style="margin-bottom:0;">
+                                <div class="slider-head"><span>Opacity</span><span id="val-wm-op">90%</span></div>
+                                <input type="range" id="wm-opacity" min="0.1" max="1.0" step="0.05" value="0.9" oninput="onWatermarkSettingChange()">
+                            </div>
+                        </div>
+                        <div class="sub-hint">Tips: Kamu juga bisa langsung klik &amp; geser watermark di layar pratinjau video.</div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Speed, Transitions (Fade) & Audio Gain -->
+                <div id="sec-time" style="display: none;">
+                    <div class="control-group">
+                        <label>Playback &amp; Export Speed (Time Remap)</label>
+                        <select id="speed-select" onchange="onSpeedChange()">
+                            <option value="0.25">0.25x (4x Slow Motion)</option>
+                            <option value="0.5">0.50x (2x Slow Motion)</option>
+                            <option value="0.75">0.75x (Smooth Slow)</option>
+                            <option value="1" selected>1.00x (Normal Speed)</option>
+                            <option value="1.25">1.25x (Fast Pace)</option>
+                            <option value="1.5">1.50x (1.5x Speed)</option>
+                            <option value="2">2.00x (2x Fast Forward)</option>
+                            <option value="4">4.00x (4x Timelapse)</option>
+                        </select>
+                        <div class="sub-hint">Durasi klip &amp; sinkronisasi audio disesuaikan otomatis.</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Smooth Fade In &amp; Fade Out (Video + Audio)</label>
+                        <div class="slider-row">
+                            <div class="slider-head"><span>Fade In Duration</span><span id="val-fadein">0.0s</span></div>
+                            <input type="range" id="fx-fadein" min="0" max="3.0" step="0.1" value="0" oninput="onTimeFxSlider()">
+                        </div>
+                        <div class="slider-row" style="margin-bottom: 0;">
+                            <div class="slider-head"><span>Fade Out Duration</span><span id="val-fadeout">0.0s</span></div>
+                            <input type="range" id="fx-fadeout" min="0" max="3.0" step="0.1" value="0" oninput="onTimeFxSlider()">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Audio Track &amp; Volume Gain</label>
+                        <select id="audio-select" onchange="onAudioModeChange()">
+                            <option value="keep" selected>Keep &amp; Process Audio Track</option>
+                            <option value="mute">Strip / Mute Audio Completely</option>
+                        </select>
+                        <div class="slider-row" style="margin-top: 9px; margin-bottom: 0;">
+                            <div class="slider-head"><span>Audio Volume Boost</span><span id="val-gain">100%</span></div>
+                            <input type="range" id="audio-gain" min="0" max="2.0" step="0.05" value="1.0" oninput="onTimeFxSlider()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Hybrid Upscaler & Pixel Enhancer -->
+                <div id="sec-enhance" style="display: none;">
+                    <div class="control-group">
+                        <label>Compute Engine Distribution</label>
+                        <select id="engine-mode" onchange="onEngineModeChange()">
+                            <option value="hybrid" selected>Hybrid (CPU Crop/Overlay + GPU Pixel Shader)</option>
+                            <option value="cpu">CPU Only (Canvas2D Filter — Hemat VRAM)</option>
+                        </select>
+                        <div class="sub-hint">Mode Hybrid membagi beban: CPU menangani crop/watermark, GPU menangani filter paralel piksel.</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Spatial Upscaler</label>
+                        <select id="upscale-select" onchange="updateTelemetry()">
+                            <option value="1" selected>Original Cropped Resolution (1.0x)</option>
+                            <option value="1.5">1.5x Edge-Sharp Upscale</option>
+                            <option value="2">2.0x Ultra Upscale</option>
+                            <option value="1080p">Target 1080p Full HD (1920×1080 / 1080×1920)</option>
+                            <option value="1440p">Target 1440p 2K QHD</option>
+                            <option value="2160p">Target 2160p 4K UHD</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Preset Penjernih Video</label>
+                        <select id="enhance-preset" onchange="applyEnhancePreset()">
+                            <option value="off" selected>Off (Raw Passthrough)</option>
+                            <option value="clear">Penjernih HD (Balanced Crisp)</option>
+                            <option value="restore">Restorasi Video Buram / Low-Res</option>
+                            <option value="lowlight">Denoise Malam / Low-Light</option>
+                            <option value="vivid">Vivid Cinema Grade</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Fine-Tune Pixel Shader Parameters</label>
+
+                        <div class="slider-row">
+                            <div class="slider-head"><span>CAS Sharpen (Ketajaman)</span><span id="val-sharpen">0%</span></div>
+                            <input type="range" id="sh-sharpen" min="0" max="2.0" step="0.05" value="0" oninput="onShaderSlider()">
+                        </div>
+
+                        <div class="slider-row">
+                            <div class="slider-head"><span>Bilateral Denoise (Halus Noise)</span><span id="val-denoise">0%</span></div>
+                            <input type="range" id="sh-denoise" min="0" max="1.0" step="0.05" value="0" oninput="onShaderSlider()">
+                        </div>
+
+                        <div class="slider-row">
+                            <div class="slider-head"><span>De-Haze (Jernihkan Kabut)</span><span id="val-dehaze">0%</span></div>
+                            <input type="range" id="sh-dehaze" min="0" max="1.0" step="0.05" value="0" oninput="onShaderSlider()">
+                        </div>
+
+                        <div class="slider-row">
+                            <div class="slider-head"><span>Contrast</span><span id="val-contrast">100%</span></div>
+                            <input type="range" id="sh-contrast" min="0.6" max="1.6" step="0.02" value="1.0" oninput="onShaderSlider()">
+                        </div>
+
+                        <div class="slider-row">
+                            <div class="slider-head"><span>Brightness</span><span id="val-brightness">0%</span></div>
+                            <input type="range" id="sh-brightness" min="-0.3" max="0.3" step="0.01" value="0" oninput="onShaderSlider()">
+                        </div>
+
+                        <div class="slider-row">
+                            <div class="slider-head"><span>Saturation</span><span id="val-saturation">100%</span></div>
+                            <input type="range" id="sh-saturation" min="0.0" max="1.8" step="0.05" value="1.0" oninput="onShaderSlider()">
+                        </div>
+
+                        <div class="slider-row" style="margin-bottom: 0;">
+                            <div class="slider-head"><span>Cinema Vignette</span><span id="val-vignette">0%</span></div>
+                            <input type="range" id="sh-vignette" min="0" max="1.0" step="0.05" value="0" oninput="onShaderSlider()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: Format, Compression & FPS -->
+                <div id="sec-export" style="display: none;">
+                    <div class="control-group">
+                        <label>Target Container &amp; Codec</label>
+                        <select id="format-select" onchange="updateTelemetry()">
+                            <option value="mp4" selected>MP4 (H.264 / AVC + AAC)</option>
+                            <option value="webm">WEBM (VP9 + Opus)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Compression &amp; Bitrate Preset</label>
+                        <select id="bitrate-preset" onchange="onBitratePresetChange()">
+                            <option value="master">Master / Near-Lossless (High Bitrate)</option>
+                            <option value="balanced" selected>Balanced HD (Optimal Size/Quality)</option>
+                            <option value="compact">Social / WhatsApp Compact (Small Size)</option>
+                            <option value="custom">Custom Bitrate (Mbps)</option>
+                        </select>
+                        <div id="custom-bitrate-box" style="display:none; margin-top:8px;">
+                            <input type="number" id="custom-mbps" value="6" min="0.5" max="100" step="0.5" oninput="updateTelemetry()">
+                        </div>
+                        <div class="sub-hint">Menggunakan Sequential rVFC + EOF Watchdog Flush + Quality VBR Mode.</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Target Frame Rate (FPS)</label>
+                        <select id="fps-select" onchange="updateTelemetry()">
+                            <option value="0" selected>Original / Default (30 FPS)</option>
+                            <option value="60">60 FPS (Smooth)</option>
+                            <option value="30">30 FPS (Standard)</option>
+                            <option value="24">24 FPS (Cinema)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Telemetry -->
+                <div class="stats-box">
+                    <div class="stat-item">
+                        <div class="stat-label">Source Info</div>
+                        <div class="stat-val" id="stat-source">-</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Target Output</div>
+                        <div class="stat-val sv-new" id="stat-target">-</div>
+                    </div>
+                </div>
+
+                <button class="btn-main" id="btn-render" onclick="startHybridExport()" disabled>
+                    ⚡ Render &amp; Export Video
+                </button>
+                <button class="btn-cancel" id="btn-cancel" onclick="cancelExport()">
+                    ✖ Batalkan Proses Render
+                </button>
+
+                <div class="progress-wrap" id="progress-wrap">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="status-msg" id="status-msg"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <video id="src-video" preload="auto" playsinline muted crossorigin="anonymous" style="position:fixed; width:1px; height:1px; opacity:0; pointer-events:none;"></video>
+
+    <script>
+        const srcVideo = document.getElementById('src-video');
+        const displayCanvas = document.getElementById('display-canvas');
+        const displayCtx = displayCanvas.getContext('2d', { alpha: false });
+
+        // Offscreen Stage 1 (CPU Geometry/Crop/Watermark) & Stage 2 (GPU WebGL2 Shader)
+        const cpuCanvas = document.createElement('canvas');
+        const cpuCtx = cpuCanvas.getContext('2d', { alpha: false, willReadFrequently: false });
+        const gpuCanvas = document.createElement('canvas');
+
+        const stageCard = document.getElementById('stage-card');
+        const videoInput = document.getElementById('video-input');
+        const btnRender = document.getElementById('btn-render');
+        const btnCancel = document.getElementById('btn-cancel');
+        const statusMsg = document.getElementById('status-msg');
+        const progressWrap = document.getElementById('progress-wrap');
+        const progressFill = document.getElementById('progress-fill');
+
+        let stagedFile = null;
+        let videoFile = null;
+        let activeObjectUrl = null;
+        let isLoadingVideo = false;
+        let abortLoad = false;
+        let activeFileReader = null;
+
+        let videoDuration = 0;
+        let srcWidth = 0;
+        let srcHeight = 0;
+        let detectedFps = 30;
+        let decodedAudioBuffer = null;
+
+        // Timeline & Multi-Segment State
+        let activeIn = 0;
+        let activeOut = 0;
+        let savedSegments = [];
+        let activeSegIdx = -1;
+
+        // Crop, Transform & Framing State
+        let aspectPreset = 'orig';
+        let cropRect = { x: 0, y: 0, w: 1, h: 1 };
+        let rotateSteps = 0;
+        let flipH = false;
+        let flipV = false;
+        let previewCropped = false;
+        let showSafeZone = false;
+        let holdRawBypass = false;
+
+        // Watermark State (Vector Templates + Custom Image + Interactive Bounds)
+        let wmLogoType = 'none';
+        let wmCustomImage = null;
+        let wmCustomObjectUrl = null;
+        const wmTemplateImages = {};
+        let wmNormX = 1.0;
+        let wmNormY = 1.0;
+        let wmHitBounds = null;
+        let wmDragState = null;
+        let wmIsHovering = false;
+
+        // Split Screen Compare State
+        let splitCompare = false;
+        let splitRatio = 0.5;
+
+        // Render Control
+        let isRendering = false;
+        let abortRender = false;
+
+        // Performance Telemetry Moving Avg
+        let avgCpuMs = 0;
+        let avgGpuMs = 0;
+        let perfFrameCounter = 0;
+
+        // Muxer Cache
+        let mp4MuxerMod = null;
+        let webmMuxerMod = null;
+
+        // =========================================
+        // 0. HIGH-DPI VECTOR LOGO TEMPLATES (SVG -> IMAGE CACHE)
+        // =========================================
+        const WM_SVG_TEMPLATES = {
+            yt: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="4" y="13" width="56" height="38" rx="11" fill="#FF0000"/><polygon points="26,23 26,41 43,32" fill="#FFFFFF"/></svg>`,
+            tiktok: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="6" width="52" height="52" rx="14" fill="#111111" stroke="#333" stroke-width="2"/><path d="M41 16v21.5a8.5 8.5 0 1 1-7-8.35v5.2a3.5 3.5 0 1 0 2 3.15V16h5z" fill="#25F4EE" transform="translate(-1.5,-1.5)"/><path d="M41 16v21.5a8.5 8.5 0 1 1-7-8.35v5.2a3.5 3.5 0 1 0 2 3.15V16h5z" fill="#FE2C55" transform="translate(1.5,1.5)"/><path d="M41 16v21.5a8.5 8.5 0 1 1-7-8.35v5.2a3.5 3.5 0 1 0 2 3.15V16h5z" fill="#FFFFFF"/></svg>`,
+            fb: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#1877F2"/><path d="M36.5 57V36.5h6.5l1-7.5h-7.5v-4.8c0-2.2.7-3.7 3.8-3.7h4V13.8c-.7-.1-3.1-.3-5.8-.3-5.8 0-9.7 3.5-9.7 10v5.5H22v7.5h6.8V57h7.7z" fill="#FFFFFF"/></svg>`,
+            ig: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#F58529"/><stop offset="50%" stop-color="#DD2A7B"/><stop offset="100%" stop-color="#8134AF"/></linearGradient></defs><rect x="6" y="6" width="52" height="52" rx="15" fill="url(#igg)"/><rect x="15" y="15" width="34" height="34" rx="10" fill="none" stroke="#FFF" stroke-width="3.8"/><circle cx="32" cy="32" r="8.5" fill="none" stroke="#FFF" stroke-width="3.8"/><circle cx="43.5" cy="20.5" r="2.5" fill="#FFF"/></svg>`,
+            x: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="6" width="52" height="52" rx="14" fill="#0F1419" stroke="#333" stroke-width="2"/><path d="M18 17h7.5l8.2 11.4L43.5 17H48L35.7 31.1 49 49h-7.5l-9-12.4L21.8 49H17l13.2-15.1L18 17zm4.5 2.8 18.8 26.4h2.8L25.3 19.8h-2.8z" fill="#FFFFFF"/></svg>`,
+            twitch: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="6" width="52" height="52" rx="14" fill="#9146FF"/><path d="M18 15l-3 6v26h9v6l6-6h7l11-11V15H18zm26 19l-6 6h-8l-6 6v-6h-6V19h26v15zm-6-10v10h-4V24h4zm-10 0v10h-4V24h4z" fill="#FFFFFF"/></svg>`,
+            discord: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="6" width="52" height="52" rx="14" fill="#5865F2"/><path d="M44.5 21.5a32 32 0 0 0-8-2.5l-1 2a29 29 0 0 0-7 0l-1-2a32 32 0 0 0-8 2.5C14.5 29 13 36.2 13.8 43.3a32 32 0 0 0 9.8 5l2-3.3a20 20 0 0 1-3.2-1.5l.8-.6a23 23 0 0 0 17.6 0l.8.6a20 20 0 0 1-3.2 1.5l2 3.3a32 32 0 0 0 9.8-5c.9-8-1.4-15.1-5.7-21.8zM26 38.5c-1.9 0-3.5-1.8-3.5-4s1.5-4 3.5-4 3.5 1.8 3.5 4-1.6 4-3.5 4zm12 0c-1.9 0-3.5-1.8-3.5-4s1.5-4 3.5-4 3.5 1.8 3.5 4-1.6 4-3.5 4z" fill="#FFFFFF"/></svg>`,
+            wa: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#25D366"/><path d="M32 15a17 17 0 0 0-14.7 25.5L15 49l8.8-2.3A17 17 0 1 0 32 15zm9.8 23.8c-.4 1.2-2.3 2.2-3.2 2.3-.9.1-2 .2-3.2-.2-.8-.3-1.8-.6-3.1-1.2-5.4-2.3-8.9-7.8-9.2-8.2-.3-.4-2.2-2.9-2.2-5.6s1.4-4 1.9-4.5c.5-.5 1.1-.7 1.5-.7h1.1c.4 0 .8-.1 1.3 1 .5 1.2 1.6 3.9 1.7 4.2.1.3.2.6 0 1-.2.4-.3.6-.6 1-.3.3-.6.7-.8 1-.3.3-.6.6-.3 1.1.3.5 1.4 2.3 3 3.7 2.1 1.8 3.8 2.4 4.3 2.7.5.3.9.2 1.2-.1.3-.4 1.4-1.6 1.8-2.2.4-.5.8-.4 1.3-.2.5.2 3.3 1.6 3.9 1.8.6.3 1 .4 1.1.7.1.3.1 1.5-.3 2.7z" fill="#FFFFFF"/></svg>`
+        };
+
+        function initWatermarkTemplates() {
+            Object.entries(WM_SVG_TEMPLATES).forEach(([key, svg]) => {
+                const uri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+                const img = new Image();
+                img.src = uri;
+                wmTemplateImages[key] = img;
+                const icoEl = document.getElementById(`ico-${key}`);
+                if (icoEl) icoEl.src = uri;
+            });
+        }
+
+        function selectWatermarkTemplate(type, btnEl = null) {
+            wmLogoType = type;
+            document.querySelectorAll('#wm-tpl-grid .wm-tpl-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) {
+                btnEl.classList.add('active');
+            } else {
+                const targetBtn = document.querySelector(`#wm-tpl-grid .wm-tpl-btn[data-tpl="${type}"]`);
+                if (targetBtn) targetBtn.classList.add('active');
+            }
+
+            const statusEl = document.getElementById('wm-logo-status');
+            const thumbEl = document.getElementById('wm-custom-thumb');
+            const clearBtn = document.getElementById('btn-clear-logo');
+
+            if (type === 'none') {
+                statusEl.innerText = 'Tanpa logo (Hanya teks)';
+                thumbEl.style.display = 'none';
+                clearBtn.style.display = 'none';
+            } else if (type === 'custom' && wmCustomImage) {
+                statusEl.innerText = 'Logo Kustom Aktif';
+                thumbEl.src = wmCustomImage.src;
+                thumbEl.style.display = 'block';
+                clearBtn.style.display = 'inline-block';
+            } else {
+                const labelMap = {
+                    yt: 'Template YouTube', tiktok: 'Template TikTok', fb: 'Template Facebook',
+                    ig: 'Template Instagram', x: 'Template X / Twitter', twitch: 'Template Twitch',
+                    discord: 'Template Discord', wa: 'Template WhatsApp'
+                };
+                statusEl.innerText = `${labelMap[type] || type.toUpperCase()} Aktif`;
+                thumbEl.src = wmTemplateImages[type]?.src || '';
+                thumbEl.style.display = 'block';
+                clearBtn.style.display = 'inline-block';
+            }
+        }
+
+        function clearWatermarkLogo() {
+            selectWatermarkTemplate('none');
+        }
+
+        document.getElementById('wm-logo-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (wmCustomObjectUrl) URL.revokeObjectURL(wmCustomObjectUrl);
+            wmCustomObjectUrl = URL.createObjectURL(file);
+
+            const img = new Image();
+            img.onload = () => {
+                wmCustomImage = img;
+                selectWatermarkTemplate('custom', document.getElementById('btn-tpl-custom'));
+                document.getElementById('wm-logo-status').innerText = `Custom: ${file.name}`;
+            };
+            img.src = wmCustomObjectUrl;
+            e.target.value = '';
+        });
+
+        function setWatermarkAnchor(ax, ay, btnEl = null) {
+            wmNormX = ax;
+            wmNormY = ay;
+            document.getElementById('wm-pos-x').value = ax;
+            document.getElementById('wm-pos-y').value = ay;
+            document.getElementById('val-wm-x').innerText = Math.round(ax * 100) + '%';
+            document.getElementById('val-wm-y').innerText = Math.round(ay * 100) + '%';
+
+            document.querySelectorAll('#wm-anchor-grid .anchor-cell').forEach(c => c.classList.remove('active'));
+            if (btnEl) {
+                btnEl.classList.add('active');
+            } else {
+                const match = document.querySelector(`#wm-anchor-grid .anchor-cell[data-ax="${ax}"][data-ay="${ay}"]`);
+                if (match) match.classList.add('active');
+            }
+        }
+
+        function onWatermarkPosSlider() {
+            wmNormX = parseFloat(document.getElementById('wm-pos-x').value);
+            wmNormY = parseFloat(document.getElementById('wm-pos-y').value);
+            document.getElementById('val-wm-x').innerText = Math.round(wmNormX * 100) + '%';
+            document.getElementById('val-wm-y').innerText = Math.round(wmNormY * 100) + '%';
+            document.querySelectorAll('#wm-anchor-grid .anchor-cell').forEach(c => c.classList.remove('active'));
+        }
+
+        function onWatermarkSettingChange() {
+            document.getElementById('val-wm-scale').innerText = Math.round(parseFloat(document.getElementById('wm-scale').value) * 100) + '%';
+            document.getElementById('val-wm-gap').innerText = Math.round(parseFloat(document.getElementById('wm-gap').value) * 100) + '%';
+            document.getElementById('val-wm-op').innerText = Math.round(parseFloat(document.getElementById('wm-opacity').value) * 100) + '%';
+        }
+
+        // =========================================
+        // 1. STREAMLINED WEBGL2 PIXEL SHADER (GPU STAGE)
+        // =========================================
+        const gl = gpuCanvas.getContext('webgl2', {
+            alpha: false,
+            antialias: false,
+            depth: false,
+            stencil: false,
+            preserveDrawingBuffer: true,
+            powerPreference: 'high-performance'
+        });
+
+        let glProgram = null;
+        let glTexture = null;
+        let glUniforms = {};
+
+        function initWebGL2() {
+            const badge = document.getElementById('gpu-badge');
+            if (!gl) {
+                badge.innerText = 'GPU SHADER: CPU FALLBACK';
+                badge.style.color = '#ff9100';
+                document.getElementById('engine-mode').value = 'cpu';
+                return;
+            }
+
+            const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+            const rendererName = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'WebGL2 Hardware';
+            badge.innerText = `GPU: ${rendererName.slice(0, 24)}`;
+
+            const vsSource = `#version 300 es
+                in vec2 a_pos;
+                in vec2 a_uv;
+                out vec2 v_uv;
+                void main() {
+                    v_uv = vec2(a_uv.x, 1.0 - a_uv.y);
+                    gl_Position = vec4(a_pos, 0.0, 1.0);
+                }
+            `;
+
+            const fsSource = `#version 300 es
+                precision highp float;
+                in vec2 v_uv;
+                out vec4 outColor;
+
+                uniform sampler2D u_tex;
+                uniform vec2 u_texel;
+                uniform float u_sharpen;
+                uniform float u_denoise;
+                uniform float u_dehaze;
+                uniform float u_contrast;
+                uniform float u_brightness;
+                uniform float u_saturation;
+                uniform float u_vignette;
+                uniform float u_fadeAlpha;
+                uniform float u_splitX;
+
+                float getLuma(vec3 c) {
+                    return dot(c, vec3(0.2126, 0.7152, 0.0722));
+                }
+
+                void main() {
+                    vec3 center = texture(u_tex, v_uv).rgb;
+
+                    if (u_splitX >= 0.0 && v_uv.x < u_splitX) {
+                        outColor = vec4(center, 1.0);
+                        return;
+                    }
+
+                    vec3 color = center;
+
+                    if (u_denoise > 0.001) {
+                        vec3 sum = center;
+                        float wSum = 1.0;
+                        float sigma = 38.0;
+                        for (int x = -1; x <= 1; x++) {
+                            for (int y = -1; y <= 1; y++) {
+                                if (x == 0 && y == 0) continue;
+                                vec2 nUV = clamp(v_uv + vec2(float(x), float(y)) * u_texel, 0.0, 1.0);
+                                vec3 s = texture(u_tex, nUV).rgb;
+                                float diff = length(s - center);
+                                float w = exp(-diff * diff * sigma);
+                                sum += s * w;
+                                wSum += w;
+                            }
+                        }
+                        color = mix(color, sum / wSum, u_denoise);
+                    }
+
+                    if (u_sharpen > 0.001) {
+                        vec3 n = texture(u_tex, clamp(v_uv + vec2(0.0, -u_texel.y), 0.0, 1.0)).rgb;
+                        vec3 s = texture(u_tex, clamp(v_uv + vec2(0.0,  u_texel.y), 0.0, 1.0)).rgb;
+                        vec3 e = texture(u_tex, clamp(v_uv + vec2( u_texel.x, 0.0), 0.0, 1.0)).rgb;
+                        vec3 w = texture(u_tex, clamp(v_uv + vec2(-u_texel.x, 0.0), 0.0, 1.0)).rgb;
+
+                        vec3 minRGB = min(color, min(min(n, s), min(e, w)));
+                        vec3 maxRGB = max(color, max(max(n, s), max(e, w)));
+                        vec3 localContrast = maxRGB - minRGB;
+
+                        vec3 blur = (n + s + e + w) * 0.25;
+                        vec3 detail = color - blur;
+                        vec3 adaptiveWeight = clamp(1.0 - localContrast * 0.45, 0.2, 1.0);
+                        color += detail * u_sharpen * adaptiveWeight;
+                    }
+
+                    if (u_dehaze > 0.001) {
+                        float veil = u_dehaze * 0.075;
+                        color = (color - veil) / max(0.25, 1.0 - veil);
+                    }
+
+                    color += u_brightness;
+                    color = (color - 0.5) * u_contrast + 0.5;
+                    color = mix(vec3(getLuma(color)), color, u_saturation);
+
+                    if (u_vignette > 0.001) {
+                        float dist = distance(v_uv, vec2(0.5));
+                        float vig = smoothstep(0.85, 0.28, dist);
+                        color *= mix(1.0, vig, u_vignette * 0.85);
+                    }
+
+                    color *= u_fadeAlpha;
+                    outColor = vec4(clamp(color, 0.0, 1.0), 1.0);
+                }
+            `;
+
+            const compile = (type, src) => {
+                const s = gl.createShader(type);
+                gl.shaderSource(s, src);
+                gl.compileShader(s);
+                if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+                    throw new Error(gl.getShaderInfoLog(s));
+                }
+                return s;
+            };
+
+            glProgram = gl.createProgram();
+            gl.attachShader(glProgram, compile(gl.VERTEX_SHADER, vsSource));
+            gl.attachShader(glProgram, compile(gl.FRAGMENT_SHADER, fsSource));
+            gl.linkProgram(glProgram);
+            gl.useProgram(glProgram);
+
+            const quad = new Float32Array([
+                -1, -1, 0, 0,
+                 1, -1, 1, 0,
+                -1,  1, 0, 1,
+                 1,  1, 1, 1
+            ]);
+            const vbo = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+            gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+
+            const posLoc = gl.getAttribLocation(glProgram, 'a_pos');
+            const uvLoc = gl.getAttribLocation(glProgram, 'a_uv');
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 16, 0);
+            gl.enableVertexAttribArray(uvLoc);
+            gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 16, 8);
+
+            glTexture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, glTexture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+            [
+                'u_tex', 'u_texel', 'u_sharpen', 'u_denoise', 'u_dehaze',
+                'u_contrast', 'u_brightness', 'u_saturation', 'u_vignette', 'u_fadeAlpha', 'u_splitX'
+            ].forEach(u => glUniforms[u] = gl.getUniformLocation(glProgram, u));
+        }
+
+        // =========================================
+        // 2. HYBRID CPU + GPU FRAME COMPOSITOR
+        // =========================================
+        function getEffectiveSourceDims() {
+            const swapped = (rotateSteps % 2) === 1;
+            return {
+                effW: swapped ? srcHeight : srcWidth,
+                effH: swapped ? srcWidth : srcHeight
+            };
+        }
+
+        function computeFadeAlpha(outputElapsedSec, totalOutputSec) {
+            const fadeIn = parseFloat(document.getElementById('fx-fadein').value) || 0;
+            const fadeOut = parseFloat(document.getElementById('fx-fadeout').value) || 0;
+            let alpha = 1.0;
+            if (fadeIn > 0.01 && outputElapsedSec < fadeIn) {
+                alpha = Math.min(alpha, Math.max(0, outputElapsedSec / fadeIn));
+            }
+            if (fadeOut > 0.01 && (totalOutputSec - outputElapsedSec) < fadeOut) {
+                alpha = Math.min(alpha, Math.max(0, (totalOutputSec - outputElapsedSec) / fadeOut));
+            }
+            return alpha;
+        }
+
+        function hasActivePixelShaders() {
+            if (holdRawBypass) return false;
+            return (
+                parseFloat(document.getElementById('sh-sharpen').value) > 0.001 ||
+                parseFloat(document.getElementById('sh-denoise').value) > 0.001 ||
+                parseFloat(document.getElementById('sh-dehaze').value) > 0.001 ||
+                Math.abs(parseFloat(document.getElementById('sh-contrast').value) - 1.0) > 0.005 ||
+                Math.abs(parseFloat(document.getElementById('sh-brightness').value)) > 0.005 ||
+                Math.abs(parseFloat(document.getElementById('sh-saturation').value) - 1.0) > 0.005 ||
+                parseFloat(document.getElementById('sh-vignette').value) > 0.001
+            );
+        }
+
+        function processHybridFrame(isExporting = false, exportElapsedSec = 0, exportTotalSec = 1) {
+            if (srcVideo.readyState < 2) return null;
+
+            const t0 = performance.now();
+            const framingMode = document.getElementById('framing-mode').value;
+            const { effW, effH } = getEffectiveSourceDims();
+            const { outW, outH } = computeOutputResolution();
+
+            const applyCropNow = isExporting || previewCropped || framingMode === 'blurpad';
+            const targetW = applyCropNow ? outW : effW;
+            const targetH = applyCropNow ? outH : effH;
+
+            if (cpuCanvas.width !== targetW || cpuCanvas.height !== targetH) {
+                cpuCanvas.width = targetW;
+                cpuCanvas.height = targetH;
+            }
+
+            cpuCtx.save();
+            cpuCtx.imageSmoothingEnabled = true;
+            cpuCtx.imageSmoothingQuality = 'high';
+            cpuCtx.fillStyle = '#000';
+            cpuCtx.fillRect(0, 0, targetW, targetH);
+
+            if (framingMode === 'blurpad' && !holdRawBypass) {
+                cpuCtx.save();
+                cpuCtx.filter = 'blur(18px) brightness(0.45)';
+                drawTransformedVideo(cpuCtx, targetW, targetH, 'cover');
+                cpuCtx.restore();
+
+                drawTransformedVideo(cpuCtx, targetW, targetH, 'contain');
+            } else if (applyCropNow && framingMode === 'crop') {
+                drawCroppedTransformedVideo(cpuCtx, targetW, targetH, cropRect);
+            } else {
+                drawTransformedVideo(cpuCtx, targetW, targetH, 'fill');
+            }
+
+            // CPU Stage: Brand Logo + Text Watermark Overlay (WYSIWYG inside active crop region)
+            if (!holdRawBypass) {
+                const inUncroppedPreview = (!applyCropNow && framingMode === 'crop' && aspectPreset !== 'orig');
+                const wmRegion = inUncroppedPreview
+                    ? {
+                        rx: cropRect.x * targetW,
+                        ry: cropRect.y * targetH,
+                        rw: cropRect.w * targetW,
+                        rh: cropRect.h * targetH
+                    }
+                    : { rx: 0, ry: 0, rw: targetW, rh: targetH };
+
+                drawCpuWatermark(cpuCtx, wmRegion, targetW, targetH, isExporting);
+            } else {
+                wmHitBounds = null;
+            }
+
+            cpuCtx.restore();
+            const tCpuEnd = performance.now();
+
+            const speed = parseFloat(document.getElementById('speed-select').value) || 1;
+            const prevElapsed = Math.max(0, (srcVideo.currentTime - activeIn) / speed);
+            const prevTotal = Math.max(0.05, (activeOut - activeIn) / speed);
+            const fadeAlpha = isExporting
+                ? computeFadeAlpha(exportElapsedSec, exportTotalSec)
+                : computeFadeAlpha(prevElapsed, prevTotal);
+
+            const engineMode = document.getElementById('engine-mode').value;
+            const useGpu = (engineMode === 'hybrid') && gl && glProgram && !holdRawBypass &&
+                           (hasActivePixelShaders() || fadeAlpha < 0.999 || (!isExporting && splitCompare));
+
+            let finalCanvas = cpuCanvas;
+
+            if (useGpu) {
+                if (gpuCanvas.width !== targetW || gpuCanvas.height !== targetH) {
+                    gpuCanvas.width = targetW;
+                    gpuCanvas.height = targetH;
+                }
+
+                gl.viewport(0, 0, targetW, targetH);
+                gl.useProgram(glProgram);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, glTexture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cpuCanvas);
+
+                gl.uniform1i(glUniforms.u_tex, 0);
+                gl.uniform2f(glUniforms.u_texel, 1.0 / Math.max(1, targetW), 1.0 / Math.max(1, targetH));
+                gl.uniform1f(glUniforms.u_sharpen, parseFloat(document.getElementById('sh-sharpen').value));
+                gl.uniform1f(glUniforms.u_denoise, parseFloat(document.getElementById('sh-denoise').value));
+                gl.uniform1f(glUniforms.u_dehaze, parseFloat(document.getElementById('sh-dehaze').value));
+                gl.uniform1f(glUniforms.u_contrast, parseFloat(document.getElementById('sh-contrast').value));
+                gl.uniform1f(glUniforms.u_brightness, parseFloat(document.getElementById('sh-brightness').value));
+                gl.uniform1f(glUniforms.u_saturation, parseFloat(document.getElementById('sh-saturation').value));
+                gl.uniform1f(glUniforms.u_vignette, parseFloat(document.getElementById('sh-vignette').value));
+                gl.uniform1f(glUniforms.u_fadeAlpha, fadeAlpha);
+                gl.uniform1f(glUniforms.u_splitX, (!isExporting && splitCompare) ? splitRatio : -1.0);
+
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                finalCanvas = gpuCanvas;
+            } else if (!holdRawBypass && (hasActivePixelShaders() || fadeAlpha < 0.999)) {
+                const bri = 100 + Math.round(parseFloat(document.getElementById('sh-brightness').value) * 100);
+                const con = Math.round(parseFloat(document.getElementById('sh-contrast').value) * 100);
+                const sat = Math.round(parseFloat(document.getElementById('sh-saturation').value) * 100);
+                cpuCtx.save();
+                cpuCtx.filter = `brightness(${bri}%) contrast(${con}%) saturate(${sat}%)`;
+                cpuCtx.drawImage(cpuCanvas, 0, 0);
+                cpuCtx.restore();
+                if (fadeAlpha < 0.999) {
+                    cpuCtx.fillStyle = `rgba(0,0,0,${1 - fadeAlpha})`;
+                    cpuCtx.fillRect(0, 0, targetW, targetH);
+                }
+            }
+
+            const tGpuEnd = performance.now();
+            const cpuMs = tCpuEnd - t0;
+            const gpuMs = tGpuEnd - tCpuEnd;
+
+            avgCpuMs = avgCpuMs * 0.85 + cpuMs * 0.15;
+            avgGpuMs = avgGpuMs * 0.85 + gpuMs * 0.15;
+            if ((++perfFrameCounter % 12) === 0) {
+                document.getElementById('perf-badge').innerText = `CPU: ${avgCpuMs.toFixed(1)}ms | GPU: ${avgGpuMs.toFixed(1)}ms`;
+            }
+
+            if (!isExporting) {
+                if (displayCanvas.width !== targetW || displayCanvas.height !== targetH) {
+                    displayCanvas.width = targetW;
+                    displayCanvas.height = targetH;
+                    updateCropBoxDOM();
+                    updateSafeZoneDOM();
+                }
+                displayCtx.drawImage(finalCanvas, 0, 0);
+
+                // Interactive Watermark Selection Box (drawn ONLY on displayCanvas preview)
+                if (wmHitBounds && (wmDragState || wmIsHovering)) {
+                    const bx = wmHitBounds.x * targetW;
+                    const by = wmHitBounds.y * targetH;
+                    const bw = wmHitBounds.w * targetW;
+                    const bh = wmHitBounds.h * targetH;
+                    displayCtx.save();
+                    displayCtx.strokeStyle = '#00e5ff';
+                    displayCtx.lineWidth = Math.max(2, Math.round(targetW * 0.0025));
+                    displayCtx.setLineDash([6, 4]);
+                    displayCtx.strokeRect(bx - 3, by - 3, bw + 6, bh + 6);
+                    displayCtx.restore();
+                }
+            }
+
+            return finalCanvas;
+        }
+
+        function drawTransformedVideo(ctx, dstW, dstH, fitMode = 'fill') {
+            const { effW, effH } = getEffectiveSourceDims();
+            let drawW = dstW, drawH = dstH, offX = 0, offY = 0;
+
+            if (fitMode === 'contain') {
+                const scale = Math.min(dstW / effW, dstH / effH);
+                drawW = effW * scale;
+                drawH = effH * scale;
+                offX = (dstW - drawW) * 0.5;
+                offY = (dstH - drawH) * 0.5;
+            } else if (fitMode === 'cover') {
+                const scale = Math.max(dstW / effW, dstH / effH);
+                drawW = effW * scale;
+                drawH = effH * scale;
+                offX = (dstW - drawW) * 0.5;
+                offY = (dstH - drawH) * 0.5;
+            }
+
+            ctx.save();
+            ctx.translate(offX + drawW * 0.5, offY + drawH * 0.5);
+            ctx.rotate((rotateSteps * Math.PI) / 2);
+            ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+            const swapped = (rotateSteps % 2) === 1;
+            const w = swapped ? drawH : drawW;
+            const h = swapped ? drawW : drawH;
+            ctx.drawImage(srcVideo, -w * 0.5, -h * 0.5, w, h);
+            ctx.restore();
+        }
+
+        function drawCroppedTransformedVideo(ctx, dstW, dstH, rect) {
+            const { effW, effH } = getEffectiveSourceDims();
+            const scaleX = dstW / (rect.w * effW);
+            const scaleY = dstH / (rect.h * effH);
+            const fullW = effW * scaleX;
+            const fullH = effH * scaleY;
+            const shiftX = -rect.x * fullW;
+            const shiftY = -rect.y * fullH;
+
+            ctx.save();
+            ctx.translate(shiftX + fullW * 0.5, shiftY + fullH * 0.5);
+            ctx.rotate((rotateSteps * Math.PI) / 2);
+            ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+            const swapped = (rotateSteps % 2) === 1;
+            const w = swapped ? fullH : fullW;
+            const h = swapped ? fullW : fullH;
+            ctx.drawImage(srcVideo, -w * 0.5, -h * 0.5, w, h);
+            ctx.restore();
+        }
+
+        function drawRoundedRectPath(ctx, x, y, w, h, r) {
+            const radius = Math.min(r, w * 0.5, h * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + w - radius, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+            ctx.lineTo(x + w, y + h - radius);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+            ctx.lineTo(x + radius, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        function drawCpuWatermark(ctx, region, canvasW, canvasH, isExporting) {
+            const { rx, ry, rw, rh } = region;
+            const wmText = document.getElementById('wm-text').value.trim();
+            const layout = document.getElementById('wm-layout').value;
+
+            let logoImg = null;
+            if (wmLogoType === 'custom' && wmCustomImage && wmCustomImage.complete && wmCustomImage.naturalWidth > 0) {
+                logoImg = wmCustomImage;
+            } else if (wmLogoType !== 'none' && wmLogoType !== 'custom') {
+                const tplImg = wmTemplateImages[wmLogoType];
+                if (tplImg && tplImg.complete && tplImg.naturalWidth > 0) {
+                    logoImg = tplImg;
+                }
+            }
+
+            const hasLogo = logoImg !== null;
+            const hasText = wmText.length > 0 && layout !== 'logo-only';
+
+            if (!hasLogo && !hasText) {
+                if (!isExporting) wmHitBounds = null;
+                return;
+            }
+
+            const scaleMult = parseFloat(document.getElementById('wm-scale').value) || 1.0;
+            const gapRatio = parseFloat(document.getElementById('wm-gap').value) || 0.35;
+            const opacity = parseFloat(document.getElementById('wm-opacity').value) || 0.9;
+            const textColor = document.getElementById('wm-color').value;
+            const fontWeight = document.getElementById('wm-weight').value;
+            const bgStyle = document.getElementById('wm-bg').value;
+
+            const fontSize = Math.max(14, Math.round(Math.min(rw, rh) * 0.04 * scaleMult));
+            const logoH = Math.round(fontSize * 1.38);
+            const logoAspect = hasLogo ? (logoImg.naturalWidth / Math.max(1, logoImg.naturalHeight)) : 1;
+            const logoW = hasLogo ? Math.round(logoH * logoAspect) : 0;
+
+            ctx.save();
+            ctx.globalAlpha = opacity;
+            ctx.font = `${fontWeight} ${fontSize}px "Segoe UI", sans-serif`;
+
+            const textW = hasText ? Math.ceil(ctx.measureText(wmText).width) : 0;
+            const textH = hasText ? fontSize : 0;
+            const gap = (hasLogo && hasText) ? Math.round(fontSize * gapRatio) : 0;
+
+            let contentW = 0;
+            let contentH = 0;
+            if (layout === 'top' || layout === 'bottom') {
+                contentW = Math.max(logoW, textW);
+                contentH = logoH + gap + textH;
+            } else {
+                contentW = logoW + gap + textW;
+                contentH = Math.max(logoH, textH);
+            }
+
+            const padX = bgStyle !== 'none' ? Math.round(fontSize * 0.55) : Math.round(fontSize * 0.14);
+            const padY = bgStyle !== 'none' ? Math.round(fontSize * 0.34) : Math.round(fontSize * 0.14);
+            const boxW = contentW + padX * 2;
+            const boxH = contentH + padY * 2;
+
+            const margin = Math.round(Math.min(rw, rh) * 0.032);
+            const availW = Math.max(0, rw - margin * 2 - boxW);
+            const availH = Math.max(0, rh - margin * 2 - boxH);
+
+            const boxX = rx + margin + wmNormX * availW;
+            const boxY = ry + margin + wmNormY * availH;
+
+            if (!isExporting) {
+                wmHitBounds = {
+                    x: boxX / canvasW,
+                    y: boxY / canvasH,
+                    w: boxW / canvasW,
+                    h: boxH / canvasH,
+                    availW,
+                    availH,
+                    canvasW,
+                    canvasH
+                };
+            }
+
+            // Optional Pill Background
+            if (bgStyle !== 'none') {
+                drawRoundedRectPath(ctx, boxX, boxY, boxW, boxH, Math.round(fontSize * 0.45));
+                if (bgStyle === 'dark') {
+                    ctx.fillStyle = 'rgba(10, 12, 16, 0.74)';
+                    ctx.fill();
+                    ctx.lineWidth = Math.max(1, Math.round(fontSize * 0.05));
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+                    ctx.stroke();
+                } else if (bgStyle === 'light') {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.86)';
+                    ctx.fill();
+                    ctx.lineWidth = Math.max(1, Math.round(fontSize * 0.05));
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.16)';
+                    ctx.stroke();
+                } else if (bgStyle === 'accent') {
+                    ctx.fillStyle = 'rgba(255, 145, 0, 0.9)';
+                    ctx.fill();
+                }
+            }
+
+            const cx = boxX + padX;
+            const cy = boxY + padY;
+
+            // Compute Logo & Text Coordinates by Relative Layout
+            let lx = cx, ly = cy, tx = cx, ty = cy;
+            ctx.textBaseline = 'middle';
+
+            if (!hasLogo && hasText) {
+                tx = cx;
+                ty = cy + contentH * 0.5;
+                ctx.textAlign = 'left';
+            } else if (hasLogo && !hasText) {
+                lx = cx;
+                ly = cy;
+            } else if (layout === 'left') {
+                lx = cx;
+                ly = cy + (contentH - logoH) * 0.5;
+                tx = cx + logoW + gap;
+                ty = cy + contentH * 0.5;
+                ctx.textAlign = 'left';
+            } else if (layout === 'right') {
+                tx = cx;
+                ty = cy + contentH * 0.5;
+                ctx.textAlign = 'left';
+                lx = cx + textW + gap;
+                ly = cy + (contentH - logoH) * 0.5;
+            } else if (layout === 'top') {
+                lx = cx + (contentW - logoW) * 0.5;
+                ly = cy;
+                tx = cx + contentW * 0.5;
+                ty = cy + logoH + gap + textH * 0.5;
+                ctx.textAlign = 'center';
+            } else if (layout === 'bottom') {
+                tx = cx + contentW * 0.5;
+                ty = cy + textH * 0.5;
+                ctx.textAlign = 'center';
+                lx = cx + (contentW - logoW) * 0.5;
+                ly = cy + textH + gap;
+            }
+
+            if (hasLogo) {
+                if (bgStyle === 'none') {
+                    ctx.shadowColor = 'rgba(0,0,0,0.75)';
+                    ctx.shadowBlur = Math.round(fontSize * 0.25);
+                    ctx.shadowOffsetX = 1;
+                    ctx.shadowOffsetY = 2;
+                }
+                ctx.drawImage(logoImg, lx, ly, logoW, logoH);
+            }
+
+            if (hasText) {
+                if (bgStyle === 'none') {
+                    ctx.shadowColor = 'rgba(0,0,0,0.88)';
+                    ctx.shadowBlur = Math.round(fontSize * 0.32);
+                    ctx.shadowOffsetX = 2;
+                    ctx.shadowOffsetY = 2;
+                } else {
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                }
+                ctx.fillStyle = textColor;
+                ctx.fillText(wmText, tx, ty);
+            }
+
+            ctx.restore();
+        }
+
+        function previewLoop() {
+            if (!isRendering && videoFile) {
+                processHybridFrame(false);
+                updatePlayheadUI();
+
+                if (!srcVideo.paused && srcVideo.currentTime >= activeOut) {
+                    srcVideo.currentTime = activeIn;
+                }
+            }
+            requestAnimationFrame(previewLoop);
+        }
+
+        // =========================================
+        // 3. STAGED FILE LOADER (HOLD / START + PROGRESS)
+        // =========================================
+        stageCard.addEventListener('dragover', (e) => { e.preventDefault(); stageCard.classList.add('dragover'); });
+        stageCard.addEventListener('dragleave', () => stageCard.classList.remove('dragover'));
+        stageCard.addEventListener('drop', (e) => {
+            e.preventDefault();
+            stageCard.classList.remove('dragover');
+            if (e.dataTransfer.files.length) stageVideoFile(e.dataTransfer.files[0]);
+        });
+        videoInput.addEventListener('change', (e) => {
+            if (e.target.files.length) stageVideoFile(e.target.files[0]);
+            videoInput.value = '';
+        });
+
+        function setLoadProgress(pct, labelText) {
+            document.getElementById('load-progress-box').style.display = 'flex';
+            document.getElementById('load-bar-fill').style.width = `${pct}%`;
+            document.getElementById('load-step-pct').innerText = `${Math.round(pct)}%`;
+            if (labelText) document.getElementById('load-step-label').innerText = labelText;
+        }
+
+        function stageVideoFile(file) {
+            if (isLoadingVideo) abortGpuLoadPipeline();
+
+            stagedFile = file;
+            videoFile = null;
+            decodedAudioBuffer = null;
+
+            srcVideo.pause();
+            srcVideo.removeAttribute('src');
+            srcVideo.load();
+
+            if (activeObjectUrl) {
+                URL.revokeObjectURL(activeObjectUrl);
+                activeObjectUrl = null;
+            }
+
+            document.getElementById('drop-placeholder').style.display = 'none';
+            document.getElementById('video-workspace').style.display = 'none';
+            document.getElementById('staging-box').style.display = 'flex';
+            document.getElementById('load-progress-box').style.display = 'none';
+            document.getElementById('btn-stage-start').disabled = false;
+            document.getElementById('btn-stage-abort').style.display = 'none';
+            stageCard.classList.remove('has-video');
+
+            const tlPanel = document.getElementById('timeline-panel');
+            tlPanel.style.opacity = '0.45';
+            tlPanel.style.pointerEvents = 'none';
+            btnRender.disabled = true;
+
+            const ext = (file.name.split('.').pop() || 'VIDEO').toUpperCase();
+            document.getElementById('stg-filename').innerText = file.name;
+            document.getElementById('stg-filemeta').innerText = `Ukuran: ${formatBytes(file.size)} • Kontainer: ${ext} (${file.type || 'video/raw'})`;
+
+            const chkAudio = document.getElementById('chk-decode-audio');
+            chkAudio.checked = file.size <= 300 * 1024 * 1024;
+
+            setStatus('⏸ File ditahan di antrean. Klik "Mulai Muat ke Studio" untuk lanjut.', '#ff9100');
+
+            if (document.getElementById('chk-auto-load').checked) {
+                startGpuLoadPipeline();
+            }
+        }
+
+        function releaseGpuAndChangeFile() {
+            srcVideo.pause();
+            document.getElementById('btn-play').innerText = '▶ Play';
+            document.getElementById('video-input').click();
+        }
+
+        function abortGpuLoadPipeline() {
+            abortLoad = true;
+            isLoadingVideo = false;
+            if (activeFileReader) {
+                try { activeFileReader.abort(); } catch (_) {}
+                activeFileReader = null;
+            }
+            srcVideo.pause();
+            srcVideo.removeAttribute('src');
+            srcVideo.load();
+            if (activeObjectUrl) {
+                URL.revokeObjectURL(activeObjectUrl);
+                activeObjectUrl = null;
+            }
+            document.getElementById('btn-stage-start').disabled = false;
+            document.getElementById('btn-stage-abort').style.display = 'none';
+            setLoadProgress(0, 'Proses muat ditahan / dibatalkan.');
+            setStatus('⏸ Pemuatan ditahan. Klik "Mulai Muat" kapan saja.', '#ff9100');
+        }
+
+        async function startGpuLoadPipeline() {
+            if (!stagedFile || isLoadingVideo) return;
+
+            isLoadingVideo = true;
+            abortLoad = false;
+
+            const btnStart = document.getElementById('btn-stage-start');
+            const btnAbort = document.getElementById('btn-stage-abort');
+            btnStart.disabled = true;
+            btnAbort.style.display = 'inline-block';
+
+            try {
+                setLoadProgress(15, '1/4 Menginisialisasi Hardware Video Decoder...');
+                setStatus('⏳ Menginisialisasi Video Decoder...', '#00e5ff');
+
+                activeObjectUrl = URL.createObjectURL(stagedFile);
+
+                await new Promise((resolve, reject) => {
+                    let settled = false;
+                    const cleanup = () => {
+                        srcVideo.removeEventListener('loadeddata', onReady);
+                        srcVideo.removeEventListener('loadedmetadata', onMeta);
+                        srcVideo.removeEventListener('error', onErr);
+                        clearTimeout(watchdog);
+                    };
+                    const onMeta = () => {
+                        if (abortLoad) return;
+                        setLoadProgress(40, '2/4 Metadata terbaca, mendekode frame pertama...');
+                        if (srcVideo.readyState >= 2) {
+                            settled = true;
+                            cleanup();
+                            resolve();
+                        }
+                    };
+                    const onReady = () => {
+                        if (settled || abortLoad) return;
+                        settled = true;
+                        cleanup();
+                        resolve();
+                    };
+                    const onErr = () => {
+                        if (settled) return;
+                        settled = true;
+                        cleanup();
+                        reject(new Error('Browser/GPU tidak mendukung codec video ini (misal HEVC 10-bit atau MKV non-standar).'));
+                    };
+                    const watchdog = setTimeout(() => {
+                        if (settled) return;
+                        settled = true;
+                        cleanup();
+                        if (srcVideo.videoWidth > 0) {
+                            resolve();
+                        } else {
+                            reject(new Error('Timeout (10d): Dekoder hardware gagal merespons header video.'));
+                        }
+                    }, 10000);
+
+                    srcVideo.addEventListener('loadedmetadata', onMeta);
+                    srcVideo.addEventListener('loadeddata', onReady);
+                    srcVideo.addEventListener('error', onErr);
+
+                    srcVideo.muted = true;
+                    srcVideo.src = activeObjectUrl;
+                    srcVideo.load();
+                });
+
+                if (abortLoad) return;
+
+                srcWidth = srcVideo.videoWidth;
+                srcHeight = srcVideo.videoHeight;
+                videoDuration = (isFinite(srcVideo.duration) && srcVideo.duration > 0) ? srcVideo.duration : 1;
+
+                setLoadProgress(65, `3/4 Menyiapkan Hybrid Buffer ${srcWidth}×${srcHeight}...`);
+
+                if (srcVideo.readyState < 2) {
+                    srcVideo.currentTime = 0.001;
+                    await waitVideoSeek(srcVideo, 2000);
+                }
+
+                if (abortLoad) return;
+
+                videoFile = stagedFile;
+                activeIn = 0;
+                activeOut = videoDuration;
+                savedSegments = [];
+                activeSegIdx = -1;
+                rotateSteps = 0;
+                flipH = false;
+                flipV = false;
+                cropRect = { x: 0, y: 0, w: 1, h: 1 };
+
+                const decodeAudioOpt = document.getElementById('chk-decode-audio').checked;
+                if (decodeAudioOpt) {
+                    await extractAudioWaveformWithProgress(stagedFile);
+                } else {
+                    clearWaveformCanvas('Audio waveform dilewati (mode hemat RAM)');
+                }
+
+                if (abortLoad) return;
+
+                setLoadProgress(100, '4/4 Selesai! Membuka Hybrid Workspace...');
+
+                srcVideo.muted = document.getElementById('btn-mute').innerText === '🔇';
+
+                document.getElementById('staging-box').style.display = 'none';
+                document.getElementById('video-workspace').style.display = 'flex';
+                stageCard.classList.add('has-video');
+
+                const tlPanel = document.getElementById('timeline-panel');
+                tlPanel.style.opacity = '1';
+                tlPanel.style.pointerEvents = 'auto';
+
+                setAspectPreset(aspectPreset);
+                processHybridFrame(false);
+                updateCropBoxDOM();
+                updateSafeZoneDOM();
+
+                document.getElementById('stat-source').innerText = `${srcWidth}×${srcHeight} • ${formatBytes(stagedFile.size)}`;
+                btnRender.disabled = false;
+
+                updateTimelineUI();
+                renderSegmentsList();
+                updateTelemetry();
+                setStatus('✓ Video aktif di Hybrid CPU+GPU Studio', '#00ff88');
+            } catch (err) {
+                if (!abortLoad) {
+                    btnStart.disabled = false;
+                    btnAbort.style.display = 'none';
+                    setLoadProgress(0, 'Gagal memuat video');
+                    setStatus(`✖ ${err.message}`, '#ff4081');
+                }
+            } finally {
+                isLoadingVideo = false;
+                btnAbort.style.display = 'none';
+            }
+        }
+
+        function clearWaveformCanvas(label = '') {
+            const wfCanvas = document.getElementById('waveform-canvas');
+            const wCtx = wfCanvas.getContext('2d');
+            wfCanvas.width = wfCanvas.clientWidth || 700;
+            wfCanvas.height = wfCanvas.clientHeight || 54;
+            wCtx.clearRect(0, 0, wfCanvas.width, wfCanvas.height);
+            if (label) {
+                wCtx.fillStyle = '#555';
+                wCtx.font = '11px monospace';
+                wCtx.fillText(label, 12, 31);
+            }
+        }
+
+        async function extractAudioWaveformWithProgress(file) {
+            clearWaveformCanvas();
+            try {
+                const arrayBuf = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    activeFileReader = reader;
+                    reader.onprogress = (ev) => {
+                        if (ev.lengthComputable) {
+                            const subPct = 65 + (ev.loaded / ev.total) * 25;
+                            setLoadProgress(subPct, `4/4 Membaca trek audio (${Math.round((ev.loaded / ev.total) * 100)}%)...`);
+                        }
+                    };
+                    reader.onload = () => { activeFileReader = null; resolve(reader.result); };
+                    reader.onerror = () => { activeFileReader = null; reject(new Error('Gagal membaca buffer audio')); };
+                    reader.onabort = () => { activeFileReader = null; reject(new Error('Aborted')); };
+                    reader.readAsArrayBuffer(file);
+                });
+
+                if (abortLoad) return;
+                setLoadProgress(93, '4/4 Mendekode gelombang audio...');
+
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                decodedAudioBuffer = await audioCtx.decodeAudioData(arrayBuf);
+                await audioCtx.close();
+
+                const wfCanvas = document.getElementById('waveform-canvas');
+                const wCtx = wfCanvas.getContext('2d');
+                const data = decodedAudioBuffer.getChannelData(0);
+                const step = Math.ceil(data.length / wfCanvas.width);
+                const amp = wfCanvas.height / 2;
+
+                wCtx.fillStyle = '#00e5ff';
+                for (let i = 0; i < wfCanvas.width; i++) {
+                    let min = 1.0, max = -1.0;
+                    for (let j = 0; j < step; j++) {
+                        const datum = data[(i * step) + j] || 0;
+                        if (datum < min) min = datum;
+                        if (datum > max) max = datum;
+                    }
+                    const y = (1 + min) * amp;
+                    const h = Math.max(1, (max - min) * amp);
+                    wCtx.fillRect(i, y, 1, h);
+                }
+            } catch (_) {
+                decodedAudioBuffer = null;
+                clearWaveformCanvas('Tidak ada trek audio / tidak didukung');
+            }
+        }
+
+        // =========================================
+        // 4. INTERACTIVE CROP, SNAP GUIDES & SAFE ZONE
+        // =========================================
+        function parsePresetRatio(preset) {
+            const map = { '9:16': 9 / 16, '4:5': 4 / 5, '1:1': 1, '16:9': 16 / 9 };
+            return map[preset] || null;
+        }
+
+        function setAspectPreset(preset, btnEl = null) {
+            aspectPreset = preset;
+            if (btnEl) {
+                document.querySelectorAll('#ratio-pills .pill-btn').forEach(b => b.classList.remove('active'));
+                btnEl.classList.add('active');
+            }
+
+            const { effW, effH } = getEffectiveSourceDims();
+            if (!effW || !effH) return;
+
+            if (preset === 'orig') {
+                cropRect = { x: 0, y: 0, w: 1, h: 1 };
+            } else if (preset === 'free') {
+                if (cropRect.w === 1 && cropRect.h === 1) {
+                    cropRect = { x: 0.1, y: 0.1, w: 0.8, h: 0.8 };
+                }
+            } else {
+                const targetAR = parsePresetRatio(preset);
+                const srcAR = effW / effH;
+                let w = 1, h = 1;
+                if (targetAR < srcAR) {
+                    h = 1.0;
+                    w = targetAR / srcAR;
+                } else {
+                    w = 1.0;
+                    h = srcAR / targetAR;
+                }
+                cropRect = {
+                    x: (1 - w) * 0.5,
+                    y: (1 - h) * 0.5,
+                    w,
+                    h
+                };
+            }
+
+            updateCropBoxDOM();
+            updateSafeZoneDOM();
+            updateTelemetry();
+        }
+
+        function centerCropBox() {
+            cropRect.x = (1 - cropRect.w) * 0.5;
+            cropRect.y = (1 - cropRect.h) * 0.5;
+            updateCropBoxDOM();
+            updateSafeZoneDOM();
+        }
+
+        function onFramingModeChange() {
+            const mode = document.getElementById('framing-mode').value;
+            if (mode === 'blurpad' && aspectPreset === 'orig') {
+                const btn916 = document.querySelector('#ratio-pills .pill-btn[data-ratio="9:16"]');
+                setAspectPreset('9:16', btn916);
+            }
+            updateCropBoxDOM();
+            updateSafeZoneDOM();
+            updateTelemetry();
+        }
+
+        function togglePreviewCropped() {
+            previewCropped = !previewCropped;
+            document.getElementById('btn-preview-crop').classList.toggle('active', previewCropped);
+            updateCropBoxDOM();
+            updateSafeZoneDOM();
+        }
+
+        function toggleSafeZone() {
+            showSafeZone = !showSafeZone;
+            document.getElementById('btn-safezone').classList.toggle('active', showSafeZone);
+            updateSafeZoneDOM();
+        }
+
+        function updateSafeZoneDOM() {
+            const szEl = document.getElementById('safe-zone-overlay');
+            if (!showSafeZone || !videoFile) {
+                szEl.style.display = 'none';
+                return;
+            }
+            const cRect = displayCanvas.getBoundingClientRect();
+            const vRect = document.getElementById('canvas-viewport').getBoundingClientRect();
+            const framingMode = document.getElementById('framing-mode').value;
+            const useCropBox = framingMode === 'crop' && !previewCropped && aspectPreset !== 'orig';
+
+            szEl.style.display = 'block';
+            if (useCropBox) {
+                szEl.style.left = ((cRect.left - vRect.left) + cropRect.x * cRect.width) + 'px';
+                szEl.style.top = ((cRect.top - vRect.top) + cropRect.y * cRect.height) + 'px';
+                szEl.style.width = (cropRect.w * cRect.width) + 'px';
+                szEl.style.height = (cropRect.h * cRect.height) + 'px';
+            } else {
+                szEl.style.left = (cRect.left - vRect.left) + 'px';
+                szEl.style.top = (cRect.top - vRect.top) + 'px';
+                szEl.style.width = cRect.width + 'px';
+                szEl.style.height = cRect.height + 'px';
+            }
+        }
+
+        function rotateVideo(delta) {
+            rotateSteps = (rotateSteps + delta + 4) % 4;
+            setAspectPreset(aspectPreset);
+            updateTelemetry();
+        }
+
+        function toggleFlip(axis) {
+            if (axis === 'h') {
+                flipH = !flipH;
+                document.getElementById('btn-fliph').classList.toggle('active', flipH);
+            } else {
+                flipV = !flipV;
+                document.getElementById('btn-flipv').classList.toggle('active', flipV);
+            }
+        }
+
+        function onEngineModeChange() {
+            const mode = document.getElementById('engine-mode').value;
+            setStatus(mode === 'hybrid'
+                ? '⚡ Mode Hybrid aktif: CPU (Crop/Watermark) + GPU (Pixel Shader)'
+                : '🖥️ Mode CPU Only aktif (Hemat VRAM)', '#00e5ff');
+        }
+
+        function updateCropBoxDOM() {
+            const box = document.getElementById('crop-box');
+            const framingMode = document.getElementById('framing-mode').value;
+            const showBox = videoFile && framingMode === 'crop' && !previewCropped && aspectPreset !== 'orig';
+
+            if (!showBox) {
+                box.style.display = 'none';
+                document.getElementById('snap-v').style.display = 'none';
+                document.getElementById('snap-h').style.display = 'none';
+                return;
+            }
+
+            const cRect = displayCanvas.getBoundingClientRect();
+            const vRect = document.getElementById('canvas-viewport').getBoundingClientRect();
+            if (!cRect.width || !cRect.height) return;
+
+            const offsetLeft = cRect.left - vRect.left;
+            const offsetTop = cRect.top - vRect.top;
+
+            box.style.display = 'block';
+            box.style.left = (offsetLeft + cropRect.x * cRect.width) + 'px';
+            box.style.top = (offsetTop + cropRect.y * cRect.height) + 'px';
+            box.style.width = (cropRect.w * cRect.width) + 'px';
+            box.style.height = (cropRect.h * cRect.height) + 'px';
+
+            const { effW, effH } = getEffectiveSourceDims();
+            const pxW = Math.round(cropRect.w * effW);
+            const pxH = Math.round(cropRect.h * effH);
+            document.getElementById('crop-badge').innerText = `${aspectPreset.toUpperCase()} (${pxW}×${pxH})`;
+        }
+
+        const cropBoxEl = document.getElementById('crop-box');
+        let cropDragState = null;
+
+        function isPointerOverWatermark(clientX, clientY) {
+            if (!wmHitBounds) return false;
+            const cRect = displayCanvas.getBoundingClientRect();
+            if (!cRect.width || !cRect.height) return false;
+            const nx = (clientX - cRect.left) / cRect.width;
+            const ny = (clientY - cRect.top) / cRect.height;
+            const padX = 10 / cRect.width;
+            const padY = 10 / cRect.height;
+            return (
+                nx >= wmHitBounds.x - padX &&
+                nx <= wmHitBounds.x + wmHitBounds.w + padX &&
+                ny >= wmHitBounds.y - padY &&
+                ny <= wmHitBounds.y + wmHitBounds.h + padY
+            );
+        }
+
+        cropBoxEl.addEventListener('pointerdown', (e) => {
+            // Allow dragging watermark even when inside the crop box
+            if (!e.target.dataset.dir && isPointerOverWatermark(e.clientX, e.clientY)) {
+                e.preventDefault();
+                e.stopPropagation();
+                startWatermarkDrag(e);
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+            const dir = e.target.dataset.dir || 'move';
+            cropBoxEl.setPointerCapture(e.pointerId);
+            cropDragState = {
+                dir,
+                startX: e.clientX,
+                startY: e.clientY,
+                orig: { ...cropRect }
+            };
+        });
+
+        cropBoxEl.addEventListener('pointermove', (e) => {
+            if (wmDragState) {
+                moveWatermarkDrag(e);
+                return;
+            }
+            if (!cropDragState) {
+                wmIsHovering = isPointerOverWatermark(e.clientX, e.clientY);
+                cropBoxEl.style.cursor = wmIsHovering ? 'grab' : 'move';
+                return;
+            }
+            const cRect = displayCanvas.getBoundingClientRect();
+            if (!cRect.width || !cRect.height) return;
+
+            const dx = (e.clientX - cropDragState.startX) / cRect.width;
+            const dy = (e.clientY - cropDragState.startY) / cRect.height;
+            const o = cropDragState.orig;
+            const { effW, effH } = getEffectiveSourceDims();
+            const srcAR = effW / Math.max(1, effH);
+            const lockedAR = parsePresetRatio(aspectPreset);
+
+            let snapX = false, snapY = false;
+
+            if (cropDragState.dir === 'move') {
+                let nx = Math.min(Math.max(o.x + dx, 0), 1 - o.w);
+                let ny = Math.min(Math.max(o.y + dy, 0), 1 - o.h);
+
+                const centerX = (1 - o.w) * 0.5;
+                const centerY = (1 - o.h) * 0.5;
+                if (Math.abs(nx - centerX) < 0.015) { nx = centerX; snapX = true; }
+                if (Math.abs(ny - centerY) < 0.015) { ny = centerY; snapY = true; }
+
+                cropRect.x = nx;
+                cropRect.y = ny;
+            } else {
+                let nx = o.x, ny = o.y, nw = o.w, nh = o.h;
+                const minSize = 0.12;
+
+                if (cropDragState.dir.includes('e')) nw = Math.max(minSize, Math.min(1 - o.x, o.w + dx));
+                if (cropDragState.dir.includes('s')) nh = Math.max(minSize, Math.min(1 - o.y, o.h + dy));
+                if (cropDragState.dir.includes('w')) {
+                    const maxLeft = o.x + o.w - minSize;
+                    nx = Math.min(Math.max(0, o.x + dx), maxLeft);
+                    nw = o.w + (o.x - nx);
+                }
+                if (cropDragState.dir.includes('n')) {
+                    const maxTop = o.y + o.h - minSize;
+                    ny = Math.min(Math.max(0, o.y + dy), maxTop);
+                    nh = o.h + (o.y - ny);
+                }
+
+                if (lockedAR) {
+                    nh = (nw * srcAR) / lockedAR;
+                    if (ny + nh > 1) {
+                        nh = 1 - ny;
+                        nw = (nh * lockedAR) / srcAR;
+                    }
+                    if (nx + nw > 1) {
+                        nw = 1 - nx;
+                        nh = (nw * srcAR) / lockedAR;
+                    }
+                }
+
+                cropRect = { x: nx, y: ny, w: nw, h: nh };
+            }
+
+            document.getElementById('snap-v').style.display = snapX ? 'block' : 'none';
+            document.getElementById('snap-h').style.display = snapY ? 'block' : 'none';
+            cropBoxEl.classList.toggle('snapped', snapX || snapY);
+
+            updateCropBoxDOM();
+            updateSafeZoneDOM();
+            updateTelemetry();
+        });
+
+        cropBoxEl.addEventListener('pointerup', (e) => {
+            if (wmDragState) {
+                endWatermarkDrag(e);
+                return;
+            }
+            if (cropDragState) {
+                cropBoxEl.releasePointerCapture(e.pointerId);
+                cropDragState = null;
+                document.getElementById('snap-v').style.display = 'none';
+                document.getElementById('snap-h').style.display = 'none';
+                cropBoxEl.classList.remove('snapped');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            updateCropBoxDOM();
+            updateSafeZoneDOM();
+            if (splitCompare) updateSplitLinePosition();
+        });
+
+        // =========================================
+        // 5. INTERACTIVE CUT & TRIM TIMELINE
+        // =========================================
+        const tlTrack = document.getElementById('timeline-track');
+        let tlDragTarget = null;
+
+        tlTrack.addEventListener('pointermove', (e) => {
+            if (videoDuration) {
+                const rect = tlTrack.getBoundingClientRect();
+                const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+                const hoverTime = ratio * videoDuration;
+                const tip = document.getElementById('tl-hover-tip');
+                const hLine = document.getElementById('tl-hover-line');
+                tip.style.display = 'block';
+                hLine.style.display = 'block';
+                tip.style.left = `${ratio * 100}%`;
+                hLine.style.left = `${ratio * 100}%`;
+                tip.innerText = formatTimecode(hoverTime);
+            }
+            if (tlDragTarget) handleTimelinePointer(e);
+        });
+
+        tlTrack.addEventListener('pointerleave', () => {
+            document.getElementById('tl-hover-tip').style.display = 'none';
+            document.getElementById('tl-hover-line').style.display = 'none';
+        });
+
+        tlTrack.addEventListener('pointerdown', (e) => {
+            if (!videoDuration) return;
+            e.preventDefault();
+            tlDragTarget = e.target.dataset.handle || 'seek';
+            tlTrack.setPointerCapture(e.pointerId);
+            handleTimelinePointer(e);
+        });
+
+        tlTrack.addEventListener('pointerup', (e) => {
+            if (tlDragTarget) {
+                tlTrack.releasePointerCapture(e.pointerId);
+                tlDragTarget = null;
+            }
+        });
+
+        function handleTimelinePointer(e) {
+            const rect = tlTrack.getBoundingClientRect();
+            const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+            const t = ratio * videoDuration;
+            const minGap = 0.1;
+
+            if (tlDragTarget === 'in') {
+                activeIn = Math.min(t, activeOut - minGap);
+                srcVideo.currentTime = activeIn;
+                syncActiveSegmentFromRange();
+            } else if (tlDragTarget === 'out') {
+                activeOut = Math.max(t, activeIn + minGap);
+                srcVideo.currentTime = activeOut;
+                syncActiveSegmentFromRange();
+            } else {
+                srcVideo.currentTime = t;
+            }
+
+            updateTimelineUI();
+            updatePlayheadUI();
+            updateTelemetry();
+        }
+
+        function setInPointAtPlayhead() {
+            if (!videoDuration) return;
+            activeIn = Math.min(srcVideo.currentTime, activeOut - 0.1);
+            syncActiveSegmentFromRange();
+            updateTimelineUI();
+            updateTelemetry();
+        }
+
+        function setOutPointAtPlayhead() {
+            if (!videoDuration) return;
+            activeOut = Math.max(srcVideo.currentTime, activeIn + 0.1);
+            syncActiveSegmentFromRange();
+            updateTimelineUI();
+            updateTelemetry();
+        }
+
+        function splitAtPlayhead() {
+            if (!videoDuration) return;
+            const t = srcVideo.currentTime;
+            if (t <= activeIn + 0.15 || t >= activeOut - 0.15) {
+                setStatus('⚠️ Posisikan playhead di antara titik IN dan OUT untuk membelah klip.', '#ff9100');
+                return;
+            }
+
+            if (savedSegments.length === 0) {
+                savedSegments.push({ start: activeIn, end: t });
+                savedSegments.push({ start: t, end: activeOut });
+                activeSegIdx = 1;
+            } else if (activeSegIdx !== -1) {
+                const origEnd = savedSegments[activeSegIdx].end;
+                savedSegments[activeSegIdx].end = t;
+                savedSegments.splice(activeSegIdx + 1, 0, { start: t, end: origEnd });
+                activeSegIdx = activeSegIdx + 1;
+            }
+
+            activeIn = savedSegments[activeSegIdx].start;
+            activeOut = savedSegments[activeSegIdx].end;
+            renderSegmentsList();
+            updateTimelineUI();
+            updateTelemetry();
+            setStatus(`✂️ Klip dibelah pada ${formatTimecode(t)} (Total ${savedSegments.length} klip)`, '#00e5ff');
+        }
+
+        function addCutSegment() {
+            if (!videoDuration) return;
+            if (savedSegments.length === 0) {
+                savedSegments.push({ start: activeIn, end: activeOut });
+            }
+            const nextStart = activeOut < videoDuration - 0.5 ? activeOut : 0;
+            const nextEnd = Math.min(videoDuration, nextStart + Math.max(1, videoDuration * 0.25));
+            savedSegments.push({ start: nextStart, end: nextEnd });
+            activeSegIdx = savedSegments.length - 1;
+            activeIn = nextStart;
+            activeOut = nextEnd;
+            srcVideo.currentTime = activeIn;
+
+            renderSegmentsList();
+            updateTimelineUI();
+            updateTelemetry();
+        }
+
+        function selectSegment(idx) {
+            activeSegIdx = idx;
+            activeIn = savedSegments[idx].start;
+            activeOut = savedSegments[idx].end;
+            srcVideo.currentTime = activeIn;
+            renderSegmentsList();
+            updateTimelineUI();
+        }
+
+        function deleteSegment(e, idx) {
+            e.stopPropagation();
+            savedSegments.splice(idx, 1);
+            if (savedSegments.length === 0) {
+                activeSegIdx = -1;
+            } else {
+                activeSegIdx = Math.min(idx, savedSegments.length - 1);
+                activeIn = savedSegments[activeSegIdx].start;
+                activeOut = savedSegments[activeSegIdx].end;
+            }
+            renderSegmentsList();
+            updateTimelineUI();
+            updateTelemetry();
+        }
+
+        function syncActiveSegmentFromRange() {
+            if (activeSegIdx !== -1 && savedSegments[activeSegIdx]) {
+                savedSegments[activeSegIdx].start = activeIn;
+                savedSegments[activeSegIdx].end = activeOut;
+                renderSegmentsList();
+            }
+        }
+
+        function resetTimeline() {
+            if (!videoDuration) return;
+            activeIn = 0;
+            activeOut = videoDuration;
+            savedSegments = [];
+            activeSegIdx = -1;
+            srcVideo.currentTime = 0;
+            renderSegmentsList();
+            updateTimelineUI();
+            updateTelemetry();
+        }
+
+        function getEffectiveSegments() {
+            if (savedSegments.length > 0) return savedSegments;
+            return [{ start: activeIn, end: activeOut }];
+        }
+
+        function getTotalOutputDuration() {
+            const speed = parseFloat(document.getElementById('speed-select').value) || 1;
+            const rawDur = getEffectiveSegments().reduce((acc, s) => acc + Math.max(0.05, s.end - s.start), 0);
+            return rawDur / speed;
+        }
+
+        function renderSegmentsList() {
+            const listEl = document.getElementById('segments-list');
+            if (savedSegments.length === 0) {
+                listEl.innerHTML = '';
+                return;
+            }
+            listEl.innerHTML = savedSegments.map((seg, i) => `
+                <div class="seg-item ${i === activeSegIdx ? 'active' : ''}" onclick="selectSegment(${i})">
+                    <span>Clip #${i + 1}: ${formatTimecode(seg.start)} → ${formatTimecode(seg.end)} (${(seg.end - seg.start).toFixed(1)}s)</span>
+                    <button class="seg-del" onclick="deleteSegment(event, ${i})" title="Hapus Klip">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function updateTimelineUI() {
+            if (!videoDuration) return;
+            const inPct = (activeIn / videoDuration) * 100;
+            const outPct = (activeOut / videoDuration) * 100;
+
+            const rangeEl = document.getElementById('trim-range');
+            rangeEl.style.left = inPct + '%';
+            rangeEl.style.width = Math.max(0.5, outPct - inPct) + '%';
+
+            document.getElementById('handle-in').style.left = `calc(${inPct}% - 2px)`;
+            document.getElementById('handle-out').style.left = `calc(${outPct}% - 11px)`;
+
+            const segs = getEffectiveSegments();
+            const totalDur = getTotalOutputDuration();
+            document.getElementById('tl-in-out').innerText = `Active Range: ${formatTimecode(activeIn)} → ${formatTimecode(activeOut)}`;
+            document.getElementById('tl-total-dur').innerText = `Output Duration: ${formatTimecode(totalDur)} (${segs.length} ${segs.length === 1 ? 'Clip' : 'Clips'})`;
+        }
+
+        function updatePlayheadUI() {
+            if (!videoDuration) return;
+            const pct = (srcVideo.currentTime / videoDuration) * 100;
+            document.getElementById('playhead').style.left = pct + '%';
+            document.getElementById('timecode-display').innerText = `${formatTimecode(srcVideo.currentTime)} / ${formatTimecode(videoDuration)}`;
+        }
+
+        // =========================================
+        // 6. TRANSPORT, SPEED, FADE, SPLIT & VIEWPORT WATERMARK DRAG
+        // =========================================
+        function togglePlay() {
+            if (!videoFile) return;
+            const btn = document.getElementById('btn-play');
+            if (srcVideo.paused) {
+                if (srcVideo.currentTime >= activeOut || srcVideo.currentTime < activeIn) {
+                    srcVideo.currentTime = activeIn;
+                }
+                srcVideo.playbackRate = parseFloat(document.getElementById('speed-select').value) || 1;
+                srcVideo.play();
+                btn.innerText = '⏸ Pause';
+            } else {
+                srcVideo.pause();
+                btn.innerText = '▶ Play';
+            }
+        }
+
+        srcVideo.addEventListener('ended', () => {
+            document.getElementById('btn-play').innerText = '▶ Play';
+        });
+
+        function stepFrame(dir) {
+            if (!videoFile) return;
+            srcVideo.pause();
+            document.getElementById('btn-play').innerText = '▶ Play';
+            const step = 1 / 30;
+            srcVideo.currentTime = Math.min(Math.max(srcVideo.currentTime + dir * step, 0), videoDuration);
+        }
+
+        function toggleMute() {
+            srcVideo.muted = !srcVideo.muted;
+            document.getElementById('btn-mute').innerText = srcVideo.muted ? '🔇' : '🔊';
+        }
+
+        function setHoldRaw(active) {
+            holdRawBypass = active;
+        }
+
+        function onSpeedChange() {
+            const speed = parseFloat(document.getElementById('speed-select').value) || 1;
+            srcVideo.playbackRate = speed;
+            updateTimelineUI();
+            updateTelemetry();
+        }
+
+        function onTimeFxSlider() {
+            document.getElementById('val-fadein').innerText = parseFloat(document.getElementById('fx-fadein').value).toFixed(1) + 's';
+            document.getElementById('val-fadeout').innerText = parseFloat(document.getElementById('fx-fadeout').value).toFixed(1) + 's';
+            const gain = parseFloat(document.getElementById('audio-gain').value);
+            document.getElementById('val-gain').innerText = Math.round(gain * 100) + '%';
+            srcVideo.volume = Math.min(1.0, gain);
+        }
+
+        function onAudioModeChange() {
+            const muted = document.getElementById('audio-select').value === 'mute';
+            srcVideo.muted = muted;
+            document.getElementById('btn-mute').innerText = muted ? '🔇' : '🔊';
+        }
+
+        function toggleSplitCompare() {
+            splitCompare = !splitCompare;
+            document.getElementById('btn-split').classList.toggle('active', splitCompare);
+            document.getElementById('split-line').style.display = splitCompare ? 'block' : 'none';
+            document.getElementById('split-labels').style.display = splitCompare ? 'flex' : 'none';
+            updateSplitLinePosition();
+        }
+
+        const viewportEl = document.getElementById('canvas-viewport');
+        let draggingSplit = false;
+
+        function startWatermarkDrag(e) {
+            if (!wmHitBounds) return;
+            viewportEl.setPointerCapture(e.pointerId);
+            wmDragState = {
+                pointerId: e.pointerId,
+                startX: e.clientX,
+                startY: e.clientY,
+                origNormX: wmNormX,
+                origNormY: wmNormY
+            };
+            displayCanvas.style.cursor = 'grabbing';
+        }
+
+        function moveWatermarkDrag(e) {
+            if (!wmDragState || !wmHitBounds) return;
+            const cRect = displayCanvas.getBoundingClientRect();
+            if (!cRect.width || !cRect.height) return;
+
+            const scaleToCanvasX = wmHitBounds.canvasW / cRect.width;
+            const scaleToCanvasY = wmHitBounds.canvasH / cRect.height;
+
+            const dxPx = (e.clientX - wmDragState.startX) * scaleToCanvasX;
+            const dyPx = (e.clientY - wmDragState.startY) * scaleToCanvasY;
+
+            let nextX = wmHitBounds.availW > 0
+                ? Math.min(Math.max(wmDragState.origNormX + dxPx / wmHitBounds.availW, 0), 1)
+                : 0.5;
+            let nextY = wmHitBounds.availH > 0
+                ? Math.min(Math.max(wmDragState.origNormY + dyPx / wmHitBounds.availH, 0), 1)
+                : 0.5;
+
+            let snapX = false, snapY = false;
+            if (Math.abs(nextX - 0.5) < 0.025) { nextX = 0.5; snapX = true; }
+            if (Math.abs(nextY - 0.5) < 0.025) { nextY = 0.5; snapY = true; }
+
+            wmNormX = nextX;
+            wmNormY = nextY;
+
+            document.getElementById('wm-pos-x').value = wmNormX.toFixed(2);
+            document.getElementById('wm-pos-y').value = wmNormY.toFixed(2);
+            document.getElementById('val-wm-x').innerText = Math.round(wmNormX * 100) + '%';
+            document.getElementById('val-wm-y').innerText = Math.round(wmNormY * 100) + '%';
+            document.querySelectorAll('#wm-anchor-grid .anchor-cell').forEach(c => c.classList.remove('active'));
+
+            document.getElementById('snap-v').style.display = snapX ? 'block' : 'none';
+            document.getElementById('snap-h').style.display = snapY ? 'block' : 'none';
+        }
+
+        function endWatermarkDrag(e) {
+            if (!wmDragState) return;
+            try { viewportEl.releasePointerCapture(wmDragState.pointerId); } catch (_) {}
+            wmDragState = null;
+            displayCanvas.style.cursor = wmIsHovering ? 'grab' : 'default';
+            document.getElementById('snap-v').style.display = 'none';
+            document.getElementById('snap-h').style.display = 'none';
+        }
+
+        viewportEl.addEventListener('pointerdown', (e) => {
+            if (!videoFile) return;
+
+            if (splitCompare) {
+                const rect = displayCanvas.getBoundingClientRect();
+                const normX = (e.clientX - rect.left) / Math.max(1, rect.width);
+                if (Math.abs(normX - splitRatio) < 0.045 || !isPointerOverWatermark(e.clientX, e.clientY)) {
+                    draggingSplit = true;
+                    viewportEl.setPointerCapture(e.pointerId);
+                    moveSplitPointer(e);
+                    return;
+                }
+            }
+
+            if (isPointerOverWatermark(e.clientX, e.clientY)) {
+                e.preventDefault();
+                startWatermarkDrag(e);
+            }
+        });
+
+        viewportEl.addEventListener('pointermove', (e) => {
+            if (wmDragState) {
+                moveWatermarkDrag(e);
+                return;
+            }
+            if (draggingSplit) {
+                moveSplitPointer(e);
+                return;
+            }
+            wmIsHovering = isPointerOverWatermark(e.clientX, e.clientY);
+            displayCanvas.style.cursor = wmIsHovering ? 'grab' : (splitCompare ? 'ew-resize' : 'default');
+        });
+
+        viewportEl.addEventListener('pointerup', (e) => {
+            if (wmDragState) {
+                endWatermarkDrag(e);
+            }
+            if (draggingSplit) {
+                viewportEl.releasePointerCapture(e.pointerId);
+                draggingSplit = false;
+            }
+        });
+
+        function moveSplitPointer(e) {
+            const rect = displayCanvas.getBoundingClientRect();
+            splitRatio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0.02), 0.98);
+            updateSplitLinePosition();
+        }
+
+        function updateSplitLinePosition() {
+            const rect = displayCanvas.getBoundingClientRect();
+            const parentRect = viewportEl.getBoundingClientRect();
+            const offsetLeft = (rect.left - parentRect.left) + (rect.width * splitRatio);
+            document.getElementById('split-line').style.left = offsetLeft + 'px';
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+            if (!videoFile) return;
+            if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+            else if (e.code === 'ArrowLeft') { e.preventDefault(); stepFrame(-1); }
+            else if (e.code === 'ArrowRight') { e.preventDefault(); stepFrame(1); }
+            else if (e.key === 'i' || e.key === 'I') { setInPointAtPlayhead(); }
+            else if (e.key === 'o' || e.key === 'O') { setOutPointAtPlayhead(); }
+            else if (e.key === 's' || e.key === 'S') { splitAtPlayhead(); }
+        });
+
+        // =========================================
+        // 7. STUDIO TABS, PRESETS & TELEMETRY
+        // =========================================
+        function setStudioTab(tab) {
+            ['crop', 'wm', 'time', 'enhance', 'export'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+                document.getElementById(`sec-${t}`).style.display = (t === tab) ? 'block' : 'none';
+            });
+            updateCropBoxDOM();
+            updateSafeZoneDOM();
+        }
+
+        function onBitratePresetChange() {
+            const preset = document.getElementById('bitrate-preset').value;
+            document.getElementById('custom-bitrate-box').style.display = preset === 'custom' ? 'block' : 'none';
+            updateTelemetry();
+        }
+
+        function applyEnhancePreset() {
+            const p = document.getElementById('enhance-preset').value;
+            const presets = {
+                off:      { sharpen: 0.0, denoise: 0.0, dehaze: 0.0, contrast: 1.00, brightness: 0.00, saturation: 1.00, vignette: 0.0 },
+                clear:    { sharpen: 0.65, denoise: 0.25, dehaze: 0.20, contrast: 1.06, brightness: 0.02, saturation: 1.08, vignette: 0.0 },
+                restore:  { sharpen: 1.25, denoise: 0.60, dehaze: 0.35, contrast: 1.12, brightness: 0.03, saturation: 1.12, vignette: 0.1 },
+                lowlight: { sharpen: 0.45, denoise: 0.85, dehaze: 0.15, contrast: 1.08, brightness: 0.08, saturation: 1.05, vignette: 0.15 },
+                vivid:    { sharpen: 0.55, denoise: 0.20, dehaze: 0.30, contrast: 1.16, brightness: 0.01, saturation: 1.25, vignette: 0.25 }
+            };
+            const cfg = presets[p] || presets.off;
+            document.getElementById('sh-sharpen').value = cfg.sharpen;
+            document.getElementById('sh-denoise').value = cfg.denoise;
+            document.getElementById('sh-dehaze').value = cfg.dehaze;
+            document.getElementById('sh-contrast').value = cfg.contrast;
+            document.getElementById('sh-brightness').value = cfg.brightness;
+            document.getElementById('sh-saturation').value = cfg.saturation;
+            document.getElementById('sh-vignette').value = cfg.vignette;
+            onShaderSlider(true);
+
+            if (p !== 'off' && !splitCompare && videoFile) {
+                toggleSplitCompare();
+            }
+        }
+
+        function onShaderSlider(fromPreset = false) {
+            if (!fromPreset) {
+                document.getElementById('enhance-preset').value = 'clear';
+            }
+            document.getElementById('val-sharpen').innerText = Math.round(parseFloat(document.getElementById('sh-sharpen').value) * 100) + '%';
+            document.getElementById('val-denoise').innerText = Math.round(parseFloat(document.getElementById('sh-denoise').value) * 100) + '%';
+            document.getElementById('val-dehaze').innerText = Math.round(parseFloat(document.getElementById('sh-dehaze').value) * 100) + '%';
+            document.getElementById('val-contrast').innerText = Math.round(parseFloat(document.getElementById('sh-contrast').value) * 100) + '%';
+            document.getElementById('val-brightness').innerText = Math.round(parseFloat(document.getElementById('sh-brightness').value) * 100) + '%';
+            document.getElementById('val-saturation').innerText = Math.round(parseFloat(document.getElementById('sh-saturation').value) * 100) + '%';
+            document.getElementById('val-vignette').innerText = Math.round(parseFloat(document.getElementById('sh-vignette').value) * 100) + '%';
+        }
+
+        function computeOutputResolution() {
+            if (!srcWidth || !srcHeight) return { outW: 1280, outH: 720 };
+            const { effW, effH } = getEffectiveSourceDims();
+            const framingMode = document.getElementById('framing-mode').value;
+
+            let baseW = effW;
+            let baseH = effH;
+
+            if (framingMode === 'blurpad') {
+                const targetAR = parsePresetRatio(aspectPreset) || (9 / 16);
+                if (targetAR < 1) {
+                    baseH = Math.max(effW, effH);
+                    baseW = Math.round(baseH * targetAR);
+                } else {
+                    baseW = Math.max(effW, effH);
+                    baseH = Math.round(baseW / targetAR);
+                }
+            } else {
+                baseW = Math.max(16, Math.round(effW * cropRect.w));
+                baseH = Math.max(16, Math.round(effH * cropRect.h));
+            }
+
+            const mode = document.getElementById('upscale-select').value;
+            let w = baseW;
+            let h = baseH;
+
+            if (mode === '1.5' || mode === '2') {
+                const factor = parseFloat(mode);
+                w = Math.round(baseW * factor);
+                h = Math.round(baseH * factor);
+            } else if (mode === '1080p' || mode === '1440p' || mode === '2160p') {
+                const targetShort = mode === '1080p' ? 1080 : (mode === '1440p' ? 1440 : 2160);
+                const scale = targetShort / Math.min(baseW, baseH);
+                w = Math.round(baseW * scale);
+                h = Math.round(baseH * scale);
+            }
+
+            w = Math.max(2, Math.floor(w / 2) * 2);
+            h = Math.max(2, Math.floor(h / 2) * 2);
+            return { outW: w, outH: h };
+        }
+
+        function computeTargetBitrate(outW, outH, fps) {
+            const preset = document.getElementById('bitrate-preset').value;
+            if (preset === 'custom') {
+                return Math.max(200_000, Math.round((parseFloat(document.getElementById('custom-mbps').value) || 5) * 1_000_000));
+            }
+            const pixels = outW * outH;
+            const fpsFactor = fps / 30;
+            const baseBps = (pixels / (1920 * 1080)) * 8_000_000 * fpsFactor;
+            if (preset === 'master') return Math.round(Math.max(4_000_000, baseBps * 2.4));
+            if (preset === 'compact') return Math.round(Math.max(800_000, baseBps * 0.42));
+            return Math.round(Math.max(2_000_000, baseBps));
+        }
+
+        function updateTelemetry() {
+            if (!videoFile) return;
+            const { outW, outH } = computeOutputResolution();
+            const fpsVal = parseInt(document.getElementById('fps-select').value) || detectedFps;
+            const bps = computeTargetBitrate(outW, outH, fpsVal);
+            const dur = getTotalOutputDuration();
+            const estBytes = ((bps + 128_000) / 8) * dur;
+            const fmt = document.getElementById('format-select').value.toUpperCase();
+
+            document.getElementById('stat-target').innerText = `${outW}×${outH} ${fmt} • ~${formatBytes(estBytes)}`;
+        }
+
+        // =========================================
+        // 8. SMOOTH SEQUENTIAL rVFC + EOF WATCHDOG + HYBRID EXPORT ENGINE
+        // =========================================
+        async function loadMuxerModule(format) {
+            const badge = document.getElementById('mux-badge');
+            if (format === 'mp4' && mp4MuxerMod) return mp4MuxerMod;
+            if (format === 'webm' && webmMuxerMod) return webmMuxerMod;
+
+            const localPath = `../../libs/muxer/${format}-muxer.js`;
+            const cdnPath = format === 'mp4'
+                ? 'https://esm.sh/mp4-muxer@5.1.3'
+                : 'https://esm.sh/webm-muxer@5.0.2';
+
+            try {
+                const mod = await import(localPath);
+                badge.innerText = `MUXER: LOCAL ${format.toUpperCase()}`;
+                if (format === 'mp4') mp4MuxerMod = mod; else webmMuxerMod = mod;
+                return mod;
+            } catch (_) {
+                const mod = await import(cdnPath);
+                badge.innerText = `MUXER: CDN ${format.toUpperCase()}`;
+                if (format === 'mp4') mp4MuxerMod = mod; else webmMuxerMod = mod;
+                return mod;
+            }
+        }
+
+        async function resolveVideoEncoderConfig(format, outW, outH, videoBitrate, fps) {
+            const candidates = format === 'mp4'
+                ? [
+                    { codec: 'avc1.640033', hardwareAcceleration: 'prefer-hardware' },
+                    { codec: 'avc1.4d0032', hardwareAcceleration: 'prefer-hardware' },
+                    { codec: 'avc1.42002a', hardwareAcceleration: 'prefer-hardware' },
+                    { codec: 'avc1.42002a', hardwareAcceleration: 'prefer-software' }
+                ]
+                : [
+                    { codec: 'vp09.00.41.08', hardwareAcceleration: 'prefer-hardware' },
+                    { codec: 'vp09.00.10.08', hardwareAcceleration: 'prefer-hardware' },
+                    { codec: 'vp09.00.10.08', hardwareAcceleration: 'prefer-software' }
+                ];
+
+            for (const cand of candidates) {
+                const cfg = {
+                    codec: cand.codec,
+                    width: outW,
+                    height: outH,
+                    bitrate: videoBitrate,
+                    bitrateMode: 'variable',
+                    latencyMode: 'quality',
+                    framerate: fps,
+                    hardwareAcceleration: cand.hardwareAcceleration
+                };
+                try {
+                    const support = await VideoEncoder.isConfigSupported(cfg);
+                    if (support && support.supported) {
+                        return support.config || cfg;
+                    }
+                } catch (_) {}
+            }
+            throw new Error(`Encoder ${format.toUpperCase()} tidak didukung untuk resolusi ${outW}×${outH} @ ${fps}fps.`);
+        }
+
+        function captureSegmentSequential(seg, speed, targetFps, onSampleFrame) {
+            return new Promise(async (resolve, reject) => {
+                srcVideo.pause();
+                srcVideo.muted = true;
+                srcVideo.currentTime = seg.start;
+                await waitVideoSeek(srcVideo, 800);
+
+                const outDt = 1 / targetFps;
+                const srcStep = outDt * speed;
+                const safeEnd = Math.min(seg.end, Math.max(seg.start + 0.02, videoDuration - 0.005));
+                let nextSampleMediaTime = seg.start;
+                let lastCapturedCanvas = null;
+                let finished = false;
+                let lastProgressWallTime = performance.now();
+
+                const decodeRate = (srcWidth * srcHeight > 2_073_600) ? 0.5 : Math.min(1.0, Math.max(0.5, speed));
+                srcVideo.playbackRate = decodeRate;
+
+                const cleanup = () => {
+                    srcVideo.removeEventListener('ended', onEnded);
+                    srcVideo.removeEventListener('error', onVideoErr);
+                    clearInterval(stallWatchdog);
+                };
+
+                const finishSegment = async () => {
+                    if (finished) return;
+                    finished = true;
+                    cleanup();
+                    srcVideo.pause();
+                    try {
+                        let safetyPad = 0;
+                        while (nextSampleMediaTime < safeEnd - 0.002 && safetyPad < targetFps) {
+                            lastCapturedCanvas = await onSampleFrame(lastCapturedCanvas);
+                            nextSampleMediaTime += srcStep;
+                            safetyPad++;
+                        }
+                        resolve();
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+
+                const onEnded = () => {
+                    finishSegment();
+                };
+
+                const onVideoErr = () => {
+                    if (finished) return;
+                    finished = true;
+                    cleanup();
+                    reject(new Error('Dekoder video error saat membaca akhir stream.'));
+                };
+
+                const stallWatchdog = setInterval(() => {
+                    if (finished) return;
+                    if (abortRender) {
+                        finished = true;
+                        cleanup();
+                        srcVideo.pause();
+                        reject(new Error('Render dibatalkan oleh pengguna.'));
+                        return;
+                    }
+                    if (srcVideo.ended || srcVideo.currentTime >= safeEnd - 0.01) {
+                        finishSegment();
+                    } else if (performance.now() - lastProgressWallTime > 2000) {
+                        if (srcVideo.paused) {
+                            srcVideo.play().catch(() => {});
+                        } else {
+                            finishSegment();
+                        }
+                    }
+                }, 250);
+
+                srcVideo.addEventListener('ended', onEnded);
+                srcVideo.addEventListener('error', onVideoErr);
+
+                if ('requestVideoFrameCallback' in srcVideo) {
+                    const onFrame = async (now, metadata) => {
+                        if (finished) return;
+                        lastProgressWallTime = performance.now();
+
+                        if (abortRender) {
+                            finished = true;
+                            cleanup();
+                            srcVideo.pause();
+                            reject(new Error('Render dibatalkan oleh pengguna.'));
+                            return;
+                        }
+
+                        const curMedia = metadata.mediaTime;
+                        if (curMedia >= safeEnd - 0.005 || srcVideo.ended) {
+                            await finishSegment();
+                            return;
+                        }
+
+                        if (curMedia >= nextSampleMediaTime - 0.002) {
+                            lastCapturedCanvas = null;
+                            while (nextSampleMediaTime <= curMedia + 0.002 && nextSampleMediaTime < safeEnd) {
+                                lastCapturedCanvas = await onSampleFrame(lastCapturedCanvas);
+                                nextSampleMediaTime += srcStep;
+                            }
+                        }
+
+                        if (nextSampleMediaTime >= safeEnd || srcVideo.ended) {
+                            await finishSegment();
+                        } else {
+                            srcVideo.requestVideoFrameCallback(onFrame);
+                        }
+                    };
+
+                    srcVideo.requestVideoFrameCallback(onFrame);
+                    srcVideo.play().catch((err) => {
+                        if (!finished) {
+                            finished = true;
+                            cleanup();
+                            reject(err);
+                        }
+                    });
+                } else {
+                    try {
+                        for (let t = seg.start; t < safeEnd; t += srcStep) {
+                            if (abortRender) throw new Error('Render dibatalkan oleh pengguna.');
+                            srcVideo.currentTime = Math.min(t, safeEnd);
+                            await waitVideoSeek(srcVideo, 350);
+                            await onSampleFrame(null);
+                        }
+                        await finishSegment();
+                    } catch (err) {
+                        if (!finished) {
+                            finished = true;
+                            cleanup();
+                            reject(err);
+                        }
+                    }
+                }
+            });
+        }
+
+        async function startHybridExport() {
+            if (!videoFile || isRendering) return;
+
+            isRendering = true;
+            abortRender = false;
+            holdRawBypass = false;
+            wmDragState = null;
+            wmIsHovering = false;
+            const prevMutedState = srcVideo.muted;
+            srcVideo.pause();
+            document.getElementById('btn-play').innerText = '▶ Play';
+
+            btnRender.disabled = true;
+            btnCancel.style.display = 'block';
+            progressWrap.style.display = 'block';
+            progressFill.style.width = '0%';
+
+            const format = document.getElementById('format-select').value;
+            const { outW, outH } = computeOutputResolution();
+            const fps = parseInt(document.getElementById('fps-select').value) || detectedFps;
+            const speed = parseFloat(document.getElementById('speed-select').value) || 1;
+            const videoBitrate = computeTargetBitrate(outW, outH, fps);
+            const wantAudio = document.getElementById('audio-select').value === 'keep';
+            const segments = getEffectiveSegments();
+
+            try {
+                if (typeof VideoEncoder === 'undefined') {
+                    throw new Error('WebCodecs tidak tersedia di browser ini.');
+                }
+
+                if (wantAudio && !decodedAudioBuffer) {
+                    setStatus('🔊 Mendekode trek audio untuk export...', '#00e5ff');
+                    await extractAudioWaveformWithProgress(videoFile);
+                }
+                const keepAudio = wantAudio && decodedAudioBuffer !== null;
+
+                setStatus('⏳ Mengonfigurasi Hybrid Muxer & Validating Codec...', '#00e5ff');
+                const muxerLib = await loadMuxerModule(format);
+                const verifiedVideoCfg = await resolveVideoEncoderConfig(format, outW, outH, videoBitrate, fps);
+                const audioCodecStr = format === 'mp4' ? 'mp4a.40.2' : 'opus';
+
+                const muxer = new muxerLib.Muxer({
+                    target: new muxerLib.ArrayBufferTarget(),
+                    video: {
+                        codec: format === 'mp4' ? 'avc' : 'V_VP9',
+                        width: outW,
+                        height: outH
+                    },
+                    audio: keepAudio ? {
+                        codec: format === 'mp4' ? 'aac' : 'A_OPUS',
+                        numberOfChannels: 2,
+                        sampleRate: 48000
+                    } : undefined,
+                    fastStart: format === 'mp4' ? 'in-memory' : undefined
+                });
+
+                let encoderError = null;
+                const videoEncoder = new VideoEncoder({
+                    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+                    error: (e) => { encoderError = e; }
+                });
+
+                videoEncoder.configure(verifiedVideoCfg);
+
+                let audioEncoder = null;
+                if (keepAudio) {
+                    audioEncoder = new AudioEncoder({
+                        output: (chunk, meta) => muxer.addAudioChunk(chunk, meta),
+                        error: (e) => { encoderError = e; }
+                    });
+                    audioEncoder.configure({
+                        codec: audioCodecStr,
+                        numberOfChannels: 2,
+                        sampleRate: 48000,
+                        bitrate: 128_000
+                    });
+                }
+
+                if (keepAudio && audioEncoder) {
+                    setStatus('🔊 Memproses & Mengodekan Trek Audio...', '#00e5ff');
+                    await encodeCutAudioSegments(audioEncoder, segments, speed);
+                }
+
+                const totalOutputSec = getTotalOutputDuration();
+                const totalFrames = Math.max(1, Math.ceil(totalOutputSec * fps));
+                const outDtUs = Math.round(1_000_000 / fps);
+                let frameIdx = 0;
+
+                for (let sIdx = 0; sIdx < segments.length; sIdx++) {
+                    const seg = segments[sIdx];
+                    await captureSegmentSequential(seg, speed, fps, async (cachedCanvas) => {
+                        if (encoderError) throw encoderError;
+
+                        const timestampUs = frameIdx * outDtUs;
+                        const elapsedOutputSec = timestampUs / 1_000_000;
+
+                        const frameCanvas = cachedCanvas || processHybridFrame(true, elapsedOutputSec, totalOutputSec);
+                        if (!frameCanvas) return null;
+
+                        while (videoEncoder.encodeQueueSize > 6) {
+                            await new Promise(r => setTimeout(r, 4));
+                        }
+
+                        const frame = new VideoFrame(frameCanvas, {
+                            timestamp: timestampUs,
+                            duration: outDtUs
+                        });
+
+                        const isKeyFrame = (frameIdx % (fps * 2)) === 0;
+                        videoEncoder.encode(frame, { keyFrame: isKeyFrame });
+                        frame.close();
+
+                        frameIdx++;
+                        const pct = Math.min(99, Math.round((frameIdx / totalFrames) * 100));
+                        progressFill.style.width = pct + '%';
+                        setStatus(`⚡ Hybrid Render: ${pct}% (${frameIdx}/${totalFrames} frames • ${outW}×${outH} @ ${fps}fps)`, '#00e5ff');
+
+                        return frameCanvas;
+                    });
+                }
+
+                setStatus('📦 99% — Flushing Video Encoder...', '#00e5ff');
+                await videoEncoder.flush();
+                videoEncoder.close();
+
+                if (audioEncoder) {
+                    setStatus('📦 99% — Flushing Audio Encoder...', '#00e5ff');
+                    await audioEncoder.flush();
+                    audioEncoder.close();
+                }
+
+                setStatus('📦 99% — Muxing Container & Generating File...', '#00e5ff');
+                muxer.finalize();
+                const blob = new Blob([muxer.target.buffer], {
+                    type: format === 'mp4' ? 'video/mp4' : 'video/webm'
+                });
+
+                const baseName = videoFile.name.replace(/\.[^/.]+$/, '') || 'video';
+                const outName = `${baseName}-gxdiag-${outW}x${outH}.${format}`;
+                triggerDownload(blob, outName);
+
+                progressFill.style.width = '100%';
+                setStatus(`✓ Selesai! ${outName} (${formatBytes(blob.size)})`, '#00ff88');
+            } catch (err) {
+                if (abortRender) {
+                    setStatus('⚠️ Render dibatalkan.', '#ff9100');
+                } else {
+                    setStatus(`✖ ${err.message}`, '#ff4081');
+                }
+            } finally {
+                isRendering = false;
+                srcVideo.pause();
+                srcVideo.muted = prevMutedState;
+                srcVideo.playbackRate = parseFloat(document.getElementById('speed-select').value) || 1;
+                btnRender.disabled = false;
+                btnCancel.style.display = 'none';
+                processHybridFrame(false);
+                updateCropBoxDOM();
+                updateSafeZoneDOM();
+            }
+        }
+
+        async function encodeCutAudioSegments(audioEncoder, segments, speed) {
+            const sampleRate = 48000;
+            const totalDur = getTotalOutputDuration();
+            const totalFrames = Math.max(1, Math.ceil(totalDur * sampleRate));
+            const gainVal = parseFloat(document.getElementById('audio-gain').value) || 1.0;
+            const fadeIn = parseFloat(document.getElementById('fx-fadein').value) || 0;
+            const fadeOut = parseFloat(document.getElementById('fx-fadeout').value) || 0;
+
+            const offlineCtx = new OfflineAudioContext(2, totalFrames, sampleRate);
+            const masterGain = offlineCtx.createGain();
+            masterGain.gain.setValueAtTime(fadeIn > 0.01 ? 0.001 : gainVal, 0);
+            if (fadeIn > 0.01) {
+                masterGain.gain.linearRampToValueAtTime(gainVal, Math.min(fadeIn, totalDur * 0.5));
+            }
+            if (fadeOut > 0.01) {
+                const fadeOutStart = Math.max(0, totalDur - fadeOut);
+                masterGain.gain.setValueAtTime(gainVal, fadeOutStart);
+                masterGain.gain.linearRampToValueAtTime(0.001, totalDur);
+            }
+            masterGain.connect(offlineCtx.destination);
+
+            let cursorSec = 0;
+            for (const seg of segments) {
+                const rawDur = Math.max(0.05, seg.end - seg.start);
+                const outSegDur = rawDur / speed;
+                const srcNode = offlineCtx.createBufferSource();
+                srcNode.buffer = decodedAudioBuffer;
+                srcNode.playbackRate.value = speed;
+                srcNode.connect(masterGain);
+                srcNode.start(cursorSec, seg.start, rawDur);
+                cursorSec += outSegDur;
+            }
+
+            const rendered = await offlineCtx.startRendering();
+            const left = rendered.getChannelData(0);
+            const right = rendered.numberOfChannels > 1 ? rendered.getChannelData(1) : left;
+
+            const chunkFrames = 1024;
+            for (let offset = 0; offset < rendered.length; offset += chunkFrames) {
+                if (abortRender) return;
+                while (audioEncoder.encodeQueueSize > 16) {
+                    await new Promise(r => setTimeout(r, 2));
+                }
+
+                const len = Math.min(chunkFrames, rendered.length - offset);
+                const planar = new Float32Array(len * 2);
+                planar.set(left.subarray(offset, offset + len), 0);
+                planar.set(right.subarray(offset, offset + len), len);
+
+                const audioData = new AudioData({
+                    format: 'f32-planar',
+                    sampleRate,
+                    numberOfFrames: len,
+                    numberOfChannels: 2,
+                    timestamp: Math.round((offset / sampleRate) * 1_000_000),
+                    data: planar
+                });
+
+                audioEncoder.encode(audioData);
+                audioData.close();
+            }
+        }
+
+        function cancelExport() {
+            abortRender = true;
+        }
+
+        function waitVideoSeek(videoEl, timeoutMs = 400) {
+            return new Promise((resolve) => {
+                let done = false;
+                const finish = () => {
+                    if (done) return;
+                    done = true;
+                    videoEl.removeEventListener('seeked', finish);
+                    resolve();
+                };
+                videoEl.addEventListener('seeked', finish);
+                setTimeout(finish, timeoutMs);
+            });
+        }
+
+        function triggerDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 6000);
+        }
+
+        function setStatus(text, color = '#00ff88') {
+            statusMsg.style.color = color;
+            statusMsg.innerText = text;
+        }
+
+        function formatTimecode(sec) {
+            if (!isFinite(sec) || sec < 0) sec = 0;
+            const mins = Math.floor(sec / 60);
+            const secs = Math.floor(sec % 60);
+            const ms = Math.floor((sec % 1) * 100);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+        }
+
+        // Boot Hybrid Engine & Watermark Vector Templates
+        (function boot() {
+            initWatermarkTemplates();
+            initWebGL2();
+            const codecBadge = document.getElementById('codec-badge');
+            if (typeof VideoEncoder !== 'undefined') {
+                codecBadge.innerText = 'ENCODER: WEBCODECS HW';
+                codecBadge.style.color = '#00ff88';
+            } else {
+                codecBadge.innerText = 'ENCODER: UNSUPPORTED';
+                codecBadge.style.color = '#ff4081';
+            }
+            previewLoop();
+        })();
+    </script>
+</body>
+</html>
