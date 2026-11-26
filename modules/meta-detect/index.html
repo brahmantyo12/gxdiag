@@ -3,153 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Meta & Reverse Search</title>
-    <meta name="theme-color" content="#1a1a1a">
-    
+    <title>GXDiag - Image Forensics & Anti-Hoax Lab</title>
+    <meta name="theme-color" content="#111111">
     <link rel="stylesheet" href="../../css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
 
     <style>
-        body { background: #111; color: #eee; font-family: 'Segoe UI', sans-serif; padding: 20px; }
-        .container { max-width: 950px; margin: 0 auto; }
-        
-        .module-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
-        .back-btn { text-decoration: none; color: #888; font-size: 1.1rem; }
-        .back-btn:hover { color: #fff; }
-        .module-title { font-size: 1.4rem; font-weight: 800; color: #ff4081; text-transform: uppercase; letter-spacing: 2px; }
-
-        .layout-grid { display: grid; grid-template-columns: 350px 1fr; gap: 25px; }
-        @media (max-width: 800px) { .layout-grid { grid-template-columns: 1fr; } }
-
-        /* Left: Drop Zone & Preview */
-        .drop-zone {
-            background: #1a1a1a; border: 2px dashed #444; border-radius: 15px;
-            padding: 30px; text-align: center; transition: 0.3s; cursor: pointer;
-            min-height: 200px; display: flex; flex-direction: column; justify-content: center;
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background: #111;
+            color: #eee;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 16px;
+            margin: 0;
         }
-        .drop-zone:hover { border-color: #ff4081; background: rgba(255, 64, 129, 0.05); }
-        
-        .preview-wrapper { position: relative; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid #333; display: none; }
-        .preview-wrapper img { width: 100%; display: block; cursor: grab; }
-        .preview-wrapper img:active { cursor: grabbing; }
-        .file-info { font-size: 0.75rem; color: #777; margin-top: 10px; text-align: center; }
+        .container { max-width: 1200px; margin: 0 auto; }
 
-        /* Right: Analysis Result */
-        .result-panel { display: none; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .module-header {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; margin-bottom: 18px; border-bottom: 1px solid #333; padding-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .back-btn {
+            text-decoration: none; color: #aaa; font-size: 0.85rem; font-weight: 700;
+            border: 1px solid #333; padding: 6px 12px; border-radius: 8px; transition: 0.2s;
+        }
+        .back-btn:hover { color: #fff; border-color: #ff4081; }
+        .module-title {
+            font-size: 1.25rem; font-weight: 800; color: #ff4081;
+            text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .reset-btn {
+            background: #1e1e1e; border: 1px solid #444; color: #ccc;
+            padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; display: none; transition: 0.2s;
+        }
+        .reset-btn:hover { border-color: #ff4081; color: #ff4081; }
 
-        /* Verdict Cards */
-        .verdict-box { margin-bottom: 15px; padding: 15px 20px; border-radius: 10px; border-left: 5px solid; background: #1f1f1f; display: flex; align-items: start; gap: 15px; }
-        .vb-safe { border-color: #00ff88; background: rgba(0, 255, 136, 0.05); } 
-        .vb-warn { border-color: #ffb300; background: rgba(255, 179, 0, 0.05); } 
-        .vb-ai { border-color: #00e5ff; background: rgba(0, 229, 255, 0.05); } 
-        .vb-null { border-color: #777; background: #222; }
+        .layout-grid { display: grid; grid-template-columns: 400px 1fr; gap: 22px; align-items: start; }
+        @media (max-width: 920px) { .layout-grid { grid-template-columns: 1fr; } }
 
-        .vb-icon { font-size: 1.8rem; line-height: 1; margin-top: 2px; }
-        .vb-content h4 { margin: 0 0 5px 0; font-size: 1rem; color: #fff; font-weight: 700; }
-        .vb-content p { margin: 0; font-size: 0.85rem; color: #bbb; line-height: 1.4; }
+        /* Left Column: Drop Zone & Preview */
+        .drop-zone {
+            background: #181818; border: 2px dashed #444; border-radius: 14px;
+            padding: 36px 20px; text-align: center; transition: 0.25s; cursor: pointer;
+            min-height: 240px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #ff4081; background: rgba(255, 64, 129, 0.06);
+        }
+
+        .preview-card {
+            display: none; background: #181818; border: 1px solid #333;
+            border-radius: 12px; padding: 12px;
+        }
+        .view-mode-bar {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px;
+        }
+        .vm-btn {
+            background: #111; border: 1px solid #333; color: #999;
+            padding: 7px 4px; border-radius: 7px; font-size: 0.68rem; font-weight: 800;
+            cursor: pointer; text-transform: uppercase; transition: 0.15s;
+        }
+        .vm-btn:hover { color: #fff; }
+        .vm-btn.active { background: #ff4081; color: #000; border-color: #ff4081; }
+
+        .preview-wrapper {
+            position: relative; width: 100%; border-radius: 8px; overflow: hidden;
+            border: 1px solid #2c2c2c; background: #080808;
+        }
+        .preview-wrapper img, .preview-wrapper canvas {
+            width: 100%; display: block; cursor: grab;
+        }
+        .preview-wrapper canvas { display: none; }
+
+        .ela-controls {
+            display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #333;
+            font-size: 0.75rem; color: #aaa;
+        }
+        .ela-controls label { display: flex; justify-content: space-between; margin-bottom: 4px; font-weight: 700; }
+        .ela-controls input[type="range"] { width: 100%; accent-color: #ff4081; cursor: pointer; }
+        .ela-legend {
+            font-size: 0.72rem; color: #888; margin-top: 6px; line-height: 1.45;
+            background: #111; padding: 8px; border-radius: 6px; border: 1px solid #282828;
+        }
+
+        .file-info { font-size: 0.74rem; color: #888; margin-top: 8px; text-align: center; font-family: monospace; }
+
+        /* OSINT Reverse Search */
+        .osint-section {
+            margin-top: 16px; background: #181818; border: 1px solid #333;
+            border-radius: 12px; padding: 14px; display: none;
+        }
+        .osint-header {
+            font-size: 0.75rem; color: #aaa; text-transform: uppercase; font-weight: 800;
+            letter-spacing: 1px; margin-bottom: 10px;
+        }
+        .osint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .osint-btn {
+            text-decoration: none; padding: 9px; border-radius: 7px; font-size: 0.78rem;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; transition: 0.2s; border: 1px solid #333; background: #222; color: #fff;
+        }
+        .osint-btn:hover { transform: translateY(-1px); }
+        .ob-google:hover { background: #4285f4; border-color: #4285f4; }
+        .ob-yandex:hover { background: #fc3f1d; border-color: #fc3f1d; }
+        .ob-bing:hover { background: #00897b; border-color: #00897b; }
+        .ob-tineye:hover { background: #00a4e4; border-color: #00a4e4; }
+        .drag-hint { font-size: 0.71rem; color: #777; text-align: center; margin-top: 9px; line-height: 1.4; }
+
+        /* Right Column: Analysis Report */
+        .result-panel { display: none; animation: fadeIn 0.35s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .verdict-box {
+            margin-bottom: 14px; padding: 14px 18px; border-radius: 10px; border-left: 5px solid;
+            background: #1b1b1b; display: flex; align-items: flex-start; gap: 14px;
+        }
+        .vb-safe { border-color: #00ff88; background: rgba(0, 255, 136, 0.06); }
+        .vb-warn { border-color: #ffb300; background: rgba(255, 179, 0, 0.07); }
+        .vb-danger { border-color: #ff4081; background: rgba(255, 64, 129, 0.08); }
+        .vb-ai { border-color: #00e5ff; background: rgba(0, 229, 255, 0.07); }
+        .vb-null { border-color: #777; background: #1e1e1e; }
+
+        .vb-icon { font-size: 1.6rem; line-height: 1; margin-top: 2px; }
+        .vb-content h4 { margin: 0 0 4px 0; font-size: 0.98rem; color: #fff; font-weight: 800; }
+        .vb-content p { margin: 0; font-size: 0.83rem; color: #bbb; line-height: 1.45; }
+
+        .card-box {
+            background: #181818; padding: 16px; border-radius: 12px;
+            border: 1px solid #333; margin-bottom: 14px;
+        }
+        .card-title {
+            margin: 0 0 12px 0; color: #aaa; text-transform: uppercase;
+            letter-spacing: 1px; font-size: 0.74rem; font-weight: 800;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* Anomaly Checklist */
+        .anomaly-list { display: flex; flex-direction: column; gap: 8px; }
+        .anom-item {
+            padding: 9px 12px; border-radius: 8px; font-size: 0.8rem;
+            background: #121212; border: 1px solid #2b2b2b; display: flex; gap: 10px; align-items: flex-start;
+        }
+        .anom-badge {
+            font-family: monospace; font-size: 0.68rem; font-weight: 800;
+            padding: 2px 6px; border-radius: 4px; white-space: nowrap; margin-top: 1px;
+        }
+        .ab-ok { background: rgba(0, 255, 136, 0.15); color: #00ff88; }
+        .ab-warn { background: rgba(255, 179, 0, 0.18); color: #ffb300; }
+        .ab-crit { background: rgba(255, 64, 129, 0.2); color: #ff4081; }
+        .ab-info { background: rgba(0, 229, 255, 0.15); color: #00e5ff; }
 
         /* Evidence Table */
-        .evidence-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .evidence-table td { padding: 8px 0; border-bottom: 1px solid #333; font-size: 0.85rem; }
-        .evidence-table td:first-child { color: #888; width: 40%; }
-        .evidence-table td:last-child { color: #eee; font-weight: 600; text-align: right; word-break: break-all; }
+        .evidence-table { width: 100%; border-collapse: collapse; }
+        .evidence-table td { padding: 7px 0; border-bottom: 1px solid #2a2a2a; font-size: 0.82rem; }
+        .evidence-table tr:last-child td { border-bottom: none; }
+        .evidence-table td:first-child { color: #888; width: 38%; }
+        .evidence-table td:last-child { color: #eee; font-weight: 600; text-align: right; word-break: break-all; font-family: monospace; }
 
-        .tag-highlight { padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+        .tag-highlight { padding: 2px 7px; border-radius: 4px; font-size: 0.78rem; }
         .th-red { background: rgba(255, 64, 129, 0.2); color: #ff4081; border: 1px solid #ff4081; }
         .th-blue { background: rgba(0, 229, 255, 0.2); color: #00e5ff; border: 1px solid #00e5ff; }
+        .th-green { background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid #00ff88; }
 
-        /* REVERSE SEARCH SECTION (NEW) */
-        .osint-section { margin-top: 20px; background: #151515; border: 1px solid #333; border-radius: 10px; padding: 15px; }
-        .osint-header { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .osint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .osint-btn {
-            text-decoration: none; padding: 10px; border-radius: 6px; font-size: 0.8rem;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            font-weight: bold; transition: 0.2s; border: 1px solid #333;
+        /* DQT Matrix Grid */
+        .dqt-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
         }
-        .osint-btn:hover { transform: translateY(-2px); }
-        
-        .ob-google { background: #303134; color: #fff; }
-        .ob-google:hover { background: #4285f4; border-color: #4285f4; }
-        
-        .ob-yandex { background: #303134; color: #fff; }
-        .ob-yandex:hover { background: #fc3f1d; border-color: #fc3f1d; } /* Yandex Red */
-        
-        .ob-bing { background: #303134; color: #fff; }
-        .ob-bing:hover { background: #00897b; border-color: #00897b; }
+        @media (max-width: 560px) { .dqt-grid { grid-template-columns: 1fr; } }
+        .dqt-box {
+            background: #101010; border: 1px solid #282828; border-radius: 8px; padding: 10px;
+            font-family: monospace; font-size: 0.7rem; color: #aaa;
+        }
+        .dqt-matrix {
+            display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
+            margin-top: 6px; text-align: center; font-size: 0.65rem;
+        }
+        .dqt-cell {
+            background: #191919; padding: 3px 1px; border-radius: 3px; color: #00e5ff;
+        }
 
-        .ob-tineye { background: #303134; color: #fff; }
-        .ob-tineye:hover { background: #00a4e4; border-color: #00a4e4; }
-
-        .drag-hint { font-size: 0.7rem; color: #666; text-align: center; margin-top: 10px; font-style: italic; }
-
-        /* Prompt Box & Raw */
-        .ai-prompt-box { background: #111; border: 1px solid #333; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; color: #00e5ff; margin-top: 15px; max-height: 150px; overflow-y: auto; display: none; line-height: 1.5; }
-        .raw-section { margin-top: 20px; }
-        .raw-btn { background: #222; border: 1px solid #444; color: #aaa; width: 100%; padding: 10px; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; border-radius: 8px; transition: 0.3s; }
-        .raw-btn:hover { background: #333; color: #fff; border-color: #666; }
-        .raw-content { display: none; background: #000; border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 10px; font-family: monospace; font-size: 0.75rem; color: #0f0; max-height: 300px; overflow-y: auto; word-break: break-all; }
-        .raw-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding: 4px 0; }
+        /* Prompt & Raw Dump */
+        .ai-prompt-box {
+            background: #101518; border: 1px solid #1f4b5c; padding: 14px; border-radius: 10px;
+            font-family: monospace; font-size: 0.76rem; color: #00e5ff; margin-bottom: 14px;
+            max-height: 180px; overflow-y: auto; display: none; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+        }
+        .raw-btn {
+            background: #1d1d1d; border: 1px solid #3a3a3a; color: #bbb; width: 100%;
+            padding: 10px; cursor: pointer; font-size: 0.78rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; border-radius: 8px; transition: 0.2s;
+        }
+        .raw-btn:hover { background: #262626; color: #fff; border-color: #666; }
+        .raw-content {
+            display: none; background: #0a0a0a; border: 1px solid #2b2b2b; padding: 12px;
+            border-radius: 8px; margin-top: 8px; font-family: monospace; font-size: 0.73rem;
+            color: #00ff88; max-height: 280px; overflow-y: auto; word-break: break-all;
+        }
+        .raw-row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed #222; padding: 4px 0; }
+        .raw-key { color: #888; flex-shrink: 0; }
+        .raw-val { color: #00ff88; text-align: right; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="module-header">
-            <a href="../../index.html" class="back-btn">⬅ Dashboard</a>
-            <div class="module-title">Forensic & Reverse Search</div>
+            <div class="header-left">
+                <a href="../../index.html" class="back-btn">← Dashboard</a>
+                <div class="module-title">Forensic &amp; Anti-Hoax Lab</div>
+            </div>
+            <button type="button" class="reset-btn" id="btn-reset" onclick="resetLab()">↻ Uji Gambar Lain</button>
         </div>
 
         <div class="layout-grid">
+            <!-- KOLOM KIRI: UPLOAD, VISUAL FORENSICS & REVERSE SEARCH -->
             <div>
                 <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-                    <div style="font-size:2.5rem; margin-bottom:10px;">🔍</div>
-                    <div style="font-weight:bold; color:#ccc;">Select Image</div>
-                    <div style="font-size:0.8rem; color:#666; margin-top:5px;">Check Metadata & Similiars</div>
-                    <input type="file" id="file-input" accept="image/jpeg, image/jpg, image/tiff" style="display:none;">
+                    <div style="font-size:2.4rem; margin-bottom:10px;">🔬</div>
+                    <div style="font-weight:800; color:#ddd;">Pilih atau Seret Gambar ke Sini</div>
+                    <div style="font-size:0.78rem; color:#777; margin-top:6px;">EXIF + DQT Fingerprint + Binary Chunks + ELA + Peta Cahaya</div>
+                    <input type="file" id="file-input" accept="image/*" style="display:none;">
                 </div>
-                
-                <div class="preview-wrapper" id="preview-wrapper">
-                    <img id="preview-img" src="" alt="Preview" draggable="true">
-                    </div>
-                <div class="file-info" id="file-info"></div>
 
-                <div class="osint-section" id="osint-panel" style="display:none;">
-                    <div class="osint-header">🌍 Reverse Image Search</div>
+                <div class="preview-card" id="preview-card">
+                    <div class="view-mode-bar">
+                        <button type="button" class="vm-btn active" id="vm-orig" onclick="setVisualMode('orig')">Asli</button>
+                        <button type="button" class="vm-btn" id="vm-ela" onclick="setVisualMode('ela')">Peta ELA</button>
+                        <button type="button" class="vm-btn" id="vm-noise" onclick="setVisualMode('noise')">Noise/Clone</button>
+                        <button type="button" class="vm-btn" id="vm-lum" onclick="setVisualMode('lum')">Peta Cahaya</button>
+                    </div>
+
+                    <div class="preview-wrapper" id="preview-wrapper">
+                        <img id="preview-img" src="" alt="Preview" draggable="true">
+                        <canvas id="forensic-canvas"></canvas>
+                    </div>
+
+                    <div class="ela-controls" id="ela-controls">
+                        <div id="ela-slider-row">
+                            <label for="ela-gain">
+                                <span>Sensitivitas Kontras ELA</span>
+                                <span id="ela-gain-val" style="color:#ff4081;">18x</span>
+                            </label>
+                            <input type="range" id="ela-gain" min="5" max="45" value="18" oninput="renderElaMap()">
+                        </div>
+                        <div class="ela-legend" id="visual-legend"></div>
+                    </div>
+
+                    <div class="file-info" id="file-info"></div>
+                </div>
+
+                <div class="osint-section" id="osint-panel">
+                    <div class="osint-header">🌍 Reverse Image Search (Lacak Sumber Asli)</div>
                     <div class="osint-grid">
-                        <a href="https://lens.google.com/" target="_blank" class="osint-btn ob-google">Google Lens</a>
-                        <a href="https://yandex.com/images/" target="_blank" class="osint-btn ob-yandex">Yandex Img</a>
-                        <a href="https://www.bing.com/visualsearch" target="_blank" class="osint-btn ob-bing">Bing Visual</a>
-                        <a href="https://tineye.com/" target="_blank" class="osint-btn ob-tineye">TinEye</a>
+                        <a href="https://lens.google.com/" target="_blank" rel="noopener" class="osint-btn ob-google">Google Lens</a>
+                        <a href="https://yandex.com/images/" target="_blank" rel="noopener" class="osint-btn ob-yandex">Yandex Images</a>
+                        <a href="https://www.bing.com/visualsearch" target="_blank" rel="noopener" class="osint-btn ob-bing">Bing Visual</a>
+                        <a href="https://tineye.com/" target="_blank" rel="noopener" class="osint-btn ob-tineye">TinEye</a>
                     </div>
                     <div class="drag-hint">
-                        💡 <strong>How to check:</strong> Click a button above, then <strong>Drag & Drop</strong> the image from the preview box into the search tab.
+                        Buka tab mesin pencari di atas, lalu <b>Drag &amp; Drop</b> foto dari kotak preview kiri ke halaman pencarian (pastikan mode tampilan di posisi <b>ASLI</b>).
                     </div>
                 </div>
-
             </div>
 
+            <!-- KOLOM KANAN: LAPORAN FORENSIK -->
             <div class="result-panel" id="result-panel">
-                <h3 style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">Forensic Report</h3>
-                
                 <div id="main-verdict"></div>
 
-                <div style="background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #333;">
-                    <h5 style="margin:0 0 15px 0; color:#aaa; text-transform:uppercase; letter-spacing:1px; font-size:0.75rem;">Metadata Extract</h5>
+                <!-- AUDIT KONSISTENSI & ANOMALI -->
+                <div class="card-box">
+                    <div class="card-title">
+                        <span>Audit Konsistensi &amp; Anomali Data</span>
+                        <span id="anomaly-score" style="font-family:monospace; color:#00e5ff;">-</span>
+                    </div>
+                    <div class="anomaly-list" id="anomaly-list"></div>
+                </div>
+
+                <!-- METADATA TABLE -->
+                <div class="card-box">
+                    <div class="card-title">
+                        <span>Ekstrak Metadata EXIF &amp; Container</span>
+                        <span id="container-badge" style="font-family:monospace; color:#888;">-</span>
+                    </div>
                     <table class="evidence-table" id="evidence-table"></table>
                 </div>
 
-                <div id="ai-prompt-box" class="ai-prompt-box">
-                    <span class="ai-label">Detected Generation Parameters:</span>
-                    <span id="prompt-content"></span>
+                <!-- JPEG QUANTIZATION TABLE (DQT) FINGERPRINT -->
+                <div class="card-box" id="dqt-card" style="display:none;">
+                    <div class="card-title">
+                        <span>JPEG Quantization Table (DQT) Fingerprint</span>
+                        <span id="dqt-quality-badge" style="font-family:monospace; color:#00e5ff;">-</span>
+                    </div>
+                    <div id="dqt-verdict-text" style="font-size:0.8rem; color:#ccc; line-height:1.45;"></div>
+                    <div class="dqt-grid" id="dqt-matrices"></div>
                 </div>
 
-                <div class="raw-section">
-                    <button class="raw-btn" onclick="toggleRaw()">📂 View Full RAW Metadata</button>
+                <!-- AI / XMP / C2PA HIDDEN PAYLOAD -->
+                <div id="ai-prompt-box" class="ai-prompt-box"></div>
+
+                <!-- RAW DUMP -->
+                <div>
+                    <button type="button" class="raw-btn" onclick="toggleRaw()">📂 Lihat Seluruh RAW Metadata &amp; Binary Signatures</button>
                     <div class="raw-content" id="raw-content"></div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -157,116 +316,755 @@
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
-        let currentTags = {};
-        
+        let currentImageEl = null;
+        let currentVisualMode = 'orig';
+        let currentFileMeta = null;
+
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
-        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
 
-        function handleFile(file) {
-            if (!file) return;
-            document.getElementById('file-info').innerText = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById('preview-img');
-                img.src = e.target.result;
-                document.getElementById('preview-wrapper').style.display = 'block';
-                dropZone.style.display = 'none';
-                document.getElementById('result-panel').style.display = 'block';
-                document.getElementById('osint-panel').style.display = 'block'; // Show OSINT buttons
-                document.getElementById('raw-content').style.display = 'none';
-                
-                setTimeout(() => analyzeImage(img), 200);
-            };
-            reader.readAsDataURL(file);
+        function resetLab() {
+            fileInput.value = '';
+            currentImageEl = null;
+            currentVisualMode = 'orig';
+            document.getElementById('preview-card').style.display = 'none';
+            document.getElementById('osint-panel').style.display = 'none';
+            document.getElementById('result-panel').style.display = 'none';
+            document.getElementById('btn-reset').style.display = 'none';
+            dropZone.style.display = 'flex';
         }
 
-        function analyzeImage(img) {
-            EXIF.getData(img, function() {
-                currentTags = EXIF.getAllTags(this);
-                renderRawDump(currentTags);
+        async function handleFile(file) {
+            if (!file) return;
 
-                const make = EXIF.getTag(this, "Make") || "-";
-                const model = EXIF.getTag(this, "Model") || "-";
-                const software = (EXIF.getTag(this, "Software") || "Unknown").toString();
-                const dateTime = EXIF.getTag(this, "DateTimeOriginal") || EXIF.getTag(this, "DateTime") || "-";
+            const arrayBuffer = await file.arrayBuffer();
+            const binaryScan = scanBinaryContainer(arrayBuffer, file.type);
+            const dqtScan = parseJpegDqtTables(arrayBuffer);
+
+            const dataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            });
+
+            const img = document.getElementById('preview-img');
+            img.onload = function() {
+                currentImageEl = img;
+                currentFileMeta = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type || 'unknown',
+                    lastModified: file.lastModified,
+                    naturalWidth: img.naturalWidth,
+                    naturalHeight: img.naturalHeight
+                };
+
+                document.getElementById('file-info').innerText =
+                    `${file.name} • ${(file.size / 1024).toFixed(1)} KB • ${img.naturalWidth}×${img.naturalHeight} px`;
+
+                dropZone.style.display = 'none';
+                document.getElementById('preview-card').style.display = 'block';
+                document.getElementById('osint-panel').style.display = 'block';
+                document.getElementById('result-panel').style.display = 'block';
+                document.getElementById('btn-reset').style.display = 'inline-block';
+                document.getElementById('raw-content').style.display = 'none';
+
+                setVisualMode('orig');
+                runFullForensics(img, currentFileMeta, binaryScan, dqtScan);
+            };
+            img.src = dataUrl;
+        }
+
+        // =========================================================
+        // 1. VISUAL FORENSICS: ELA, NOISE & FALSE-COLOR LUMINANCE
+        // =========================================================
+        function setVisualMode(mode) {
+            currentVisualMode = mode;
+            ['orig', 'ela', 'noise', 'lum'].forEach(m => {
+                document.getElementById(`vm-${m}`).classList.toggle('active', m === mode);
+            });
+
+            const img = document.getElementById('preview-img');
+            const canvas = document.getElementById('forensic-canvas');
+            const elaCtrl = document.getElementById('ela-controls');
+            const sliderRow = document.getElementById('ela-slider-row');
+            const legend = document.getElementById('visual-legend');
+
+            if (mode === 'orig') {
+                img.style.display = 'block';
+                canvas.style.display = 'none';
+                elaCtrl.style.display = 'none';
+            } else if (mode === 'ela') {
+                img.style.display = 'none';
+                canvas.style.display = 'block';
+                elaCtrl.style.display = 'block';
+                sliderRow.style.display = 'block';
+                legend.innerHTML = '<b>Peta Warna ELA (Error Level Analysis):</b> Area asli tampak gelap/redup seragam. Bagian yang ditempel, dihapus, atau diberi teks baru menyala kontras karena tingkat kompresinya berbeda.';
+                renderElaMap();
+            } else if (mode === 'noise') {
+                img.style.display = 'none';
+                canvas.style.display = 'block';
+                elaCtrl.style.display = 'block';
+                sliderRow.style.display = 'none';
+                legend.innerHTML = '<b>Peta Noise &amp; Edge (Laplacian High-Pass):</b> Sensor kamera asli menghasilkan butiran noise merata. Area yang terlalu licin/hitam rata di tengah tekstur ramai menandakan retouching, blur, atau AI inpainting.';
+                renderNoiseMap();
+            } else if (mode === 'lum') {
+                img.style.display = 'none';
+                canvas.style.display = 'block';
+                elaCtrl.style.display = 'block';
+                sliderRow.style.display = 'none';
+                legend.innerHTML = '<b>Peta Cahaya &amp; Bayangan (False-Color Isophote):</b> Biru/Ungu = Gelap, Hijau = Midtone, Kuning/Merah = Sorotan Cahaya, Garis Hitam = Kontur Intensitas. Periksa apakah arah cahaya pada wajah/objek selaras dengan latar belakang.';
+                renderLuminanceMap();
+            }
+        }
+
+        function getScaledDimensions(img, maxDim = 900) {
+            let w = img.naturalWidth;
+            let h = img.naturalHeight;
+            if (w > maxDim || h > maxDim) {
+                const ratio = Math.min(maxDim / w, maxDim / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+            return { w, h };
+        }
+
+        function renderElaMap() {
+            if (!currentImageEl) return;
+            const gain = parseInt(document.getElementById('ela-gain').value, 10);
+            document.getElementById('ela-gain-val').innerText = `${gain}x`;
+
+            const { w, h } = getScaledDimensions(currentImageEl);
+            const canvas = document.getElementById('forensic-canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(currentImageEl, 0, 0, w, h);
+            const origData = ctx.getImageData(0, 0, w, h);
+
+            const recompressedUrl = canvas.toDataURL('image/jpeg', 0.90);
+            const tempImg = new Image();
+            tempImg.onload = function() {
+                const tmpCanvas = document.createElement('canvas');
+                tmpCanvas.width = w;
+                tmpCanvas.height = h;
+                const tmpCtx = tmpCanvas.getContext('2d');
+                tmpCtx.drawImage(tempImg, 0, 0, w, h);
+                const compData = tmpCtx.getImageData(0, 0, w, h);
+
+                const out = ctx.createImageData(w, h);
+                const d1 = origData.data;
+                const d2 = compData.data;
+                const dst = out.data;
+
+                for (let i = 0; i < d1.length; i += 4) {
+                    const dr = Math.abs(d1[i] - d2[i]) * gain;
+                    const dg = Math.abs(d1[i + 1] - d2[i + 1]) * gain;
+                    const db = Math.abs(d1[i + 2] - d2[i + 2]) * gain;
+
+                    const energy = (dr + dg + db) / 3;
+                    if (energy > 150) {
+                        dst[i] = Math.min(255, energy * 1.2);
+                        dst[i + 1] = Math.min(255, dg * 0.7);
+                        dst[i + 2] = Math.min(255, 255 - energy * 0.5);
+                    } else {
+                        dst[i] = Math.min(255, dr);
+                        dst[i + 1] = Math.min(255, dg);
+                        dst[i + 2] = Math.min(255, db);
+                    }
+                    dst[i + 3] = 255;
+                }
+                ctx.putImageData(out, 0, 0);
+            };
+            tempImg.src = recompressedUrl;
+        }
+
+        function renderNoiseMap() {
+            if (!currentImageEl) return;
+            const { w, h } = getScaledDimensions(currentImageEl);
+            const canvas = document.getElementById('forensic-canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(currentImageEl, 0, 0, w, h);
+            const src = ctx.getImageData(0, 0, w, h).data;
+            const out = ctx.createImageData(w, h);
+            const dst = out.data;
+
+            const lum = new Float32Array(w * h);
+            for (let i = 0, p = 0; i < src.length; i += 4, p++) {
+                lum[p] = 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
+            }
+
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const idx = y * w + x;
+                    const lap = Math.abs(
+                        4 * lum[idx] - lum[idx - 1] - lum[idx + 1] - lum[idx - w] - lum[idx + w]
+                    ) * 6;
+                    const v = Math.min(255, lap);
+                    const o = idx * 4;
+                    dst[o] = v * 0.35;
+                    dst[o + 1] = v;
+                    dst[o + 2] = Math.min(255, v * 1.15);
+                    dst[o + 3] = 255;
+                }
+            }
+            ctx.putImageData(out, 0, 0);
+        }
+
+        function renderLuminanceMap() {
+            if (!currentImageEl) return;
+            const { w, h } = getScaledDimensions(currentImageEl);
+            const canvas = document.getElementById('forensic-canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(currentImageEl, 0, 0, w, h);
+            const src = ctx.getImageData(0, 0, w, h).data;
+            const out = ctx.createImageData(w, h);
+            const dst = out.data;
+
+            for (let i = 0; i < src.length; i += 4) {
+                const l = 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
+                // Isophote contour lines every 32 luminance steps
+                if (Math.floor(l) % 32 === 0) {
+                    dst[i] = 15;
+                    dst[i + 1] = 15;
+                    dst[i + 2] = 15;
+                    dst[i + 3] = 255;
+                    continue;
+                }
+
+                // False-color thermal gradient (Dark=Blue -> Cyan -> Green -> Yellow -> Hot White/Red)
+                const t = l / 255;
+                let r = 0, g = 0, b = 0;
+                if (t < 0.25) {
+                    r = 40 * (t / 0.25);
+                    g = 40 + 140 * (t / 0.25);
+                    b = 140 + 115 * (t / 0.25);
+                } else if (t < 0.5) {
+                    const k = (t - 0.25) / 0.25;
+                    r = 40 * (1 - k);
+                    g = 180 + 75 * k;
+                    b = 255 * (1 - k);
+                } else if (t < 0.75) {
+                    const k = (t - 0.5) / 0.25;
+                    r = 255 * k;
+                    g = 255;
+                    b = 0;
+                } else {
+                    const k = (t - 0.75) / 0.25;
+                    r = 255;
+                    g = 255 * (1 - k * 0.75);
+                    b = 180 * k;
+                }
+                dst[i] = r;
+                dst[i + 1] = g;
+                dst[i + 2] = b;
+                dst[i + 3] = 255;
+            }
+            ctx.putImageData(out, 0, 0);
+        }
+
+        // =========================================================
+        // 2. JPEG QUANTIZATION TABLE (DQT / FF DB) FINGERPRINTING
+        // =========================================================
+        const STD_IJG_LUM = [
+            16,11,10,16,24,40,51,61, 12,12,14,19,26,58,60,55,
+            14,13,16,24,40,57,69,56, 14,17,22,29,51,87,80,62,
+            18,22,37,56,68,109,103,77, 24,35,55,64,81,104,113,92,
+            49,64,78,87,103,121,120,101, 72,92,95,98,112,100,103,99
+        ];
+
+        function parseJpegDqtTables(buffer) {
+            const bytes = new Uint8Array(buffer);
+            if (bytes.length < 4 || bytes[0] !== 0xFF || bytes[1] !== 0xD8) {
+                return null; // Not JPEG
+            }
+
+            const tables = {};
+            let i = 2;
+            while (i < bytes.length - 4) {
+                if (bytes[i] !== 0xFF) { i++; continue; }
+                const marker = bytes[i + 1];
+                if (marker === 0xDA || marker === 0xD9) break; // Start of Scan or EOI
+                if (marker === 0x00 || (marker >= 0xD0 && marker <= 0xD7) || marker === 0x01) {
+                    i += 2;
+                    continue;
+                }
+
+                const segLen = (bytes[i + 2] << 8) | bytes[i + 3];
+                if (segLen < 2 || i + 2 + segLen > bytes.length) break;
+
+                if (marker === 0xDB) {
+                    let pos = i + 4;
+                    const end = i + 2 + segLen;
+                    while (pos < end) {
+                        const pqTq = bytes[pos++];
+                        const precision = (pqTq >> 4) & 0x0F; // 0 = 8-bit, 1 = 16-bit
+                        const tableId = pqTq & 0x0F;
+                        const entrySize = precision === 0 ? 1 : 2;
+                        if (pos + 64 * entrySize > end) break;
+
+                        const vals = [];
+                        for (let k = 0; k < 64; k++) {
+                            if (precision === 0) {
+                                vals.push(bytes[pos++]);
+                            } else {
+                                vals.push((bytes[pos] << 8) | bytes[pos + 1]);
+                                pos += 2;
+                            }
+                        }
+                        tables[tableId] = vals;
+                    }
+                }
+                i += 2 + segLen;
+            }
+
+            if (!tables[0]) return null;
+
+            const t0 = tables[0];
+            const sum0 = t0.reduce((a, b) => a + b, 0);
+            const avg0 = sum0 / 64;
+
+            // Estimate IJG Quality Factor from Luminance table
+            const stdSum = STD_IJG_LUM.reduce((a, b) => a + b, 0);
+            const scaleRatio = (sum0 / stdSum) * 100;
+            let estQuality = 0;
+            if (scaleRatio <= 100) {
+                estQuality = Math.round(100 - (scaleRatio / 2));
+            } else {
+                estQuality = Math.max(1, Math.round(5000 / scaleRatio));
+            }
+            estQuality = Math.min(100, Math.max(1, estQuality));
+
+            // Check exact scaled IJG match (characteristic of libjpeg / GIMP / ImageMagick / Web Canvas / WhatsApp)
+            let isExactIjg = false;
+            for (let q = 1; q <= 100; q++) {
+                const s = q < 50 ? Math.floor(5000 / q) : 200 - 2 * q;
+                let mismatch = 0;
+                for (let k = 0; k < 64; k++) {
+                    const expected = Math.max(1, Math.min(255, Math.floor((STD_IJG_LUM[k] * s + 50) / 100)));
+                    if (t0[k] !== expected) { mismatch++; break; }
+                }
+                if (mismatch === 0) { isExactIjg = true; estQuality = q; break; }
+            }
+
+            let signatureHint = '';
+            if (isExactIjg) {
+                if (estQuality >= 70 && estQuality <= 85) {
+                    signatureHint = `Matriks IJG Standard (Q=${estQuality}) — khas kompresi ulang Software/Web (libjpeg, WhatsApp/Messenger, atau GIMP/Editor).`;
+                } else {
+                    signatureHint = `Matriks IJG Standard (Q=${estQuality}) — dihasilkan oleh encoder software berbasis libjpeg.`;
+                }
+            } else {
+                signatureHint = `Matriks Custom / Non-IJG (Est. Q≈${estQuality}) — khas Hardware ISP Kamera Smartphone/DSLR atau Adobe Photoshop Save-for-Web.`;
+            }
+
+            return {
+                tables,
+                estQuality,
+                avg0: avg0.toFixed(1),
+                isExactIjg,
+                signatureHint
+            };
+        }
+
+        // =========================================================
+        // 3. BINARY CONTAINER SCANNER (PNG CHUNKS, XMP, C2PA, AI)
+        // =========================================================
+        function scanBinaryContainer(buffer, mimeType) {
+            const bytes = new Uint8Array(buffer);
+            const scanLen = Math.min(bytes.length, 450000);
+            let ascii = '';
+            for (let i = 0; i < scanLen; i++) {
+                const c = bytes[i];
+                ascii += (c >= 32 && c <= 126) ? String.fromCharCode(c) : ' ';
+            }
+
+            const foundEditors = [];
+            const foundAi = [];
+            const hasXmp = ascii.includes('http://ns.adobe.com/xap/1.0/') || ascii.includes('<x:xmpmeta');
+            const hasC2pa = ascii.includes('c2pa') || ascii.includes('jumb') || ascii.includes('ContentCredentials');
+            let aiPromptExtract = '';
+
+            const editorSignatures = [
+                { key: 'adobe photoshop', label: 'Adobe Photoshop' },
+                { key: 'adobe lightroom', label: 'Adobe Lightroom' },
+                { key: 'canva', label: 'Canva Editor' },
+                { key: 'gimp', label: 'GIMP' },
+                { key: 'affinity photo', label: 'Affinity Photo' },
+                { key: 'picsart', label: 'PicsArt' },
+                { key: 'snapseed', label: 'Google Snapseed' },
+                { key: 'capcut', label: 'CapCut' },
+                { key: 'photopea', label: 'Photopea' },
+                { key: 'corel', label: 'CorelDRAW / PaintShop' }
+            ];
+
+            const aiSignatures = [
+                { key: 'comfyui', label: 'ComfyUI (Stable Diffusion)' },
+                { key: 'automatic1111', label: 'Automatic1111 WebUI' },
+                { key: 'stable diffusion', label: 'Stable Diffusion' },
+                { key: 'midjourney', label: 'Midjourney' },
+                { key: 'dall-e', label: 'OpenAI DALL-E' },
+                { key: 'trainedalgorithmicmedia', label: 'IPTC AI Algorithmic Media Tag' },
+                { key: 'google generative', label: 'Google Imagen / Generative AI' },
+                { key: 'firefly', label: 'Adobe Firefly AI' },
+                { key: 'novelai', label: 'NovelAI' }
+            ];
+
+            const lowerAscii = ascii.toLowerCase();
+            editorSignatures.forEach(sig => {
+                if (lowerAscii.includes(sig.key) && !foundEditors.includes(sig.label)) {
+                    foundEditors.push(sig.label);
+                }
+            });
+            aiSignatures.forEach(sig => {
+                if (lowerAscii.includes(sig.key) && !foundAi.includes(sig.label)) {
+                    foundAi.push(sig.label);
+                }
+            });
+
+            const paramMatch = ascii.match(/(parameters|prompt|workflow)\s*([^\x00]{15,800})/i);
+            if (paramMatch) {
+                aiPromptExtract = paramMatch[0].replace(/\s+/g, ' ').trim();
+            }
+
+            let containerType = mimeType || 'Unknown';
+            if (bytes[0] === 0xFF && bytes[1] === 0xD8) containerType = 'JPEG (JFIF/EXIF)';
+            else if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) containerType = 'PNG (Chunk Container)';
+            else if (ascii.startsWith('RIFF') && ascii.includes('WEBP')) containerType = 'WebP (RIFF Container)';
+
+            return {
+                containerType,
+                foundEditors,
+                foundAi,
+                hasXmp,
+                hasC2pa,
+                aiPromptExtract
+            };
+        }
+
+        // =========================================================
+        // 4. EXIF + CONSISTENCY AUDIT ENGINE
+        // =========================================================
+        function parseExifDate(str) {
+            if (!str || typeof str !== 'string') return null;
+            const m = str.match(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+            if (!m) return null;
+            return new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}`);
+        }
+
+        function convertGpsToDecimal(gpsArr, ref) {
+            if (!Array.isArray(gpsArr) || gpsArr.length < 3) return null;
+            const d = Number(gpsArr[0]);
+            const m = Number(gpsArr[1]);
+            const s = Number(gpsArr[2]);
+            if (isNaN(d) || isNaN(m) || isNaN(s)) return null;
+            let dec = d + (m / 60) + (s / 3600);
+            if (ref === 'S' || ref === 'W') dec = -dec;
+            return dec.toFixed(6);
+        }
+
+        function runFullForensics(img, fileMeta, binaryScan, dqtScan) {
+            document.getElementById('container-badge').innerText = binaryScan.containerType;
+
+            EXIF.getData(img, function() {
+                const tags = EXIF.getAllTags(this) || {};
+                const make = EXIF.getTag(this, "Make") || "";
+                const model = EXIF.getTag(this, "Model") || "";
+                const software = (EXIF.getTag(this, "Software") || "").toString();
+                const dateOrig = EXIF.getTag(this, "DateTimeOriginal") || "";
+                const dateMod = EXIF.getTag(this, "DateTime") || "";
                 const iso = EXIF.getTag(this, "ISOSpeedRatings") || "-";
+                const fNumber = EXIF.getTag(this, "FNumber");
+                const exposure = EXIF.getTag(this, "ExposureTime");
+                const exifW = EXIF.getTag(this, "PixelXDimension");
+                const exifH = EXIF.getTag(this, "PixelYDimension");
                 const userComment = EXIF.getTag(this, "UserComment") || "";
 
-                const analysis = classifyImage(software, userComment);
-                renderVerdict(analysis);
-                renderTable(make, model, software, dateTime, iso, analysis);
+                const lat = convertGpsToDecimal(EXIF.getTag(this, "GPSLatitude"), EXIF.getTag(this, "GPSLatitudeRef"));
+                const lon = convertGpsToDecimal(EXIF.getTag(this, "GPSLongitude"), EXIF.getTag(this, "GPSLongitudeRef"));
+
+                const anomalies = [];
+                let riskFlags = 0;
+
+                // 1. AI Signatures
+                const commentStr = Array.isArray(userComment) ? String.fromCharCode(...userComment) : String(userComment);
+                const hasPromptText = binaryScan.aiPromptExtract || commentStr.includes('Steps:') || commentStr.includes('Seed:');
+                if (binaryScan.foundAi.length > 0 || hasPromptText) {
+                    riskFlags += 2;
+                    anomalies.push({
+                        level: 'crit',
+                        badge: 'AI DETECTED',
+                        text: `Jejak generator AI ditemukan: <b>${binaryScan.foundAi.join(', ') || 'Generation Parameters'}</b>.`
+                    });
+                }
+
+                // 2. Editor Signatures
+                const allEditors = [...binaryScan.foundEditors];
+                const editorWords = ['photoshop', 'lightroom', 'gimp', 'canva', 'paint', 'affinity', 'picsart', 'snapseed', 'capcut'];
+                if (software && editorWords.some(w => software.toLowerCase().includes(w)) && !allEditors.includes(software)) {
+                    allEditors.push(software);
+                }
+
+                if (allEditors.length > 0) {
+                    riskFlags += 2;
+                    anomalies.push({
+                        level: 'crit',
+                        badge: 'EDITED',
+                        text: `Terdeteksi jejak aplikasi penyunting gambar pada struktur file: <b>${allEditors.join(', ')}</b>.`
+                    });
+                }
+
+                // 3. Timestamp Mismatch
+                const dOrig = parseExifDate(dateOrig);
+                const dMod = parseExifDate(dateMod);
+                if (dOrig && dMod) {
+                    const diffSec = Math.abs((dMod - dOrig) / 1000);
+                    if (diffSec > 120) {
+                        riskFlags += 1;
+                        anomalies.push({
+                            level: 'warn',
+                            badge: 'TIME MISMATCH',
+                            text: `Waktu simpan ulang (<code>${dateMod}</code>) berbeda <b>${Math.round(diffSec / 60)} menit</b> dari waktu jepret asli kamera (<code>${dateOrig}</code>).`
+                        });
+                    } else {
+                        anomalies.push({
+                            level: 'ok',
+                            badge: 'TIME SYNC',
+                            text: `Timestamp kamera asli (<code>${dateOrig}</code>) konsisten dengan waktu pembuatan file.`
+                        });
+                    }
+                }
+
+                // 4. Resolution Mismatch
+                if (exifW && exifH && (exifW !== fileMeta.naturalWidth || exifH !== fileMeta.naturalHeight)) {
+                    riskFlags += 1;
+                    anomalies.push({
+                        level: 'warn',
+                        badge: 'RESIZED/CROP',
+                        text: `Dimensi aktual (<b>${fileMeta.naturalWidth}×${fileMeta.naturalHeight}</b>) tidak cocok dengan tag EXIF asli (<b>${exifW}×${exifH}</b>). Gambar telah dipotong atau dikompres ulang.`
+                    });
+                }
+
+                // 5. DQT Fingerprint Check
+                if (dqtScan) {
+                    if (dqtScan.isExactIjg && (make || model)) {
+                        riskFlags += 1;
+                        anomalies.push({
+                            level: 'warn',
+                            badge: 'DQT RE-ENCODED',
+                            text: `Header EXIF menyebut kamera <b>${make} ${model}</b>, namun tabel kuantisasi JPEG (<code>Q=${dqtScan.estQuality}</code>) memakai matriks standar <code>libjpeg</code>. Foto kemungkinan telah di-save ulang oleh software.`
+                        });
+                    } else if (dqtScan.isExactIjg) {
+                        anomalies.push({
+                            level: 'info',
+                            badge: 'DQT SOFTWARE',
+                            text: dqtScan.signatureHint
+                        });
+                    } else {
+                        anomalies.push({
+                            level: 'ok',
+                            badge: 'DQT CUSTOM',
+                            text: dqtScan.signatureHint
+                        });
+                    }
+                }
+
+                // 6. Stripped EXIF
+                const tagCount = Object.keys(tags).filter(k => k !== 'thumbnail').length;
+                if (tagCount === 0) {
+                    const isWaName = /WA\d{4}|WhatsApp/i.test(fileMeta.name);
+                    anomalies.push({
+                        level: 'warn',
+                        badge: 'STRIPPED EXIF',
+                        text: isWaName
+                            ? `Pola nama file WhatsApp terdeteksi. Metadata kamera asli telah dihapus otomatis oleh kompresi messenger — gunakan tab <b>Peta ELA</b>, <b>Peta Cahaya</b> &amp; <b>Reverse Image Search</b>.`
+                            : `Tidak ada metadata EXIF kamera (kemungkinan hasil screenshot, unduhan media sosial, atau telah dibersihkan). Periksa <b>Peta ELA</b> &amp; <b>Peta Cahaya</b>.`
+                    });
+                } else if (make || model) {
+                    anomalies.push({
+                        level: 'ok',
+                        badge: 'CAMERA HARDWARE',
+                        text: `Teridentifikasi hardware kamera fisik: <b>${make} ${model}</b> (ISO ${iso}${fNumber ? `, f/${fNumber}` : ''}).`
+                    });
+                }
+
+                // 7. C2PA Content Credentials
+                if (binaryScan.hasC2pa) {
+                    anomalies.push({
+                        level: 'info',
+                        badge: 'C2PA JUMBF',
+                        text: `File memiliki kontainer <b>C2PA Content Credentials</b> (tanda tangan kriptografi asal-usul media).`
+                    });
+                }
+
+                renderMainVerdict(binaryScan, allEditors, make, model, software, tagCount, riskFlags, hasPromptText);
+
+                document.getElementById('anomaly-score').innerText = `${anomalies.length} Indikator Diperiksa`;
+                document.getElementById('anomaly-list').innerHTML = anomalies.map(a => `
+                    <div class="anom-item">
+                        <span class="anom-badge ab-${a.level}">${a.badge}</span>
+                        <div style="color:#ccc; line-height:1.4;">${a.text}</div>
+                    </div>
+                `).join('');
+
+                let swDisplay = software || (allEditors[0] || '-');
+                if (allEditors.length > 0) swDisplay = `<span class="tag-highlight th-red">${swDisplay}</span>`;
+                else if (binaryScan.foundAi.length > 0) swDisplay = `<span class="tag-highlight th-blue">${binaryScan.foundAi[0]}</span>`;
+                else if (software) swDisplay = `<span class="tag-highlight th-green">${software}</span>`;
+
+                const gpsHtml = (lat && lon)
+                    ? `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener" style="color:#00ff88; text-decoration:underline;">${lat}, ${lon} ↗</a>`
+                    : '-';
+
+                document.getElementById('evidence-table').innerHTML = `
+                    <tr><td>Kamera / Perangkat</td><td>${(make || model) ? `${make} ${model}`.trim() : '-'}</td></tr>
+                    <tr><td>Software / Pipeline</td><td>${swDisplay}</td></tr>
+                    <tr><td>Waktu Jepret (Original)</td><td>${dateOrig || '-'}</td></tr>
+                    <tr><td>Waktu Modifikasi</td><td>${dateMod || '-'}</td></tr>
+                    <tr><td>Parameter Optik</td><td>ISO ${iso}${fNumber ? ` • f/${fNumber}` : ''}${exposure ? ` • 1/${Math.round(1/exposure)}s` : ''}</td></tr>
+                    <tr><td>Koordinat GPS</td><td>${gpsHtml}</td></tr>
+                    <tr><td>Struktur XMP / C2PA</td><td>${binaryScan.hasXmp ? 'XMP Ada' : 'Tidak Ada'} • ${binaryScan.hasC2pa ? 'C2PA Ada' : 'Non-C2PA'}</td></tr>
+                `;
+
+                renderDqtCard(dqtScan);
+
+                const pBox = document.getElementById('ai-prompt-box');
+                const promptPayload = binaryScan.aiPromptExtract || (hasPromptText ? commentStr.replace(/[^\x20-\x7E]/g, '') : '');
+                if (promptPayload) {
+                    pBox.style.display = 'block';
+                    pBox.innerHTML = `<strong style="color:#fff;">Terdeteksi Parameter / Prompt Tersembunyi:</strong>\n${escapeHTML(promptPayload)}`;
+                } else {
+                    pBox.style.display = 'none';
+                }
+
+                renderRawDump(tags, binaryScan, dqtScan);
             });
         }
 
-        function classifyImage(software, userComment) {
-            let result = { type: "UNKNOWN", title: "No Signature Found", desc: "Metadata is empty or generic.", cssClass: "vb-null", icon: "📁", prompt: null };
-            const swLower = software.toLowerCase();
-            const commentStr = String.fromCharCode(...(userComment || []));
-
-            const aiKeywords = ["stable diffusion", "midjourney", "dall-e", "novelai", "automatic1111", "comfyui"];
-            if (aiKeywords.some(k => swLower.includes(k)) || commentStr.includes("Steps:") || commentStr.includes("Seed:")) {
-                result = { type: "AI", title: "AI Generated Content", desc: "Metadata contains signatures from AI Generators.", cssClass: "vb-ai", icon: "🤖", prompt: commentStr.replace(/[^\x20-\x7E]/g, '') };
-                return result;
+        function renderDqtCard(dqtScan) {
+            const card = document.getElementById('dqt-card');
+            if (!dqtScan) {
+                card.style.display = 'none';
+                return;
             }
+            card.style.display = 'block';
+            document.getElementById('dqt-quality-badge').innerText = `Est. JPEG Q: ${dqtScan.estQuality}% • ${dqtScan.isExactIjg ? 'IJG Matrix' : 'Custom Matrix'}`;
+            document.getElementById('dqt-verdict-text').innerText = dqtScan.signatureHint;
 
-            const editorKeywords = ["photoshop", "gimp", "lightroom", "canva", "paint", "picasa", "affinity"];
-            if (editorKeywords.some(k => swLower.includes(k))) {
-                result = { type: "EDITED", title: "Post-Processing Detected", desc: `Software tag: <strong>${software}</strong>. Image saved via editor.`, cssClass: "vb-warn", icon: "🖌️" };
-                return result;
-            }
+            const buildMatrixHtml = (title, arr) => {
+                if (!arr) return '';
+                const cells = arr.map(v => `<div class="dqt-cell">${v}</div>`).join('');
+                return `<div class="dqt-box"><div style="font-weight:bold; color:#ddd;">${title}</div><div class="dqt-matrix">${cells}</div></div>`;
+            };
 
-            const camKeywords = ["android", "ios", "google", "apple", "samsung", "ver", "build", "miui"];
-            if (camKeywords.some(k => swLower.includes(k)) || (software !== "Unknown" && !swLower.includes("adobe"))) {
-                result = { type: "ORIGINAL", title: "Camera / OS Processed", desc: `Signature <strong>${software}</strong> indicates Camera OS processing.`, cssClass: "vb-safe", icon: "📸" };
-                return result;
-            }
-            return result;
+            document.getElementById('dqt-matrices').innerHTML =
+                buildMatrixHtml('Table 0: Luminance (8×8)', dqtScan.tables[0]) +
+                buildMatrixHtml('Table 1: Chrominance (8×8)', dqtScan.tables[1]);
         }
 
-        function renderVerdict(data) {
+        function renderMainVerdict(binaryScan, allEditors, make, model, software, tagCount, riskFlags, hasPromptText) {
+            let verdict = {
+                css: 'vb-null',
+                icon: '📁',
+                title: 'Metadata Kamera Kosong / Terhapus',
+                desc: 'Tidak ditemukan header kamera maupun jejak software eksplisit. Gunakan <b>Peta ELA</b> &amp; <b>Peta Cahaya</b> di panel kiri serta <b>Reverse Image Search</b> untuk melacak unggahan pertama.'
+            };
+
+            if (binaryScan.foundAi.length > 0 || hasPromptText) {
+                verdict = {
+                    css: 'vb-ai',
+                    icon: '🤖',
+                    title: 'Terindikasi Gambar Buatan AI (Synthetic Media)',
+                    desc: `Struktur biner file memuat tanda tangan generator AI (<b>${binaryScan.foundAi.join(', ') || 'AI Metadata'}</b>).`
+                };
+            } else if (allEditors.length > 0) {
+                verdict = {
+                    css: 'vb-danger',
+                    icon: '⚠️',
+                    title: 'Terdeteksi Jejak Penyuntingan (Post-Processed)',
+                    desc: `Gambar pernah diproses atau disimpan ulang melalui perangkat lunak editor (<b>${allEditors.join(', ')}</b>). Periksa <b>Peta ELA</b> untuk melihat area mana yang diubah.`
+                };
+            } else if (riskFlags > 0 && (make || model)) {
+                verdict = {
+                    css: 'vb-warn',
+                    icon: '🔎',
+                    title: 'Metadata Kamera Ada, Namun Ditemukan Anomali',
+                    desc: `Tercatat dari perangkat <b>${make} ${model}</b>, tetapi terdapat ketidakcocokan waktu, dimensi, atau tabel kompresi DQT. Cek poin anomali di bawah.`
+                };
+            } else if (make || model) {
+                verdict = {
+                    css: 'vb-safe',
+                    icon: '✅',
+                    title: 'Struktur EXIF &amp; DQT Kamera Konsisten',
+                    desc: `Metadata perangkat keras <b>${make} ${model}</b> utuh tanpa tanda tangan software editor eksternal. Tetap pastikan konteks waktu &amp; lokasi lewat Reverse Search.`
+                };
+            }
+
             document.getElementById('main-verdict').innerHTML = `
-                <div class="verdict-box ${data.cssClass}">
-                    <div class="vb-icon">${data.icon}</div>
-                    <div class="vb-content"><h4>${data.title}</h4><p>${data.desc}</p></div>
-                </div>`;
-            const pBox = document.getElementById('ai-prompt-box');
-            if(data.type === "AI" && data.prompt) { pBox.style.display = 'block'; document.getElementById('prompt-content').innerText = data.prompt; }
-            else { pBox.style.display = 'none'; }
-        }
-
-        function renderTable(make, model, sw, date, iso, analysis) {
-            let swDisplay = sw;
-            if (analysis.type === "EDITED") swDisplay = `<span class="tag-highlight th-red">${sw}</span>`;
-            if (analysis.type === "AI") swDisplay = `<span class="tag-highlight th-blue">${sw}</span>`;
-            document.getElementById('evidence-table').innerHTML = `
-                <tr><td>Device Make</td><td>${make}</td></tr>
-                <tr><td>Device Model</td><td>${model}</td></tr>
-                <tr><td>Software Tag</td><td>${swDisplay}</td></tr>
-                <tr><td>Date Original</td><td>${date}</td></tr>
-                <tr><td>ISO Speed</td><td>${iso}</td></tr>
+                <div class="verdict-box ${verdict.css}">
+                    <div class="vb-icon">${verdict.icon}</div>
+                    <div class="vb-content">
+                        <h4>${verdict.title}</h4>
+                        <p>${verdict.desc}</p>
+                    </div>
+                </div>
             `;
         }
 
-        function renderRawDump(tags) {
+        function escapeHTML(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function renderRawDump(tags, binaryScan, dqtScan) {
             const container = document.getElementById('raw-content');
-            let html = "";
-            for (let key in tags) {
-                if (tags.hasOwnProperty(key) && key !== "thumbnail") { 
+            let rows = [];
+
+            rows.push(`<div class="raw-row"><span class="raw-key">[Container]</span><span class="raw-val">${binaryScan.containerType}</span></div>`);
+            if (dqtScan) {
+                rows.push(`<div class="raw-row"><span class="raw-key">[JPEG DQT Fingerprint]</span><span class="raw-val">Est. Q=${dqtScan.estQuality}% (${dqtScan.isExactIjg ? 'Exact IJG libjpeg' : 'Custom Hardware/Encoder'})</span></div>`);
+            }
+            if (binaryScan.foundEditors.length) {
+                rows.push(`<div class="raw-row"><span class="raw-key">[Binary Editor Signatures]</span><span class="raw-val">${escapeHTML(binaryScan.foundEditors.join(', '))}</span></div>`);
+            }
+            if (binaryScan.foundAi.length) {
+                rows.push(`<div class="raw-row"><span class="raw-key">[Binary AI Signatures]</span><span class="raw-val">${escapeHTML(binaryScan.foundAi.join(', '))}</span></div>`);
+            }
+
+            for (const key in tags) {
+                if (Object.prototype.hasOwnProperty.call(tags, key) && key !== 'thumbnail') {
                     let val = tags[key];
-                    if (typeof val === 'object') val = JSON.stringify(val).substring(0, 50) + (JSON.stringify(val).length>50?"...":"");
-                    html += `<div class="raw-row"><span class="raw-key">${key}</span><span class="raw-val">${val}</span></div>`;
+                    if (typeof val === 'object') {
+                        const s = JSON.stringify(val);
+                        val = s.length > 65 ? s.substring(0, 65) + '...' : s;
+                    }
+                    rows.push(`<div class="raw-row"><span class="raw-key">${escapeHTML(key)}</span><span class="raw-val">${escapeHTML(val)}</span></div>`);
                 }
             }
-            if(html === "") html = "<div style='color:#777; text-align:center;'>No EXIF data found.</div>";
-            container.innerHTML = html;
+
+            if (rows.length <= 1) {
+                rows.push(`<div style="color:#777; text-align:center; padding:8px;">Tidak ada tag EXIF tersimpan di dalam file ini.</div>`);
+            }
+            container.innerHTML = rows.join('');
         }
 
         function toggleRaw() {
             const el = document.getElementById('raw-content');
-            el.style.display = el.style.display === 'none' || el.style.display === '' ? 'block' : 'none';
+            el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
         }
     </script>
 </body>
