@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Pro Keyboard Tester</title>
+    <title>GXDiag - Pro Keyboard &amp; VIA/QMK Lab</title>
     <meta name="theme-color" content="#1a1a1a">
     <link rel="stylesheet" href="../../css/style.css">
     <style>
-        /* --- UPGRADED VISUALS (LAYOUT AMAN) --- */
-        
+        * { box-sizing: border-box; }
         body {
-            background: #111; 
+            background: #111;
             background-image: radial-gradient(circle at 50% 0%, #1a2a3a 0%, #0d0d0d 80%);
             color: #eee; font-family: 'Segoe UI', sans-serif;
             min-height: 100vh; margin: 0; padding: 20px;
@@ -18,162 +17,386 @@
         }
 
         /* HEADER & CONTROLS */
-        .kb-header { 
-            display: flex; justify-content: space-between; width: 100%; 
-            max-width: 1260px; margin-bottom: 20px; align-items: center; 
-            flex-wrap: wrap; gap: 10px; margin-top: 40px; 
+        .kb-header {
+            display: flex; justify-content: space-between; width: 100%;
+            max-width: 1280px; margin-bottom: 14px; align-items: center;
+            flex-wrap: wrap; gap: 10px; margin-top: 36px;
         }
-        
+
         .kb-header h2 {
-            margin: 0; font-size: 1.8rem; color: #00e5ff; 
+            margin: 0; font-size: 1.6rem; color: #00e5ff;
             text-transform: uppercase; letter-spacing: 2px;
             text-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
         }
 
-        .controls { display: flex; gap: 15px; }
-        .ctrl-box { 
-            background: rgba(30, 30, 30, 0.8); padding: 8px 20px; border-radius: 30px; 
-            border: 1px solid #444; display: flex; align-items: center; gap: 10px; 
+        .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .ctrl-box {
+            background: rgba(30, 30, 30, 0.85); padding: 6px 12px; border-radius: 30px;
+            border: 1px solid #444; display: flex; align-items: center; gap: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); backdrop-filter: blur(5px);
         }
-        
-        /* DASHBOARD STATS */
+
+        /* LAYOUT PRESET PILLS */
+        .layout-pills {
+            display: flex; background: #191919; border: 1px solid #3c3c3c;
+            border-radius: 30px; padding: 3px; gap: 2px; flex-wrap: wrap;
+        }
+        .l-pill {
+            background: transparent; border: none; color: #888;
+            padding: 5px 10px; border-radius: 24px; font-family: monospace;
+            font-size: 0.73rem; font-weight: 800; cursor: pointer; transition: 0.15s;
+        }
+        .l-pill:hover { color: #fff; }
+        .l-pill.active { background: #00e5ff; color: #000; }
+
+        .action-pill {
+            background: rgba(24, 24, 24, 0.9); border: 1px solid #444; color: #ddd;
+            padding: 7px 13px; border-radius: 30px; font-size: 0.75rem;
+            font-weight: 800; font-family: monospace; cursor: pointer;
+            transition: 0.18s; display: flex; align-items: center; gap: 6px;
+        }
+        .action-pill:hover { border-color: #00e5ff; color: #fff; }
+        .action-pill.locked {
+            background: rgba(0, 255, 136, 0.14); border-color: #00ff88;
+            color: #00ff88; box-shadow: 0 0 14px rgba(0, 255, 136, 0.25);
+        }
+        .action-pill.hid-active {
+            background: rgba(255, 145, 0, 0.16); border-color: #ff9100;
+            color: #ffab40;
+        }
+        .action-pill.reset:hover { border-color: #ff4081; color: #ff4081; }
+
+        /* OS GUARD STATUS BAR */
+        .guard-banner {
+            width: 100%; max-width: 1280px; margin-bottom: 14px;
+            background: rgba(20, 24, 28, 0.9); border: 1px solid #2b3540;
+            border-radius: 10px; padding: 8px 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 8px; font-family: monospace; font-size: 0.74rem;
+        }
+        .guard-status { color: #90caf9; }
+        .shift-meter { color: #aaa; }
+        .shift-meter.warn { color: #ffab40; font-weight: bold; }
+
+        /* DASHBOARD STATS (3 COLUMNS) */
         .dashboard {
-            width: 100%; max-width: 1260px; display: grid; 
-            grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px;
+            width: 100%; max-width: 1280px; display: grid;
+            grid-template-columns: 1.5fr 1.2fr 1.0fr; gap: 15px; margin-bottom: 16px;
         }
+        @media (max-width: 1040px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+
         .dash-panel {
-            background: linear-gradient(145deg, #1e1e1e, #181818); /* Gradient halus */
-            border: 1px solid #333; border-radius: 15px;
-            padding: 20px; height: 160px; display: flex; flex-direction: column; 
-            position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: linear-gradient(145deg, #1d1d1d, #161616);
+            border: 1px solid #303030; border-radius: 14px;
+            padding: 14px 16px; min-height: 185px; display: flex; flex-direction: column;
+            position: relative; box-shadow: 0 10px 26px rgba(0,0,0,0.35);
         }
-        .panel-head { 
-            display: flex; justify-content: space-between; font-size: 0.85rem; 
-            color: #aaa; font-weight: bold; margin-bottom: 10px; 
-            border-bottom: 1px solid #333; padding-bottom: 8px; letter-spacing: 1px;
+        .panel-head {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; color: #aaa; font-weight: 800; margin-bottom: 10px;
+            border-bottom: 1px solid #2d2d2d; padding-bottom: 7px; letter-spacing: 0.7px;
+            font-family: monospace; gap: 6px;
         }
+
+        .info-toggle-btn {
+            background: rgba(0, 229, 255, 0.12); border: 1px solid rgba(0, 229, 255, 0.45);
+            color: #00e5ff; border-radius: 5px; padding: 2px 7px;
+            font-family: monospace; font-size: 0.68rem; font-weight: 800;
+            cursor: pointer; transition: 0.15s;
+        }
+        .info-toggle-btn:hover { background: #00e5ff; color: #000; }
+
+        .rt-guide-box {
+            display: none; background: #10151a; border: 1px solid #263849;
+            border-radius: 8px; padding: 9px 11px; margin-bottom: 9px;
+            font-size: 0.72rem; line-height: 1.48; color: #c5d4e2;
+        }
+        .rt-guide-box b { color: #00e5ff; }
+        .rt-guide-box ul { margin: 4px 0 0 0; padding-left: 16px; }
+        .rt-guide-box li { margin-bottom: 3px; }
 
         /* LOG & STATS */
-        #key-history { 
-            flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; 
-            gap: 5px; align-content: flex-start; 
+        #key-history {
+            flex-grow: 1; overflow-y: auto; max-height: 120px; display: flex; flex-wrap: wrap;
+            gap: 5px; align-content: flex-start;
         }
-        .log-item { 
-            background: #252525; padding: 4px 8px; border-radius: 4px; font-size: 11px; 
-            border: 1px solid #444; font-family: monospace; color: #00e5ff; 
+        .log-item {
+            background: #242424; padding: 3px 7px; border-radius: 4px; font-size: 11px;
+            border: 1px solid #3c3c3c; font-family: monospace; color: #00e5ff;
         }
-        .log-item.err { color: #ff4081; border-color: #ff4081; background: rgba(255, 64, 129, 0.1); }
-        
-        .stats-col { display: flex; flex-direction: column; justify-content: center; gap: 10px; height: 100%; }
-        .stat-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #333; padding-bottom: 2px; }
-        .stat-val { font-size: 1.4rem; font-weight: bold; color: #fff; font-family: monospace; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-        .stat-lbl { font-size: 0.75rem; color: #888; font-weight: bold; }
+        .log-item.err { color: #ff4081; border-color: #ff4081; background: rgba(255, 64, 129, 0.12); }
 
-        /* --- KEYBOARD LAYOUT (STRUKTUR DIPERTAHANKAN) --- */
-        .wrapper { 
-            width: 100%; display: flex; justify-content: center; 
-            margin-bottom: 50px; 
-        }
-
-        .kb-container { 
-            position: relative; 
-            background: #121212; /* Lebih gelap agar kontras */
-            padding: 30px; 
-            border-radius: 15px; 
-            box-shadow: 0 50px 100px rgba(0,0,0,0.8), inset 0 0 0 2px #222; /* Efek tebal */
-            border-bottom: 15px solid #080808; 
-            display: flex; 
-            gap: 20px; 
-            align-items: flex-start; 
-            width: 1300px; /* Ukuran asli dipertahankan */
-            min-width: 1300px; 
-            transform-origin: top center; 
-            transition: transform 0.1s linear;
+        .stats-col { display: flex; flex-direction: column; justify-content: space-between; gap: 5px; height: 100%; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #2e2e2e; padding-bottom: 3px; }
+        .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .stat-val { font-size: 1.04rem; font-weight: 800; color: #fff; font-family: monospace; text-align: right; }
+        .stat-lbl { font-size: 0.68rem; color: #888; font-weight: 700; font-family: monospace; }
+        .nkro-tag {
+            display: block; font-size: 0.62rem; font-weight: 800; color: #00e5ff;
+            letter-spacing: 0.4px; margin-top: 1px;
         }
 
-        /* STRUKTUR BLOCK (JANGAN DIUBAH) */
+        /* STRAFE / JIGGLE / RAPID TRIGGER LAB */
+        .strafe-visualizer { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+        .strafe-key-box {
+            width: 44px; height: 26px; border-radius: 5px; background: #232323;
+            border: 1px solid #3d3d3d; display: flex; align-items: center; justify-content: center;
+            font-family: monospace; font-weight: 800; font-size: 0.74rem; color: #777; transition: 0.05s;
+        }
+        .strafe-key-box.lit {
+            background: #00e5ff; color: #000; border-color: #00e5ff;
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.5);
+        }
+        .strafe-track {
+            flex: 1; height: 14px; background: #101010; border: 1px solid #2b2b2b;
+            border-radius: 99px; position: relative; overflow: hidden;
+        }
+        .strafe-track::after {
+            content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 2px; background: rgba(255, 255, 255, 0.25);
+        }
+        .strafe-puck {
+            position: absolute; top: 1px; width: 22px; height: 10px;
+            border-radius: 99px; background: #00ff88; left: calc(50% - 11px);
+            transition: left 0.06s ease-out, background 0.1s;
+        }
+
+        .strafe-metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        .sm-card { background: #121212; border: 1px solid #262626; border-radius: 7px; padding: 5px 8px; }
+        .sm-lbl { font-size: 0.61rem; color: #777; font-family: monospace; text-transform: uppercase; }
+        .sm-val { font-size: 0.8rem; font-weight: 800; font-family: monospace; color: #eee; margin-top: 1px; }
+
+        /* WEBHID VIA / QMK INSPECTOR DRAWER */
+        .hid-panel {
+            display: none; width: 100%; max-width: 1280px; margin-bottom: 18px;
+            background: linear-gradient(145deg, #1a1714, #141414);
+            border: 1px solid rgba(255, 145, 0, 0.45); border-radius: 14px;
+            padding: 15px 18px; box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+        }
+        .hid-grid {
+            display: grid; grid-template-columns: 1.1fr 1.4fr; gap: 14px; margin-top: 10px;
+        }
+        @media (max-width: 900px) { .hid-grid { grid-template-columns: 1fr; } }
+        .hid-card {
+            background: #101010; border: 1px solid #282828; border-radius: 9px;
+            padding: 10px 12px; font-family: monospace; font-size: 0.74rem; line-height: 1.5;
+        }
+        .hid-packets {
+            max-height: 115px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
+            margin-top: 6px;
+        }
+        .pkt-line {
+            background: #171717; border-left: 3px solid #ff9100; padding: 3px 8px;
+            font-family: monospace; font-size: 0.7rem; color: #ddd;
+        }
+
+        /* =========================================================
+           KEYBOARD CHASSIS & MULTI-LAYOUT ENGINE (100% / TKL / 75% / 65% / 60%)
+           Base unit: 1u = 50px, gap = 6px (pitch = 56px)
+           ========================================================= */
+        .wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            overflow: visible;
+        }
+
+        .kb-container {
+            position: relative;
+            background: #141414;
+            padding: 20px 22px 18px 22px;
+            border-radius: 16px;
+            box-shadow: 0 28px 70px rgba(0,0,0,0.85), inset 0 0 0 2px #262626;
+            border-bottom: 10px solid #090909;
+            display: inline-flex;
+            gap: 20px;
+            align-items: flex-start;
+            width: max-content;
+            height: max-content;
+            transform-origin: top center;
+            transition: transform 0.12s ease-out;
+            user-select: none;
+        }
+
+        /* MACINTOSH MODE CHASSIS ACCENT */
+        .kb-container.mac-mode {
+            background: #191a1d;
+            box-shadow: 0 28px 70px rgba(0,0,0,0.85), inset 0 0 0 2px #363940;
+        }
+
         .block-main { display: flex; flex-direction: column; gap: 6px; }
-        .block-main .row:first-child { margin-bottom: 25px; }
-        .block-nav { display: flex; flex-direction: column; width: 162px; padding-top: 80px; }
-        .nav-cmd { margin-bottom: 45px; } 
-        .block-num { display: grid; grid-template-columns: repeat(4, 50px); grid-template-rows: repeat(5, 50px); gap: 6px; width: 218px; padding-top: 80px; }
+        .block-main .row:first-child { margin-bottom: 22px; }
+        .block-nav { display: flex; flex-direction: column; width: 162px; padding-top: 78px; }
+        .nav-cmd { margin-bottom: 45px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .block-num { display: grid; grid-template-columns: repeat(4, 50px); grid-template-rows: repeat(5, 50px); gap: 6px; width: 218px; padding-top: 78px; }
         .row { display: flex; gap: 6px; position: relative; }
-        .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; position: absolute; top: 30px; }
-        .nav-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; position: absolute; top: 20px; }
+        .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 45px; }
 
-        /* DESAIN TOMBOL (VISUAL UPGRADE) */
-        .key { 
-            height: 50px; width: 50px; 
-            background: #2a2a2a; /* Warna dasar tombol */
-            color: #bbb; 
-            border-radius: 6px; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 13px; font-weight: 700; 
-            cursor: default; 
-            border-bottom: 4px solid #151515; /* Efek 3D */
-            border-top: 1px solid #444; 
-            transition: 0.05s; 
+        .key {
+            height: 50px; width: 50px;
+            background: #292929;
+            color: #bbb;
+            border-radius: 6px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700;
+            cursor: default;
+            border-bottom: 4px solid #151515;
+            border-top: 1px solid #434343;
+            transition: 0.05s;
+            position: relative;
+            flex-shrink: 0;
+            line-height: 1.15;
+            text-align: center;
         }
-        
-        /* EFEK PENCET (GLOW CYAN) */
-        .key.active { 
-            background: #00e5ff; 
-            color: #000; 
-            border-bottom: 2px solid #00b8d4; 
+
+        .key .mac-sub {
+            display: none;
+            font-size: 9px;
+            font-weight: 600;
+            color: #7e8a97;
+            margin-top: 2px;
+        }
+        .kb-container.mac-mode .key .mac-sub {
+            display: block;
+        }
+        .kb-container.mac-mode .key.active .mac-sub {
+            color: #00363f;
+        }
+        .kb-container.mac-mode .key.tested .mac-sub {
+            color: #55b88a;
+        }
+
+        .key.active {
+            background: #00e5ff;
+            color: #000;
+            border-bottom: 2px solid #00b8d4;
             border-top: 0;
-            transform: translateY(2px); 
-            box-shadow: 0 0 20px #00e5ff; /* Glow Effect */
-            z-index: 100; 
-        }
-        
-        /* EFEK SUDAH DITES (HIJAU REDUP) */
-        .key.tested { 
-            background: #0f3030; 
-            color: #00ff88; 
-            border-color: #082020; 
-            box-shadow: inset 0 0 5px rgba(0, 255, 136, 0.2);
+            transform: translateY(2px);
+            box-shadow: 0 0 18px #00e5ff;
+            z-index: 100;
         }
 
-        /* UKURAN KHUSUS (DIPERTAHANKAN) */
-        .w-125 { width: 62px; } .w-15 { width: 78px; } .w-175 { width: 92px; } .w-2 { width: 106px; } .w-225 { width: 121px; } .w-275 { width: 149px; } .w-space { width: 342px; }
-        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; } 
-        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; } 
+        .key.tested {
+            background: #0f3030;
+            color: #00ff88;
+            border-color: #082020;
+            box-shadow: inset 0 0 5px rgba(0, 255, 136, 0.22);
+        }
+
+        .key.chatter-flag {
+            border-color: #ff4081 !important;
+            box-shadow: inset 0 0 8px rgba(255, 64, 129, 0.6) !important;
+        }
+
+        /* KEY WIDTH UNITS (1u=50, 1.25u=64, 1.5u=78, 1.75u=92, 2u=106, 2.25u=120, 2.75u=148, 6.25u=344) */
+        .w-1u { width: 50px; }
+        .w-125 { width: 64px; }
+        .w-15 { width: 78px; }
+        .w-175 { width: 92px; }
+        .w-2 { width: 106px; }
+        .w-225 { width: 120px; }
+        .w-275 { width: 148px; }
+        .w-space { width: 344px; }
+
+        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; }
+        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; }
         .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
 
-        /* ISO FIX */
-        .iso-key { display: none; } .kb-container.iso-mode .iso-key { display: flex; } .kb-container.iso-mode .ansi-key { display: none; }
-        .kb-container.iso-mode .key[data-code="Enter"] { position: absolute; right: 0; top: -56px; height: 106px; width: 65px; z-index: 5; border-radius: 5px 5px 5px 15px; }
-        .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 62px; }
+        /* ISO ENTER & LEFT SHIFT */
+        .iso-key { display: none; }
+        .kb-container.iso-mode .iso-key { display: flex; }
+        .kb-container.iso-mode .ansi-key { display: none; }
+        .kb-container.iso-mode .key[data-code="Enter"] {
+            position: absolute; right: 0; top: -56px; height: 106px; width: 64px;
+            z-index: 5; border-radius: 5px 5px 5px 14px;
+        }
+        .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 64px; }
 
-        /* SWITCH TOGGLE CANTIK */
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+        /* COMPACT EXCLUSIVE KEYS (HIDDEN IN 100%, TKL, 60%) */
+        .k75-only { display: none; }
+        .k-compact-nav { display: none; } /* Right-column nav + compact arrows shared by 75% and 65% */
+        .k65-only { display: none; }
+
+        /* --- LAYOUT: TKL (80%) --- */
+        .kb-container.layout-tkl .block-num { display: none; }
+
+        /* --- LAYOUT: 60% COMPACT --- */
+        .kb-container.layout-60 {
+            gap: 0;
+            padding: 16px 18px 14px 18px;
+            border-bottom-width: 8px;
+        }
+        .kb-container.layout-60 .block-nav,
+        .kb-container.layout-60 .block-num,
+        .kb-container.layout-60 .row-fn { display: none; }
+
+        /* --- LAYOUT: 75% COMPACT (PRESS PLAY ESSENTIAL 75 - 84 KEYS, 16u WIDE = 890px inner) --- */
+        .kb-container.layout-75 {
+            gap: 0;
+            padding: 16px 18px 14px 18px;
+            border-bottom-width: 8px;
+        }
+        .kb-container.layout-75 .block-nav,
+        .kb-container.layout-75 .block-num { display: none; }
+        .kb-container.layout-75 .k75-only,
+        .kb-container.layout-75 .k-compact-nav { display: flex; }
+        .kb-container.layout-75 .row-fn { margin-bottom: 10px; }
+        .kb-container.layout-75 .fn-gap { margin-right: 0 !important; }
+        .kb-container.layout-75 .key[data-code="ShiftRight"] { width: 92px; }
+        .kb-container.layout-75 .r6-right-mod { width: 50px !important; }
+        .kb-container.layout-75 .hide-in-compact { display: none !important; }
+        .kb-container.layout-75.iso-mode .key[data-code="Enter"] { right: 56px; }
+
+        /* --- LAYOUT: 65% COMPACT (68 KEYS: FANTECH ATOM X66 / PRESS PLAY ESSENTIAL 65 / VORTEXSERIES MONO 65) --- */
+        .kb-container.layout-65 {
+            gap: 0;
+            padding: 16px 18px 14px 18px;
+            border-bottom-width: 8px;
+        }
+        .kb-container.layout-65 .block-nav,
+        .kb-container.layout-65 .block-num,
+        .kb-container.layout-65 .row-fn { display: none; }
+        .kb-container.layout-65 .k-compact-nav,
+        .kb-container.layout-65 .k65-only { display: flex; }
+        .kb-container.layout-65 .hide-in-65 { display: none !important; }
+        .kb-container.layout-65 .hide-in-compact { display: none !important; }
+        .kb-container.layout-65 .key[data-code="ShiftRight"] { width: 92px; }
+        .kb-container.layout-65 .r6-right-mod { width: 50px !important; }
+        .kb-container.layout-65.iso-mode .key[data-code="Enter"] { right: 56px; }
+
+        /* SWITCH TOGGLE */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; border: 1px solid #555; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 2px; background-color: #888; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 34px; border: 1px solid #555; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: #888; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: #00e5ff; border-color: #00e5ff; }
-        input:checked + .slider:before { transform: translateX(20px); background-color: #fff; }
+        input:checked + .slider:before { transform: translateX(19px); background-color: #fff; }
+        input:checked + .slider.mac-slider { background-color: #b388ff; border-color: #b388ff; }
 
         /* ALERT BOX */
-        .alert-box { 
-            background: linear-gradient(135deg, #d50000, #ff1744); color: white; 
-            padding: 10px 25px; border-radius: 30px; position: fixed; top: 80px; left: 50%; 
-            transform: translateX(-50%); display: none; z-index: 999; 
-            font-weight: bold; box-shadow: 0 5px 20px rgba(0,0,0,0.5); 
+        .alert-box {
+            background: linear-gradient(135deg, #d50000, #ff1744); color: white;
+            padding: 10px 25px; border-radius: 30px; position: fixed; top: 75px; left: 50%;
+            transform: translateX(-50%); display: none; z-index: 999;
+            font-weight: bold; box-shadow: 0 5px 20px rgba(0,0,0,0.5); font-family: monospace;
         }
 
         /* BACK BUTTON */
-        .back-btn { 
-            text-decoration: none; color: #888; font-weight: bold; 
-            border: 1px solid #444; padding: 8px 15px; border-radius: 8px; 
-            transition: 0.3s; position: absolute; top: 20px; left: 20px; 
+        .back-btn {
+            text-decoration: none; color: #888; font-weight: bold;
+            border: 1px solid #444; padding: 8px 15px; border-radius: 8px;
+            transition: 0.3s; position: absolute; top: 20px; left: 20px;
         }
         .back-btn:hover { background: #333; color: #fff; border-color: #fff; }
 
-        @media (max-width: 800px) { 
-            .dashboard { grid-template-columns: 1fr; } 
-            .back-btn { position: relative; top: 0; left: 0; margin-bottom: 20px; display: inline-block;}
+        @media (max-width: 800px) {
+            .back-btn { position: relative; top: 0; left: 0; margin-bottom: 10px; display: inline-block; }
+            .kb-header { margin-top: 10px; }
         }
     </style>
 </head>
@@ -182,31 +405,166 @@
     <div id="chatter-alert" class="alert-box">⚠️ CHATTER DETECTED! <span id="chatter-key"></span></div>
 
     <div class="kb-header">
-        <h2 style="margin:0;">Keyboard Tester</h2>
+        <h2>Keyboard &amp; VIA/QMK Lab</h2>
         <div class="controls">
-            <div class="ctrl-box">
-                <span style="font-size:0.8rem; color:#888; font-weight:bold;">ANSI</span>
-                <label class="switch"><input type="checkbox" id="layout-toggle" onchange="toggleLayout()"><span class="slider"></span></label>
-                <span style="font-size:0.8rem; color:#00e5ff; font-weight:bold;">ISO</span>
+            <!-- MULTI-LAYOUT SELECTOR -->
+            <div class="layout-pills" title="Pilih Ukuran Fisik Keyboard">
+                <button type="button" class="l-pill active" data-layout="full" onclick="setBoardLayout('full', this)">100% FULL</button>
+                <button type="button" class="l-pill" data-layout="tkl" onclick="setBoardLayout('tkl', this)">80% TKL</button>
+                <button type="button" class="l-pill" data-layout="75" onclick="setBoardLayout('75', this)">75% COMPACT</button>
+                <button type="button" class="l-pill" data-layout="65" onclick="setBoardLayout('65', this)">65% COMPACT</button>
+                <button type="button" class="l-pill" data-layout="60" onclick="setBoardLayout('60', this)">60%</button>
             </div>
+
+            <button type="button" class="action-pill" id="btn-webhid" onclick="connectWebHidInspector()" title="Baca descriptor USB HID, Layer VIA/QMK & paket tombol mentah (Fn/Knob)">
+                🔌 WEBHID VIA/QMK
+            </button>
+
+            <button type="button" class="action-pill" id="btn-os-lock" onclick="toggleOsKeyLock()" title="Kunci tombol Windows/Command, Alt+Tab, Esc & Ctrl+W via Fullscreen Keyboard Lock API">
+                🔓 OS KEY LOCK
+            </button>
+
+            <button type="button" class="action-pill reset" onclick="resetAllStats()">
+                ↺ RESET
+            </button>
+
+            <!-- WIN / MAC MODE SWITCH -->
+            <div class="ctrl-box" title="Ubah layout modifier & legenda ke Macintosh (Control, Option ⌥, Command ⌘)">
+                <span style="font-size:0.75rem; color:#00e5ff; font-weight:bold;" id="lbl-win">WIN</span>
+                <label class="switch"><input type="checkbox" id="os-mode-toggle" onchange="toggleMacMode()"><span class="slider mac-slider"></span></label>
+                <span style="font-size:0.75rem; color:#888; font-weight:bold;" id="lbl-mac"> MAC</span>
+            </div>
+
             <div class="ctrl-box">
-                <span style="font-size:0.8rem; font-weight:bold;">🔊 SFX</span>
+                <span style="font-size:0.75rem; color:#888; font-weight:bold;">ANSI</span>
+                <label class="switch"><input type="checkbox" id="layout-toggle" onchange="toggleIsoAnsi()"><span class="slider"></span></label>
+                <span style="font-size:0.75rem; color:#00e5ff; font-weight:bold;">ISO</span>
+            </div>
+
+            <div class="ctrl-box">
+                <span style="font-size:0.75rem; font-weight:bold;">🔊 SFX</span>
                 <label class="switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></label>
             </div>
         </div>
     </div>
 
+    <div class="guard-banner">
+        <div class="guard-status" id="guard-status-text">
+            🛡️ Shortcut Guard Aktif. Klik <b>OS KEY LOCK</b> untuk mengunci tombol Windows/Command &amp; Ctrl+W dalam Fullscreen.
+        </div>
+        <div class="shift-meter" id="shift-guard-meter">
+            Shift Tap Guard: 0/5 (Aman dari Sticky Keys OS)
+        </div>
+    </div>
+
+    <!-- WEBHID VIA / QMK INSPECTOR PANEL -->
+    <div class="hid-panel" id="hid-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; border-bottom:1px solid #2e261f; padding-bottom:8px;">
+            <span style="font-family:monospace; font-size:0.8rem; font-weight:800; color:#ffab40;">
+                🔌 WEBHID / VIA / QMK FIRMWARE &amp; RAW REPORT INSPECTOR
+            </span>
+            <div style="display:flex; gap:6px;">
+                <button type="button" class="action-pill" style="padding:4px 10px; font-size:0.7rem;" onclick="queryViaFirmwareInfo()">🔄 Ping VIA Protocol</button>
+                <button type="button" class="action-pill reset" style="padding:4px 10px; font-size:0.7rem;" onclick="disconnectWebHid()">✕ Tutup HID</button>
+            </div>
+        </div>
+        <div class="hid-grid">
+            <div class="hid-card" id="hid-descriptor-box">
+                Menunggu koneksi perangkat HID...
+            </div>
+            <div class="hid-card">
+                <div style="display:flex; justify-content:space-between; color:#aaa; font-weight:bold;">
+                    <span>RAW HID PACKET STREAM (Fn / Rotary Knob / Macro)</span>
+                    <span style="cursor:pointer; color:#ff4081;" onclick="document.getElementById('hid-packet-list').innerHTML=''">[CLEAR]</span>
+                </div>
+                <div class="hid-packets" id="hid-packet-list">
+                    <div style="color:#666; font-size:0.7rem;">Tekan tombol Fn, putar rotary knob, atau tekan tombol makro VIA untuk melihat raw hex report...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="dashboard">
+        <!-- PANEL 1: STRAFE, JIGGLE & RAPID TRIGGER LAB -->
         <div class="dash-panel">
-            <div class="panel-head">INPUT LOG <span style="cursor:pointer; color:#ff4081; font-size:0.7rem;" onclick="clearLog()">[CLEAR]</span></div>
+            <div class="panel-head">
+                <span>🎯 STRAFE, JIGGLE &amp; RAPID TRIGGER LAB</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span id="socd-badge" style="color:#00ff88;">SOCD: READY</span>
+                    <button type="button" class="info-toggle-btn" onclick="toggleRtGuide()">ℹ️ Cara Kerja</button>
+                </div>
+            </div>
+
+            <div class="rt-guide-box" id="rt-guide-box">
+                <b>Fungsi Lab untuk Switch Rapid Trigger (Hall Effect / TMR) &amp; Gaming:</b>
+                <ul>
+                    <li><b>Counter-Strafe Gap / Overlap:</b> Mengukur jeda saat pindah arah <code>A ↔ D</code> atau <code>← ↔ →</code>. Nilai mendekati <code>0 ms</code> membuat karakter berhenti instan saat menembak (Valorant/CS2); nilai minus berarti kedua tombol masih bertumpuk.</li>
+                    <li><b>SOCD (Snap Tap / Rappy Snappy):</b> Mendeteksi prioritas sinyal ketika tombol kiri dan kanan ditekan bersamaan.</li>
+                    <li><b>Fastest Micro-Tap (Dwell):</b> Mengukur durasi penekanan tersingkat yang terbaca switch. Switch <i>Rapid Trigger</i> dengan titik aktuasi dangkal (<code>0.1–0.4mm</code>) mampu mencatat tap super singkat (<code>&lt;25 ms</code>).</li>
+                    <li><b>Rapid Trigger Reset Gap:</b> Jeda lepas-tekan ulang pada tombol yang sama. Pada switch mekanikal biasa, tombol harus naik melewati titik reset fisik; pada <i>Rapid Trigger</i>, lepas sedikit langsung reset sehingga spam tombol jauh lebih cepat.</li>
+                </ul>
+            </div>
+
+            <div class="strafe-visualizer">
+                <div class="strafe-key-box" id="vis-left">A / ←</div>
+                <div class="strafe-track">
+                    <div class="strafe-puck" id="strafe-puck"></div>
+                </div>
+                <div class="strafe-key-box" id="vis-right">D / →</div>
+            </div>
+
+            <div class="strafe-metrics">
+                <div class="sm-card">
+                    <div class="sm-lbl">Counter-Strafe Gap / Overlap</div>
+                    <div class="sm-val" id="strafe-gap" style="color:#00e5ff;">-- ms</div>
+                </div>
+                <div class="sm-card">
+                    <div class="sm-lbl">Jiggle Speed &amp; Avg Hold</div>
+                    <div class="sm-val" id="jiggle-rate">0.0 Hz • -- ms</div>
+                </div>
+                <div class="sm-card">
+                    <div class="sm-lbl">Fastest Micro-Tap (Dwell)</div>
+                    <div class="sm-val" id="min-dwell" style="color:#00ff88;">-- ms</div>
+                </div>
+                <div class="sm-card">
+                    <div class="sm-lbl">Rapid Trigger Reset Gap</div>
+                    <div class="sm-val" id="min-reset" style="color:#ffab40;">-- ms</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL 2: INPUT & DWELL LOG -->
+        <div class="dash-panel">
+            <div class="panel-head">
+                <span>INPUT &amp; DWELL LOG</span>
+                <span style="cursor:pointer; color:#ff4081; font-size:0.72rem;" onclick="clearLog()">[CLEAR LOG]</span>
+            </div>
             <div id="key-history"></div>
         </div>
+
+        <!-- PANEL 3: LIVE TELEMETRY & NKRO GHOST TEST -->
         <div class="dash-panel">
-            <div class="panel-head">LIVE STATISTICS</div>
+            <div class="panel-head">NKRO GHOST TEST &amp; TELEMETRY</div>
             <div class="stats-col">
-                <div class="stat-row"><span class="stat-lbl">PRESSED NOW</span><span class="stat-val" id="ghost-curr" style="color:#00ff88">0</span></div>
-                <div class="stat-row"><span class="stat-lbl">MAX GHOSTING</span><span class="stat-val" id="ghost-max" style="color:#00e5ff">0</span></div>
-                <div class="stat-row"><span class="stat-lbl">SPEED (KPM)</span><span class="stat-val" id="kpm">0</span></div>
+                <div class="stat-row">
+                    <span class="stat-lbl">PRESSED NOW (SIMULTANEOUS)</span>
+                    <span class="stat-val" id="ghost-curr" style="color:#00ff88">0</span>
+                </div>
+                <div class="stat-row">
+                    <div>
+                        <span class="stat-lbl">MAX NKRO / GHOSTING</span>
+                        <span class="nkro-tag" id="nkro-verdict">Tahan banyak tombol sekaligus</span>
+                    </div>
+                    <span class="stat-val" id="ghost-max" style="color:#00e5ff">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-lbl">TESTED COVERAGE</span>
+                    <span class="stat-val" id="coverage-stat" style="color:#00ff88">0% (0/104)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-lbl">LAST DWELL / KPM</span>
+                    <span class="stat-val" id="last-dwell" style="color:#ffab40">-- ms • 0</span>
+                </div>
             </div>
         </div>
     </div>
@@ -214,37 +572,146 @@
     <div class="wrapper">
         <div class="kb-container" id="kb-case">
             <div class="block-main">
-                <div class="row">
-                    <div class="key" style="margin-right:30px;" data-code="Escape">Esc</div>
-                    <div class="key" data-code="F1">F1</div><div class="key" data-code="F2">F2</div><div class="key" data-code="F3">F3</div><div class="key" style="margin-right:20px;" data-code="F4">F4</div>
-                    <div class="key" data-code="F5">F5</div><div class="key" data-code="F6">F6</div><div class="key" data-code="F7">F7</div><div class="key" style="margin-right:20px;" data-code="F8">F8</div>
-                    <div class="key" data-code="F9">F9</div><div class="key" data-code="F10">F10</div><div class="key" data-code="F11">F11</div><div class="key" data-code="F12">F12</div>
+                <!-- ROW 1: FUNCTION ROW (16u in 75% Compact: Esc, F1-F12, PrtSc, Pause, Del) -->
+                <div class="row row-fn">
+                    <div class="key fn-gap" style="margin-right:30px;" data-code="Escape">Esc</div>
+                    <div class="key" data-code="F1">F1<span class="mac-sub">☀-</span></div>
+                    <div class="key" data-code="F2">F2<span class="mac-sub">☀+</span></div>
+                    <div class="key" data-code="F3">F3<span class="mac-sub">⊞</span></div>
+                    <div class="key fn-gap" style="margin-right:20px;" data-code="F4">F4<span class="mac-sub">⌘Space</span></div>
+                    <div class="key" data-code="F5">F5<span class="mac-sub">🎤</span></div>
+                    <div class="key" data-code="F6">F6<span class="mac-sub">☾</span></div>
+                    <div class="key" data-code="F7">F7<span class="mac-sub">⏮</span></div>
+                    <div class="key fn-gap" style="margin-right:20px;" data-code="F8">F8<span class="mac-sub">⏯</span></div>
+                    <div class="key" data-code="F9">F9<span class="mac-sub">⏭</span></div>
+                    <div class="key" data-code="F10">F10<span class="mac-sub">🔇</span></div>
+                    <div class="key" data-code="F11">F11<span class="mac-sub">🔉</span></div>
+                    <div class="key" data-code="F12">F12<span class="mac-sub">🔊</span></div>
+                    <!-- 75% Compact Top-Right Cluster -->
+                    <div class="key k75-only" data-code="PrintScreen" data-win-lbl="Prt" data-mac-lbl="F13">Prt</div>
+                    <div class="key k75-only" data-code="Pause" data-win-lbl="Pau" data-mac-lbl="F15">Pau</div>
+                    <div class="key k75-only" data-code="Delete">Del</div>
                 </div>
+
+                <!-- ROW 2: NUMBER ROW (16u in 75% & 65%: Esc[65%] / ~..Backspace + Home[75%] / Del[65%]) -->
                 <div class="row">
-                    <div class="key" data-code="Backquote">~</div><div class="key" data-code="Digit1">1</div><div class="key" data-code="Digit2">2</div><div class="key" data-code="Digit3">3</div><div class="key" data-code="Digit4">4</div><div class="key" data-code="Digit5">5</div><div class="key" data-code="Digit6">6</div><div class="key" data-code="Digit7">7</div><div class="key" data-code="Digit8">8</div><div class="key" data-code="Digit9">9</div><div class="key" data-code="Digit0">0</div><div class="key" data-code="Minus">-</div><div class="key" data-code="Equal">=</div><div class="key w-2" data-code="Backspace">Back</div>
+                    <div class="key k65-only" data-code="Escape">Esc</div>
+                    <div class="key hide-in-65" data-code="Backquote">~</div>
+                    <div class="key" data-code="Digit1">1</div>
+                    <div class="key" data-code="Digit2">2</div>
+                    <div class="key" data-code="Digit3">3</div>
+                    <div class="key" data-code="Digit4">4</div>
+                    <div class="key" data-code="Digit5">5</div>
+                    <div class="key" data-code="Digit6">6</div>
+                    <div class="key" data-code="Digit7">7</div>
+                    <div class="key" data-code="Digit8">8</div>
+                    <div class="key" data-code="Digit9">9</div>
+                    <div class="key" data-code="Digit0">0</div>
+                    <div class="key" data-code="Minus">-</div>
+                    <div class="key" data-code="Equal">=</div>
+                    <div class="key w-2" data-code="Backspace" data-win-lbl="Back" data-mac-lbl="Delete">Back</div>
+                    <div class="key k75-only" data-code="Home">Hm</div>
+                    <div class="key k65-only" data-code="Delete">Del</div>
                 </div>
-                <div class="row"><div class="key w-15" data-code="Tab">Tab</div><div class="key" data-code="KeyQ">Q</div><div class="key" data-code="KeyW">W</div><div class="key" data-code="KeyE">E</div><div class="key" data-code="KeyR">R</div><div class="key" data-code="KeyT">T</div><div class="key" data-code="KeyY">Y</div><div class="key" data-code="KeyU">U</div><div class="key" data-code="KeyI">I</div><div class="key" data-code="KeyO">O</div><div class="key" data-code="KeyP">P</div><div class="key" data-code="BracketLeft">[</div><div class="key" data-code="BracketRight">]</div><div class="key w-15 ansi-key" data-code="Backslash">\</div></div>
-                <div class="row"><div class="key w-175" data-code="CapsLock">Caps</div><div class="key" data-code="KeyA">A</div><div class="key" data-code="KeyS">S</div><div class="key" data-code="KeyD">D</div><div class="key" data-code="KeyF">F</div><div class="key" data-code="KeyG">G</div><div class="key" data-code="KeyH">H</div><div class="key" data-code="KeyJ">J</div><div class="key" data-code="KeyK">K</div><div class="key" data-code="KeyL">L</div><div class="key" data-code="Semicolon">;</div><div class="key" data-code="Quote">'</div><div class="key iso-key" data-code="Backslash">#</div><div class="key w-225" data-code="Enter">Enter</div></div>
-                <div class="row"><div class="key w-225" data-code="ShiftLeft">Shift</div><div class="key iso-key" data-code="IntlBackslash">\</div><div class="key" data-code="KeyZ">Z</div><div class="key" data-code="KeyX">X</div><div class="key" data-code="KeyC">C</div><div class="key" data-code="KeyV">V</div><div class="key" data-code="KeyB">B</div><div class="key" data-code="KeyN">N</div><div class="key" data-code="KeyM">M</div><div class="key" data-code="Comma">,</div><div class="key" data-code="Period">.</div><div class="key" data-code="Slash">/</div><div class="key w-275" data-code="ShiftRight">Shift</div></div>
-                <div class="row"><div class="key w-125" data-code="ControlLeft">Ctrl</div><div class="key w-125" data-code="MetaLeft">Win</div><div class="key w-125" data-code="AltLeft">Alt</div><div class="key w-space" data-code="Space">Space</div><div class="key w-125" data-code="AltRight">Alt</div><div class="key w-125" data-code="MetaRight">Win</div><div class="key" data-code="ContextMenu">Mn</div><div class="key w-125" data-code="ControlRight">Ctrl</div></div>
+
+                <!-- ROW 3: TAB ROW (16u in 75% & 65%: Tab..\ + PgUp) -->
+                <div class="row">
+                    <div class="key w-15" data-code="Tab">Tab</div>
+                    <div class="key" data-code="KeyQ">Q</div>
+                    <div class="key" data-code="KeyW">W</div>
+                    <div class="key" data-code="KeyE">E</div>
+                    <div class="key" data-code="KeyR">R</div>
+                    <div class="key" data-code="KeyT">T</div>
+                    <div class="key" data-code="KeyY">Y</div>
+                    <div class="key" data-code="KeyU">U</div>
+                    <div class="key" data-code="KeyI">I</div>
+                    <div class="key" data-code="KeyO">O</div>
+                    <div class="key" data-code="KeyP">P</div>
+                    <div class="key" data-code="BracketLeft">[</div>
+                    <div class="key" data-code="BracketRight">]</div>
+                    <div class="key w-15 ansi-key" data-code="Backslash">\</div>
+                    <div class="key k-compact-nav" data-code="PageUp">PU</div>
+                </div>
+
+                <!-- ROW 4: CAPS ROW (16u in 75% & 65%: Caps..Enter + PgDn) -->
+                <div class="row">
+                    <div class="key w-175" data-code="CapsLock">Caps</div>
+                    <div class="key" data-code="KeyA">A</div>
+                    <div class="key" data-code="KeyS">S</div>
+                    <div class="key" data-code="KeyD">D</div>
+                    <div class="key" data-code="KeyF">F</div>
+                    <div class="key" data-code="KeyG">G</div>
+                    <div class="key" data-code="KeyH">H</div>
+                    <div class="key" data-code="KeyJ">J</div>
+                    <div class="key" data-code="KeyK">K</div>
+                    <div class="key" data-code="KeyL">L</div>
+                    <div class="key" data-code="Semicolon">;</div>
+                    <div class="key" data-code="Quote">'</div>
+                    <div class="key iso-key" data-code="Backslash">#</div>
+                    <div class="key w-225" data-code="Enter" data-win-lbl="Enter" data-mac-lbl="Return">Enter</div>
+                    <div class="key k-compact-nav" data-code="PageDown">PD</div>
+                </div>
+
+                <!-- ROW 5: SHIFT ROW (16u in 75% & 65%: ShiftL..ShiftR(1.75u) + ArrowUp + End) -->
+                <div class="row">
+                    <div class="key w-225" data-code="ShiftLeft">Shift</div>
+                    <div class="key iso-key" data-code="IntlBackslash">\</div>
+                    <div class="key" data-code="KeyZ">Z</div>
+                    <div class="key" data-code="KeyX">X</div>
+                    <div class="key" data-code="KeyC">C</div>
+                    <div class="key" data-code="KeyV">V</div>
+                    <div class="key" data-code="KeyB">B</div>
+                    <div class="key" data-code="KeyN">N</div>
+                    <div class="key" data-code="KeyM">M</div>
+                    <div class="key" data-code="Comma">,</div>
+                    <div class="key" data-code="Period">.</div>
+                    <div class="key" data-code="Slash">/</div>
+                    <div class="key w-275" data-code="ShiftRight">Shift</div>
+                    <div class="key k-compact-nav" data-code="ArrowUp">↑</div>
+                    <div class="key k-compact-nav" data-code="End">Ed</div>
+                </div>
+
+                <!-- ROW 6: BOTTOM ROW (WIN: Ctrl,Win,Alt,Space,Alt,Win,Mn,Ctrl | MAC: Control,Option,Command,Space,Command,Option,Fn,Control) -->
+                <div class="row">
+                    <div class="key w-125" data-code="ControlLeft" data-win-lbl="Ctrl" data-mac-lbl="⌃ Ctrl">Ctrl</div>
+                    <div class="key w-125" data-code="MetaLeft" id="mod-l2" data-win-lbl="Win" data-mac-lbl="⌥ Opt">Win</div>
+                    <div class="key w-125" data-code="AltLeft" id="mod-l3" data-win-lbl="Alt" data-mac-lbl="⌘ Cmd">Alt</div>
+                    <div class="key w-space" data-code="Space">Space</div>
+                    <div class="key w-125 r6-right-mod" data-code="AltRight" id="mod-r1" data-win-lbl="Alt" data-mac-lbl="⌘ Cmd">Alt</div>
+                    <div class="key w-125 r6-right-mod hide-in-compact" data-code="MetaRight" id="mod-r2" data-win-lbl="Win" data-mac-lbl="⌥ Opt">Win</div>
+                    <div class="key r6-right-mod" data-code="ContextMenu" id="key-fn-menu">Mn</div>
+                    <div class="key w-125 r6-right-mod" data-code="ControlRight" data-win-lbl="Ctrl" data-mac-lbl="⌃ Ctrl">Ctrl</div>
+                    <!-- 75% & 65% Compact Bottom-Right Arrows -->
+                    <div class="key k-compact-nav" data-code="ArrowLeft">←</div>
+                    <div class="key k-compact-nav" data-code="ArrowDown">↓</div>
+                    <div class="key k-compact-nav" data-code="ArrowRight">→</div>
+                </div>
             </div>
 
+            <!-- NAVIGATION BLOCK (100% & TKL ONLY) -->
             <div class="block-nav">
                 <div class="nav-sys">
-                    <div class="key" data-code="PrintScreen">Prt</div><div class="key" data-code="ScrollLock">Scr</div><div class="key" data-code="Pause">Pau</div>
+                    <div class="key" data-code="PrintScreen" data-win-lbl="Prt" data-mac-lbl="F13">Prt</div>
+                    <div class="key" data-code="ScrollLock" data-win-lbl="Scr" data-mac-lbl="F14">Scr</div>
+                    <div class="key" data-code="Pause" data-win-lbl="Pau" data-mac-lbl="F15">Pau</div>
                 </div>
                 <div class="nav-cmd">
-                    <div class="key" data-code="Insert">Ins</div><div class="key" data-code="Home">Hm</div><div class="key" data-code="PageUp">PU</div>
-                    <div class="key" data-code="Delete">Del</div><div class="key" data-code="End">Ed</div><div class="key" data-code="PageDown">PD</div>
+                    <div class="key" data-code="Insert" data-win-lbl="Ins" data-mac-lbl="Fn">Ins</div>
+                    <div class="key" data-code="Home">Hm</div>
+                    <div class="key" data-code="PageUp">PU</div>
+                    <div class="key" data-code="Delete">Del</div>
+                    <div class="key" data-code="End">Ed</div>
+                    <div class="key" data-code="PageDown">PD</div>
                 </div>
-                <div class="nav-arr" style="margin-top: 45px;"> 
+                <div class="nav-arr">
                     <div></div><div class="key" data-code="ArrowUp">↑</div><div></div>
                     <div class="key" data-code="ArrowLeft">←</div><div class="key" data-code="ArrowDown">↓</div><div class="key" data-code="ArrowRight">→</div>
                 </div>
             </div>
 
+            <!-- NUMPAD BLOCK (100% FULL ONLY) -->
             <div class="block-num">
-                <div class="key" data-code="NumLock">Num</div><div class="key" data-code="NumpadDivide">/</div><div class="key" data-code="NumpadMultiply">*</div><div class="key" data-code="NumpadSubtract">-</div>
+                <div class="key" data-code="NumLock" data-win-lbl="Num" data-mac-lbl="Clear">Num</div><div class="key" data-code="NumpadDivide">/</div><div class="key" data-code="NumpadMultiply">*</div><div class="key" data-code="NumpadSubtract">-</div>
                 <div class="key" data-code="Numpad7">7</div><div class="key" data-code="Numpad8">8</div><div class="key" data-code="Numpad9">9</div><div class="key" data-code="NumpadAdd">+</div>
                 <div class="key" data-code="Numpad4">4</div><div class="key" data-code="Numpad5">5</div><div class="key" data-code="Numpad6">6</div>
                 <div class="key" data-code="Numpad1">1</div><div class="key" data-code="Numpad2">2</div><div class="key" data-code="Numpad3">3</div><div class="key" data-code="NumpadEnter">Ent</div>
@@ -254,79 +721,707 @@
     </div>
 
     <script>
-        // --- AUDIO ENGINE ---
+        // =========================================
+        // 1. WEB AUDIO SYNTHETIC CLICK SFX
+        // =========================================
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let noiseBuffer = null;
+
         function playSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (!document.getElementById('sound-toggle').checked) return;
             if (!noiseBuffer) {
                 const b = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
-                const d = b.getChannelData(0); for(let i=0; i<d.length; i++) d[i] = Math.random()*2-1;
+                const d = b.getChannelData(0);
+                for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
                 noiseBuffer = b;
             }
-            const s = audioCtx.createBufferSource(); s.buffer = noiseBuffer;
-            const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1200;
-            const g = audioCtx.createGain(); g.gain.setValueAtTime(0.5, audioCtx.currentTime); 
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.03);
-            s.connect(f); f.connect(g); g.connect(audioCtx.destination);
-            s.start(); s.stop(audioCtx.currentTime+0.04);
+            const s = audioCtx.createBufferSource();
+            s.buffer = noiseBuffer;
+            const f = audioCtx.createBiquadFilter();
+            f.type = 'highpass';
+            f.frequency.value = 1200;
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.45, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+            s.connect(f);
+            f.connect(g);
+            g.connect(audioCtx.destination);
+            s.start();
+            s.stop(audioCtx.currentTime + 0.04);
         }
 
-        // --- KEYBOARD LOGIC ---
-        let activeKeys = new Set(), maxSim = 0, lastKeyTime = {}, startTime = null, count = 0;
-        
-        function toggleLayout() {
-            document.getElementById('kb-case').classList.toggle('iso-mode');
-            setTimeout(autoScaleKeyboard, 50);
+        function toggleRtGuide() {
+            const box = document.getElementById('rt-guide-box');
+            box.style.display = (box.style.display === 'block') ? 'none' : 'block';
         }
-        function format(code) { return code.replace('Key','').replace('Digit','').replace('Numpad','Num '); }
-        function clearLog() { document.getElementById('key-history').innerHTML = ''; }
 
-        window.addEventListener('keydown', e => {
-            if (e.repeat) return;
-            if (['Tab','AltLeft','AltRight'].includes(e.code) || e.code.startsWith('F')) e.preventDefault();
-            playSound();
-            const now = Date.now(), last = lastKeyTime[e.code] || 0;
-            if (last && now-last < 80) {
-                document.getElementById('chatter-key').innerText = format(e.code) + ` (${now-last}ms)`;
-                document.getElementById('chatter-alert').style.display = 'block';
-                setTimeout(()=>document.getElementById('chatter-alert').style.display='none',3000);
+        // =========================================
+        // 2. MACINTOSH / WINDOWS & MULTI-LAYOUT ENGINE
+        // =========================================
+        let currentBoardLayout = 'full';
+        let isMacMode = false;
+
+        function toggleMacMode() {
+            isMacMode = document.getElementById('os-mode-toggle').checked;
+            const kb = document.getElementById('kb-case');
+            kb.classList.toggle('mac-mode', isMacMode);
+
+            document.getElementById('lbl-win').style.color = isMacMode ? '#888' : '#00e5ff';
+            document.getElementById('lbl-mac').style.color = isMacMode ? '#b388ff' : '#888';
+
+            // Update keycap labels for Win vs Mac
+            document.querySelectorAll('.key[data-win-lbl]').forEach(el => {
+                el.innerText = isMacMode ? el.dataset.macLbl : el.dataset.winLbl;
+            });
+
+            // Swap physical data-code mapping on bottom row so pressing real Command (Meta) or Win-mode Alt highlights the exact physical keycap!
+            const modL2 = document.getElementById('mod-l2'); // Physical position 2 (Win in Win-mode, Option in Mac-mode)
+            const modL3 = document.getElementById('mod-l3'); // Physical position 3 next to Space (Alt in Win-mode, Command in Mac-mode)
+            const modR1 = document.getElementById('mod-r1'); // Right of Space (AltR in Win-mode, CommandR in Mac-mode)
+            const modR2 = document.getElementById('mod-r2'); // Second right of Space (MetaR in Win-mode, OptionR in Mac-mode)
+
+            if (isMacMode) {
+                modL2.dataset.code = 'AltLeft';
+                modL3.dataset.code = 'MetaLeft';
+                modR1.dataset.code = 'MetaRight';
+                modR2.dataset.code = 'AltRight';
+            } else {
+                modL2.dataset.code = 'MetaLeft';
+                modL3.dataset.code = 'AltLeft';
+                modR1.dataset.code = 'AltRight';
+                modR2.dataset.code = 'MetaRight';
             }
-            lastKeyTime[e.code] = now;
-            activeKeys.add(e.code); count++;
-            if(!startTime) { startTime=now; setInterval(()=>{
-                const m = (Date.now()-startTime)/60000;
-                document.getElementById('kpm').innerText = m>0?Math.round(count/m):0;
-            },1000); }
-            document.getElementById('ghost-curr').innerText = activeKeys.size;
-            if(activeKeys.size > maxSim) document.getElementById('ghost-max').innerText = maxSim = activeKeys.size;
-            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>{k.classList.add('active','tested')});
-            const l = document.createElement('div'); l.className = 'log-item';
-            if(now-last < 80) l.classList.add('err');
-            l.innerText = format(e.code);
-            document.getElementById('key-history').prepend(l);
-        });
 
-        window.addEventListener('keyup', e => {
-            activeKeys.delete(e.code);
-            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k=>k.classList.remove('active'));
-            document.getElementById('ghost-curr').innerText = activeKeys.size;
-        });
+            updateFnMenuLabel();
+        }
 
-        // --- AGGRESSIVE AUTO SCALE ---
+        function updateFnMenuLabel() {
+            const fnMenuKey = document.getElementById('key-fn-menu');
+            if (!fnMenuKey) return;
+            if (isMacMode || currentBoardLayout === '75' || currentBoardLayout === '65') {
+                fnMenuKey.innerText = 'Fn';
+            } else {
+                fnMenuKey.innerText = 'Mn';
+            }
+        }
+
+        function setBoardLayout(mode, btnEl) {
+            currentBoardLayout = mode;
+            const kb = document.getElementById('kb-case');
+            kb.classList.remove('layout-full', 'layout-tkl', 'layout-75', 'layout-65', 'layout-60');
+            if (mode !== 'full') kb.classList.add(`layout-${mode}`);
+
+            updateFnMenuLabel();
+
+            document.querySelectorAll('.l-pill').forEach(p => p.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+
+            updateCoverageStat();
+            requestAnimationFrame(autoScaleKeyboard);
+        }
+
+        function toggleIsoAnsi() {
+            document.getElementById('kb-case').classList.toggle('iso-mode');
+            updateCoverageStat();
+            requestAnimationFrame(autoScaleKeyboard);
+        }
+
         function autoScaleKeyboard() {
             const wrapper = document.querySelector('.wrapper');
             const keyboard = document.getElementById('kb-case');
-            const originalWidth = 1300; 
-            const screenWidth = window.innerWidth - 60; // Safe buffer
-            let scale = screenWidth / originalWidth;
+
+            keyboard.style.transition = 'none';
+            keyboard.style.transform = 'scale(1)';
+
+            const rect = keyboard.getBoundingClientRect();
+            const naturalWidth = rect.width;
+            const naturalHeight = rect.height;
+
+            const availableWidth = Math.max(300, window.innerWidth - 40);
+            let scale = availableWidth / naturalWidth;
             if (scale > 1) scale = 1;
+
             keyboard.style.transform = `scale(${scale})`;
-            wrapper.style.height = (keyboard.offsetHeight * scale) + 'px';
+            wrapper.style.height = Math.ceil(naturalHeight * scale) + 'px';
+
+            requestAnimationFrame(() => {
+                keyboard.style.transition = 'transform 0.12s ease-out';
+            });
         }
 
-        window.addEventListener('load', autoScaleKeyboard);
+        function updateCoverageStat() {
+            const visibleKeys = [...document.querySelectorAll('.kb-container .key')]
+                .filter(el => el.offsetParent !== null);
+            const totalVisible = visibleKeys.length;
+            const testedVisible = visibleKeys.filter(el => el.classList.contains('tested')).length;
+            const pct = totalVisible > 0 ? Math.round((testedVisible / totalVisible) * 100) : 0;
+            document.getElementById('coverage-stat').innerText = `${pct}% (${testedVisible}/${totalVisible})`;
+        }
+
+        function updateNkroVerdict(maxSimultaneous) {
+            const el = document.getElementById('nkro-verdict');
+            if (maxSimultaneous === 0) {
+                el.style.color = '#888';
+                el.innerText = 'Tahan banyak tombol sekaligus';
+            } else if (maxSimultaneous <= 2) {
+                el.style.color = '#ff4081';
+                el.innerText = '2KRO / GHOSTING DETECTED';
+            } else if (maxSimultaneous <= 6) {
+                el.style.color = '#ffab40';
+                el.innerText = `${maxSimultaneous}KRO (USB BOOT / LIMITED)`;
+            } else {
+                el.style.color = '#00ff88';
+                el.innerText = `FULL NKRO PASS (${maxSimultaneous}-KEY)`;
+            }
+        }
+
+        // =========================================
+        // 3. WEBHID VIA / QMK FIRMWARE & RAW REPORT INSPECTOR
+        // =========================================
+        let connectedHidDevices = [];
+        let viaRawInterface = null;
+
+        async function connectWebHidInspector() {
+            if (!('hid' in navigator)) {
+                alert('Browser ini tidak mendukung WebHID API. Gunakan Google Chrome, Microsoft Edge, atau Brave versi desktop.');
+                return;
+            }
+
+            try {
+                const devices = await navigator.hid.requestDevice({ filters: [] });
+                if (!devices || devices.length === 0) return;
+
+                const targetVid = devices[0].vendorId;
+                const targetPid = devices[0].productId;
+
+                const allGranted = await navigator.hid.getDevices();
+                connectedHidDevices = allGranted.filter(d => d.vendorId === targetVid && d.productId === targetPid);
+                if (connectedHidDevices.length === 0) connectedHidDevices = devices;
+
+                viaRawInterface = null;
+                const collectionsSummary = [];
+
+                for (const dev of connectedHidDevices) {
+                    if (!dev.opened) {
+                        await dev.open();
+                    }
+
+                    for (const col of dev.collections || []) {
+                        const upHex = '0x' + col.usagePage.toString(16).toUpperCase().padStart(4, '0');
+                        const uHex = '0x' + col.usage.toString(16).toUpperCase().padStart(2, '0');
+                        collectionsSummary.push(`${upHex}:${uHex}`);
+
+                        if (col.usagePage === 0xFF60 && col.usage === 0x61) {
+                            viaRawInterface = dev;
+                        }
+                    }
+
+                    dev.oninputreport = (event) => handleRawHidReport(dev, event);
+                }
+
+                const primary = connectedHidDevices[0];
+                const vidStr = primary.vendorId.toString(16).toUpperCase().padStart(4, '0');
+                const pidStr = primary.productId.toString(16).toUpperCase().padStart(4, '0');
+
+                document.getElementById('hid-panel').style.display = 'block';
+                const btn = document.getElementById('btn-webhid');
+                btn.classList.add('hid-active');
+                btn.innerHTML = `🔌 HID: ${vidStr}:${pidStr}`;
+
+                document.getElementById('hid-descriptor-box').innerHTML =
+                    `<div><b>Product Name:</b> <span style="color:#fff;">${primary.productName || 'Generic USB HID Keyboard'}</span></div>` +
+                    `<div><b>USB VID : PID:</b> <span style="color:#00e5ff;">${vidStr}:${pidStr}</span> &nbsp;|&nbsp; <b>Interfaces Opened:</b> ${connectedHidDevices.length}</div>` +
+                    `<div><b>HID Usage Pages:</b> <span style="color:#aaa;">${[...new Set(collectionsSummary)].join(', ')}</span></div>` +
+                    `<div id="via-proto-status" style="margin-top:4px; color:${viaRawInterface ? '#00ff88' : '#ffab40'};">` +
+                    (viaRawInterface
+                        ? '✔ VIA / QMK Raw HID Interface (0xFF60:0x61) Terdeteksi! Mengambil info firmware...'
+                        : 'ℹ️ Interface VIA (0xFF60) tidak ditemukan (Firmware non-VIA / standar HID). Raw packet sniffer tetap aktif.') +
+                    `</div>`;
+
+                if (viaRawInterface) {
+                    await queryViaFirmwareInfo();
+                }
+            } catch (err) {
+                if (err.name !== 'NotAllowedError') {
+                    alert(`Gagal membuka WebHID: ${err.message}`);
+                }
+            }
+        }
+
+        async function queryViaFirmwareInfo() {
+            if (!viaRawInterface || !viaRawInterface.opened) return;
+            try {
+                const pktProto = new Uint8Array(32);
+                pktProto[0] = 0x01;
+                await viaRawInterface.sendReport(0x00, pktProto);
+
+                setTimeout(async () => {
+                    if (!viaRawInterface || !viaRawInterface.opened) return;
+                    const pktLayers = new Uint8Array(32);
+                    pktLayers[0] = 0x11;
+                    await viaRawInterface.sendReport(0x00, pktLayers);
+                }, 60);
+            } catch (e) {
+                const st = document.getElementById('via-proto-status');
+                if (st) st.innerText = `⚠️ Gagal mengirim perintah VIA: ${e.message}`;
+            }
+        }
+
+        function handleRawHidReport(dev, event) {
+            const bytes = new Uint8Array(event.data.buffer);
+            const hexArr = Array.from(bytes.slice(0, 16)).map(b => b.toString(16).toUpperCase().padStart(2, '0'));
+            const hexStr = hexArr.join(' ') + (bytes.length > 16 ? ' ...' : '');
+
+            if (dev === viaRawInterface && bytes.length >= 3) {
+                const cmd = bytes[0];
+                const st = document.getElementById('via-proto-status');
+                if (cmd === 0x01 && st) {
+                    const viaVer = (bytes[1] << 8) | bytes[2];
+                    st.innerHTML = `✔ <b>VIA Protocol v${viaVer}</b> Aktif &amp; Merespons!`;
+                } else if (cmd === 0x11 && st) {
+                    const layers = bytes[1];
+                    st.innerHTML += ` &nbsp;|&nbsp; <b>Dynamic Keymap Layers:</b> <span style="color:#00e5ff;">${layers} Layer</span>`;
+                }
+            }
+
+            const list = document.getElementById('hid-packet-list');
+            if (list.children.length === 1 && list.children[0].style.color === 'rgb(102, 102, 102)') {
+                list.innerHTML = '';
+            }
+
+            const line = document.createElement('div');
+            line.className = 'pkt-line';
+            line.innerText = `[ID 0x${event.reportId.toString(16).toUpperCase()}] ${hexStr}`;
+            list.prepend(line);
+            if (list.children.length > 35) list.removeChild(list.lastChild);
+        }
+
+        async function disconnectWebHid() {
+            for (const dev of connectedHidDevices) {
+                try {
+                    dev.oninputreport = null;
+                    if (dev.opened) await dev.close();
+                } catch (_) {}
+            }
+            connectedHidDevices = [];
+            viaRawInterface = null;
+            document.getElementById('hid-panel').style.display = 'none';
+            const btn = document.getElementById('btn-webhid');
+            btn.classList.remove('hid-active');
+            btn.innerHTML = '🔌 WEBHID VIA/QMK';
+        }
+
+        // =========================================
+        // 4. OS KEYBOARD LOCK & STICKY KEYS GUARD
+        // =========================================
+        let osKeyLocked = false;
+        let shiftTapStreak = 0;
+        let lastShiftTapTs = 0;
+
+        async function toggleOsKeyLock() {
+            const btn = document.getElementById('btn-os-lock');
+            const statusEl = document.getElementById('guard-status-text');
+
+            if (!osKeyLocked) {
+                try {
+                    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                        await document.documentElement.requestFullscreen();
+                    }
+                    if (navigator.keyboard && typeof navigator.keyboard.lock === 'function') {
+                        await navigator.keyboard.lock([
+                            'MetaLeft', 'MetaRight', 'Escape', 'Tab',
+                            'AltLeft', 'AltRight', 'ControlLeft', 'ControlRight',
+                            'KeyW', 'KeyT', 'KeyN', 'KeyR', 'F1', 'F5', 'F11', 'F12'
+                        ]);
+                        osKeyLocked = true;
+                        btn.classList.add('locked');
+                        btn.innerHTML = '🔒 OS KEY LOCK: ON';
+                        statusEl.innerHTML = '🔒 <b style="color:#00ff88;">OS Key Lock Aktif:</b> Tombol Windows/Command (Meta), Alt+Tab, Esc &amp; Ctrl+W dikunci penuh selama Fullscreen.';
+                    } else {
+                        osKeyLocked = true;
+                        btn.classList.add('locked');
+                        btn.innerHTML = '🔒 BROWSER LOCK: ON';
+                        statusEl.innerHTML = '⚠️ Browser ini tidak mendukung <code>navigator.keyboard.lock()</code> (khusus Chrome/Edge Desktop). Shortcut browser tetap dikunci.';
+                    }
+                } catch (err) {
+                    statusEl.innerHTML = `⚠️ Gagal mengaktifkan OS Key Lock: ${err.message}`;
+                }
+            } else {
+                releaseOsKeyLock();
+            }
+        }
+
+        function releaseOsKeyLock() {
+            if (navigator.keyboard && typeof navigator.keyboard.unlock === 'function') {
+                navigator.keyboard.unlock();
+            }
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+            osKeyLocked = false;
+            const btn = document.getElementById('btn-os-lock');
+            btn.classList.remove('locked');
+            btn.innerHTML = '🔓 OS KEY LOCK';
+            document.getElementById('guard-status-text').innerHTML =
+                '🛡️ Shortcut Guard Aktif. Klik <b>OS KEY LOCK</b> untuk mengunci tombol Windows/Command &amp; Ctrl+W dalam Fullscreen.';
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && osKeyLocked) {
+                releaseOsKeyLock();
+            }
+        });
+
+        window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        function updateShiftGuard(code, now) {
+            if (code !== 'ShiftLeft' && code !== 'ShiftRight') {
+                shiftTapStreak = 0;
+                const m = document.getElementById('shift-guard-meter');
+                m.classList.remove('warn');
+                m.innerText = 'Shift Tap Guard: 0/5 (Aman dari Sticky Keys OS)';
+                return;
+            }
+            if (now - lastShiftTapTs < 3500) {
+                shiftTapStreak++;
+            } else {
+                shiftTapStreak = 1;
+            }
+            lastShiftTapTs = now;
+
+            const meter = document.getElementById('shift-guard-meter');
+            if (shiftTapStreak >= 4) {
+                meter.classList.add('warn');
+                meter.innerText = `⚠️ Shift Tap: ${shiftTapStreak}/5 — Ketukan ke-5 memicu popup Sticky Keys Windows (tekan tombol lain untuk reset)`;
+            } else {
+                meter.classList.remove('warn');
+                meter.innerText = `Shift Tap Guard: ${shiftTapStreak}/5 (Aman dari Sticky Keys OS)`;
+            }
+        }
+
+        // =========================================
+        // 5. STRAFE, JIGGLE & RAPID TRIGGER ENGINE
+        // =========================================
+        const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft']);
+        const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight']);
+
+        let leftDownAt = null;
+        let rightDownAt = null;
+        let lastLeftUpAt = null;
+        let lastRightUpAt = null;
+        let lastStrafeSwitchAt = null;
+        let strafeSwitchIntervals = [];
+        let strafeHoldDurations = [];
+
+        let fastestDwellMs = Infinity;
+        let fastestResetMs = Infinity;
+
+        function updateStrafeVisualizer() {
+            const leftActive = leftDownAt !== null;
+            const rightActive = rightDownAt !== null;
+
+            document.getElementById('vis-left').classList.toggle('lit', leftActive);
+            document.getElementById('vis-right').classList.toggle('lit', rightActive);
+
+            const puck = document.getElementById('strafe-puck');
+            const socdBadge = document.getElementById('socd-badge');
+
+            if (leftActive && rightActive) {
+                const newerSide = rightDownAt > leftDownAt ? 'RIGHT (D/→)' : 'LEFT (A/←)';
+                puck.style.left = 'calc(50% - 11px)';
+                puck.style.background = '#ff4081';
+                socdBadge.style.color = '#ff4081';
+                socdBadge.innerText = `SOCD OVERLAP • LAST: ${newerSide}`;
+            } else if (leftActive) {
+                puck.style.left = '6px';
+                puck.style.background = '#00e5ff';
+                socdBadge.style.color = '#00e5ff';
+                socdBadge.innerText = 'STRAFE LEFT';
+            } else if (rightActive) {
+                puck.style.left = 'calc(100% - 28px)';
+                puck.style.background = '#00e5ff';
+                socdBadge.style.color = '#00e5ff';
+                socdBadge.innerText = 'STRAFE RIGHT';
+            } else {
+                puck.style.left = 'calc(50% - 11px)';
+                puck.style.background = '#00ff88';
+                socdBadge.style.color = '#00ff88';
+                socdBadge.innerText = 'COUNTER-STOPPED';
+            }
+        }
+
+        function recordStrafeDown(side, now) {
+            if (side === 'left') {
+                leftDownAt = now;
+                if (rightDownAt !== null) {
+                    const overlap = now - rightDownAt;
+                    document.getElementById('strafe-gap').innerHTML = `<span style="color:#ff4081;">-${overlap.toFixed(1)} ms (OVERLAP)</span>`;
+                } else if (lastRightUpAt !== null) {
+                    const gap = now - lastRightUpAt;
+                    const color = gap <= 25 ? '#00ff88' : (gap <= 65 ? '#00e5ff' : '#ffab40');
+                    document.getElementById('strafe-gap').innerHTML = `<span style="color:${color};">+${gap.toFixed(1)} ms (GAP)</span>`;
+                }
+            } else {
+                rightDownAt = now;
+                if (leftDownAt !== null) {
+                    const overlap = now - leftDownAt;
+                    document.getElementById('strafe-gap').innerHTML = `<span style="color:#ff4081;">-${overlap.toFixed(1)} ms (OVERLAP)</span>`;
+                } else if (lastLeftUpAt !== null) {
+                    const gap = now - lastLeftUpAt;
+                    const color = gap <= 25 ? '#00ff88' : (gap <= 65 ? '#00e5ff' : '#ffab40');
+                    document.getElementById('strafe-gap').innerHTML = `<span style="color:${color};">+${gap.toFixed(1)} ms (GAP)</span>`;
+                }
+            }
+
+            if (lastStrafeSwitchAt !== null) {
+                const delta = now - lastStrafeSwitchAt;
+                if (delta < 1200) {
+                    strafeSwitchIntervals.push(delta);
+                    if (strafeSwitchIntervals.length > 10) strafeSwitchIntervals.shift();
+                } else {
+                    strafeSwitchIntervals = [];
+                }
+            }
+            lastStrafeSwitchAt = now;
+            renderJiggleTelemetry();
+            updateStrafeVisualizer();
+        }
+
+        function recordStrafeUp(side, now) {
+            if (side === 'left' && leftDownAt !== null) {
+                const hold = now - leftDownAt;
+                strafeHoldDurations.push(hold);
+                if (strafeHoldDurations.length > 10) strafeHoldDurations.shift();
+                leftDownAt = null;
+                lastLeftUpAt = now;
+            } else if (side === 'right' && rightDownAt !== null) {
+                const hold = now - rightDownAt;
+                strafeHoldDurations.push(hold);
+                if (strafeHoldDurations.length > 10) strafeHoldDurations.shift();
+                rightDownAt = null;
+                lastRightUpAt = now;
+            }
+            renderJiggleTelemetry();
+            updateStrafeVisualizer();
+        }
+
+        function renderJiggleTelemetry() {
+            const avgInterval = strafeSwitchIntervals.length > 0
+                ? strafeSwitchIntervals.reduce((a, b) => a + b, 0) / strafeSwitchIntervals.length
+                : 0;
+            const jiggleHz = avgInterval > 0 ? (1000 / (avgInterval * 2)) : 0;
+            const avgHold = strafeHoldDurations.length > 0
+                ? strafeHoldDurations.reduce((a, b) => a + b, 0) / strafeHoldDurations.length
+                : 0;
+
+            document.getElementById('jiggle-rate').innerText =
+                `${jiggleHz.toFixed(1)} Hz • ${avgHold > 0 ? avgHold.toFixed(0) + ' ms' : '-- ms'}`;
+        }
+
+        // =========================================
+        // 6. CORE KEYBOARD, CHATTER & DWELL LOGIC
+        // =========================================
+        let activeKeys = new Set();
+        let maxSim = 0;
+        let keyDownPerf = {};
+        let lastKeyUpPerf = {};
+        let lastKeyDownPerf = {};
+        let startTime = null;
+        let count = 0;
+        let lastDwellVal = '-- ms';
+        let kpmVal = 0;
+        let kpmTimer = null;
+
+        function format(code) {
+            if (isMacMode) {
+                const macNames = {
+                    'MetaLeft': 'Cmd L', 'MetaRight': 'Cmd R',
+                    'AltLeft': 'Opt L', 'AltRight': 'Opt R',
+                    'ControlLeft': 'Ctrl L', 'ControlRight': 'Ctrl R',
+                    'Backspace': 'Delete', 'Enter': 'Return'
+                };
+                if (macNames[code]) return macNames[code];
+            }
+            return code
+                .replace('Key', '')
+                .replace('Digit', '')
+                .replace('Numpad', 'Num ')
+                .replace('Left', ' L')
+                .replace('Right', ' R');
+        }
+
+        function clearLog() {
+            document.getElementById('key-history').innerHTML = '';
+        }
+
+        function resetAllStats() {
+            activeKeys.clear();
+            maxSim = 0;
+            keyDownPerf = {};
+            lastKeyUpPerf = {};
+            lastKeyDownPerf = {};
+            startTime = null;
+            count = 0;
+            leftDownAt = null;
+            rightDownAt = null;
+            lastLeftUpAt = null;
+            lastRightUpAt = null;
+            lastStrafeSwitchAt = null;
+            strafeSwitchIntervals = [];
+            strafeHoldDurations = [];
+            fastestDwellMs = Infinity;
+            fastestResetMs = Infinity;
+            shiftTapStreak = 0;
+            lastDwellVal = '-- ms';
+            kpmVal = 0;
+
+            document.getElementById('ghost-curr').innerText = '0';
+            document.getElementById('ghost-max').innerText = '0';
+            updateNkroVerdict(0);
+            document.getElementById('last-dwell').innerText = '-- ms • 0';
+            document.getElementById('strafe-gap').innerText = '-- ms';
+            document.getElementById('jiggle-rate').innerText = '0.0 Hz • -- ms';
+            document.getElementById('min-dwell').innerText = '-- ms';
+            document.getElementById('min-reset').innerText = '-- ms';
+            document.getElementById('shift-guard-meter').innerText = 'Shift Tap Guard: 0/5 (Aman dari Sticky Keys OS)';
+            document.getElementById('shift-guard-meter').classList.remove('warn');
+
+            document.querySelectorAll('.key').forEach(k => {
+                k.classList.remove('active', 'tested', 'chatter-flag');
+            });
+            clearLog();
+            updateStrafeVisualizer();
+            updateCoverageStat();
+        }
+
+        const BLOCKED_DEFAULT_CODES = new Set([
+            'Tab', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight',
+            'ControlLeft', 'ControlRight', 'MetaLeft', 'MetaRight',
+            'ContextMenu', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'
+        ]);
+
+        window.addEventListener('keydown', (e) => {
+            if (
+                BLOCKED_DEFAULT_CODES.has(e.code) ||
+                e.code.startsWith('F') ||
+                e.ctrlKey || e.altKey || e.metaKey
+            ) {
+                e.preventDefault();
+            }
+
+            if (e.repeat) return;
+
+            const now = performance.now();
+            playSound();
+            updateShiftGuard(e.code, now);
+
+            if (lastKeyUpPerf[e.code]) {
+                const resetGap = now - lastKeyUpPerf[e.code];
+                if (resetGap < fastestResetMs && resetGap > 2) {
+                    fastestResetMs = resetGap;
+                    document.getElementById('min-reset').innerText = `${fastestResetMs.toFixed(1)} ms`;
+                }
+            }
+
+            const prevDown = lastKeyDownPerf[e.code] || 0;
+            const isChatter = prevDown > 0 && (now - prevDown) < 80;
+            if (isChatter) {
+                document.getElementById('chatter-key').innerText = `${format(e.code)} (${(now - prevDown).toFixed(1)}ms)`;
+                document.getElementById('chatter-alert').style.display = 'block';
+                document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k => k.classList.add('chatter-flag'));
+                setTimeout(() => { document.getElementById('chatter-alert').style.display = 'none'; }, 3000);
+            }
+
+            lastKeyDownPerf[e.code] = now;
+            keyDownPerf[e.code] = now;
+            activeKeys.add(e.code);
+            count++;
+
+            if (LEFT_KEYS.has(e.code)) recordStrafeDown('left', now);
+            if (RIGHT_KEYS.has(e.code)) recordStrafeDown('right', now);
+
+            if (!startTime) {
+                startTime = now;
+                if (kpmTimer) clearInterval(kpmTimer);
+                kpmTimer = setInterval(() => {
+                    if (!startTime) return;
+                    const m = (performance.now() - startTime) / 60000;
+                    kpmVal = m > 0 ? Math.round(count / m) : 0;
+                    document.getElementById('last-dwell').innerText = `${lastDwellVal} • ${kpmVal}`;
+                }, 1000);
+            }
+
+            document.getElementById('ghost-curr').innerText = activeKeys.size;
+            if (activeKeys.size > maxSim) {
+                maxSim = activeKeys.size;
+                document.getElementById('ghost-max').innerText = maxSim;
+                updateNkroVerdict(maxSim);
+            }
+
+            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k => {
+                k.classList.add('active', 'tested');
+            });
+            updateCoverageStat();
+
+            const l = document.createElement('div');
+            l.className = 'log-item';
+            if (isChatter) l.classList.add('err');
+            l.innerText = format(e.code);
+            const hist = document.getElementById('key-history');
+            hist.prepend(l);
+            if (hist.children.length > 90) hist.removeChild(hist.lastChild);
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (
+                BLOCKED_DEFAULT_CODES.has(e.code) ||
+                e.code.startsWith('F') ||
+                e.ctrlKey || e.altKey || e.metaKey
+            ) {
+                e.preventDefault();
+            }
+
+            const now = performance.now();
+            lastKeyUpPerf[e.code] = now;
+
+            if (keyDownPerf[e.code]) {
+                const dwell = now - keyDownPerf[e.code];
+                lastDwellVal = `${dwell.toFixed(1)} ms`;
+                document.getElementById('last-dwell').innerText = `${lastDwellVal} • ${kpmVal}`;
+                if (dwell < fastestDwellMs && dwell > 1) {
+                    fastestDwellMs = dwell;
+                    document.getElementById('min-dwell').innerText = `${fastestDwellMs.toFixed(1)} ms`;
+                }
+                delete keyDownPerf[e.code];
+            }
+
+            if (LEFT_KEYS.has(e.code)) recordStrafeUp('left', now);
+            if (RIGHT_KEYS.has(e.code)) recordStrafeUp('right', now);
+
+            activeKeys.delete(e.code);
+            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k => k.classList.remove('active'));
+            document.getElementById('ghost-curr').innerText = activeKeys.size;
+        });
+
+        window.addEventListener('blur', () => {
+            activeKeys.clear();
+            leftDownAt = null;
+            rightDownAt = null;
+            document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
+            document.getElementById('ghost-curr').innerText = '0';
+            updateStrafeVisualizer();
+        });
+
+        window.addEventListener('load', () => {
+            // Auto-enable Macintosh mode if accessed from macOS
+            if (/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) {
+                document.getElementById('os-mode-toggle').checked = true;
+                toggleMacMode();
+            }
+            updateCoverageStat();
+            autoScaleKeyboard();
+        });
         window.addEventListener('resize', autoScaleKeyboard);
     </script>
 </body>
