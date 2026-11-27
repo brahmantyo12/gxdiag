@@ -11,7 +11,7 @@
     
     <style>
         /* =========================================
-           1. ISOLATED RESET & RESPONSIVE SHELL
+1. ISOLATED RESET & RESPONSIVE SHELL
            ========================================= */
         *, *::before, *::after { box-sizing: border-box; }
 
@@ -119,86 +119,41 @@
         .tab-content.active { display: block; }
 
         /* =========================================
-           2. TAB 1: CLASSIC SCANNER (CAMERA + UPLOAD)
+2. TAB 1: CLASSIC SCANNER (ALL FORMATS)
            ========================================= */
         .classic-scan-wrap {
             width: 100%;
-            max-width: 480px;
+            max-width: 520px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            gap: 14px;
         }
 
-        #reader { 
-            width: 100% !important; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            border: 2px solid #333 !important; 
-            background: #181818;
-            padding: 10px;
-            color: #ccc;
-        }
-        #reader * { max-width: 100%; }
-        #reader video, #reader__scan_region img { 
-            width: 100% !important; 
-            height: auto !important; 
-            border-radius: 8px; 
-        }
-        #reader button {
-            background: var(--c-cyan, #00e5ff);
-            color: #000;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 0.76rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            margin: 6px 4px;
-            transition: 0.2s;
-            min-height: 40px;
-        }
-        #reader button:hover { filter: brightness(1.12); }
-        #reader select {
-            background: #121212;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 8px 10px;
-            border-radius: 8px;
-            margin: 6px 0;
-            width: 100%;
-            min-height: 40px;
-        }
-        #reader a, #reader__dashboard_section_swaplink {
-            color: var(--c-cyan, #00e5ff) !important;
-            text-decoration: underline !important;
-            font-size: 0.82rem;
-            font-weight: 700;
-            display: inline-block;
-            margin-top: 8px;
-            cursor: pointer;
-        }
-        #reader input[type="file"] {
-            color: #ccc;
-            font-size: 0.8rem;
-            margin: 8px auto;
-            width: 100%;
+        .scan-reticle {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border: 2px solid rgba(0, 229, 255, 0.75);
+            border-radius: 14px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35), inset 0 0 18px rgba(0, 229, 255, 0.2);
+            pointer-events: none;
+            z-index: 10;
         }
 
         .scan-result { 
-            margin-top: 16px; 
             width: 100%; 
-            background: #1e1e1e; 
+            background: #1a1a1a; 
             padding: 15px; 
-            border-radius: 10px; 
-            border: 1px solid #444; 
+            border-radius: 12px; 
+            border: 1px solid #383838; 
+            border-left: 4px solid var(--c-cyan, #00e5ff);
             display: none; 
             word-break: break-all; 
         }
 
         /* =========================================
-           3. SPLIT-GRID & SHARED COMPONENTS
+3. SPLIT-GRID & SHARED COMPONENTS
            ========================================= */
         .split-layout {
             display: grid;
@@ -275,7 +230,6 @@
             outline: none;
             transition: border-color 0.2s;
         }
-        /* Cegah auto-zoom browser mobile (iOS Safari / Android WebView) saat fokus input */
         @media (max-width: 768px) {
             input[type="text"], select { font-size: 16px; }
         }
@@ -333,12 +287,12 @@
         .quick-action-row .btn { flex: 1; min-width: 105px; min-height: 38px; font-size: 0.72rem; }
 
         /* =========================================
-           4. TAB 2: RETAIL PRODUCT SCANNER & POS
+4. CAMERA VIEWPORT & RETAIL PRODUCT SCANNER
            ========================================= */
         .viewport-box {
             position: relative;
             width: 100%;
-            min-height: 240px;
+            min-height: 260px;
             background: #080808;
             border-radius: 10px;
             overflow: hidden;
@@ -347,8 +301,15 @@
             align-items: center;
             justify-content: center;
         }
-        .reader-mount { width: 100%; }
-        .reader-mount video { object-fit: cover !important; border-radius: 8px; width: 100% !important; }
+        .reader-mount { width: 100%; display: flex; justify-content: center; align-items: center; }
+        .reader-mount video {
+            display: block !important;
+            width: 100% !important;
+            min-height: 240px;
+            max-height: 380px;
+            object-fit: cover !important;
+            border-radius: 8px;
+        }
 
         .laser-line {
             position: absolute;
@@ -368,12 +329,20 @@
         }
 
         .cam-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
             padding: 30px 15px;
-            color: #666;
+            color: #777;
             font-size: 0.8rem;
             font-family: monospace;
             line-height: 1.5;
+            background: #080808;
+            z-index: 5;
         }
 
         .cam-toolbar-4 {
@@ -515,7 +484,7 @@
         }
 
         /* =========================================
-           5. TAB 3: HIGH-RES GENERATOR
+5. TAB 3: HIGH-RES GENERATOR
            ========================================= */
         .preview-stage {
             width: 100%;
@@ -653,16 +622,45 @@
 
     <div class="main-container">
         <!-- =========================================
-             TAB 1: CLASSIC SCANNER (KAMERA & UNGGAH FILE)
+             TAB 1: CLASSIC SCANNER (ALL FORMATS + UPLOAD)
              ========================================= -->
         <div id="scan" class="tab-content active">
             <div class="classic-scan-wrap">
-                <div id="reader"></div>
-                <div style="color:#666; font-size:0.78rem; margin-top:10px; text-align:center;">
-                    Supports: QR, UPC, EAN (Snacks), Code128 &amp; Scan Image File
+                <div class="panel-card">
+                    <div class="section-heading">
+                        <span>Universal Scanner (2D &amp; 1D)</span>
+                        <span id="all-status-pill" style="color: #777; font-family: monospace;">STANDBY</span>
+                    </div>
+
+                    <div class="viewport-box">
+                        <div id="reader" class="reader-mount"></div>
+                        <div class="scan-reticle" id="all-reticle" style="display:none;"></div>
+                        <div class="cam-placeholder" id="all-placeholder">
+                            <div>
+                                Siap memindai QR Code, DataMatrix, PDF417, EAN/UPC &amp; Code128.<br>
+                                Tekan <b>MULAI KAMERA</b> atau unggah foto kode.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-row" id="all-cam-row" style="display: none;">
+                        <label for="all-cam-select">Pilih Kamera</label>
+                        <select id="all-cam-select" onchange="restartAllCamera()"></select>
+                    </div>
+
+                    <div class="cam-toolbar-4">
+                        <button type="button" class="btn btn-cyan" id="btn-all-toggle" onclick="toggleAllCamera()">▶ MULAI</button>
+                        <button type="button" class="btn btn-dark active-toggle" id="btn-all-beep" onclick="toggleBeep()">🔊 BEEP</button>
+                        <button type="button" class="btn btn-dark" id="btn-all-torch" onclick="toggleAllTorch()" disabled>🔦 FLASH</button>
+                        <label for="all-file-input" class="btn btn-dark" style="margin:0; cursor:pointer;">🖼 FOTO</label>
+                        <input type="file" id="all-file-input" accept="image/*" style="display:none;" onchange="scanAllFromFile(event)">
+                    </div>
+
+                    <div class="error-banner" id="all-error"></div>
                 </div>
+
                 <div class="scan-result" id="scan-res-box">
-                    <div style="color:#888; font-size:0.75rem; font-weight:bold;">RESULT:</div>
+                    <div style="color:#888; font-size:0.75rem; font-weight:bold;">HASIL PEMINDAIAN:</div>
                     <div id="scan-data" style="color:#fff; font-family:monospace; font-size:1.1rem; font-weight:bold; margin-top:4px;">-</div>
                     <div id="scan-format" style="color:var(--c-cyan, #00e5ff); font-size:0.8rem; margin-top:5px;">-</div>
                     <div class="quick-action-row">
@@ -899,8 +897,8 @@
             if (camMutex) return;
             camMutex = true;
             try {
-                if (id !== 'scan' && scanner) {
-                    await stopClassicScanner();
+                if (id !== 'scan' && allIsScanning) {
+                    await stopAllCamera();
                 }
                 if (id !== 'retail' && rtlIsScanning) {
                     await stopRtlCamera();
@@ -910,10 +908,6 @@
                 document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
                 document.getElementById(id).classList.add('active');
                 document.getElementById(`tab-btn-${id}`).classList.add('active');
-
-                if (id === 'scan') {
-                    startScanner();
-                }
             } finally {
                 camMutex = false;
             }
@@ -921,40 +915,209 @@
 
         // Otomatis matikan kamera jika aplikasi/tab diminimize di HP
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden && rtlIsScanning) {
-                stopRtlCamera();
+            if (document.hidden) {
+                if (allIsScanning) stopAllCamera();
+                if (rtlIsScanning) stopRtlCamera();
             }
         });
 
         // =========================================
-        // 2. TAB 1: CLASSIC SCANNER (CAMERA + UPLOAD)
+        // 2. TAB 1: UNIVERSAL SCANNER (ALL FORMATS + UPLOAD)
         // =========================================
-        let scanner = null;
+        let allScanner = null;
+        let allIsScanning = false;
+        let allTorchOn = false;
 
-        function onScanSuccess(decodedText, decodedResult) {
+        function showAllError(msg) {
+            const box = document.getElementById('all-error');
+            box.innerText = msg;
+            box.style.display = 'block';
+        }
+        function clearAllError() {
+            document.getElementById('all-error').style.display = 'none';
+        }
+
+        function handleAllDecoded(decodedText, decodedResult) {
+            playPosBeep();
+            if (navigator.vibrate) navigator.vibrate(50);
+
             document.getElementById('scan-res-box').style.display = 'block';
             document.getElementById('scan-data').innerText = decodedText;
-            document.getElementById('scan-format').innerText = decodedResult.result.format?.formatName || "Detected";
+            const fmt = decodedResult?.result?.format?.formatName || decodedResult?.format?.formatName || "Detected";
+            document.getElementById('scan-format').innerText = `Format: ${fmt}`;
 
             const isUrl = /^https?:\/\/[^\s]+$/i.test(decodedText.trim());
             document.getElementById('btn-classic-open').style.display = isUrl ? 'inline-flex' : 'none';
-
-            if (navigator.vibrate) navigator.vibrate(50);
         }
 
-        function startScanner() {
-            if (!scanner) {
-                scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 150 } });
-                scanner.render(onScanSuccess);
+        async function populateAllCameras() {
+            try {
+                const devices = await Html5Qrcode.getCameras();
+                const sel = document.getElementById('all-cam-select');
+                const row = document.getElementById('all-cam-row');
+                if (devices && devices.length > 0) {
+                    const prevVal = sel.value;
+                    sel.innerHTML = '';
+                    devices.forEach((dev, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = dev.id;
+                        opt.text = dev.label || `Kamera ${idx + 1}`;
+                        sel.appendChild(opt);
+                    });
+
+                    if (prevVal && devices.some(d => d.id === prevVal)) {
+                        sel.value = prevVal;
+                    } else {
+                        const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
+                        if (backCam) sel.value = backCam.id;
+                    }
+                    row.style.display = devices.length > 1 ? 'flex' : 'none';
+                }
+            } catch (_) {}
+        }
+
+        async function toggleAllCamera() {
+            if (allIsScanning) {
+                await stopAllCamera();
+            } else {
+                await startAllCamera();
             }
         }
 
-        async function stopClassicScanner() {
-            if (scanner) {
+        async function restartAllCamera() {
+            if (allIsScanning) {
+                await stopAllCamera();
+                await startAllCamera();
+            }
+        }
+
+        async function startAllCamera() {
+            if (camMutex) return;
+            camMutex = true;
+            clearAllError();
+            if (rtlIsScanning) await stopRtlCamera();
+
+            const toggleBtn = document.getElementById('btn-all-toggle');
+            const statusPill = document.getElementById('all-status-pill');
+            const placeholder = document.getElementById('all-placeholder');
+            const reticle = document.getElementById('all-reticle');
+
+            toggleBtn.disabled = true;
+            statusPill.innerText = 'MEMUAT...';
+            statusPill.style.color = 'var(--c-orange)';
+
+            try {
+                // Bersihkan instance lama bila tersisa
+                if (allScanner) {
+                    try { await allScanner.clear(); } catch (_) {}
+                }
+
+                allScanner = new Html5Qrcode("reader", { verbose: false });
+
+                // Request daftar kamera terlebih dahulu (memicu izin kamera jika belum diberikan)
+                await populateAllCameras();
+                const camId = document.getElementById('all-cam-select').value;
+                const source = camId ? { deviceId: { exact: camId } } : { facingMode: "environment" };
+
+                placeholder.style.display = 'none';
+                reticle.style.display = 'block';
+
+                await allScanner.start(
+                    source,
+                    {
+                        fps: 15,
+                        qrbox: function(w, h) {
+                            const size = Math.min(260, Math.floor(Math.min(w, h) * 0.72));
+                            return { width: Math.max(160, size), height: Math.max(160, size) };
+                        }
+                    },
+                    (text, res) => handleAllDecoded(text, res),
+                    () => {}
+                );
+
+                // Refresh label kamera setelah stream aktif (beberapa browser baru mengisi label setelah stream berjalan)
+                await populateAllCameras();
+
+                allIsScanning = true;
+                allTorchOn = false;
+                toggleBtn.innerText = '⏹ STOP';
+                toggleBtn.className = 'btn btn-danger';
+                statusPill.innerText = 'SCAN AKTIF';
+                statusPill.style.color = 'var(--c-cyan)';
+
                 try {
-                    await scanner.clear();
-                } catch (_) {}
-                scanner = null;
+                    const caps = allScanner.getRunningTrackCameraCapabilities();
+                    document.getElementById('btn-all-torch').disabled = !(caps && caps.torchFeature && caps.torchFeature().isSupported());
+                } catch (_) {
+                    document.getElementById('btn-all-torch').disabled = true;
+                }
+            } catch (err) {
+                placeholder.style.display = 'flex';
+                reticle.style.display = 'none';
+                statusPill.innerText = 'ERROR';
+                statusPill.style.color = 'var(--c-red)';
+                showAllError(`Akses kamera gagal: ${err?.message || err}`);
+            } finally {
+                toggleBtn.disabled = false;
+                camMutex = false;
+            }
+        }
+
+        async function stopAllCamera() {
+            const toggleBtn = document.getElementById('btn-all-toggle');
+            const statusPill = document.getElementById('all-status-pill');
+            const placeholder = document.getElementById('all-placeholder');
+            const reticle = document.getElementById('all-reticle');
+            const torchBtn = document.getElementById('btn-all-torch');
+
+            try {
+                if (allScanner && allIsScanning) {
+                    await allScanner.stop();
+                }
+                if (allScanner) {
+                    await allScanner.clear();
+                }
+            } catch (_) {}
+
+            allScanner = null;
+            allIsScanning = false;
+            allTorchOn = false;
+            torchBtn.disabled = true;
+            torchBtn.classList.remove('active-toggle');
+            reticle.style.display = 'none';
+            placeholder.style.display = 'flex';
+            toggleBtn.innerText = '▶ MULAI';
+            toggleBtn.className = 'btn btn-cyan';
+            statusPill.innerText = 'STANDBY';
+            statusPill.style.color = '#777';
+        }
+
+        async function toggleAllTorch() {
+            if (!allScanner || !allIsScanning) return;
+            try {
+                const caps = allScanner.getRunningTrackCameraCapabilities();
+                const torch = caps.torchFeature();
+                allTorchOn = !allTorchOn;
+                await torch.apply(allTorchOn);
+                document.getElementById('btn-all-torch').classList.toggle('active-toggle', allTorchOn);
+            } catch (_) {}
+        }
+
+        async function scanAllFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            clearAllError();
+            if (allIsScanning) await stopAllCamera();
+
+            try {
+                const fileScanner = new Html5Qrcode("reader", { verbose: false });
+                const result = await fileScanner.scanFileV2(file, false);
+                handleAllDecoded(result.decodedText, result);
+                try { await fileScanner.clear(); } catch (_) {}
+            } catch (_) {
+                showAllError("QR Code atau Barcode tidak ditemukan pada gambar tersebut.");
+            } finally {
+                event.target.value = '';
             }
         }
 
@@ -976,8 +1139,6 @@
             generateCode();
             switchTab('gen');
         }
-
-        startScanner();
 
         // =========================================
         // 3. TAB 2: RETAIL PRODUCT SCANNER & POS
@@ -1031,9 +1192,12 @@
 
         function toggleBeep() {
             beepEnabled = !beepEnabled;
-            const btn = document.getElementById('btn-beep-toggle');
-            btn.classList.toggle('active-toggle', beepEnabled);
-            btn.innerText = beepEnabled ? '🔊 BEEP' : '🔇 MUTE';
+            ['btn-beep-toggle', 'btn-all-beep'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.classList.toggle('active-toggle', beepEnabled);
+                btn.innerText = beepEnabled ? '🔊 BEEP' : '🔇 MUTE';
+            });
             if (beepEnabled) playPosBeep();
         }
 
@@ -1115,7 +1279,7 @@
             if (camMutex) return;
             camMutex = true;
             clearRtlError();
-            await stopClassicScanner();
+            if (allIsScanning) await stopAllCamera();
 
             const toggleBtn = document.getElementById('btn-rtl-toggle');
             const statusPill = document.getElementById('rtl-status-pill');
@@ -1126,6 +1290,10 @@
             statusPill.style.color = 'var(--c-orange)';
 
             try {
+                if (rtlScanner) {
+                    try { await rtlScanner.clear(); } catch (_) {}
+                }
+
                 const retailFormats = typeof Html5QrcodeSupportedFormats !== 'undefined' ? [
                     Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8,
@@ -1144,7 +1312,7 @@
 
                 await populateRtlCameras();
                 const camId = document.getElementById('rtl-cam-select').value;
-                const source = camId ? camId : { facingMode: "environment" };
+                const source = camId ? { deviceId: { exact: camId } } : { facingMode: "environment" };
 
                 placeholder.style.display = 'none';
                 await rtlScanner.start(
@@ -1161,6 +1329,8 @@
                     () => {}
                 );
 
+                await populateRtlCameras();
+
                 rtlIsScanning = true;
                 rtlTorchOn = false;
                 toggleBtn.innerText = '⏹ STOP';
@@ -1175,7 +1345,7 @@
                     document.getElementById('btn-rtl-torch').disabled = true;
                 }
             } catch (err) {
-                placeholder.style.display = 'block';
+                placeholder.style.display = 'flex';
                 statusPill.innerText = 'ERROR';
                 statusPill.style.color = 'var(--c-red)';
                 showRtlError(`Akses kamera gagal: ${err?.message || err}`);
@@ -1195,6 +1365,9 @@
                 if (rtlScanner && rtlIsScanning) {
                     await rtlScanner.stop();
                 }
+                if (rtlScanner) {
+                    await rtlScanner.clear();
+                }
             } catch (_) {}
 
             rtlScanner = null;
@@ -1202,7 +1375,7 @@
             rtlTorchOn = false;
             torchBtn.disabled = true;
             torchBtn.classList.remove('active-toggle');
-            placeholder.style.display = 'block';
+            placeholder.style.display = 'flex';
             toggleBtn.innerText = '▶ MULAI';
             toggleBtn.className = 'btn btn-green';
             statusPill.innerText = 'STANDBY';
@@ -1230,6 +1403,7 @@
                 const fileScanner = new Html5Qrcode("reader-retail", { verbose: false });
                 const result = await fileScanner.scanFileV2(file, false);
                 handleRtlDecoded(result.decodedText, result, true);
+                try { await fileScanner.clear(); } catch (_) {}
             } catch (_) {
                 showRtlError("Barcode produk tidak ditemukan pada gambar tersebut.");
             } finally {
