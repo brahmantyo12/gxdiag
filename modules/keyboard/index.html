@@ -3,1933 +3,1426 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GXDiag - Barcode & QR Studio</title>
+    <title>GXDiag - Pro Keyboard &amp; VIA/QMK Lab</title>
+    <meta name="theme-color" content="#1a1a1a">
     <link rel="stylesheet" href="../../css/style.css">
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-    
     <style>
-        /* =========================================
-1. ISOLATED RESET & RESPONSIVE SHELL
-           ========================================= */
-        *, *::before, *::after { box-sizing: border-box; }
-
-        body { 
-            background: var(--bg-dark, #121212); 
-            color: #eee;
-            display: flex; 
-            flex-direction: column; 
-            align-items: stretch;
-            min-height: 100vh;
-            min-height: 100dvh;
-            padding: 0;
-            margin: 0;
-            overflow-x: hidden; 
+        * { box-sizing: border-box; }
+        body {
+            background: #111;
+            background-image: radial-gradient(circle at 50% 0%, #1a2a3a 0%, #0d0d0d 80%);
+            color: #eee; font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh; margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        .mod-header { 
+        /* HEADER & CONTROLS */
+        .kb-header {
+            display: flex; justify-content: space-between; width: 100%;
+            max-width: 1280px; margin-bottom: 14px; align-items: center;
+            flex-wrap: wrap; gap: 10px; margin-top: 36px;
+        }
+
+        .kb-header h2 {
+            margin: 0; font-size: 1.6rem; color: #00e5ff;
+            text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+        }
+
+        .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .ctrl-box {
+            background: rgba(30, 30, 30, 0.85); padding: 6px 12px; border-radius: 30px;
+            border: 1px solid #444; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); backdrop-filter: blur(5px);
+        }
+
+        /* LAYOUT PRESET PILLS */
+        .layout-pills {
+            display: flex; background: #191919; border: 1px solid #3c3c3c;
+            border-radius: 30px; padding: 3px; gap: 2px; flex-wrap: wrap;
+        }
+        .l-pill {
+            background: transparent; border: none; color: #888;
+            padding: 5px 10px; border-radius: 24px; font-family: monospace;
+            font-size: 0.73rem; font-weight: 800; cursor: pointer; transition: 0.15s;
+        }
+        .l-pill:hover { color: #fff; }
+        .l-pill.active { background: #00e5ff; color: #000; }
+
+        .action-pill {
+            background: rgba(24, 24, 24, 0.9); border: 1px solid #444; color: #ddd;
+            padding: 7px 13px; border-radius: 30px; font-size: 0.75rem;
+            font-weight: 800; font-family: monospace; cursor: pointer;
+            transition: 0.18s; display: flex; align-items: center; gap: 6px;
+        }
+        .action-pill:hover { border-color: #00e5ff; color: #fff; }
+        .action-pill.locked {
+            background: rgba(0, 255, 136, 0.14); border-color: #00ff88;
+            color: #00ff88; box-shadow: 0 0 14px rgba(0, 255, 136, 0.25);
+        }
+        .action-pill.hid-active {
+            background: rgba(255, 145, 0, 0.16); border-color: #ff9100;
+            color: #ffab40;
+        }
+        .action-pill.reset:hover { border-color: #ff4081; color: #ff4081; }
+
+        /* OS GUARD STATUS BAR */
+        .guard-banner {
+            width: 100%; max-width: 1280px; margin-bottom: 14px;
+            background: rgba(20, 24, 28, 0.9); border: 1px solid #2b3540;
+            border-radius: 10px; padding: 8px 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 8px; font-family: monospace; font-size: 0.74rem;
+        }
+        .guard-status { color: #90caf9; }
+        .shift-meter { color: #aaa; }
+        .shift-meter.warn { color: #ffab40; font-weight: bold; }
+
+        /* DASHBOARD STATS (3 COLUMNS) */
+        .dashboard {
+            width: 100%; max-width: 1280px; display: grid;
+            grid-template-columns: 1.5fr 1.2fr 1.0fr; gap: 15px; margin-bottom: 16px;
+        }
+        @media (max-width: 1040px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+
+        .dash-panel {
+            background: linear-gradient(145deg, #1d1d1d, #161616);
+            border: 1px solid #303030; border-radius: 14px;
+            padding: 14px 16px; min-height: 185px; display: flex; flex-direction: column;
+            position: relative; box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+        }
+        .panel-head {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; color: #aaa; font-weight: 800; margin-bottom: 10px;
+            border-bottom: 1px solid #2d2d2d; padding-bottom: 7px; letter-spacing: 0.7px;
+            font-family: monospace; gap: 6px;
+        }
+
+        .info-toggle-btn {
+            background: rgba(0, 229, 255, 0.12); border: 1px solid rgba(0, 229, 255, 0.45);
+            color: #00e5ff; border-radius: 5px; padding: 2px 7px;
+            font-family: monospace; font-size: 0.68rem; font-weight: 800;
+            cursor: pointer; transition: 0.15s;
+        }
+        .info-toggle-btn:hover { background: #00e5ff; color: #000; }
+
+        .rt-guide-box {
+            display: none; background: #10151a; border: 1px solid #263849;
+            border-radius: 8px; padding: 9px 11px; margin-bottom: 9px;
+            font-size: 0.72rem; line-height: 1.48; color: #c5d4e2;
+        }
+        .rt-guide-box b { color: #00e5ff; }
+        .rt-guide-box ul { margin: 4px 0 0 0; padding-left: 16px; }
+        .rt-guide-box li { margin-bottom: 3px; }
+
+        /* LOG & STATS */
+        #key-history {
+            flex-grow: 1; overflow-y: auto; max-height: 120px; display: flex; flex-wrap: wrap;
+            gap: 5px; align-content: flex-start;
+        }
+        .log-item {
+            background: #242424; padding: 3px 7px; border-radius: 4px; font-size: 11px;
+            border: 1px solid #3c3c3c; font-family: monospace; color: #00e5ff;
+        }
+        .log-item.err { color: #ff4081; border-color: #ff4081; background: rgba(255, 64, 129, 0.12); }
+
+        .stats-col { display: flex; flex-direction: column; justify-content: space-between; gap: 5px; height: 100%; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #2e2e2e; padding-bottom: 3px; }
+        .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .stat-val { font-size: 1.04rem; font-weight: 800; color: #fff; font-family: monospace; text-align: right; }
+        .stat-lbl { font-size: 0.68rem; color: #888; font-weight: 700; font-family: monospace; }
+        .nkro-tag {
+            display: block; font-size: 0.62rem; font-weight: 800; color: #00e5ff;
+            letter-spacing: 0.4px; margin-top: 1px;
+        }
+
+        /* STRAFE / JIGGLE / RAPID TRIGGER LAB */
+        .strafe-visualizer { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+        .strafe-key-box {
+            width: 44px; height: 26px; border-radius: 5px; background: #232323;
+            border: 1px solid #3d3d3d; display: flex; align-items: center; justify-content: center;
+            font-family: monospace; font-weight: 800; font-size: 0.74rem; color: #777; transition: 0.05s;
+        }
+        .strafe-key-box.lit {
+            background: #00e5ff; color: #000; border-color: #00e5ff;
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.5);
+        }
+        .strafe-track {
+            flex: 1; height: 14px; background: #101010; border: 1px solid #2b2b2b;
+            border-radius: 99px; position: relative; overflow: hidden;
+        }
+        .strafe-track::after {
+            content: ""; position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 2px; background: rgba(255, 255, 255, 0.25);
+        }
+        .strafe-puck {
+            position: absolute; top: 1px; width: 22px; height: 10px;
+            border-radius: 99px; background: #00ff88; left: calc(50% - 11px);
+            transition: left 0.06s ease-out, background 0.1s;
+        }
+
+        .strafe-metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        .sm-card { background: #121212; border: 1px solid #262626; border-radius: 7px; padding: 5px 8px; }
+        .sm-lbl { font-size: 0.61rem; color: #777; font-family: monospace; text-transform: uppercase; }
+        .sm-val { font-size: 0.8rem; font-weight: 800; font-family: monospace; color: #eee; margin-top: 1px; }
+
+        /* WEBHID VIA / QMK INSPECTOR DRAWER */
+        .hid-panel {
+            display: none; width: 100%; max-width: 1280px; margin-bottom: 18px;
+            background: linear-gradient(145deg, #1a1714, #141414);
+            border: 1px solid rgba(255, 145, 0, 0.45); border-radius: 14px;
+            padding: 15px 18px; box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+        }
+        .hid-grid {
+            display: grid; grid-template-columns: 1.1fr 1.4fr; gap: 14px; margin-top: 10px;
+        }
+        @media (max-width: 900px) { .hid-grid { grid-template-columns: 1fr; } }
+        .hid-card {
+            background: #101010; border: 1px solid #282828; border-radius: 9px;
+            padding: 10px 12px; font-family: monospace; font-size: 0.74rem; line-height: 1.5;
+        }
+        .hid-packets {
+            max-height: 115px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
+            margin-top: 6px;
+        }
+        .pkt-line {
+            background: #171717; border-left: 3px solid #ff9100; padding: 3px 8px;
+            font-family: monospace; font-size: 0.7rem; color: #ddd;
+        }
+
+        /* =========================================================
+           KEYBOARD CHASSIS & MULTI-LAYOUT ENGINE (100% / TKL / 75% / 65% / 60%)
+           Base unit: 1u = 50px, gap = 6px (pitch = 56px)
+           ========================================================= */
+        .wrapper {
             width: 100%;
-            padding: 12px 16px; 
-            background: #111; 
-            border-bottom: 1px solid var(--border-color, #333); 
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .mod-header .back-btn { position: static; margin: 0; white-space: nowrap; }
-        .mod-title { 
-            font-size: 0.86rem; 
-            font-weight: 800; 
-            color: var(--c-cyan, #00e5ff); 
-            letter-spacing: 1.4px; 
-            text-transform: uppercase; 
-            text-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
-            text-align: center;
-        }
-        .header-badge {
-            font-size: 0.68rem;
-            font-family: monospace;
-            color: #888;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            padding: 4px 10px;
-            border-radius: 20px;
-            white-space: nowrap;
-        }
-        @media (max-width: 520px) {
-            .header-badge { display: none; }
-            .mod-title { font-size: 0.78rem; letter-spacing: 1px; }
-        }
-        
-        /* 3-Tab Navigation Bar */
-        .tabs-wrapper {
-            width: 100%;
-            background: #151515;
-            border-bottom: 1px solid var(--border-color, #333);
             display: flex;
             justify-content: center;
-        }
-        .tabs { 
-            width: 100%; 
-            max-width: 1280px;
-            display: flex; 
-        }
-        .tab { 
-            flex: 1; 
-            padding: 14px 8px; 
-            text-align: center; 
-            color: #888; 
-            cursor: pointer; 
-            font-weight: 800; 
-            font-size: 0.8rem; 
-            letter-spacing: 0.8px; 
-            transition: 0.2s; 
-            border-bottom: 3px solid transparent;
-            user-select: none;
-            white-space: nowrap;
-            -webkit-tap-highlight-color: transparent;
-        }
-        @media (max-width: 420px) {
-            .tab { font-size: 0.72rem; letter-spacing: 0.2px; padding: 12px 4px; }
-        }
-        .tab:hover { color: #ccc; background: rgba(255,255,255,0.02); }
-        .tab.active { 
-            color: var(--c-cyan, #00e5ff); 
-            background: #1b1b1b; 
-            border-bottom-color: var(--c-cyan, #00e5ff); 
-        }
-        .tab.retail-tab.active {
-            color: var(--c-green, #00e676);
-            border-bottom-color: var(--c-green, #00e676);
+            align-items: flex-start;
+            margin-bottom: 20px;
+            overflow: visible;
         }
 
-        .main-container {
-            width: 100%;
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 14px;
-            flex-grow: 1;
-        }
-
-        .tab-content { display: none; width: 100%; }
-        .tab-content.active { display: block; }
-
-        /* =========================================
-2. TAB 1: CLASSIC SCANNER (ALL FORMATS)
-           ========================================= */
-        .classic-scan-wrap {
-            width: 100%;
-            max-width: 520px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .scan-reticle {
-            position: absolute;
-            width: 220px;
-            height: 220px;
-            border: 2px solid rgba(0, 229, 255, 0.75);
-            border-radius: 14px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35), inset 0 0 18px rgba(0, 229, 255, 0.2);
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .scan-result { 
-            width: 100%; 
-            background: #1a1a1a; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 1px solid #383838; 
-            border-left: 4px solid var(--c-cyan, #00e5ff);
-            display: none; 
-            word-break: break-all; 
-        }
-
-        /* =========================================
-3. SPLIT-GRID & SHARED COMPONENTS
-           ========================================= */
-        .split-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            align-items: start;
-        }
-
-        @media (min-width: 920px) {
-            .main-container { padding: 24px; }
-            .split-layout {
-                grid-template-columns: 440px 1fr;
-                gap: 24px;
-            }
-            .sticky-pane {
-                position: sticky;
-                top: 72px;
-            }
-        }
-
-        .panel-card {
-            width: 100%;
-            background: var(--bg-card, linear-gradient(145deg, #1e1e1e, #252525));
-            border: 1px solid var(--border-color, #333);
-            border-radius: 14px;
-            padding: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .section-heading {
-            font-size: 0.74rem;
-            font-weight: 800;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .control-row { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-        .control-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
-        @media (max-width: 420px) {
-            .control-grid-2 { grid-template-columns: 1fr; }
-        }
-
-        label { 
-            font-size: 0.72rem; 
-            color: #aaa; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        .val-pill { color: var(--c-cyan, #00e5ff); font-family: monospace; font-size: 0.78rem; }
-        
-        input[type="text"], select {
-            background: #121212;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 10px 12px;
-            border-radius: 8px;
-            width: 100%;
-            min-height: 42px;
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        @media (max-width: 768px) {
-            input[type="text"], select { font-size: 16px; }
-        }
-        input[type="text"]:focus, select:focus { border-color: var(--c-cyan, #00e5ff); }
-
-        .hint-text { font-size: 0.72rem; color: #777; font-family: monospace; line-height: 1.4; }
-        
-        .error-banner {
-            display: none;
-            width: 100%;
-            background: rgba(255, 23, 68, 0.15);
-            border: 1px solid var(--c-red, #ff1744);
-            color: #ff8a80;
-            font-size: 0.8rem;
-            padding: 10px 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .btn {
-            min-height: 42px;
-            padding: 10px 14px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 0.78rem;
-            letter-spacing: 0.6px;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        .btn-cyan { background: var(--c-cyan, #00e5ff); color: #000; }
-        .btn-cyan:hover:not(:disabled) { filter: brightness(1.12); }
-        .btn-green { background: var(--c-green, #00e676); color: #000; }
-        .btn-green:hover:not(:disabled) { filter: brightness(1.12); }
-        .btn-danger { background: rgba(255, 23, 68, 0.15); border: 1px solid var(--c-red, #ff1744); color: var(--c-red, #ff1744); }
-        .btn-danger:hover:not(:disabled) { background: var(--c-red, #ff1744); color: #fff; }
-        .btn-dark { background: #181818; color: #ddd; border: 1px solid #444; }
-        .btn-dark:hover:not(:disabled) { border-color: var(--c-cyan, #00e5ff); color: var(--c-cyan, #00e5ff); }
-        .btn-dark.active-toggle { background: rgba(0, 229, 255, 0.15); border-color: var(--c-cyan, #00e5ff); color: var(--c-cyan, #00e5ff); }
-
-        .quick-action-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .quick-action-row .btn { flex: 1; min-width: 105px; min-height: 38px; font-size: 0.72rem; }
-
-        /* =========================================
-4. CAMERA VIEWPORT & RETAIL PRODUCT SCANNER
-           ========================================= */
-        .viewport-box {
+        .kb-container {
             position: relative;
-            width: 100%;
-            min-height: 260px;
-            background: #080808;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .reader-mount { width: 100%; display: flex; justify-content: center; align-items: center; }
-        .reader-mount video {
-            display: block !important;
-            width: 100% !important;
-            min-height: 240px;
-            max-height: 380px;
-            object-fit: cover !important;
-            border-radius: 8px;
-        }
-
-        .laser-line {
-            position: absolute;
-            left: 8%;
-            right: 8%;
-            top: 50%;
-            height: 2px;
-            background: var(--c-red, #ff1744);
-            box-shadow: 0 0 12px var(--c-red, #ff1744), 0 0 4px #fff;
-            pointer-events: none;
-            z-index: 10;
-            animation: laserPulse 1.6s infinite ease-in-out;
-        }
-        @keyframes laserPulse {
-            0%, 100% { opacity: 0.55; transform: translateY(-10px); }
-            50% { opacity: 1; transform: translateY(10px); }
-        }
-
-        .cam-placeholder {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 30px 15px;
-            color: #777;
-            font-size: 0.8rem;
-            font-family: monospace;
-            line-height: 1.5;
-            background: #080808;
-            z-index: 5;
-        }
-
-        .cam-toolbar-4 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-        @media (min-width: 480px) {
-            .cam-toolbar-4 { grid-template-columns: repeat(4, 1fr); }
-        }
-
-        .manual-sku-bar {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 8px;
-            width: 100%;
-        }
-
-        .scan-hero-result {
-            background: #121212;
-            border: 1px solid #333;
-            border-left: 4px solid var(--c-green, #00e676);
-            border-radius: 10px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .scan-code-display {
-            font-family: monospace;
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: #fff;
-            word-break: break-all;
-            letter-spacing: 0.5px;
-        }
-        .scan-meta-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            align-items: center;
-        }
-        .meta-tag {
-            font-size: 0.7rem;
-            font-family: monospace;
-            padding: 3px 8px;
-            border-radius: 5px;
-            background: #222;
-            color: var(--c-cyan, #00e5ff);
-            border: 1px solid #383838;
-        }
-        .meta-tag.gs1 { color: var(--c-green, #00e676); border-color: rgba(0, 230, 118, 0.3); }
-
-        .batch-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 380px;
-            overflow-y: auto;
-            padding-right: 2px;
-        }
-        .batch-empty {
-            text-align: center;
-            padding: 28px 12px;
-            color: #666;
-            font-size: 0.78rem;
-            font-family: monospace;
-            border: 1px dashed #333;
-            border-radius: 8px;
-            line-height: 1.5;
-        }
-        .batch-item {
             background: #141414;
-            border: 1px solid #2e2e2e;
-            border-radius: 9px;
-            padding: 10px 12px;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            align-items: center;
-            transition: 0.2s;
+            padding: 20px 22px 18px 22px;
+            border-radius: 16px;
+            box-shadow: 0 28px 70px rgba(0,0,0,0.85), inset 0 0 0 2px #262626;
+            border-bottom: 10px solid #090909;
+            display: inline-flex;
+            gap: 20px;
+            align-items: flex-start;
+            width: max-content;
+            height: max-content;
+            transform-origin: top center;
+            transition: transform 0.12s ease-out;
+            user-select: none;
         }
-        .batch-item.flash-new {
-            border-color: var(--c-green, #00e676);
-            background: rgba(0, 230, 118, 0.08);
+
+        /* MACINTOSH MODE CHASSIS ACCENT */
+        .kb-container.mac-mode {
+            background: #191a1d;
+            box-shadow: 0 28px 70px rgba(0,0,0,0.85), inset 0 0 0 2px #363940;
         }
-        .batch-code {
-            font-family: monospace;
-            font-weight: 800;
-            font-size: 0.92rem;
-            color: #fff;
-            word-break: break-all;
+
+        .block-main { display: flex; flex-direction: column; gap: 6px; }
+        .block-main .row:first-child { margin-bottom: 22px; }
+        .block-nav { display: flex; flex-direction: column; width: 162px; padding-top: 78px; }
+        .nav-cmd { margin-bottom: 45px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .block-num { display: grid; grid-template-columns: repeat(4, 50px); grid-template-rows: repeat(5, 50px); gap: 6px; width: 218px; padding-top: 78px; }
+        .row { display: flex; gap: 6px; position: relative; }
+        .nav-sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; position: absolute; top: 20px; }
+        .nav-arr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 45px; }
+
+        .key {
+            height: 50px; width: 50px;
+            background: #292929;
+            color: #bbb;
+            border-radius: 6px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700;
+            cursor: default;
+            border-bottom: 4px solid #151515;
+            border-top: 1px solid #434343;
+            transition: 0.05s;
+            position: relative;
+            flex-shrink: 0;
+            line-height: 1.15;
+            text-align: center;
         }
-        .batch-sub {
-            font-size: 0.68rem;
-            color: #888;
-            font-family: monospace;
+
+        .key .mac-sub {
+            display: none;
+            font-size: 9px;
+            font-weight: 600;
+            color: #7e8a97;
             margin-top: 2px;
         }
-        .batch-note-input {
-            background: #1c1c1c !important;
-            border: 1px solid #333 !important;
-            padding: 6px 8px !important;
-            min-height: 34px !important;
-            font-size: 0.8rem !important;
-            margin-top: 6px;
-            color: #ddd !important;
+        .kb-container.mac-mode .key .mac-sub {
+            display: block;
         }
-        @media (max-width: 768px) {
-            .batch-note-input { font-size: 16px !important; }
+        .kb-container.mac-mode .key.active .mac-sub {
+            color: #00363f;
         }
-        .qty-controls {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .qty-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 6px;
-            border: 1px solid #444;
-            background: #222;
-            color: #fff;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .qty-btn:hover { border-color: var(--c-green, #00e676); color: var(--c-green, #00e676); }
-        .qty-val {
-            font-family: monospace;
-            font-weight: 800;
-            font-size: 0.95rem;
-            min-width: 26px;
-            text-align: center;
-            color: var(--c-green, #00e676);
+        .kb-container.mac-mode .key.tested .mac-sub {
+            color: #55b88a;
         }
 
-        /* =========================================
-5. TAB 3: HIGH-RES GENERATOR
-           ========================================= */
-        .preview-stage {
-            width: 100%;
-            min-height: 230px;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color, #333);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            background-color: #181818;
-            background-image: 
-                linear-gradient(45deg, #222 25%, transparent 25%), 
-                linear-gradient(-45deg, #222 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, #222 75%), 
-                linear-gradient(-45deg, transparent 75%, #222 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-        }
-        @media (min-width: 920px) {
-            .preview-stage { min-height: 320px; padding: 28px; }
+        .key.active {
+            background: #00e5ff;
+            color: #000;
+            border-bottom: 2px solid #00b8d4;
+            border-top: 0;
+            transform: translateY(2px);
+            box-shadow: 0 0 18px #00e5ff;
+            z-index: 100;
         }
 
-        #output-canvas {
-            max-width: 210px;
-            max-height: 210px;
-            width: auto;
-            height: auto;
-            border-radius: 6px;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.65);
-        }
-        @media (min-width: 920px) {
-            #output-canvas { max-width: 270px; max-height: 270px; }
-        }
-        #output-canvas.barcode-mode {
-            max-width: 100%;
-            max-height: 165px;
+        .key.tested {
+            background: #0f3030;
+            color: #00ff88;
+            border-color: #082020;
+            box-shadow: inset 0 0 5px rgba(0, 255, 136, 0.22);
         }
 
-        .res-badge {
-            margin-top: 12px;
-            font-size: 0.7rem;
-            font-family: monospace;
-            color: var(--c-green, #00e676);
-            background: rgba(0, 230, 118, 0.1);
-            border: 1px solid rgba(0, 230, 118, 0.3);
-            padding: 4px 12px;
-            border-radius: 20px;
-            text-align: center;
+        .key.chatter-flag {
+            border-color: #ff4081 !important;
+            box-shadow: inset 0 0 8px rgba(255, 64, 129, 0.6) !important;
         }
 
-        input[type="range"] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-            padding: 10px 0;
-            cursor: pointer;
-            touch-action: pan-y;
+        /* KEY WIDTH UNITS (1u=50, 1.25u=64, 1.5u=78, 1.75u=92, 2u=106, 2.25u=120, 2.75u=148, 6.25u=344) */
+        .w-1u { width: 50px; }
+        .w-125 { width: 64px; }
+        .w-15 { width: 78px; }
+        .w-175 { width: 92px; }
+        .w-2 { width: 106px; }
+        .w-225 { width: 120px; }
+        .w-275 { width: 148px; }
+        .w-space { width: 344px; }
+
+        .key[data-code="Numpad0"] { grid-column: span 2; width: 106px; }
+        .key[data-code="NumpadAdd"] { grid-row: span 2; height: 106px; }
+        .key[data-code="NumpadEnter"] { grid-row: span 2; height: 106px; }
+
+        /* ISO ENTER & LEFT SHIFT */
+        .iso-key { display: none; }
+        .kb-container.iso-mode .iso-key { display: flex; }
+        .kb-container.iso-mode .ansi-key { display: none; }
+        .kb-container.iso-mode .key[data-code="Enter"] {
+            position: absolute; right: 0; top: -56px; height: 106px; width: 64px;
+            z-index: 5; border-radius: 5px 5px 5px 14px;
         }
-        input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 6px;
-            background: #121212;
-            border: 1px solid #444;
-            border-radius: 4px;
+        .kb-container.iso-mode .key[data-code="ShiftLeft"] { width: 64px; }
+
+        /* COMPACT EXCLUSIVE KEYS (HIDDEN IN 100%, TKL, 60%) */
+        .k75-only { display: none; }
+        .k-compact-nav { display: none; } /* Right-column nav + compact arrows shared by 75% and 65% */
+        .k65-only { display: none; }
+
+        /* --- LAYOUT: TKL (80%) --- */
+        .kb-container.layout-tkl .block-num { display: none; }
+
+        /* --- LAYOUT: 60% COMPACT --- */
+        .kb-container.layout-60 {
+            gap: 0;
+            padding: 16px 18px 14px 18px;
+            border-bottom-width: 8px;
         }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: var(--c-cyan, #00e5ff);
-            margin-top: -8px;
-            box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+        .kb-container.layout-60 .block-nav,
+        .kb-container.layout-60 .block-num,
+        .kb-container.layout-60 .row-fn { display: none; }
+
+        /* --- LAYOUT: 75% COMPACT (PRESS PLAY ESSENTIAL 75 - 84 KEYS, 16u WIDE = 890px inner) --- */
+        .kb-container.layout-75 {
+            gap: 0;
+            padding: 16px 18px 14px 18px;
+            border-bottom-width: 8px;
         }
-        .slider-scale {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.65rem;
-            font-family: monospace;
-            color: #666;
+        .kb-container.layout-75 .block-nav,
+        .kb-container.layout-75 .block-num { display: none; }
+        .kb-container.layout-75 .k75-only,
+        .kb-container.layout-75 .k-compact-nav { display: flex; }
+        .kb-container.layout-75 .row-fn { margin-bottom: 10px; }
+        .kb-container.layout-75 .fn-gap { margin-right: 0 !important; }
+        .kb-container.layout-75 .key[data-code="ShiftRight"] { width: 92px; }
+        .kb-container.layout-75 .r6-right-mod { width: 50px !important; }
+        .kb-container.layout-75 .hide-in-compact { display: none !important; }
+        .kb-container.layout-75.iso-mode .key[data-code="Enter"] { right: 56px; }
+
+        /* --- LAYOUT: 65% COMPACT (68 KEYS: FANTECH ATOM X66 / PRESS PLAY ESSENTIAL 65 / VORTEXSERIES MONO 65) --- */
+        .kb-container.layout-65 {
+            gap: 0;
+            padding: 16px 18px 14px 18px;
+            border-bottom-width: 8px;
+        }
+        .kb-container.layout-65 .block-nav,
+        .kb-container.layout-65 .block-num,
+        .kb-container.layout-65 .row-fn { display: none; }
+        .kb-container.layout-65 .k-compact-nav,
+        .kb-container.layout-65 .k65-only { display: flex; }
+        .kb-container.layout-65 .hide-in-65 { display: none !important; }
+        .kb-container.layout-65 .hide-in-compact { display: none !important; }
+        .kb-container.layout-65 .key[data-code="ShiftRight"] { width: 92px; }
+        .kb-container.layout-65 .r6-right-mod { width: 50px !important; }
+        .kb-container.layout-65.iso-mode .key[data-code="Enter"] { right: 56px; }
+
+        /* SWITCH TOGGLE */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 34px; border: 1px solid #555; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: #888; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #00e5ff; border-color: #00e5ff; }
+        input:checked + .slider:before { transform: translateX(19px); background-color: #fff; }
+        input:checked + .slider.mac-slider { background-color: #b388ff; border-color: #b388ff; }
+
+        /* ALERT BOX */
+        .alert-box {
+            background: linear-gradient(135deg, #d50000, #ff1744); color: white;
+            padding: 10px 25px; border-radius: 30px; position: fixed; top: 75px; left: 50%;
+            transform: translateX(-50%); display: none; z-index: 999;
+            font-weight: bold; box-shadow: 0 5px 20px rgba(0,0,0,0.5); font-family: monospace;
         }
 
-        .logo-upload-bar { display: flex; gap: 8px; align-items: center; width: 100%; }
-        .file-label {
-            flex: 1;
-            min-height: 42px;
-            background: #121212;
-            border: 1px dashed #555;
-            color: #ccc;
-            padding: 9px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: 0.2s;
-            overflow: hidden;
-            text-transform: none;
-            font-weight: 500;
+        /* BACK BUTTON */
+        .back-btn {
+            text-decoration: none; color: #888; font-weight: bold;
+            border: 1px solid #444; padding: 8px 15px; border-radius: 8px;
+            transition: 0.3s; position: absolute; top: 20px; left: 20px;
         }
-        .file-label:hover { border-color: var(--c-cyan, #00e5ff); color: #fff; }
-        .file-name-truncate {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
+        .back-btn:hover { background: #333; color: #fff; border-color: #fff; }
 
-        .download-bar {
-            display: grid;
-            grid-template-columns: 110px 1fr;
-            gap: 10px;
-            width: 100%;
+        @media (max-width: 800px) {
+            .back-btn { position: relative; top: 0; left: 0; margin-bottom: 10px; display: inline-block; }
+            .kb-header { margin-top: 10px; }
         }
     </style>
 </head>
 <body>
-    <div class="mod-header">
-        <a href="../../index.html" class="back-btn">← DASHBOARD</a>
-        <span class="mod-title">BARCODE & QR STUDIO</span>
-        <span class="header-badge">3-IN-1 STUDIO</span>
-    </div>
+    <a href="../../index.html" class="back-btn">← MENU UTAMA</a>
+    <div id="chatter-alert" class="alert-box">⚠️ CHATTER DETECTED! <span id="chatter-key"></span></div>
 
-    <div class="tabs-wrapper">
-        <div class="tabs">
-            <div class="tab active" id="tab-btn-scan" onclick="switchTab('scan')">SCANNER (ALL)</div>
-            <div class="tab retail-tab" id="tab-btn-retail" onclick="switchTab('retail')">PRODUK RITEL</div>
-            <div class="tab" id="tab-btn-gen" onclick="switchTab('gen')">GENERATOR</div>
+    <div class="kb-header">
+        <h2>Keyboard &amp; VIA/QMK Lab</h2>
+        <div class="controls">
+            <!-- MULTI-LAYOUT SELECTOR -->
+            <div class="layout-pills" title="Pilih Ukuran Fisik Keyboard">
+                <button type="button" class="l-pill active" data-layout="full" onclick="setBoardLayout('full', this)">100% FULL</button>
+                <button type="button" class="l-pill" data-layout="tkl" onclick="setBoardLayout('tkl', this)">80% TKL</button>
+                <button type="button" class="l-pill" data-layout="75" onclick="setBoardLayout('75', this)">75% COMPACT</button>
+                <button type="button" class="l-pill" data-layout="65" onclick="setBoardLayout('65', this)">65% COMPACT</button>
+                <button type="button" class="l-pill" data-layout="60" onclick="setBoardLayout('60', this)">60%</button>
+            </div>
+
+            <button type="button" class="action-pill" id="btn-webhid" onclick="connectWebHidInspector()" title="Baca descriptor USB HID, Layer VIA/QMK & paket tombol mentah (Fn/Knob)">
+                🔌 WEBHID VIA/QMK
+            </button>
+
+            <button type="button" class="action-pill" id="btn-os-lock" onclick="toggleOsKeyLock()" title="Kunci tombol Windows/Command, Alt+Tab, Esc & Ctrl+W via Fullscreen Keyboard Lock API">
+                🔓 OS KEY LOCK
+            </button>
+
+            <button type="button" class="action-pill reset" onclick="resetAllStats()">
+                ↺ RESET
+            </button>
+
+            <!-- WIN / MAC MODE SWITCH -->
+            <div class="ctrl-box" title="Ubah layout modifier & legenda ke Macintosh (Control, Option ⌥, Command ⌘)">
+                <span style="font-size:0.75rem; color:#00e5ff; font-weight:bold;" id="lbl-win">WIN</span>
+                <label class="switch"><input type="checkbox" id="os-mode-toggle" onchange="toggleMacMode()"><span class="slider mac-slider"></span></label>
+                <span style="font-size:0.75rem; color:#888; font-weight:bold;" id="lbl-mac"> MAC</span>
+            </div>
+
+            <div class="ctrl-box">
+                <span style="font-size:0.75rem; color:#888; font-weight:bold;">ANSI</span>
+                <label class="switch"><input type="checkbox" id="layout-toggle" onchange="toggleIsoAnsi()"><span class="slider"></span></label>
+                <span style="font-size:0.75rem; color:#00e5ff; font-weight:bold;">ISO</span>
+            </div>
+
+            <div class="ctrl-box">
+                <span style="font-size:0.75rem; font-weight:bold;">🔊 SFX</span>
+                <label class="switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></label>
+            </div>
         </div>
     </div>
 
-    <div class="main-container">
-        <!-- =========================================
-             TAB 1: CLASSIC SCANNER (ALL FORMATS + UPLOAD)
-             ========================================= -->
-        <div id="scan" class="tab-content active">
-            <div class="classic-scan-wrap">
-                <div class="panel-card">
-                    <div class="section-heading">
-                        <span>Universal Scanner (2D &amp; 1D)</span>
-                        <span id="all-status-pill" style="color: #777; font-family: monospace;">STANDBY</span>
-                    </div>
+    <div class="guard-banner">
+        <div class="guard-status" id="guard-status-text">
+            🛡️ Shortcut Guard Aktif. Klik <b>OS KEY LOCK</b> untuk mengunci tombol Windows/Command &amp; Ctrl+W dalam Fullscreen.
+        </div>
+        <div class="shift-meter" id="shift-guard-meter">
+            Shift Tap Guard: 0/5 (Aman dari Sticky Keys OS)
+        </div>
+    </div>
 
-                    <div class="viewport-box">
-                        <div id="reader" class="reader-mount"></div>
-                        <div class="scan-reticle" id="all-reticle" style="display:none;"></div>
-                        <div class="cam-placeholder" id="all-placeholder">
-                            <div>
-                                Siap memindai QR Code, DataMatrix, PDF417, EAN/UPC &amp; Code128.<br>
-                                Tekan <b>MULAI KAMERA</b> atau unggah foto kode.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="control-row" id="all-cam-row" style="display: none;">
-                        <label for="all-cam-select">Pilih Kamera</label>
-                        <select id="all-cam-select" onchange="restartAllCamera()"></select>
-                    </div>
-
-                    <div class="cam-toolbar-4">
-                        <button type="button" class="btn btn-cyan" id="btn-all-toggle" onclick="toggleAllCamera()">▶ MULAI</button>
-                        <button type="button" class="btn btn-dark active-toggle" id="btn-all-beep" onclick="toggleBeep()">🔊 BEEP</button>
-                        <button type="button" class="btn btn-dark" id="btn-all-torch" onclick="toggleAllTorch()" disabled>🔦 FLASH</button>
-                        <label for="all-file-input" class="btn btn-dark" style="margin:0; cursor:pointer;">🖼 FOTO</label>
-                        <input type="file" id="all-file-input" accept="image/*" style="display:none;" onchange="scanAllFromFile(event)">
-                    </div>
-
-                    <div class="error-banner" id="all-error"></div>
+    <!-- WEBHID VIA / QMK INSPECTOR PANEL -->
+    <div class="hid-panel" id="hid-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; border-bottom:1px solid #2e261f; padding-bottom:8px;">
+            <span style="font-family:monospace; font-size:0.8rem; font-weight:800; color:#ffab40;">
+                🔌 WEBHID / VIA / QMK FIRMWARE &amp; RAW REPORT INSPECTOR
+            </span>
+            <div style="display:flex; gap:6px;">
+                <button type="button" class="action-pill" style="padding:4px 10px; font-size:0.7rem;" onclick="queryViaFirmwareInfo()">🔄 Ping VIA Protocol</button>
+                <button type="button" class="action-pill reset" style="padding:4px 10px; font-size:0.7rem;" onclick="disconnectWebHid()">✕ Tutup HID</button>
+            </div>
+        </div>
+        <div class="hid-grid">
+            <div class="hid-card" id="hid-descriptor-box">
+                Menunggu koneksi perangkat HID...
+            </div>
+            <div class="hid-card">
+                <div style="display:flex; justify-content:space-between; color:#aaa; font-weight:bold;">
+                    <span>RAW HID PACKET STREAM (Fn / Rotary Knob / Macro)</span>
+                    <span style="cursor:pointer; color:#ff4081;" onclick="document.getElementById('hid-packet-list').innerHTML=''">[CLEAR]</span>
                 </div>
+                <div class="hid-packets" id="hid-packet-list">
+                    <div style="color:#666; font-size:0.7rem;">Tekan tombol Fn, putar rotary knob, atau tekan tombol makro VIA untuk melihat raw hex report...</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="scan-result" id="scan-res-box">
-                    <div style="color:#888; font-size:0.75rem; font-weight:bold;">HASIL PEMINDAIAN:</div>
-                    <div id="scan-data" style="color:#fff; font-family:monospace; font-size:1.1rem; font-weight:bold; margin-top:4px;">-</div>
-                    <div id="scan-format" style="color:var(--c-cyan, #00e5ff); font-size:0.8rem; margin-top:5px;">-</div>
-                    <div class="quick-action-row">
-                        <button type="button" class="btn btn-dark" onclick="copyClassicResult()">📋 Salin</button>
-                        <button type="button" class="btn btn-cyan" id="btn-classic-open" onclick="openClassicUrl()" style="display:none;">🌐 Buka Link</button>
-                        <button type="button" class="btn btn-dark" onclick="sendClassicToGenerator()">⚙ Ke Generator</button>
-                    </div>
+    <div class="dashboard">
+        <!-- PANEL 1: STRAFE, JIGGLE & RAPID TRIGGER LAB -->
+        <div class="dash-panel">
+            <div class="panel-head">
+                <span>🎯 STRAFE, JIGGLE &amp; RAPID TRIGGER LAB</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span id="socd-badge" style="color:#00ff88;">SOCD: READY</span>
+                    <button type="button" class="info-toggle-btn" onclick="toggleRtGuide()">ℹ️ Cara Kerja</button>
+                </div>
+            </div>
+
+            <div class="rt-guide-box" id="rt-guide-box">
+                <b>Fungsi Lab untuk Switch Rapid Trigger (Hall Effect / TMR) &amp; Gaming:</b>
+                <ul>
+                    <li><b>Counter-Strafe Gap / Overlap:</b> Mengukur jeda saat pindah arah <code>A ↔ D</code> atau <code>← ↔ →</code>. Nilai mendekati <code>0 ms</code> membuat karakter berhenti instan saat menembak (Valorant/CS2); nilai minus berarti kedua tombol masih bertumpuk.</li>
+                    <li><b>SOCD (Snap Tap / Rappy Snappy):</b> Mendeteksi prioritas sinyal ketika tombol kiri dan kanan ditekan bersamaan.</li>
+                    <li><b>Fastest Micro-Tap (Dwell):</b> Mengukur durasi penekanan tersingkat yang terbaca switch. Switch <i>Rapid Trigger</i> dengan titik aktuasi dangkal (<code>0.1–0.4mm</code>) mampu mencatat tap super singkat (<code>&lt;25 ms</code>).</li>
+                    <li><b>Rapid Trigger Reset Gap:</b> Jeda lepas-tekan ulang pada tombol yang sama. Pada switch mekanikal biasa, tombol harus naik melewati titik reset fisik; pada <i>Rapid Trigger</i>, lepas sedikit langsung reset sehingga spam tombol jauh lebih cepat.</li>
+                </ul>
+            </div>
+
+            <div class="strafe-visualizer">
+                <div class="strafe-key-box" id="vis-left">A / ←</div>
+                <div class="strafe-track">
+                    <div class="strafe-puck" id="strafe-puck"></div>
+                </div>
+                <div class="strafe-key-box" id="vis-right">D / →</div>
+            </div>
+
+            <div class="strafe-metrics">
+                <div class="sm-card">
+                    <div class="sm-lbl">Counter-Strafe Gap / Overlap</div>
+                    <div class="sm-val" id="strafe-gap" style="color:#00e5ff;">-- ms</div>
+                </div>
+                <div class="sm-card">
+                    <div class="sm-lbl">Jiggle Speed &amp; Avg Hold</div>
+                    <div class="sm-val" id="jiggle-rate">0.0 Hz • -- ms</div>
+                </div>
+                <div class="sm-card">
+                    <div class="sm-lbl">Fastest Micro-Tap (Dwell)</div>
+                    <div class="sm-val" id="min-dwell" style="color:#00ff88;">-- ms</div>
+                </div>
+                <div class="sm-card">
+                    <div class="sm-lbl">Rapid Trigger Reset Gap</div>
+                    <div class="sm-val" id="min-reset" style="color:#ffab40;">-- ms</div>
                 </div>
             </div>
         </div>
 
-        <!-- =========================================
-             TAB 2: PRODUK RITEL (POS & INVENTORY MODE)
-             ========================================= -->
-        <div id="retail" class="tab-content">
-            <div class="split-layout">
-                <!-- Kiri (Sticky di Desktop): Kamera POS & Input Manual -->
-                <div class="sticky-pane" style="display: flex; flex-direction: column; gap: 14px;">
-                    <div class="panel-card">
-                        <div class="section-heading">
-                            <span>Scanner Produk Ritel (1D)</span>
-                            <span id="rtl-status-pill" style="color: #777; font-family: monospace;">STANDBY</span>
-                        </div>
+        <!-- PANEL 2: INPUT & DWELL LOG -->
+        <div class="dash-panel">
+            <div class="panel-head">
+                <span>INPUT &amp; DWELL LOG</span>
+                <span style="cursor:pointer; color:#ff4081; font-size:0.72rem;" onclick="clearLog()">[CLEAR LOG]</span>
+            </div>
+            <div id="key-history"></div>
+        </div>
 
-                        <div class="viewport-box">
-                            <div id="reader-retail" class="reader-mount"></div>
-                            <div class="laser-line"></div>
-                            <div class="cam-placeholder" id="rtl-placeholder">
-                                Mode kasir / stok opname siap.<br>Tekan <b>MULAI</b> untuk memindai barcode kemasan.
-                            </div>
-                        </div>
-
-                        <div class="control-row" id="rtl-cam-row" style="display: none;">
-                            <label for="rtl-cam-select">Pilih Lensa Kamera</label>
-                            <select id="rtl-cam-select" onchange="restartRtlCamera()"></select>
-                        </div>
-
-                        <div class="cam-toolbar-4">
-                            <button type="button" class="btn btn-green" id="btn-rtl-toggle" onclick="toggleRtlCamera()">▶ MULAI</button>
-                            <button type="button" class="btn btn-dark active-toggle" id="btn-beep-toggle" onclick="toggleBeep()">🔊 BEEP</button>
-                            <button type="button" class="btn btn-dark" id="btn-rtl-torch" onclick="toggleRtlTorch()" disabled>🔦 FLASH</button>
-                            <label for="rtl-file-input" class="btn btn-dark" style="margin:0; cursor:pointer;">🖼 FOTO</label>
-                            <input type="file" id="rtl-file-input" accept="image/*" style="display:none;" onchange="scanRtlFromFile(event)">
-                        </div>
-
-                        <div class="error-banner" id="rtl-error"></div>
-
-                        <div class="control-row" style="border-top: 1px solid #333; padding-top: 10px;">
-                            <label for="manual-sku-input">Input SKU Manual (Jika Label Rusak)</label>
-                            <div class="manual-sku-bar">
-                                <input type="text" id="manual-sku-input" placeholder="Ketik angka barcode..." onkeydown="if(event.key==='Enter') submitManualSku()">
-                                <button type="button" class="btn btn-dark" onclick="submitManualSku()">+ TAMBAH</button>
-                            </div>
-                        </div>
-                    </div>
+        <!-- PANEL 3: LIVE TELEMETRY & NKRO GHOST TEST -->
+        <div class="dash-panel">
+            <div class="panel-head">NKRO GHOST TEST &amp; TELEMETRY</div>
+            <div class="stats-col">
+                <div class="stat-row">
+                    <span class="stat-lbl">PRESSED NOW (SIMULTANEOUS)</span>
+                    <span class="stat-val" id="ghost-curr" style="color:#00ff88">0</span>
                 </div>
-
-                <!-- Kanan: Info SKU Terakhir & Daftar Rekap Stok -->
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                    <div class="panel-card">
-                        <div class="section-heading">
-                            <span>Produk Terakhir Terdeteksi</span>
-                            <span id="rtl-time" style="font-family: monospace; color: #666;">-</span>
-                        </div>
-
-                        <div class="scan-hero-result">
-                            <div class="scan-code-display" id="rtl-data">Arahkan garis merah ke barcode barang...</div>
-                            <div class="scan-meta-row">
-                                <span class="meta-tag" id="rtl-format">Format: -</span>
-                                <span class="meta-tag gs1" id="rtl-gs1" style="display:none;">-</span>
-                            </div>
-                            <div class="quick-action-row">
-                                <button type="button" class="btn btn-dark" id="btn-rtl-copy" onclick="copyRtlResult()" disabled>📋 Salin SKU</button>
-                                <button type="button" class="btn btn-green" id="btn-rtl-lookup" onclick="lookupRetailWeb()" disabled>🔍 Cek Nama Produk</button>
-                                <button type="button" class="btn btn-dark" id="btn-rtl-gen" onclick="sendRtlToGenerator()" disabled>⚙ Cetak Ulang Barcode</button>
-                            </div>
-                        </div>
+                <div class="stat-row">
+                    <div>
+                        <span class="stat-lbl">MAX NKRO / GHOSTING</span>
+                        <span class="nkro-tag" id="nkro-verdict">Tahan banyak tombol sekaligus</span>
                     </div>
-
-                    <!-- Daftar Rekap Stok Opname -->
-                    <div class="panel-card">
-                        <div class="section-heading">
-                            <span>Daftar Barang (<span id="total-sku-count" style="color:var(--c-cyan);">0</span> SKU / <span id="total-qty-count" style="color:var(--c-green);">0</span> PCS)</span>
-                            <label style="text-transform:none; font-size:0.72rem; cursor:pointer; gap:5px; color:#ccc;">
-                                <input type="checkbox" id="chk-auto-batch" checked style="accent-color:var(--c-green);"> Catat Otomatis
-                            </label>
-                        </div>
-
-                        <div class="batch-list" id="batch-list">
-                            <div class="batch-empty">
-                                Belum ada produk dipindai.<br>Setiap barcode barang yang terbaca otomatis masuk ke daftar ini dan tersimpan otomatis di peramban.
-                            </div>
-                        </div>
-
-                        <div class="control-grid-2" style="margin-top: 4px;">
-                            <button type="button" class="btn btn-green" id="btn-export-csv" onclick="exportBatchCSV()" disabled>⬇ UNDUH REKAP CSV</button>
-                            <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px;">
-                                <button type="button" class="btn btn-dark" id="btn-copy-batch" onclick="copyBatchText()" disabled>📋 SALIN LIST</button>
-                                <button type="button" class="btn btn-danger" id="btn-clear-batch" onclick="clearBatchList()" disabled title="Kosongkan Daftar">🗑</button>
-                            </div>
-                        </div>
-                    </div>
+                    <span class="stat-val" id="ghost-max" style="color:#00e5ff">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-lbl">TESTED COVERAGE</span>
+                    <span class="stat-val" id="coverage-stat" style="color:#00ff88">0% (0/104)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-lbl">LAST DWELL / KPM</span>
+                    <span class="stat-val" id="last-dwell" style="color:#ffab40">-- ms • 0</span>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- =========================================
-             TAB 3: HIGH-RES GENERATOR
-             ========================================= -->
-        <div id="gen" class="tab-content">
-            <div class="split-layout">
-                <!-- Kiri (Sticky di Desktop): Live Preview & Export -->
-                <div class="sticky-pane">
-                    <div class="panel-card">
-                        <div class="section-heading">
-                            <span>Live Print Preview</span>
-                            <span style="color: var(--c-green); font-family: monospace;">SHARP INTEGER</span>
-                        </div>
-
-                        <div class="preview-stage">
-                            <canvas id="output-canvas"></canvas>
-                            <div class="res-badge" id="dim-info">2048 × 2048 px (300+ DPI Print Ready)</div>
-                        </div>
-
-                        <div class="error-banner" id="gen-error"></div>
-
-                        <div class="download-bar">
-                            <select id="export-format" aria-label="Format Unduhan">
-                                <option value="png" selected>PNG</option>
-                                <option value="jpg">JPG</option>
-                                <option value="jxl">JXL</option>
-                            </select>
-                            <button type="button" class="btn btn-green" id="download-btn" onclick="downloadImage()">⬇ UNDUH GAMBAR</button>
-                        </div>
-                    </div>
+    <div class="wrapper">
+        <div class="kb-container" id="kb-case">
+            <div class="block-main">
+                <!-- ROW 1: FUNCTION ROW (16u in 75% Compact: Esc, F1-F12, PrtSc, Pause, Del) -->
+                <div class="row row-fn">
+                    <div class="key fn-gap" style="margin-right:30px;" data-code="Escape">Esc</div>
+                    <div class="key" data-code="F1">F1<span class="mac-sub">☀-</span></div>
+                    <div class="key" data-code="F2">F2<span class="mac-sub">☀+</span></div>
+                    <div class="key" data-code="F3">F3<span class="mac-sub">⊞</span></div>
+                    <div class="key fn-gap" style="margin-right:20px;" data-code="F4">F4<span class="mac-sub">⌘Space</span></div>
+                    <div class="key" data-code="F5">F5<span class="mac-sub">🎤</span></div>
+                    <div class="key" data-code="F6">F6<span class="mac-sub">☾</span></div>
+                    <div class="key" data-code="F7">F7<span class="mac-sub">⏮</span></div>
+                    <div class="key fn-gap" style="margin-right:20px;" data-code="F8">F8<span class="mac-sub">⏯</span></div>
+                    <div class="key" data-code="F9">F9<span class="mac-sub">⏭</span></div>
+                    <div class="key" data-code="F10">F10<span class="mac-sub">🔇</span></div>
+                    <div class="key" data-code="F11">F11<span class="mac-sub">🔉</span></div>
+                    <div class="key" data-code="F12">F12<span class="mac-sub">🔊</span></div>
+                    <!-- 75% Compact Top-Right Cluster -->
+                    <div class="key k75-only" data-code="PrintScreen" data-win-lbl="Prt" data-mac-lbl="F13">Prt</div>
+                    <div class="key k75-only" data-code="Pause" data-win-lbl="Pau" data-mac-lbl="F15">Pau</div>
+                    <div class="key k75-only" data-code="Delete">Del</div>
                 </div>
 
-                <!-- Kanan: Parameter & Kustomisasi -->
-                <div class="panel-card">
-                    <div class="section-heading">
-                        <span>Konfigurasi Kode & Matriks</span>
-                        <span style="color: #666; font-family: monospace;">2D / 1D</span>
-                    </div>
-
-                    <div class="control-row">
-                        <label for="code-type">Jenis Kode (2D / 1D Barcode)</label>
-                        <select id="code-type" onchange="onFormatChange()">
-                            <option value="QR" selected>QR Code (2D Matrix - High Res)</option>
-                            <option value="CODE128">Code 128 (Alfanumerik / Logistik)</option>
-                            <option value="EAN13">EAN-13 (Produk Retail - 12/13 Digit)</option>
-                            <option value="EAN8">EAN-8 (Kemasan Kecil - 7/8 Digit)</option>
-                            <option value="UPC">UPC-A (Retail Standar US - 11/12 Digit)</option>
-                            <option value="CODE39">Code 39 (Industri / Inventaris Aset)</option>
-                            <option value="ITF14">ITF-14 (Karton / Dus Distribusi - 13/14 Digit)</option>
-                            <option value="MSI">MSI Plessey (Rak Gudang - Numerik)</option>
-                            <option value="codabar">Codabar (Medis / Perpustakaan)</option>
-                        </select>
-                    </div>
-
-                    <div class="control-row">
-                        <label for="code-text">Data / Konten Kode</label>
-                        <input type="text" id="code-text" placeholder="Masukkan teks, URL, atau angka..." value="https://brahmantyo12.my.id" oninput="scheduleGenerateCode()">
-                        <span class="hint-text" id="format-hint">Mendukung URL, teks, Wi-Fi string. Area tengah kosong bebas tabrakan modul.</span>
-                    </div>
-
-                    <!-- Opsi Khusus QR Code -->
-                    <div id="qr-only-section" style="display: flex; flex-direction: column; gap: 14px; border-top: 1px solid #333; padding-top: 12px;">
-                        <div class="control-row">
-                            <label for="qr-clear-slider">
-                                <span>Kosongkan Area Tengah (Lebar Sisi)</span>
-                                <span class="val-pill" id="clear-zone-readout">36% Lebar (~13.0% Area)</span>
-                            </label>
-                            <input type="range" id="qr-clear-slider" min="0" max="50" step="1" value="36" oninput="scheduleGenerateCode()">
-                            <div class="slider-scale">
-                                <span>0% (Penuh)</span>
-                                <span>28% (Kecil)</span>
-                                <span>40% (Optimal Max)</span>
-                                <span>50% (Ekstrem)</span>
-                            </div>
-                            <span class="hint-text" id="clear-zone-status" style="color: var(--c-green);">[Aman] Kapasitas Error Correction Level H (30%) mencukupi.</span>
-                        </div>
-
-                        <div class="control-row">
-                            <label>Sisipkan Logo Tengah (Opsional)</label>
-                            <div class="logo-upload-bar">
-                                <label for="logo-input" class="file-label">
-                                    <span class="file-name-truncate" id="logo-filename">Pilih gambar logo (PNG/SVG/JPG/WebP)...</span>
-                                    <span style="color: var(--c-cyan); font-weight: bold;">UNGGAH</span>
-                                </label>
-                                <input type="file" id="logo-input" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
-                                <button type="button" class="btn btn-danger" id="clear-logo-btn" onclick="removeLogo()" style="display:none; padding: 0 12px;" title="Hapus Logo">✕</button>
-                            </div>
-                            <span class="hint-text" id="logo-hint">Logo otomatis diskalakan proporsional di dalam zona kosong tanpa memotong kotak QR.</span>
-                        </div>
-                    </div>
-
-                    <div class="control-grid-2" style="border-top: 1px solid #333; padding-top: 12px;">
-                        <div class="control-row">
-                            <label for="bg-mode">Latar Belakang</label>
-                            <select id="bg-mode" onchange="generateCode()">
-                                <option value="white" selected>Putih Solid (#FFFFFF)</option>
-                                <option value="transparent">Transparan (Alpha)</option>
-                            </select>
-                        </div>
-                        <div class="control-row" id="qr-ecc-row">
-                            <label for="qr-ecc">Error Correction</label>
-                            <select id="qr-ecc" onchange="generateCode()">
-                                <option value="L">Low (7%)</option>
-                                <option value="M">Medium (15%)</option>
-                                <option value="Q">Quartile (25%)</option>
-                                <option value="H" selected>High (30% - Wajib Logo)</option>
-                            </select>
-                        </div>
-                        <div class="control-row" id="barcode-text-row" style="display: none;">
-                            <label for="show-hr-text">Teks Angka Bawah</label>
-                            <select id="show-hr-text" onchange="generateCode()">
-                                <option value="true" selected>Tampilkan</option>
-                                <option value="false">Sembunyikan</option>
-                            </select>
-                        </div>
-                    </div>
+                <!-- ROW 2: NUMBER ROW (16u in 75% & 65%: Esc[65%] / ~..Backspace + Home[75%] / Del[65%]) -->
+                <div class="row">
+                    <div class="key k65-only" data-code="Escape">Esc</div>
+                    <div class="key hide-in-65" data-code="Backquote">~</div>
+                    <div class="key" data-code="Digit1">1</div>
+                    <div class="key" data-code="Digit2">2</div>
+                    <div class="key" data-code="Digit3">3</div>
+                    <div class="key" data-code="Digit4">4</div>
+                    <div class="key" data-code="Digit5">5</div>
+                    <div class="key" data-code="Digit6">6</div>
+                    <div class="key" data-code="Digit7">7</div>
+                    <div class="key" data-code="Digit8">8</div>
+                    <div class="key" data-code="Digit9">9</div>
+                    <div class="key" data-code="Digit0">0</div>
+                    <div class="key" data-code="Minus">-</div>
+                    <div class="key" data-code="Equal">=</div>
+                    <div class="key w-2" data-code="Backspace" data-win-lbl="Back" data-mac-lbl="Delete">Back</div>
+                    <div class="key k75-only" data-code="Home">Hm</div>
+                    <div class="key k65-only" data-code="Delete">Del</div>
                 </div>
+
+                <!-- ROW 3: TAB ROW (16u in 75% & 65%: Tab..\ + PgUp) -->
+                <div class="row">
+                    <div class="key w-15" data-code="Tab">Tab</div>
+                    <div class="key" data-code="KeyQ">Q</div>
+                    <div class="key" data-code="KeyW">W</div>
+                    <div class="key" data-code="KeyE">E</div>
+                    <div class="key" data-code="KeyR">R</div>
+                    <div class="key" data-code="KeyT">T</div>
+                    <div class="key" data-code="KeyY">Y</div>
+                    <div class="key" data-code="KeyU">U</div>
+                    <div class="key" data-code="KeyI">I</div>
+                    <div class="key" data-code="KeyO">O</div>
+                    <div class="key" data-code="KeyP">P</div>
+                    <div class="key" data-code="BracketLeft">[</div>
+                    <div class="key" data-code="BracketRight">]</div>
+                    <div class="key w-15 ansi-key" data-code="Backslash">\</div>
+                    <div class="key k-compact-nav" data-code="PageUp">PU</div>
+                </div>
+
+                <!-- ROW 4: CAPS ROW (16u in 75% & 65%: Caps..Enter + PgDn) -->
+                <div class="row">
+                    <div class="key w-175" data-code="CapsLock">Caps</div>
+                    <div class="key" data-code="KeyA">A</div>
+                    <div class="key" data-code="KeyS">S</div>
+                    <div class="key" data-code="KeyD">D</div>
+                    <div class="key" data-code="KeyF">F</div>
+                    <div class="key" data-code="KeyG">G</div>
+                    <div class="key" data-code="KeyH">H</div>
+                    <div class="key" data-code="KeyJ">J</div>
+                    <div class="key" data-code="KeyK">K</div>
+                    <div class="key" data-code="KeyL">L</div>
+                    <div class="key" data-code="Semicolon">;</div>
+                    <div class="key" data-code="Quote">'</div>
+                    <div class="key iso-key" data-code="Backslash">#</div>
+                    <div class="key w-225" data-code="Enter" data-win-lbl="Enter" data-mac-lbl="Return">Enter</div>
+                    <div class="key k-compact-nav" data-code="PageDown">PD</div>
+                </div>
+
+                <!-- ROW 5: SHIFT ROW (16u in 75% & 65%: ShiftL..ShiftR(1.75u) + ArrowUp + End) -->
+                <div class="row">
+                    <div class="key w-225" data-code="ShiftLeft">Shift</div>
+                    <div class="key iso-key" data-code="IntlBackslash">\</div>
+                    <div class="key" data-code="KeyZ">Z</div>
+                    <div class="key" data-code="KeyX">X</div>
+                    <div class="key" data-code="KeyC">C</div>
+                    <div class="key" data-code="KeyV">V</div>
+                    <div class="key" data-code="KeyB">B</div>
+                    <div class="key" data-code="KeyN">N</div>
+                    <div class="key" data-code="KeyM">M</div>
+                    <div class="key" data-code="Comma">,</div>
+                    <div class="key" data-code="Period">.</div>
+                    <div class="key" data-code="Slash">/</div>
+                    <div class="key w-275" data-code="ShiftRight">Shift</div>
+                    <div class="key k-compact-nav" data-code="ArrowUp">↑</div>
+                    <div class="key k-compact-nav" data-code="End">Ed</div>
+                </div>
+
+                <!-- ROW 6: BOTTOM ROW (WIN: Ctrl,Win,Alt,Space,Alt,Win,Mn,Ctrl | MAC: Control,Option,Command,Space,Command,Option,Fn,Control) -->
+                <div class="row">
+                    <div class="key w-125" data-code="ControlLeft" data-win-lbl="Ctrl" data-mac-lbl="⌃ Ctrl">Ctrl</div>
+                    <div class="key w-125" data-code="MetaLeft" id="mod-l2" data-win-lbl="Win" data-mac-lbl="⌥ Opt">Win</div>
+                    <div class="key w-125" data-code="AltLeft" id="mod-l3" data-win-lbl="Alt" data-mac-lbl="⌘ Cmd">Alt</div>
+                    <div class="key w-space" data-code="Space">Space</div>
+                    <div class="key w-125 r6-right-mod" data-code="AltRight" id="mod-r1" data-win-lbl="Alt" data-mac-lbl="⌘ Cmd">Alt</div>
+                    <div class="key w-125 r6-right-mod hide-in-compact" data-code="MetaRight" id="mod-r2" data-win-lbl="Win" data-mac-lbl="⌥ Opt">Win</div>
+                    <div class="key r6-right-mod" data-code="ContextMenu" id="key-fn-menu">Mn</div>
+                    <div class="key w-125 r6-right-mod" data-code="ControlRight" data-win-lbl="Ctrl" data-mac-lbl="⌃ Ctrl">Ctrl</div>
+                    <!-- 75% & 65% Compact Bottom-Right Arrows -->
+                    <div class="key k-compact-nav" data-code="ArrowLeft">←</div>
+                    <div class="key k-compact-nav" data-code="ArrowDown">↓</div>
+                    <div class="key k-compact-nav" data-code="ArrowRight">→</div>
+                </div>
+            </div>
+
+            <!-- NAVIGATION BLOCK (100% & TKL ONLY) -->
+            <div class="block-nav">
+                <div class="nav-sys">
+                    <div class="key" data-code="PrintScreen" data-win-lbl="Prt" data-mac-lbl="F13">Prt</div>
+                    <div class="key" data-code="ScrollLock" data-win-lbl="Scr" data-mac-lbl="F14">Scr</div>
+                    <div class="key" data-code="Pause" data-win-lbl="Pau" data-mac-lbl="F15">Pau</div>
+                </div>
+                <div class="nav-cmd">
+                    <div class="key" data-code="Insert" data-win-lbl="Ins" data-mac-lbl="Fn">Ins</div>
+                    <div class="key" data-code="Home">Hm</div>
+                    <div class="key" data-code="PageUp">PU</div>
+                    <div class="key" data-code="Delete">Del</div>
+                    <div class="key" data-code="End">Ed</div>
+                    <div class="key" data-code="PageDown">PD</div>
+                </div>
+                <div class="nav-arr">
+                    <div></div><div class="key" data-code="ArrowUp">↑</div><div></div>
+                    <div class="key" data-code="ArrowLeft">←</div><div class="key" data-code="ArrowDown">↓</div><div class="key" data-code="ArrowRight">→</div>
+                </div>
+            </div>
+
+            <!-- NUMPAD BLOCK (100% FULL ONLY) -->
+            <div class="block-num">
+                <div class="key" data-code="NumLock" data-win-lbl="Num" data-mac-lbl="Clear">Num</div><div class="key" data-code="NumpadDivide">/</div><div class="key" data-code="NumpadMultiply">*</div><div class="key" data-code="NumpadSubtract">-</div>
+                <div class="key" data-code="Numpad7">7</div><div class="key" data-code="Numpad8">8</div><div class="key" data-code="Numpad9">9</div><div class="key" data-code="NumpadAdd">+</div>
+                <div class="key" data-code="Numpad4">4</div><div class="key" data-code="Numpad5">5</div><div class="key" data-code="Numpad6">6</div>
+                <div class="key" data-code="Numpad1">1</div><div class="key" data-code="Numpad2">2</div><div class="key" data-code="Numpad3">3</div><div class="key" data-code="NumpadEnter">Ent</div>
+                <div class="key" data-code="Numpad0">0</div><div class="key" data-code="NumpadDecimal">.</div>
             </div>
         </div>
     </div>
 
     <script>
         // =========================================
-        // 1. TAB NAVIGATION & HARDWARE ARBITRATION
+        // 1. WEB AUDIO SYNTHETIC CLICK SFX
         // =========================================
-        let camMutex = false;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let noiseBuffer = null;
 
-        async function switchTab(id) {
-            if (camMutex) return;
-            camMutex = true;
-            try {
-                if (id !== 'scan' && allIsScanning) {
-                    await stopAllCamera();
-                }
-                if (id !== 'retail' && rtlIsScanning) {
-                    await stopRtlCamera();
-                }
-
-                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-                document.getElementById(id).classList.add('active');
-                document.getElementById(`tab-btn-${id}`).classList.add('active');
-            } finally {
-                camMutex = false;
+        function playSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!document.getElementById('sound-toggle').checked) return;
+            if (!noiseBuffer) {
+                const b = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+                const d = b.getChannelData(0);
+                for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+                noiseBuffer = b;
             }
+            const s = audioCtx.createBufferSource();
+            s.buffer = noiseBuffer;
+            const f = audioCtx.createBiquadFilter();
+            f.type = 'highpass';
+            f.frequency.value = 1200;
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.45, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+            s.connect(f);
+            f.connect(g);
+            g.connect(audioCtx.destination);
+            s.start();
+            s.stop(audioCtx.currentTime + 0.04);
         }
 
-        // Otomatis matikan kamera jika aplikasi/tab diminimize di HP
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                if (allIsScanning) stopAllCamera();
-                if (rtlIsScanning) stopRtlCamera();
-            }
-        });
-
-        // =========================================
-        // 2. TAB 1: UNIVERSAL SCANNER (ALL FORMATS + UPLOAD)
-        // =========================================
-        let allScanner = null;
-        let allIsScanning = false;
-        let allTorchOn = false;
-
-        function showAllError(msg) {
-            const box = document.getElementById('all-error');
-            box.innerText = msg;
-            box.style.display = 'block';
-        }
-        function clearAllError() {
-            document.getElementById('all-error').style.display = 'none';
-        }
-
-        function handleAllDecoded(decodedText, decodedResult) {
-            playPosBeep();
-            if (navigator.vibrate) navigator.vibrate(50);
-
-            document.getElementById('scan-res-box').style.display = 'block';
-            document.getElementById('scan-data').innerText = decodedText;
-            const fmt = decodedResult?.result?.format?.formatName || decodedResult?.format?.formatName || "Detected";
-            document.getElementById('scan-format').innerText = `Format: ${fmt}`;
-
-            const isUrl = /^https?:\/\/[^\s]+$/i.test(decodedText.trim());
-            document.getElementById('btn-classic-open').style.display = isUrl ? 'inline-flex' : 'none';
-        }
-
-        async function populateAllCameras() {
-            try {
-                const devices = await Html5Qrcode.getCameras();
-                const sel = document.getElementById('all-cam-select');
-                const row = document.getElementById('all-cam-row');
-                if (devices && devices.length > 0) {
-                    const prevVal = sel.value;
-                    sel.innerHTML = '';
-                    devices.forEach((dev, idx) => {
-                        const opt = document.createElement('option');
-                        opt.value = dev.id;
-                        opt.text = dev.label || `Kamera ${idx + 1}`;
-                        sel.appendChild(opt);
-                    });
-
-                    if (prevVal && devices.some(d => d.id === prevVal)) {
-                        sel.value = prevVal;
-                    } else {
-                        const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
-                        if (backCam) sel.value = backCam.id;
-                    }
-                    row.style.display = devices.length > 1 ? 'flex' : 'none';
-                }
-            } catch (_) {}
-        }
-
-        async function toggleAllCamera() {
-            if (allIsScanning) {
-                await stopAllCamera();
-            } else {
-                await startAllCamera();
-            }
-        }
-
-        async function restartAllCamera() {
-            if (allIsScanning) {
-                await stopAllCamera();
-                await startAllCamera();
-            }
-        }
-
-        async function startAllCamera() {
-            if (camMutex) return;
-            camMutex = true;
-            clearAllError();
-            if (rtlIsScanning) await stopRtlCamera();
-
-            const toggleBtn = document.getElementById('btn-all-toggle');
-            const statusPill = document.getElementById('all-status-pill');
-            const placeholder = document.getElementById('all-placeholder');
-            const reticle = document.getElementById('all-reticle');
-
-            toggleBtn.disabled = true;
-            statusPill.innerText = 'MEMUAT...';
-            statusPill.style.color = 'var(--c-orange)';
-
-            try {
-                // Bersihkan instance lama bila tersisa
-                if (allScanner) {
-                    try { await allScanner.clear(); } catch (_) {}
-                }
-
-                allScanner = new Html5Qrcode("reader", { verbose: false });
-
-                // Request daftar kamera terlebih dahulu (memicu izin kamera jika belum diberikan)
-                await populateAllCameras();
-                const camId = document.getElementById('all-cam-select').value;
-                const source = camId ? { deviceId: { exact: camId } } : { facingMode: "environment" };
-
-                placeholder.style.display = 'none';
-                reticle.style.display = 'block';
-
-                await allScanner.start(
-                    source,
-                    {
-                        fps: 15,
-                        qrbox: function(w, h) {
-                            const size = Math.min(260, Math.floor(Math.min(w, h) * 0.72));
-                            return { width: Math.max(160, size), height: Math.max(160, size) };
-                        }
-                    },
-                    (text, res) => handleAllDecoded(text, res),
-                    () => {}
-                );
-
-                // Refresh label kamera setelah stream aktif (beberapa browser baru mengisi label setelah stream berjalan)
-                await populateAllCameras();
-
-                allIsScanning = true;
-                allTorchOn = false;
-                toggleBtn.innerText = '⏹ STOP';
-                toggleBtn.className = 'btn btn-danger';
-                statusPill.innerText = 'SCAN AKTIF';
-                statusPill.style.color = 'var(--c-cyan)';
-
-                try {
-                    const caps = allScanner.getRunningTrackCameraCapabilities();
-                    document.getElementById('btn-all-torch').disabled = !(caps && caps.torchFeature && caps.torchFeature().isSupported());
-                } catch (_) {
-                    document.getElementById('btn-all-torch').disabled = true;
-                }
-            } catch (err) {
-                placeholder.style.display = 'flex';
-                reticle.style.display = 'none';
-                statusPill.innerText = 'ERROR';
-                statusPill.style.color = 'var(--c-red)';
-                showAllError(`Akses kamera gagal: ${err?.message || err}`);
-            } finally {
-                toggleBtn.disabled = false;
-                camMutex = false;
-            }
-        }
-
-        async function stopAllCamera() {
-            const toggleBtn = document.getElementById('btn-all-toggle');
-            const statusPill = document.getElementById('all-status-pill');
-            const placeholder = document.getElementById('all-placeholder');
-            const reticle = document.getElementById('all-reticle');
-            const torchBtn = document.getElementById('btn-all-torch');
-
-            try {
-                if (allScanner && allIsScanning) {
-                    await allScanner.stop();
-                }
-                if (allScanner) {
-                    await allScanner.clear();
-                }
-            } catch (_) {}
-
-            allScanner = null;
-            allIsScanning = false;
-            allTorchOn = false;
-            torchBtn.disabled = true;
-            torchBtn.classList.remove('active-toggle');
-            reticle.style.display = 'none';
-            placeholder.style.display = 'flex';
-            toggleBtn.innerText = '▶ MULAI';
-            toggleBtn.className = 'btn btn-cyan';
-            statusPill.innerText = 'STANDBY';
-            statusPill.style.color = '#777';
-        }
-
-        async function toggleAllTorch() {
-            if (!allScanner || !allIsScanning) return;
-            try {
-                const caps = allScanner.getRunningTrackCameraCapabilities();
-                const torch = caps.torchFeature();
-                allTorchOn = !allTorchOn;
-                await torch.apply(allTorchOn);
-                document.getElementById('btn-all-torch').classList.toggle('active-toggle', allTorchOn);
-            } catch (_) {}
-        }
-
-        async function scanAllFromFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            clearAllError();
-            if (allIsScanning) await stopAllCamera();
-
-            try {
-                const fileScanner = new Html5Qrcode("reader", { verbose: false });
-                const result = await fileScanner.scanFileV2(file, false);
-                handleAllDecoded(result.decodedText, result);
-                try { await fileScanner.clear(); } catch (_) {}
-            } catch (_) {
-                showAllError("QR Code atau Barcode tidak ditemukan pada gambar tersebut.");
-            } finally {
-                event.target.value = '';
-            }
-        }
-
-        function copyClassicResult() {
-            navigator.clipboard.writeText(document.getElementById('scan-data').innerText);
-        }
-
-        function openClassicUrl() {
-            const url = document.getElementById('scan-data').innerText.trim();
-            if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
-        }
-
-        function sendClassicToGenerator() {
-            const text = document.getElementById('scan-data').innerText.trim();
-            if (!text || text === '-') return;
-            document.getElementById('code-type').value = 'QR';
-            onFormatChange();
-            document.getElementById('code-text').value = text;
-            generateCode();
-            switchTab('gen');
+        function toggleRtGuide() {
+            const box = document.getElementById('rt-guide-box');
+            box.style.display = (box.style.display === 'block') ? 'none' : 'block';
         }
 
         // =========================================
-        // 3. TAB 2: RETAIL PRODUCT SCANNER & POS
+        // 2. MACINTOSH / WINDOWS & MULTI-LAYOUT ENGINE
         // =========================================
-        const STORAGE_KEY_BATCH = 'gxdiag_retail_batch_v1';
-        let rtlScanner = null;
-        let rtlIsScanning = false;
-        let rtlTorchOn = false;
-        let beepEnabled = true;
-        let audioCtx = null;
-        let lastRtlCode = '';
-        let lastRtlTimestamp = 0;
-        let scannedItems = [];
+        let currentBoardLayout = 'full';
+        let isMacMode = false;
 
-        function loadSavedBatch() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY_BATCH);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed)) scannedItems = parsed;
-                }
-            } catch (_) {}
-            renderBatchList();
-        }
+        function toggleMacMode() {
+            isMacMode = document.getElementById('os-mode-toggle').checked;
+            const kb = document.getElementById('kb-case');
+            kb.classList.toggle('mac-mode', isMacMode);
 
-        function persistBatch() {
-            try {
-                localStorage.setItem(STORAGE_KEY_BATCH, JSON.stringify(scannedItems));
-            } catch (_) {}
-        }
+            document.getElementById('lbl-win').style.color = isMacMode ? '#888' : '#00e5ff';
+            document.getElementById('lbl-mac').style.color = isMacMode ? '#b388ff' : '#888';
 
-        function playPosBeep() {
-            if (!beepEnabled) return;
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(1850, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.11);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.11);
-            } catch (_) {}
-        }
-
-        function toggleBeep() {
-            beepEnabled = !beepEnabled;
-            ['btn-beep-toggle', 'btn-all-beep'].forEach(id => {
-                const btn = document.getElementById(id);
-                if (!btn) return;
-                btn.classList.toggle('active-toggle', beepEnabled);
-                btn.innerText = beepEnabled ? '🔊 BEEP' : '🔇 MUTE';
+            // Update keycap labels for Win vs Mac
+            document.querySelectorAll('.key[data-win-lbl]').forEach(el => {
+                el.innerText = isMacMode ? el.dataset.macLbl : el.dataset.winLbl;
             });
-            if (beepEnabled) playPosBeep();
-        }
 
-        function detectGS1Origin(code) {
-            const clean = code.replace(/\s+/g, '');
-            if (!/^\d{8,14}$/.test(clean)) return null;
+            // Swap physical data-code mapping on bottom row so pressing real Command (Meta) or Win-mode Alt highlights the exact physical keycap!
+            const modL2 = document.getElementById('mod-l2'); // Physical position 2 (Win in Win-mode, Option in Mac-mode)
+            const modL3 = document.getElementById('mod-l3'); // Physical position 3 next to Space (Alt in Win-mode, Command in Mac-mode)
+            const modR1 = document.getElementById('mod-r1'); // Right of Space (AltR in Win-mode, CommandR in Mac-mode)
+            const modR2 = document.getElementById('mod-r2'); // Second right of Space (MetaR in Win-mode, OptionR in Mac-mode)
 
-            const p3 = parseInt(clean.substring(0, 3), 10);
-            const p2 = parseInt(clean.substring(0, 2), 10);
-
-            if (p3 === 899) return 'GS1 Indonesia (899)';
-            if (p3 === 885) return 'GS1 Thailand (885)';
-            if (p3 === 888) return 'GS1 Singapura (888)';
-            if (p3 === 955) return 'GS1 Malaysia (955)';
-            if (p3 === 880) return 'GS1 Korea Selatan (880)';
-            if (p3 === 471) return 'GS1 Taiwan (471)';
-            if (p3 === 489) return 'GS1 Hong Kong (489)';
-            if (p3 === 893) return 'GS1 Vietnam (893)';
-            if (p2 === 45 || p2 === 49) return `GS1 Jepang (${p2})`;
-            if (p3 >= 690 && p3 <= 699) return `GS1 Tiongkok (${p3})`;
-            if (p2 >= 0 && p2 <= 13) return 'UPC / GS1 US & Kanada';
-            if (p2 >= 30 && p2 <= 37) return `GS1 Prancis (${p2})`;
-            if (p3 >= 400 && p3 <= 440) return `GS1 Jerman (${p3})`;
-            if (p2 === 50) return 'GS1 Inggris (50)';
-            return `Standar Ritel (${clean.length} Digit)`;
-        }
-
-        function showRtlError(msg) {
-            const box = document.getElementById('rtl-error');
-            box.innerText = msg;
-            box.style.display = 'block';
-        }
-        function clearRtlError() {
-            document.getElementById('rtl-error').style.display = 'none';
-        }
-
-        async function populateRtlCameras() {
-            try {
-                const devices = await Html5Qrcode.getCameras();
-                const sel = document.getElementById('rtl-cam-select');
-                const row = document.getElementById('rtl-cam-row');
-                if (devices && devices.length > 0) {
-                    const prevVal = sel.value;
-                    sel.innerHTML = '';
-                    devices.forEach((dev, idx) => {
-                        const opt = document.createElement('option');
-                        opt.value = dev.id;
-                        opt.text = dev.label || `Kamera ${idx + 1}`;
-                        sel.appendChild(opt);
-                    });
-
-                    if (prevVal && devices.some(d => d.id === prevVal)) {
-                        sel.value = prevVal;
-                    } else {
-                        const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
-                        if (backCam) sel.value = backCam.id;
-                    }
-                    row.style.display = devices.length > 1 ? 'flex' : 'none';
-                }
-            } catch (_) {}
-        }
-
-        async function toggleRtlCamera() {
-            if (rtlIsScanning) {
-                await stopRtlCamera();
+            if (isMacMode) {
+                modL2.dataset.code = 'AltLeft';
+                modL3.dataset.code = 'MetaLeft';
+                modR1.dataset.code = 'MetaRight';
+                modR2.dataset.code = 'AltRight';
             } else {
-                await startRtlCamera();
-            }
-        }
-
-        async function restartRtlCamera() {
-            if (rtlIsScanning) {
-                await stopRtlCamera();
-                await startRtlCamera();
-            }
-        }
-
-        async function startRtlCamera() {
-            if (camMutex) return;
-            camMutex = true;
-            clearRtlError();
-            if (allIsScanning) await stopAllCamera();
-
-            const toggleBtn = document.getElementById('btn-rtl-toggle');
-            const statusPill = document.getElementById('rtl-status-pill');
-            const placeholder = document.getElementById('rtl-placeholder');
-
-            toggleBtn.disabled = true;
-            statusPill.innerText = 'MEMUAT...';
-            statusPill.style.color = 'var(--c-orange)';
-
-            try {
-                if (rtlScanner) {
-                    try { await rtlScanner.clear(); } catch (_) {}
-                }
-
-                const retailFormats = typeof Html5QrcodeSupportedFormats !== 'undefined' ? [
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39,
-                    Html5QrcodeSupportedFormats.ITF,
-                    Html5QrcodeSupportedFormats.CODABAR
-                ].filter(Boolean) : undefined;
-
-                rtlScanner = new Html5Qrcode("reader-retail", {
-                    formatsToSupport: retailFormats,
-                    verbose: false
-                });
-
-                await populateRtlCameras();
-                const camId = document.getElementById('rtl-cam-select').value;
-                const source = camId ? { deviceId: { exact: camId } } : { facingMode: "environment" };
-
-                placeholder.style.display = 'none';
-                await rtlScanner.start(
-                    source,
-                    {
-                        fps: 18,
-                        qrbox: function(w, h) {
-                            const boxW = Math.min(340, Math.floor(w * 0.86));
-                            const boxH = Math.min(135, Math.floor(h * 0.48));
-                            return { width: Math.max(180, boxW), height: Math.max(90, boxH) };
-                        }
-                    },
-                    (text, res) => handleRtlDecoded(text, res, false),
-                    () => {}
-                );
-
-                await populateRtlCameras();
-
-                rtlIsScanning = true;
-                rtlTorchOn = false;
-                toggleBtn.innerText = '⏹ STOP';
-                toggleBtn.className = 'btn btn-danger';
-                statusPill.innerText = 'POS AKTIF';
-                statusPill.style.color = 'var(--c-green)';
-
-                try {
-                    const caps = rtlScanner.getRunningTrackCameraCapabilities();
-                    document.getElementById('btn-rtl-torch').disabled = !(caps && caps.torchFeature && caps.torchFeature().isSupported());
-                } catch (_) {
-                    document.getElementById('btn-rtl-torch').disabled = true;
-                }
-            } catch (err) {
-                placeholder.style.display = 'flex';
-                statusPill.innerText = 'ERROR';
-                statusPill.style.color = 'var(--c-red)';
-                showRtlError(`Akses kamera gagal: ${err?.message || err}`);
-            } finally {
-                toggleBtn.disabled = false;
-                camMutex = false;
-            }
-        }
-
-        async function stopRtlCamera() {
-            const toggleBtn = document.getElementById('btn-rtl-toggle');
-            const statusPill = document.getElementById('rtl-status-pill');
-            const placeholder = document.getElementById('rtl-placeholder');
-            const torchBtn = document.getElementById('btn-rtl-torch');
-
-            try {
-                if (rtlScanner && rtlIsScanning) {
-                    await rtlScanner.stop();
-                }
-                if (rtlScanner) {
-                    await rtlScanner.clear();
-                }
-            } catch (_) {}
-
-            rtlScanner = null;
-            rtlIsScanning = false;
-            rtlTorchOn = false;
-            torchBtn.disabled = true;
-            torchBtn.classList.remove('active-toggle');
-            placeholder.style.display = 'flex';
-            toggleBtn.innerText = '▶ MULAI';
-            toggleBtn.className = 'btn btn-green';
-            statusPill.innerText = 'STANDBY';
-            statusPill.style.color = '#777';
-        }
-
-        async function toggleRtlTorch() {
-            if (!rtlScanner || !rtlIsScanning) return;
-            try {
-                const caps = rtlScanner.getRunningTrackCameraCapabilities();
-                const torch = caps.torchFeature();
-                rtlTorchOn = !rtlTorchOn;
-                await torch.apply(rtlTorchOn);
-                document.getElementById('btn-rtl-torch').classList.toggle('active-toggle', rtlTorchOn);
-            } catch (_) {}
-        }
-
-        async function scanRtlFromFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            clearRtlError();
-            if (rtlIsScanning) await stopRtlCamera();
-
-            try {
-                const fileScanner = new Html5Qrcode("reader-retail", { verbose: false });
-                const result = await fileScanner.scanFileV2(file, false);
-                handleRtlDecoded(result.decodedText, result, true);
-                try { await fileScanner.clear(); } catch (_) {}
-            } catch (_) {
-                showRtlError("Barcode produk tidak ditemukan pada gambar tersebut.");
-            } finally {
-                event.target.value = '';
-            }
-        }
-
-        function submitManualSku() {
-            const input = document.getElementById('manual-sku-input');
-            const val = input.value.trim();
-            if (!val) return;
-            handleRtlDecoded(val, { format: { formatName: 'MANUAL ENTRY' } }, true);
-            input.value = '';
-        }
-
-        function handleRtlDecoded(decodedText, decodedResult, bypassCooldown = false) {
-            const now = Date.now();
-            if (!bypassCooldown && decodedText === lastRtlCode && (now - lastRtlTimestamp) < 1500) {
-                return;
+                modL2.dataset.code = 'MetaLeft';
+                modL3.dataset.code = 'AltLeft';
+                modR1.dataset.code = 'AltRight';
+                modR2.dataset.code = 'MetaRight';
             }
 
-            lastRtlCode = decodedText;
-            lastRtlTimestamp = now;
+            updateFnMenuLabel();
+        }
 
-            playPosBeep();
-            if (navigator.vibrate) navigator.vibrate(60);
-
-            const formatName = decodedResult?.result?.format?.formatName || decodedResult?.format?.formatName || "1D BARCODE";
-            const gs1Info = detectGS1Origin(decodedText);
-            const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            document.getElementById('rtl-data').innerText = decodedText;
-            document.getElementById('rtl-format').innerText = `Format: ${formatName}`;
-            document.getElementById('rtl-time').innerText = timeStr;
-
-            const gs1El = document.getElementById('rtl-gs1');
-            if (gs1Info) {
-                gs1El.innerText = gs1Info;
-                gs1El.style.display = 'inline-block';
+        function updateFnMenuLabel() {
+            const fnMenuKey = document.getElementById('key-fn-menu');
+            if (!fnMenuKey) return;
+            if (isMacMode || currentBoardLayout === '75' || currentBoardLayout === '65') {
+                fnMenuKey.innerText = 'Fn';
             } else {
-                gs1El.style.display = 'none';
-            }
-
-            document.getElementById('btn-rtl-copy').disabled = false;
-            document.getElementById('btn-rtl-lookup').disabled = false;
-            document.getElementById('btn-rtl-gen').disabled = false;
-
-            if (document.getElementById('chk-auto-batch').checked) {
-                addToBatchList(decodedText, formatName, gs1Info, timeStr);
+                fnMenuKey.innerText = 'Mn';
             }
         }
 
-        function addToBatchList(code, format, gs1, timeStr) {
-            const existingIdx = scannedItems.findIndex(item => item.code === code);
-            if (existingIdx !== -1) {
-                scannedItems[existingIdx].qty += 1;
-                scannedItems[existingIdx].time = timeStr;
-                const [updated] = scannedItems.splice(existingIdx, 1);
-                scannedItems.unshift(updated);
-            } else {
-                scannedItems.unshift({
-                    code: code,
-                    format: format,
-                    gs1: gs1 || '',
-                    note: '',
-                    qty: 1,
-                    time: timeStr
-                });
-            }
-            persistBatch();
-            renderBatchList(code);
+        function setBoardLayout(mode, btnEl) {
+            currentBoardLayout = mode;
+            const kb = document.getElementById('kb-case');
+            kb.classList.remove('layout-full', 'layout-tkl', 'layout-75', 'layout-65', 'layout-60');
+            if (mode !== 'full') kb.classList.add(`layout-${mode}`);
+
+            updateFnMenuLabel();
+
+            document.querySelectorAll('.l-pill').forEach(p => p.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+
+            updateCoverageStat();
+            requestAnimationFrame(autoScaleKeyboard);
         }
 
-        function escapeHTML(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
+        function toggleIsoAnsi() {
+            document.getElementById('kb-case').classList.toggle('iso-mode');
+            updateCoverageStat();
+            requestAnimationFrame(autoScaleKeyboard);
         }
 
-        function renderBatchList(highlightCode = null) {
-            const container = document.getElementById('batch-list');
-            const skuEl = document.getElementById('total-sku-count');
-            const qtyEl = document.getElementById('total-qty-count');
-            const hasItems = scannedItems.length > 0;
+        function autoScaleKeyboard() {
+            const wrapper = document.querySelector('.wrapper');
+            const keyboard = document.getElementById('kb-case');
 
-            document.getElementById('btn-export-csv').disabled = !hasItems;
-            document.getElementById('btn-copy-batch').disabled = !hasItems;
-            document.getElementById('btn-clear-batch').disabled = !hasItems;
+            keyboard.style.transition = 'none';
+            keyboard.style.transform = 'scale(1)';
 
-            const totalQty = scannedItems.reduce((sum, item) => sum + item.qty, 0);
-            skuEl.innerText = scannedItems.length;
-            qtyEl.innerText = totalQty;
+            const rect = keyboard.getBoundingClientRect();
+            const naturalWidth = rect.width;
+            const naturalHeight = rect.height;
 
-            if (!hasItems) {
-                container.innerHTML = `<div class="batch-empty">Belum ada produk dipindai.<br>Setiap barcode barang yang terbaca otomatis masuk ke daftar ini dan tersimpan otomatis di peramban.</div>`;
-                return;
-            }
+            const availableWidth = Math.max(300, window.innerWidth - 40);
+            let scale = availableWidth / naturalWidth;
+            if (scale > 1) scale = 1;
 
-            container.innerHTML = scannedItems.map((item, idx) => `
-                <div class="batch-item ${item.code === highlightCode ? 'flash-new' : ''}">
-                    <div>
-                        <div class="batch-code">${escapeHTML(item.code)}</div>
-                        <div class="batch-sub">${escapeHTML(item.format)} ${item.gs1 ? '• ' + escapeHTML(item.gs1) : ''} • ${item.time}</div>
-                        <input type="text" class="batch-note-input" placeholder="Tambah nama barang / catatan..." value="${escapeHTML(item.note)}" oninput="updateBatchNote(${idx}, this.value)">
-                    </div>
-                    <div class="qty-controls">
-                        <button type="button" class="qty-btn" onclick="changeBatchQty(${idx}, -1)">-</button>
-                        <span class="qty-val">${item.qty}</span>
-                        <button type="button" class="qty-btn" onclick="changeBatchQty(${idx}, 1)">+</button>
-                    </div>
-                </div>
-            `).join('');
-        }
+            keyboard.style.transform = `scale(${scale})`;
+            wrapper.style.height = Math.ceil(naturalHeight * scale) + 'px';
 
-        function changeBatchQty(idx, delta) {
-            if (!scannedItems[idx]) return;
-            scannedItems[idx].qty += delta;
-            if (scannedItems[idx].qty <= 0) {
-                scannedItems.splice(idx, 1);
-            }
-            persistBatch();
-            renderBatchList();
-        }
-
-        function updateBatchNote(idx, val) {
-            if (scannedItems[idx]) {
-                scannedItems[idx].note = val;
-                persistBatch();
-            }
-        }
-
-        function clearBatchList() {
-            scannedItems = [];
-            lastRtlCode = '';
-            persistBatch();
-            renderBatchList();
-        }
-
-        function copyRtlResult() {
-            navigator.clipboard.writeText(document.getElementById('rtl-data').innerText);
-        }
-
-        function lookupRetailWeb() {
-            const code = document.getElementById('rtl-data').innerText.trim();
-            if (!code || code.startsWith('Arahkan')) return;
-            window.open(`https://www.google.com/search?q=${encodeURIComponent(code)}`, '_blank', 'noopener');
-        }
-
-        function sendRtlToGenerator() {
-            const text = document.getElementById('rtl-data').innerText.trim();
-            if (!text || text.startsWith('Arahkan')) return;
-
-            const codeTypeEl = document.getElementById('code-type');
-            if (/^\d{12,13}$/.test(text)) codeTypeEl.value = 'EAN13';
-            else if (/^\d{7,8}$/.test(text)) codeTypeEl.value = 'EAN8';
-            else if (/^\d{11,12}$/.test(text)) codeTypeEl.value = 'UPC';
-            else codeTypeEl.value = 'CODE128';
-
-            onFormatChange();
-            document.getElementById('code-text').value = text;
-            generateCode();
-            switchTab('gen');
-        }
-
-        function copyBatchText() {
-            if (!scannedItems.length) return;
-            const lines = scannedItems.map((it, i) => `${i + 1}. [${it.code}] x${it.qty}${it.note ? ' - ' + it.note : ''} (${it.format})`);
-            navigator.clipboard.writeText(lines.join('\n'));
-        }
-
-        function exportBatchCSV() {
-            if (!scannedItems.length) return;
-            const header = ['No', 'Barcode', 'Format', 'Info_Standar', 'Nama_Catatan', 'Qty', 'Waktu_Scan'];
-            const rows = scannedItems.map((it, i) => [
-                i + 1,
-                `"${it.code.replace(/"/g, '""')}"`,
-                `"${it.format}"`,
-                `"${it.gs1}"`,
-                `"${it.note.replace(/"/g, '""')}"`,
-                it.qty,
-                `"${it.time}"`
-            ].join(','));
-
-            const csvContent = '\uFEFF' + [header.join(','), ...rows].join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const dateTag = new Date().toISOString().slice(0, 10);
-            triggerBlobDownload(blob, `GXDiag_ProdukRitel_${dateTag}.csv`);
-        }
-
-        // =========================================
-        // 4. TAB 3: HIGH-RES QR & BARCODE GENERATOR
-        // =========================================
-        const FORMAT_META = {
-            QR: { sample: "https://brahmantyo12.my.id", hint: "Mendukung URL, teks, Wi-Fi string. Area tengah kosong bebas tabrakan modul." },
-            CODE128: { sample: "BTSTORE12-INV-001", hint: "Mendukung huruf, angka, dan simbol ASCII standar." },
-            EAN13: { sample: "899123456789", hint: "Wajib 12 digit angka (digit ke-13 checksum dihitung otomatis) atau 13 digit valid." },
-            EAN8: { sample: "9638507", hint: "Wajib 7 digit angka (digit ke-8 checksum otomatis) atau 8 digit valid." },
-            UPC: { sample: "012345678905", hint: "Wajib 11 atau 12 digit angka (UPC-A)." },
-            CODE39: { sample: "ASSET-2026-X99", hint: "Mendukung huruf KAPITAL (A-Z), angka (0-9), dan simbol (- . $ / + %)." },
-            ITF14: { sample: "10012345678902", hint: "Wajib 13 atau 14 digit angka untuk kemasan karton/kardus." },
-            MSI: { sample: "1234567890", hint: "Khusus angka (0-9) untuk pelabelan rak gudang." },
-            codabar: { sample: "A123456B", hint: "Angka (0-9) dan (- $ : / . +), diawali/diakhiri huruf A-D." }
-        };
-
-        let uploadedLogoImg = null;
-        let jxlEncoderModule = null;
-        let genRafId = null;
-
-        function scheduleGenerateCode() {
-            if (genRafId) cancelAnimationFrame(genRafId);
-            genRafId = requestAnimationFrame(() => {
-                genRafId = null;
-                generateCode();
+            requestAnimationFrame(() => {
+                keyboard.style.transition = 'transform 0.12s ease-out';
             });
         }
 
-        function handleLogoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    uploadedLogoImg = img;
-                    document.getElementById('logo-filename').innerText = file.name;
-                    document.getElementById('clear-logo-btn').style.display = 'inline-flex';
-
-                    const clearSlider = document.getElementById('qr-clear-slider');
-                    if (parseInt(clearSlider.value, 10) === 0) {
-                        clearSlider.value = '36';
-                    }
-                    generateCode();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+        function updateCoverageStat() {
+            const visibleKeys = [...document.querySelectorAll('.kb-container .key')]
+                .filter(el => el.offsetParent !== null);
+            const totalVisible = visibleKeys.length;
+            const testedVisible = visibleKeys.filter(el => el.classList.contains('tested')).length;
+            const pct = totalVisible > 0 ? Math.round((testedVisible / totalVisible) * 100) : 0;
+            document.getElementById('coverage-stat').innerText = `${pct}% (${testedVisible}/${totalVisible})`;
         }
 
-        function removeLogo() {
-            uploadedLogoImg = null;
-            document.getElementById('logo-input').value = '';
-            document.getElementById('logo-filename').innerText = 'Pilih gambar logo (PNG/SVG/JPG/WebP)...';
-            document.getElementById('clear-logo-btn').style.display = 'none';
-            generateCode();
+        function updateNkroVerdict(maxSimultaneous) {
+            const el = document.getElementById('nkro-verdict');
+            if (maxSimultaneous === 0) {
+                el.style.color = '#888';
+                el.innerText = 'Tahan banyak tombol sekaligus';
+            } else if (maxSimultaneous <= 2) {
+                el.style.color = '#ff4081';
+                el.innerText = '2KRO / GHOSTING DETECTED';
+            } else if (maxSimultaneous <= 6) {
+                el.style.color = '#ffab40';
+                el.innerText = `${maxSimultaneous}KRO (USB BOOT / LIMITED)`;
+            } else {
+                el.style.color = '#00ff88';
+                el.innerText = `FULL NKRO PASS (${maxSimultaneous}-KEY)`;
+            }
         }
 
-        function onFormatChange() {
-            const type = document.getElementById('code-type').value;
-            const meta = FORMAT_META[type];
-            const inputEl = document.getElementById('code-text');
-            const isQR = type === 'QR';
+        // =========================================
+        // 3. WEBHID VIA / QMK FIRMWARE & RAW REPORT INSPECTOR
+        // =========================================
+        let connectedHidDevices = [];
+        let viaRawInterface = null;
 
-            document.getElementById('qr-only-section').style.display = isQR ? 'flex' : 'none';
-            document.getElementById('qr-ecc-row').style.display = isQR ? 'flex' : 'none';
-            document.getElementById('barcode-text-row').style.display = isQR ? 'none' : 'flex';
-            document.getElementById('format-hint').innerText = meta.hint;
-            inputEl.value = meta.sample;
-
-            generateCode();
-        }
-
-        function showGenError(msg) {
-            const errBox = document.getElementById('gen-error');
-            errBox.innerText = msg;
-            errBox.style.display = 'block';
-        }
-
-        function clearGenError() {
-            document.getElementById('gen-error').style.display = 'none';
-        }
-
-        function generateCode() {
-            clearGenError();
-            const type = document.getElementById('code-type').value;
-            const text = document.getElementById('code-text').value.trim();
-            const bgMode = document.getElementById('bg-mode').value;
-            const canvas = document.getElementById('output-canvas');
-            const dimInfo = document.getElementById('dim-info');
-
-            if (!text) {
-                showGenError("Input data tidak boleh kosong.");
+        async function connectWebHidInspector() {
+            if (!('hid' in navigator)) {
+                alert('Browser ini tidak mendukung WebHID API. Gunakan Google Chrome, Microsoft Edge, atau Brave versi desktop.');
                 return;
             }
 
-            if (type === 'QR') {
-                canvas.classList.remove('barcode-mode');
-                renderHighResQR(canvas, text, bgMode);
-                dimInfo.innerText = `${canvas.width} × ${canvas.height} px (300+ DPI Print Ready)`;
-            } else {
-                canvas.classList.add('barcode-mode');
-                renderHighResBarcode(canvas, type, text, bgMode);
-                if (document.getElementById('gen-error').style.display === 'none') {
-                    dimInfo.innerText = `${canvas.width} × ${canvas.height} px (${type} High-DPI)`;
+            try {
+                const devices = await navigator.hid.requestDevice({ filters: [] });
+                if (!devices || devices.length === 0) return;
+
+                const targetVid = devices[0].vendorId;
+                const targetPid = devices[0].productId;
+
+                const allGranted = await navigator.hid.getDevices();
+                connectedHidDevices = allGranted.filter(d => d.vendorId === targetVid && d.productId === targetPid);
+                if (connectedHidDevices.length === 0) connectedHidDevices = devices;
+
+                viaRawInterface = null;
+                const collectionsSummary = [];
+
+                for (const dev of connectedHidDevices) {
+                    if (!dev.opened) {
+                        await dev.open();
+                    }
+
+                    for (const col of dev.collections || []) {
+                        const upHex = '0x' + col.usagePage.toString(16).toUpperCase().padStart(4, '0');
+                        const uHex = '0x' + col.usage.toString(16).toUpperCase().padStart(2, '0');
+                        collectionsSummary.push(`${upHex}:${uHex}`);
+
+                        if (col.usagePage === 0xFF60 && col.usage === 0x61) {
+                            viaRawInterface = dev;
+                        }
+                    }
+
+                    dev.oninputreport = (event) => handleRawHidReport(dev, event);
+                }
+
+                const primary = connectedHidDevices[0];
+                const vidStr = primary.vendorId.toString(16).toUpperCase().padStart(4, '0');
+                const pidStr = primary.productId.toString(16).toUpperCase().padStart(4, '0');
+
+                document.getElementById('hid-panel').style.display = 'block';
+                const btn = document.getElementById('btn-webhid');
+                btn.classList.add('hid-active');
+                btn.innerHTML = `🔌 HID: ${vidStr}:${pidStr}`;
+
+                document.getElementById('hid-descriptor-box').innerHTML =
+                    `<div><b>Product Name:</b> <span style="color:#fff;">${primary.productName || 'Generic USB HID Keyboard'}</span></div>` +
+                    `<div><b>USB VID : PID:</b> <span style="color:#00e5ff;">${vidStr}:${pidStr}</span> &nbsp;|&nbsp; <b>Interfaces Opened:</b> ${connectedHidDevices.length}</div>` +
+                    `<div><b>HID Usage Pages:</b> <span style="color:#aaa;">${[...new Set(collectionsSummary)].join(', ')}</span></div>` +
+                    `<div id="via-proto-status" style="margin-top:4px; color:${viaRawInterface ? '#00ff88' : '#ffab40'};">` +
+                    (viaRawInterface
+                        ? '✔ VIA / QMK Raw HID Interface (0xFF60:0x61) Terdeteksi! Mengambil info firmware...'
+                        : 'ℹ️ Interface VIA (0xFF60) tidak ditemukan (Firmware non-VIA / standar HID). Raw packet sniffer tetap aktif.') +
+                    `</div>`;
+
+                if (viaRawInterface) {
+                    await queryViaFirmwareInfo();
+                }
+            } catch (err) {
+                if (err.name !== 'NotAllowedError') {
+                    alert(`Gagal membuka WebHID: ${err.message}`);
                 }
             }
         }
 
-        function buildOptimalQR(text, eccLevel, clearRatio) {
-            let minVersion = 0;
-            if (clearRatio >= 0.42) minVersion = 5;
-            else if (clearRatio >= 0.34) minVersion = 4;
+        async function queryViaFirmwareInfo() {
+            if (!viaRawInterface || !viaRawInterface.opened) return;
+            try {
+                const pktProto = new Uint8Array(32);
+                pktProto[0] = 0x01;
+                await viaRawInterface.sendReport(0x00, pktProto);
 
-            if (minVersion > 0) {
+                setTimeout(async () => {
+                    if (!viaRawInterface || !viaRawInterface.opened) return;
+                    const pktLayers = new Uint8Array(32);
+                    pktLayers[0] = 0x11;
+                    await viaRawInterface.sendReport(0x00, pktLayers);
+                }, 60);
+            } catch (e) {
+                const st = document.getElementById('via-proto-status');
+                if (st) st.innerText = `⚠️ Gagal mengirim perintah VIA: ${e.message}`;
+            }
+        }
+
+        function handleRawHidReport(dev, event) {
+            const bytes = new Uint8Array(event.data.buffer);
+            const hexArr = Array.from(bytes.slice(0, 16)).map(b => b.toString(16).toUpperCase().padStart(2, '0'));
+            const hexStr = hexArr.join(' ') + (bytes.length > 16 ? ' ...' : '');
+
+            if (dev === viaRawInterface && bytes.length >= 3) {
+                const cmd = bytes[0];
+                const st = document.getElementById('via-proto-status');
+                if (cmd === 0x01 && st) {
+                    const viaVer = (bytes[1] << 8) | bytes[2];
+                    st.innerHTML = `✔ <b>VIA Protocol v${viaVer}</b> Aktif &amp; Merespons!`;
+                } else if (cmd === 0x11 && st) {
+                    const layers = bytes[1];
+                    st.innerHTML += ` &nbsp;|&nbsp; <b>Dynamic Keymap Layers:</b> <span style="color:#00e5ff;">${layers} Layer</span>`;
+                }
+            }
+
+            const list = document.getElementById('hid-packet-list');
+            if (list.children.length === 1 && list.children[0].style.color === 'rgb(102, 102, 102)') {
+                list.innerHTML = '';
+            }
+
+            const line = document.createElement('div');
+            line.className = 'pkt-line';
+            line.innerText = `[ID 0x${event.reportId.toString(16).toUpperCase()}] ${hexStr}`;
+            list.prepend(line);
+            if (list.children.length > 35) list.removeChild(list.lastChild);
+        }
+
+        async function disconnectWebHid() {
+            for (const dev of connectedHidDevices) {
                 try {
-                    const qrBoosted = qrcode(minVersion, eccLevel);
-                    qrBoosted.addData(text);
-                    qrBoosted.make();
-                    return qrBoosted;
+                    dev.oninputreport = null;
+                    if (dev.opened) await dev.close();
                 } catch (_) {}
             }
-
-            const qrAuto = qrcode(0, eccLevel);
-            qrAuto.addData(text);
-            qrAuto.make();
-            return qrAuto;
+            connectedHidDevices = [];
+            viaRawInterface = null;
+            document.getElementById('hid-panel').style.display = 'none';
+            const btn = document.getElementById('btn-webhid');
+            btn.classList.remove('hid-active');
+            btn.innerHTML = '🔌 WEBHID VIA/QMK';
         }
 
-        function renderHighResQR(canvas, text, bgMode) {
-            const clearPct = parseInt(document.getElementById('qr-clear-slider').value, 10);
-            const clearRatio = clearPct / 100;
-            const eccSelect = document.getElementById('qr-ecc');
-            const readoutEl = document.getElementById('clear-zone-readout');
-            const statusEl = document.getElementById('clear-zone-status');
-            const logoHint = document.getElementById('logo-hint');
+        // =========================================
+        // 4. OS KEYBOARD LOCK & STICKY KEYS GUARD
+        // =========================================
+        let osKeyLocked = false;
+        let shiftTapStreak = 0;
+        let lastShiftTapTs = 0;
 
-            if (clearRatio > 0 && eccSelect.value !== 'H') {
-                eccSelect.value = 'H';
-            }
+        async function toggleOsKeyLock() {
+            const btn = document.getElementById('btn-os-lock');
+            const statusEl = document.getElementById('guard-status-text');
 
-            if (uploadedLogoImg && clearRatio === 0) {
-                logoHint.innerHTML = `<span style="color:var(--c-orange);">[Info] Geser slider area tengah > 0% untuk menampilkan logo tanpa menimpa modul.</span>`;
-            } else {
-                logoHint.innerText = "Logo otomatis diskalakan proporsional di dalam zona kosong tanpa memotong kotak QR.";
-            }
-
-            try {
-                const qr = buildOptimalQR(text, eccSelect.value, clearRatio);
-                const count = qr.getModuleCount();
-                const quietZone = 4;
-                const totalModules = count + (quietZone * 2);
-
-                const modulePx = Math.floor(2048 / totalModules);
-                const finalSize = modulePx * totalModules;
-
-                canvas.width = finalSize;
-                canvas.height = finalSize;
-                const ctx = canvas.getContext('2d');
-
-                ctx.clearRect(0, 0, finalSize, finalSize);
-                if (bgMode === 'white') {
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, finalSize, finalSize);
-                }
-
-                let minEx = -1, maxEx = -1, clearModules = 0;
-                if (clearRatio > 0) {
-                    clearModules = Math.round(count * clearRatio);
-                    if (clearModules % 2 === 0) clearModules++;
-                    const maxAllowedModules = count - 18;
-                    if (clearModules > maxAllowedModules) {
-                        clearModules = maxAllowedModules % 2 === 0 ? maxAllowedModules - 1 : maxAllowedModules;
-                    }
-
-                    const halfClear = Math.floor(clearModules / 2);
-                    const centerIdx = Math.floor(count / 2);
-                    minEx = centerIdx - halfClear;
-                    maxEx = centerIdx + halfClear;
-                }
-
-                const actualSidePct = Math.round((clearModules / count) * 100);
-                const actualAreaPct = (((clearModules * clearModules) / (count * count)) * 100).toFixed(1);
-                readoutEl.innerText = `${actualSidePct}% Lebar (~${actualAreaPct}% Area)`;
-
-                if (clearPct === 0) {
-                    statusEl.style.color = '#888';
-                    statusEl.innerText = '[Standar] Matriks QR penuh tanpa ruang kosong tengah.';
-                } else if (actualSidePct <= 41) {
-                    statusEl.style.color = 'var(--c-green)';
-                    statusEl.innerText = `[Aman] Luas terpotong ${actualAreaPct}% (Batas ECC H: 30%). Terbaca optimal di semua kamera.`;
-                } else if (actualSidePct <= 45) {
-                    statusEl.style.color = 'var(--c-orange)';
-                    statusEl.innerText = `[Batas Optimal] Luas terpotong ${actualAreaPct}%. Disarankan uji scan kamera sebelum cetak massal.`;
-                } else {
-                    statusEl.style.color = 'var(--c-red)';
-                    statusEl.innerText = `[Zona Ekstrem] Luas terpotong ${actualAreaPct}% mendekati limit Reed-Solomon. Wajib uji scan!`;
-                }
-
-                ctx.fillStyle = '#000000';
-                for (let row = 0; row < count; row++) {
-                    for (let col = 0; col < count; col++) {
-                        if (clearRatio > 0 && row >= minEx && row <= maxEx && col >= minEx && col <= maxEx) {
-                            continue;
-                        }
-                        if (qr.isDark(row, col)) {
-                            const x = (col + quietZone) * modulePx;
-                            const y = (row + quietZone) * modulePx;
-                            ctx.fillRect(x, y, modulePx, modulePx);
-                        }
-                    }
-                }
-
-                if (uploadedLogoImg && clearModules > 0) {
-                    const clearZonePx = clearModules * modulePx;
-                    const maxLogoBox = Math.max(modulePx, clearZonePx - (modulePx * 1.2));
-                    const scale = Math.min(maxLogoBox / uploadedLogoImg.width, maxLogoBox / uploadedLogoImg.height);
-                    
-                    const drawW = uploadedLogoImg.width * scale;
-                    const drawH = uploadedLogoImg.height * scale;
-                    const drawX = (finalSize - drawW) / 2;
-                    const drawY = (finalSize - drawH) / 2;
-
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(uploadedLogoImg, drawX, drawY, drawW, drawH);
-                }
-            } catch (e) {
-                showGenError("Teks terlalu panjang untuk kapasitas QR Code ini.");
-            }
-        }
-
-        function renderHighResBarcode(canvas, format, text, bgMode) {
-            const displayValue = document.getElementById('show-hr-text').value === 'true';
-            try {
-                JsBarcode(canvas, text, {
-                    format: format,
-                    width: 5,
-                    height: 240,
-                    displayValue: displayValue,
-                    font: "monospace",
-                    fontOptions: "bold",
-                    fontSize: 38,
-                    textMargin: 12,
-                    margin: 30,
-                    background: bgMode === 'white' ? '#FFFFFF' : 'rgba(0,0,0,0)',
-                    lineColor: '#000000',
-                    valid: function(valid) {
-                        if (!valid) {
-                            throw new Error(`Format data tidak valid untuk standar ${format}. Periksa panjang digit/karakter.`);
-                        }
-                    }
-                });
-            } catch (err) {
-                showGenError(err.message || `Gagal membuat barcode ${format}.`);
-            }
-        }
-
-        function triggerBlobDownload(blob, filename) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        async function downloadImage() {
-            clearGenError();
-            const canvas = document.getElementById('output-canvas');
-            const type = document.getElementById('code-type').value;
-            const ext = document.getElementById('export-format').value;
-            const rawText = document.getElementById('code-text').value.trim() || 'code';
-            const safeName = rawText.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 24);
-            const filename = `GXDiag_${type}_${safeName}.${ext}`;
-            const btn = document.getElementById('download-btn');
-
-            if (ext === 'png') {
-                canvas.toBlob(blob => triggerBlobDownload(blob, filename), 'image/png');
-                return;
-            }
-
-            if (ext === 'jpg') {
-                const flatCanvas = document.createElement('canvas');
-                flatCanvas.width = canvas.width;
-                flatCanvas.height = canvas.height;
-                const fCtx = flatCanvas.getContext('2d');
-                fCtx.fillStyle = '#FFFFFF';
-                fCtx.fillRect(0, 0, flatCanvas.width, flatCanvas.height);
-                fCtx.drawImage(canvas, 0, 0);
-
-                flatCanvas.toBlob(blob => triggerBlobDownload(blob, filename), 'image/jpeg', 0.95);
-                return;
-            }
-
-            if (ext === 'jxl') {
-                btn.disabled = true;
-                const origText = btn.innerText;
-                btn.innerText = "ENCODING JXL...";
-
+            if (!osKeyLocked) {
                 try {
-                    const nativeJxlBlob = await new Promise(resolve => {
-                        canvas.toBlob(b => resolve(b && b.type === 'image/jxl' ? b : null), 'image/jxl', 0.92);
-                    });
-
-                    if (nativeJxlBlob) {
-                        triggerBlobDownload(nativeJxlBlob, filename);
-                        return;
+                    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                        await document.documentElement.requestFullscreen();
                     }
-
-                    if (!jxlEncoderModule) {
-                        jxlEncoderModule = await import('https://cdn.jsdelivr.net/npm/@jsquash/jxl@1.2.0/+esm');
+                    if (navigator.keyboard && typeof navigator.keyboard.lock === 'function') {
+                        await navigator.keyboard.lock([
+                            'MetaLeft', 'MetaRight', 'Escape', 'Tab',
+                            'AltLeft', 'AltRight', 'ControlLeft', 'ControlRight',
+                            'KeyW', 'KeyT', 'KeyN', 'KeyR', 'F1', 'F5', 'F11', 'F12'
+                        ]);
+                        osKeyLocked = true;
+                        btn.classList.add('locked');
+                        btn.innerHTML = '🔒 OS KEY LOCK: ON';
+                        statusEl.innerHTML = '🔒 <b style="color:#00ff88;">OS Key Lock Aktif:</b> Tombol Windows/Command (Meta), Alt+Tab, Esc &amp; Ctrl+W dikunci penuh selama Fullscreen.';
+                    } else {
+                        osKeyLocked = true;
+                        btn.classList.add('locked');
+                        btn.innerHTML = '🔒 BROWSER LOCK: ON';
+                        statusEl.innerHTML = '⚠️ Browser ini tidak mendukung <code>navigator.keyboard.lock()</code> (khusus Chrome/Edge Desktop). Shortcut browser tetap dikunci.';
                     }
-
-                    const ctx = canvas.getContext('2d');
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const jxlBuffer = await jxlEncoderModule.encode(imageData, { quality: 92 });
-                    const jxlBlob = new Blob([jxlBuffer], { type: 'image/jxl' });
-                    triggerBlobDownload(jxlBlob, filename);
-
                 } catch (err) {
-                    showGenError(`Gagal melakukan encoding JXL: ${err.message}. Pastikan koneksi internet aktif untuk memuat WASM encoder atau gunakan format PNG.`);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerText = origText;
+                    statusEl.innerHTML = `⚠️ Gagal mengaktifkan OS Key Lock: ${err.message}`;
                 }
+            } else {
+                releaseOsKeyLock();
             }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            loadSavedBatch();
-            generateCode();
+        function releaseOsKeyLock() {
+            if (navigator.keyboard && typeof navigator.keyboard.unlock === 'function') {
+                navigator.keyboard.unlock();
+            }
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+            osKeyLocked = false;
+            const btn = document.getElementById('btn-os-lock');
+            btn.classList.remove('locked');
+            btn.innerHTML = '🔓 OS KEY LOCK';
+            document.getElementById('guard-status-text').innerHTML =
+                '🛡️ Shortcut Guard Aktif. Klik <b>OS KEY LOCK</b> untuk mengunci tombol Windows/Command &amp; Ctrl+W dalam Fullscreen.';
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && osKeyLocked) {
+                releaseOsKeyLock();
+            }
         });
+
+        window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        function updateShiftGuard(code, now) {
+            if (code !== 'ShiftLeft' && code !== 'ShiftRight') {
+                shiftTapStreak = 0;
+                const m = document.getElementById('shift-guard-meter');
+                m.classList.remove('warn');
+                m.innerText = 'Shift Tap Guard: 0/5 (Aman dari Sticky Keys OS)';
+                return;
+            }
+            if (now - lastShiftTapTs < 3500) {
+                shiftTapStreak++;
+            } else {
+                shiftTapStreak = 1;
+            }
+            lastShiftTapTs = now;
+
+            const meter = document.getElementById('shift-guard-meter');
+            if (shiftTapStreak >= 4) {
+                meter.classList.add('warn');
+                meter.innerText = `⚠️ Shift Tap: ${shiftTapStreak}/5 — Ketukan ke-5 memicu popup Sticky Keys Windows (tekan tombol lain untuk reset)`;
+            } else {
+                meter.classList.remove('warn');
+                meter.innerText = `Shift Tap Guard: ${shiftTapStreak}/5 (Aman dari Sticky Keys OS)`;
+            }
+        }
+
+        // =========================================
+        // 5. STRAFE, JIGGLE & RAPID TRIGGER ENGINE
+        // =========================================
+        const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft']);
+        const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight']);
+
+        let leftDownAt = null;
+        let rightDownAt = null;
+        let lastLeftUpAt = null;
+        let lastRightUpAt = null;
+        let lastStrafeSwitchAt = null;
+        let strafeSwitchIntervals = [];
+        let strafeHoldDurations = [];
+
+        let fastestDwellMs = Infinity;
+        let fastestResetMs = Infinity;
+
+        function updateStrafeVisualizer() {
+            const leftActive = leftDownAt !== null;
+            const rightActive = rightDownAt !== null;
+
+            document.getElementById('vis-left').classList.toggle('lit', leftActive);
+            document.getElementById('vis-right').classList.toggle('lit', rightActive);
+
+            const puck = document.getElementById('strafe-puck');
+            const socdBadge = document.getElementById('socd-badge');
+
+            if (leftActive && rightActive) {
+                const newerSide = rightDownAt > leftDownAt ? 'RIGHT (D/→)' : 'LEFT (A/←)';
+                puck.style.left = 'calc(50% - 11px)';
+                puck.style.background = '#ff4081';
+                socdBadge.style.color = '#ff4081';
+                socdBadge.innerText = `SOCD OVERLAP • LAST: ${newerSide}`;
+            } else if (leftActive) {
+                puck.style.left = '6px';
+                puck.style.background = '#00e5ff';
+                socdBadge.style.color = '#00e5ff';
+                socdBadge.innerText = 'STRAFE LEFT';
+            } else if (rightActive) {
+                puck.style.left = 'calc(100% - 28px)';
+                puck.style.background = '#00e5ff';
+                socdBadge.style.color = '#00e5ff';
+                socdBadge.innerText = 'STRAFE RIGHT';
+            } else {
+                puck.style.left = 'calc(50% - 11px)';
+                puck.style.background = '#00ff88';
+                socdBadge.style.color = '#00ff88';
+                socdBadge.innerText = 'COUNTER-STOPPED';
+            }
+        }
+
+        function recordStrafeDown(side, now) {
+            if (side === 'left') {
+                leftDownAt = now;
+                if (rightDownAt !== null) {
+                    const overlap = now - rightDownAt;
+                    document.getElementById('strafe-gap').innerHTML = `<span style="color:#ff4081;">-${overlap.toFixed(1)} ms (OVERLAP)</span>`;
+                } else if (lastRightUpAt !== null) {
+                    const gap = now - lastRightUpAt;
+                    const color = gap <= 25 ? '#00ff88' : (gap <= 65 ? '#00e5ff' : '#ffab40');
+                    document.getElementById('strafe-gap').innerHTML = `<span style="color:${color};">+${gap.toFixed(1)} ms (GAP)</span>`;
+                }
+            } else {
+                rightDownAt = now;
+                if (leftDownAt !== null) {
+                    const overlap = now - leftDownAt;
+                    document.getElementById('strafe-gap').innerHTML = `<span style="color:#ff4081;">-${overlap.toFixed(1)} ms (OVERLAP)</span>`;
+                } else if (lastLeftUpAt !== null) {
+                    const gap = now - lastLeftUpAt;
+                    const color = gap <= 25 ? '#00ff88' : (gap <= 65 ? '#00e5ff' : '#ffab40');
+                    document.getElementById('strafe-gap').innerHTML = `<span style="color:${color};">+${gap.toFixed(1)} ms (GAP)</span>`;
+                }
+            }
+
+            if (lastStrafeSwitchAt !== null) {
+                const delta = now - lastStrafeSwitchAt;
+                if (delta < 1200) {
+                    strafeSwitchIntervals.push(delta);
+                    if (strafeSwitchIntervals.length > 10) strafeSwitchIntervals.shift();
+                } else {
+                    strafeSwitchIntervals = [];
+                }
+            }
+            lastStrafeSwitchAt = now;
+            renderJiggleTelemetry();
+            updateStrafeVisualizer();
+        }
+
+        function recordStrafeUp(side, now) {
+            if (side === 'left' && leftDownAt !== null) {
+                const hold = now - leftDownAt;
+                strafeHoldDurations.push(hold);
+                if (strafeHoldDurations.length > 10) strafeHoldDurations.shift();
+                leftDownAt = null;
+                lastLeftUpAt = now;
+            } else if (side === 'right' && rightDownAt !== null) {
+                const hold = now - rightDownAt;
+                strafeHoldDurations.push(hold);
+                if (strafeHoldDurations.length > 10) strafeHoldDurations.shift();
+                rightDownAt = null;
+                lastRightUpAt = now;
+            }
+            renderJiggleTelemetry();
+            updateStrafeVisualizer();
+        }
+
+        function renderJiggleTelemetry() {
+            const avgInterval = strafeSwitchIntervals.length > 0
+                ? strafeSwitchIntervals.reduce((a, b) => a + b, 0) / strafeSwitchIntervals.length
+                : 0;
+            const jiggleHz = avgInterval > 0 ? (1000 / (avgInterval * 2)) : 0;
+            const avgHold = strafeHoldDurations.length > 0
+                ? strafeHoldDurations.reduce((a, b) => a + b, 0) / strafeHoldDurations.length
+                : 0;
+
+            document.getElementById('jiggle-rate').innerText =
+                `${jiggleHz.toFixed(1)} Hz • ${avgHold > 0 ? avgHold.toFixed(0) + ' ms' : '-- ms'}`;
+        }
+
+        // =========================================
+        // 6. CORE KEYBOARD, CHATTER & DWELL LOGIC
+        // =========================================
+        let activeKeys = new Set();
+        let maxSim = 0;
+        let keyDownPerf = {};
+        let lastKeyUpPerf = {};
+        let lastKeyDownPerf = {};
+        let startTime = null;
+        let count = 0;
+        let lastDwellVal = '-- ms';
+        let kpmVal = 0;
+        let kpmTimer = null;
+
+        function format(code) {
+            if (isMacMode) {
+                const macNames = {
+                    'MetaLeft': 'Cmd L', 'MetaRight': 'Cmd R',
+                    'AltLeft': 'Opt L', 'AltRight': 'Opt R',
+                    'ControlLeft': 'Ctrl L', 'ControlRight': 'Ctrl R',
+                    'Backspace': 'Delete', 'Enter': 'Return'
+                };
+                if (macNames[code]) return macNames[code];
+            }
+            return code
+                .replace('Key', '')
+                .replace('Digit', '')
+                .replace('Numpad', 'Num ')
+                .replace('Left', ' L')
+                .replace('Right', ' R');
+        }
+
+        function clearLog() {
+            document.getElementById('key-history').innerHTML = '';
+        }
+
+        function resetAllStats() {
+            activeKeys.clear();
+            maxSim = 0;
+            keyDownPerf = {};
+            lastKeyUpPerf = {};
+            lastKeyDownPerf = {};
+            startTime = null;
+            count = 0;
+            leftDownAt = null;
+            rightDownAt = null;
+            lastLeftUpAt = null;
+            lastRightUpAt = null;
+            lastStrafeSwitchAt = null;
+            strafeSwitchIntervals = [];
+            strafeHoldDurations = [];
+            fastestDwellMs = Infinity;
+            fastestResetMs = Infinity;
+            shiftTapStreak = 0;
+            lastDwellVal = '-- ms';
+            kpmVal = 0;
+
+            document.getElementById('ghost-curr').innerText = '0';
+            document.getElementById('ghost-max').innerText = '0';
+            updateNkroVerdict(0);
+            document.getElementById('last-dwell').innerText = '-- ms • 0';
+            document.getElementById('strafe-gap').innerText = '-- ms';
+            document.getElementById('jiggle-rate').innerText = '0.0 Hz • -- ms';
+            document.getElementById('min-dwell').innerText = '-- ms';
+            document.getElementById('min-reset').innerText = '-- ms';
+            document.getElementById('shift-guard-meter').innerText = 'Shift Tap Guard: 0/5 (Aman dari Sticky Keys OS)';
+            document.getElementById('shift-guard-meter').classList.remove('warn');
+
+            document.querySelectorAll('.key').forEach(k => {
+                k.classList.remove('active', 'tested', 'chatter-flag');
+            });
+            clearLog();
+            updateStrafeVisualizer();
+            updateCoverageStat();
+        }
+
+        const BLOCKED_DEFAULT_CODES = new Set([
+            'Tab', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight',
+            'ControlLeft', 'ControlRight', 'MetaLeft', 'MetaRight',
+            'ContextMenu', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'
+        ]);
+
+        window.addEventListener('keydown', (e) => {
+            if (
+                BLOCKED_DEFAULT_CODES.has(e.code) ||
+                e.code.startsWith('F') ||
+                e.ctrlKey || e.altKey || e.metaKey
+            ) {
+                e.preventDefault();
+            }
+
+            if (e.repeat) return;
+
+            const now = performance.now();
+            playSound();
+            updateShiftGuard(e.code, now);
+
+            if (lastKeyUpPerf[e.code]) {
+                const resetGap = now - lastKeyUpPerf[e.code];
+                if (resetGap < fastestResetMs && resetGap > 2) {
+                    fastestResetMs = resetGap;
+                    document.getElementById('min-reset').innerText = `${fastestResetMs.toFixed(1)} ms`;
+                }
+            }
+
+            const prevDown = lastKeyDownPerf[e.code] || 0;
+            const isChatter = prevDown > 0 && (now - prevDown) < 80;
+            if (isChatter) {
+                document.getElementById('chatter-key').innerText = `${format(e.code)} (${(now - prevDown).toFixed(1)}ms)`;
+                document.getElementById('chatter-alert').style.display = 'block';
+                document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k => k.classList.add('chatter-flag'));
+                setTimeout(() => { document.getElementById('chatter-alert').style.display = 'none'; }, 3000);
+            }
+
+            lastKeyDownPerf[e.code] = now;
+            keyDownPerf[e.code] = now;
+            activeKeys.add(e.code);
+            count++;
+
+            if (LEFT_KEYS.has(e.code)) recordStrafeDown('left', now);
+            if (RIGHT_KEYS.has(e.code)) recordStrafeDown('right', now);
+
+            if (!startTime) {
+                startTime = now;
+                if (kpmTimer) clearInterval(kpmTimer);
+                kpmTimer = setInterval(() => {
+                    if (!startTime) return;
+                    const m = (performance.now() - startTime) / 60000;
+                    kpmVal = m > 0 ? Math.round(count / m) : 0;
+                    document.getElementById('last-dwell').innerText = `${lastDwellVal} • ${kpmVal}`;
+                }, 1000);
+            }
+
+            document.getElementById('ghost-curr').innerText = activeKeys.size;
+            if (activeKeys.size > maxSim) {
+                maxSim = activeKeys.size;
+                document.getElementById('ghost-max').innerText = maxSim;
+                updateNkroVerdict(maxSim);
+            }
+
+            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k => {
+                k.classList.add('active', 'tested');
+            });
+            updateCoverageStat();
+
+            const l = document.createElement('div');
+            l.className = 'log-item';
+            if (isChatter) l.classList.add('err');
+            l.innerText = format(e.code);
+            const hist = document.getElementById('key-history');
+            hist.prepend(l);
+            if (hist.children.length > 90) hist.removeChild(hist.lastChild);
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (
+                BLOCKED_DEFAULT_CODES.has(e.code) ||
+                e.code.startsWith('F') ||
+                e.ctrlKey || e.altKey || e.metaKey
+            ) {
+                e.preventDefault();
+            }
+
+            const now = performance.now();
+            lastKeyUpPerf[e.code] = now;
+
+            if (keyDownPerf[e.code]) {
+                const dwell = now - keyDownPerf[e.code];
+                lastDwellVal = `${dwell.toFixed(1)} ms`;
+                document.getElementById('last-dwell').innerText = `${lastDwellVal} • ${kpmVal}`;
+                if (dwell < fastestDwellMs && dwell > 1) {
+                    fastestDwellMs = dwell;
+                    document.getElementById('min-dwell').innerText = `${fastestDwellMs.toFixed(1)} ms`;
+                }
+                delete keyDownPerf[e.code];
+            }
+
+            if (LEFT_KEYS.has(e.code)) recordStrafeUp('left', now);
+            if (RIGHT_KEYS.has(e.code)) recordStrafeUp('right', now);
+
+            activeKeys.delete(e.code);
+            document.querySelectorAll(`.key[data-code="${e.code}"]`).forEach(k => k.classList.remove('active'));
+            document.getElementById('ghost-curr').innerText = activeKeys.size;
+        });
+
+        window.addEventListener('blur', () => {
+            activeKeys.clear();
+            leftDownAt = null;
+            rightDownAt = null;
+            document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
+            document.getElementById('ghost-curr').innerText = '0';
+            updateStrafeVisualizer();
+        });
+
+        window.addEventListener('load', () => {
+            // Auto-enable Macintosh mode if accessed from macOS
+            if (/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) {
+                document.getElementById('os-mode-toggle').checked = true;
+                toggleMacMode();
+            }
+            updateCoverageStat();
+            autoScaleKeyboard();
+        });
+        window.addEventListener('resize', autoScaleKeyboard);
     </script>
 </body>
 </html>
